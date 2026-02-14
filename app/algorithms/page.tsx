@@ -72,8 +72,8 @@ export default function AlgorithmsPage() {
                 onClick={() => setActiveCategory(cat.key)}
                 className={`flex-1 flex items-center justify-center gap-2 sm:gap-3 font-montserrat font-bold transition-all duration-200 py-4 sm:py-5 text-sm sm:text-lg lg:text-xl border border-black dark:border-white/20 ${
                   isActive 
-                    ? "bg-brand-teal text-white border-brand-teal dark:border-brand-teal" 
-                    : "bg-transparent text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                    ? "bg-[#269984] text-white border-[#269984] dark:border-[#269984]" 
+                    : "bg-transparent text-black dark:text-white hover:bg-[#269984] hover:text-white transition-colors"
                 }`}
               >
                 <Image
@@ -118,7 +118,7 @@ export default function AlgorithmsPage() {
                 </p>
                 <Link
                   href={`/algorithms/${algo.id}`}
-                  className="inline-flex items-center justify-center font-montserrat font-bold transition-colors border-2 border-brand-teal-light text-brand-teal-light hover:bg-brand-teal-light hover:text-white dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-black px-8 py-2.5 text-base sm:text-lg rounded-lg"
+                  className="inline-flex items-center justify-center font-montserrat font-bold transition-colors border-2 border-[#36D6BA] text-[#36D6BA] hover:bg-[#36D6BA] hover:text-white dark:border-white dark:text-white dark:hover:bg-[#269984] dark:hover:border-[#269984] dark:hover:text-white px-8 py-2.5 text-base sm:text-lg rounded-lg"
                 >
                   Read more
                 </Link>
