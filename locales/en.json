@@ -1,9 +1,13 @@
 {
   "brand": "AlgoRythmics",
   "nav": {
+    "home": "Home",
     "algorithms": "Algorithms",
     "profil": "Profile",
-    "courses": "Courses"
+    "courses": "Courses",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register"
   },
   "aria": {
     "go_home": "Go to homepage",
@@ -14,6 +18,33 @@
   "title": {
     "light_mode": "Light mode",
     "dark_mode": "Dark mode"
+  },
+  "hero": {
+    "title_line1": "Creativity.",
+    "title_line2": "Interactivity.",
+    "title_line3": "Coding.",
+    "description": "Coding is everywhere. Though many of the lessons are boring, with no creativity. Join us, if you want to improve your skills in a different way."
+  },
+  "features": {
+    "title": "You can choose from various learning steps",
+    "video": "Video",
+    "animation": "Animation",
+    "control": "Control",
+    "create_code": "Create code",
+    "live_code": "Live code",
+    "quiz": "Quiz"
+  },
+  "sidebar": {
+    "search_placeholder": "Search algorithms...",
+    "categories_title": "Categories"
+  },
+  "algorithm_card": {
+    "read_more": "Read more",
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    }
   },
   "footer": "© {year} AlgoRythmics. All rights reserved."
 }

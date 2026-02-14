@@ -2,18 +2,13 @@ import ThemeProviderClient from "./components/ThemeProviderClient";
 import LocaleProvider from "./i18n/LocaleProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
 });
 
@@ -24,13 +19,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      {/* suppressHydrationWarning is required for next-themes to work correctly without mismatch warnings */}
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${montserrat.variable} antialiased min-h-screen flex flex-col`}
       >
         <ThemeProviderClient>
           <LocaleProvider>
             <Header />
-            <main className="flex-1 max-w-6xl mx-auto px-6 py-8">
+            <main className="flex-1 pt-[var(--header-height)]">
               {children}
             </main>
             <Footer />
