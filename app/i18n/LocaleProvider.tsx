@@ -5,9 +5,11 @@ import en from "../../locales/en.json";
 import hu from "../../locales/hu.json";
 import ro from "../../locales/ro.json";
 
-type Locale = "en" | "hu" | "ro";
+export type Locale = "en" | "hu" | "ro";
 
-type Translations = Record<string, string | Record<string, string>>;
+type Translations = {
+  [key: string]: string | Translations;
+};
 
 const translations: Record<Locale, Translations> = {
   en: en as Translations,

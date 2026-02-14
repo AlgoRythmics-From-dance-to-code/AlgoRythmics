@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useLocale } from "../i18n/LocaleProvider";
 
 export default function Hero() {
@@ -12,11 +13,14 @@ export default function Hero() {
         {/* Content wrapper – 1920 based layout */}
         <div className="relative mx-auto" style={{ maxWidth: "1920px" }}>
           {/* ── Decorative vine/dots (top-left) ── */}
-          <img
+          <Image
             src="/assets/group_23.svg"
             alt=""
+            width={0}
+            height={0}
+            sizes="100vw"
             className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180"
-            style={{ left: "420px", width: "200px", top: "-7px" }}
+            style={{ left: "420px", width: "200px", top: "-7px", height: "auto" }}
           />
 
           {/* ── Text block (left side) ── */}
@@ -41,9 +45,12 @@ export default function Hero() {
           </div>
 
           {/* ── Hero illustration (right side) ── */}
-          <img
+          <Image
             src="/assets/hero_ground_path.svg"
             alt="Hero illustration"
+            width={0}
+            height={0}
+            sizes="100vw"
             className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180"
             style={{
               top: "0px",
@@ -56,10 +63,14 @@ export default function Hero() {
 
           {/* Mobile fallback */}
           <div className="md:hidden flex flex-col items-center px-6 py-12 gap-8">
-            <img
+            <Image
               src="/assets/group_21.svg"
               alt="Hero illustration"
+              width={0}
+              height={0}
+              sizes="100vw"
               className="w-[80%] max-w-[400px] h-auto dark:invert dark:hue-rotate-180"
+              style={{ width: "80%", height: "auto" }}
             />
             <div className="text-center">
               <h1
@@ -85,11 +96,14 @@ export default function Hero() {
 
       {/* ━━━ TRANSITION: group_25.svg ━━━ */}
       <div className="w-full bg-white dark:bg-[#0a0a0a]">
-        <img
+        <Image
           src="/assets/group_25.svg"
           alt=""
+          width={0}
+          height={0}
+          sizes="100vw"
           className="w-full h-auto pointer-events-none select-none dark:invert dark:hue-rotate-180"
-          style={{ display: "block" }}
+          style={{ display: "block", width: "100%", height: "auto" }}
         />
       </div>
     </>

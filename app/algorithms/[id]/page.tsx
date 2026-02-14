@@ -111,14 +111,13 @@ export default function AlgorithmDetailPage({ params }: { params: Promise<{ id: 
                 {data.description}
               </p>
             </div>
-// ...
-// ...
+
+
             {/* Illustration */}
             <div className="flex-shrink-0 w-48 sm:w-56 md:w-64 lg:w-80">
               <Image src={`/assets/${data.illAsset}`} alt={data.name} width={330} height={330} className="w-full h-auto dark:invert dark:hue-rotate-180" />
             </div>
-// ...
-// ...
+
           </div>
         </div>
       </div>

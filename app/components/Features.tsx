@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useLocale } from "../i18n/LocaleProvider";
 
 export default function Features() {
@@ -36,11 +37,14 @@ export default function Features() {
 function FeatureCard({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="flex items-center justify-center">
-      <img
+      <Image
         src={src}
         alt={alt}
+        width={0}
+        height={0}
+        sizes="100vw"
         className="w-full h-auto pointer-events-none select-none dark:invert dark:hue-rotate-180"
-        style={{ maxWidth: "280px" }}
+        style={{ maxWidth: "280px", width: "100%", height: "auto" }}
       />
     </div>
   );

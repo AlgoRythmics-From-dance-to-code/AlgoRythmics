@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 export default function BottomBanner() {
   return (
     <section
@@ -9,11 +11,14 @@ export default function BottomBanner() {
         className="mx-auto px-6 py-6 md:py-10 flex items-center justify-center"
         style={{ maxWidth: "1400px" }}
       >
-        <img
+        <Image
           src="/assets/illustration_no_bg.png"
           alt="AlgoRythmics illustration"
+          width={0}
+          height={0}
+          sizes="100vw"
           className="w-full h-auto object-contain pointer-events-none select-none dark:invert dark:hue-rotate-180"
-          style={{ maxWidth: "1100px" }}
+          style={{ maxWidth: "1100px", width: "100%", height: "auto" }}
         />
       </div>
     </section>

@@ -2,8 +2,9 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import { useLocale } from "../i18n/LocaleProvider";
+import { useLocale, Locale } from "../i18n/LocaleProvider";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
@@ -14,6 +15,7 @@ export default function Header() {
   const { locale, setLocale, t } = useLocale();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // ... (keep logic same)
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -27,7 +29,7 @@ export default function Header() {
     };
   }, []);
 
-  const languages = [
+  const languages: { code: Locale; label: string; flag: string }[] = [
     { code: "en", label: "EN", flag: "https://flagcdn.com/w40/gb.png" },
     { code: "hu", label: "HU", flag: "https://flagcdn.com/w40/hu.png" },
     { code: "ro", label: "RO", flag: "https://flagcdn.com/w40/ro.png" },
@@ -43,14 +45,17 @@ export default function Header() {
       <div className="max-w-[1400px] mx-auto h-full flex items-center justify-between px-6 lg:px-12">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
-          <img
+          <Image
             src="/assets/group_20.svg"
             alt="AlgoRythmics Logo"
+            width={0}
+            height={0}
+            sizes="100vw"
             className="h-10 sm:h-11 md:h-12 w-auto"
-            style={{ filter: "brightness(0) invert(1)" }}
+            style={{ filter: "brightness(0) invert(1)", width: "auto", height: "auto" }}
           />
         </Link>
-
+        
         {/* Desktop Nav — centre links */}
         <nav className="hidden md:flex items-center gap-5 lg:gap-8">
           <NavLink href="/" label={t("nav.home")} active={pathname === "/"} />
@@ -75,11 +80,13 @@ export default function Header() {
               onClick={() => setLangDropdownOpen(!langDropdownOpen)} 
               className="flex items-center gap-2 hover:opacity-80 transition-opacity p-2"
             >
-              <img src={currentLang.flag} alt={currentLang.code} className="w-5 h-auto rounded-sm object-cover" />
+              <Image src={currentLang.flag} alt={currentLang.code} width={20} height={15} className="w-5 h-auto rounded-sm object-cover" />
               <span className="font-montserrat text-white text-sm lg:text-base uppercase">{currentLang.code}</span>
-              <img 
+              <Image 
                 src="/assets/path_1568.svg" 
                 alt="" 
+                width={10}
+                height={10}
                 style={{ 
                   width: "10px", 
                   height: "auto", 
@@ -97,14 +104,14 @@ export default function Header() {
                   <button
                     key={lang.code}
                     onClick={() => {
-                      setLocale(lang.code as any);
+                      setLocale(lang.code);
                       setLangDropdownOpen(false);
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors ${
                       locale === lang.code ? "bg-gray-50 font-bold text-[var(--brand-teal)]" : "text-gray-700"
                     }`}
                   >
-                    <img src={lang.flag} alt={lang.code} className="w-5 h-auto rounded-sm object-cover" />
+                    <Image src={lang.flag} alt={lang.code} width={20} height={15} className="w-5 h-auto rounded-sm object-cover" />
                     <span className="font-montserrat text-sm uppercase">{lang.label}</span>
                   </button>
                 ))}
@@ -114,7 +121,7 @@ export default function Header() {
 
           {/* Search */}
           <button className="hover:opacity-80 transition-opacity">
-            <img src="/assets/group_500.svg" alt="Search" className="w-8 h-8 lg:w-9 lg:h-9" style={{ filter: "brightness(0) invert(1)" }} />
+            <Image src="/assets/group_500.svg" alt="Search" width={0} height={0} sizes="100vw" className="w-8 h-8 lg:w-9 lg:h-9" style={{ filter: "brightness(0) invert(1)", width: "auto", height: "auto" }} />
           </button>
         </div>
 
@@ -141,14 +148,14 @@ export default function Header() {
                 {languages.map((lang) => (
                    <button 
                     key={lang.code}
-                    onClick={() => setLocale(lang.code as any)} 
+                    onClick={() => setLocale(lang.code)} 
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-md border ${
                       locale === lang.code 
                         ? "bg-white text-[#269984] border-white" 
                         : "text-white border-white/30"
                     }`}
                    >
-                      <img src={lang.flag} alt={lang.code} className="w-5 h-auto rounded-sm object-cover" />
+                      <Image src={lang.flag} alt={lang.code} width={20} height={15} className="w-5 h-auto rounded-sm object-cover" />
                       <span className="font-montserrat text-sm uppercase font-bold">{lang.code}</span>
                    </button>
                 ))}

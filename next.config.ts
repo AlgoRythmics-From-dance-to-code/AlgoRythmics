@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // i18n is intentionally omitted because the App Router manages
   // internationalization differently (see Next.js App Router i18n docs).
   // We provide a client-side LocaleProvider for translations instead.
+  images: {
+    domains: ["flagcdn.com"],
+  },
 };
 
 export default nextConfig;

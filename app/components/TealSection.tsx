@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useLocale } from "../i18n/LocaleProvider";
 
 export default function TealSection() {
@@ -45,11 +46,14 @@ export default function TealSection() {
 
               {/* Illustration */}
               <div className="flex-1 flex items-center justify-center p-4 pt-1">
-                <img
+                <Image
                   src={card.illustration}
                   alt={card.title}
+                  width={0}
+                  height={0}
+                  sizes="100vw"
                   className="w-full h-auto pointer-events-none select-none dark:invert dark:hue-rotate-180"
-                  style={{ maxWidth: "180px" }}
+                  style={{ maxWidth: "180px", width: "100%", height: "auto" }}
                 />
               </div>
             </Link>

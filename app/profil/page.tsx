@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+
 
 const sidebarLinks = [
   { key: "public", label: "Public Profile" },
