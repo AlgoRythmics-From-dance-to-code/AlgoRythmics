@@ -53,11 +53,10 @@ export default function Hero() {
             height={744}
             priority
             sizes="(max-width: 768px) 100vw, 720px"
-            className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180"
+            className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180 w-[450px] lg:w-[600px] xl:w-[720px]"
             style={{
               top: "0px",
               right: "100px",
-              width: "720px",
               height: "auto",
               zIndex: 2,
             }}

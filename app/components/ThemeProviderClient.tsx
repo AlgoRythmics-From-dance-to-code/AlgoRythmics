@@ -11,7 +11,7 @@ export default function ThemeProviderClient({
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="light"
       enableSystem={true}
       disableTransitionOnChange
     >
