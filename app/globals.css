@@ -2,11 +2,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  --font-montserrat: var(--font-montserrat);
-  --color-brand-green: var(--brand-green);
-  --color-brand-dark: var(--brand-dark);
-}
+
 
 .dark {
   --background: #0a0a0a;
@@ -20,6 +16,9 @@
   
   /* Course Colors Dark Mode Overrides */
   --color-course-create: #4ADE80; /* Green shade replacing red in dark mode */
+  
+  --muted: rgba(255, 255, 255, 0.6);
+  --border: rgba(255, 255, 255, 0.06);
 }
 :root {
   --background: #ffffff;
@@ -33,8 +32,11 @@
   --card-bg: #ffffff;
   --card-border: #e5e7eb;
   --text-secondary: #4b5563;
+  --muted: rgba(0, 0, 0, 0.6);
+  --border: #e5e7eb;
   
   --font-montserrat: 'Montserrat', sans-serif;
+  --header-height: 85px;
 
   /* Course Colors */
   --color-course-video: #269984;

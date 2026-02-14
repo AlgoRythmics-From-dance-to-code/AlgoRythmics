@@ -19,14 +19,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      {/* suppressHydrationWarning is required for next-themes to work correctly without mismatch warnings */}
       <body
         className={`${montserrat.variable} antialiased min-h-screen flex flex-col`}
-        suppressHydrationWarning
       >
         <ThemeProviderClient>
           <LocaleProvider>
             <Header />
-            <main className="flex-1 pt-[85px]">
+            <main className="flex-1 pt-[var(--header-height)]">
               {children}
             </main>
             <Footer />

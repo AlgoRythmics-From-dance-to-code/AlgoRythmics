@@ -30,17 +30,17 @@ export default function Header() {
   }, []);
 
   const languages: { code: Locale; label: string; flag: string }[] = [
-    { code: "en", label: "EN", flag: "https://flagcdn.com/w40/gb.png" },
-    { code: "hu", label: "HU", flag: "https://flagcdn.com/w40/hu.png" },
-    { code: "ro", label: "RO", flag: "https://flagcdn.com/w40/ro.png" },
+    { code: "en", label: "EN", flag: "/flags/gb.png" },
+    { code: "hu", label: "HU", flag: "/flags/hu.png" },
+    { code: "ro", label: "RO", flag: "/flags/ro.png" },
   ];
 
   const currentLang = languages.find(l => l.code === locale) || languages[0];
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50"
-      style={{ height: "85px", backgroundColor: "#269984" }}
+      className="fixed top-0 left-0 right-0 z-50 h-[var(--header-height)]"
+      style={{ backgroundColor: "#269984" }}
     >
       <div className="max-w-[1400px] mx-auto h-full flex items-center justify-between px-6 lg:px-12">
         {/* Logo */}
@@ -48,9 +48,9 @@ export default function Header() {
           <Image
             src="/assets/group_20.svg"
             alt="AlgoRythmics Logo"
-            width={0}
-            height={0}
-            sizes="100vw"
+            width={294}
+            height={57}
+            sizes="(max-width: 768px) 150px, 200px"
             className="h-10 sm:h-11 md:h-12 w-auto"
             style={{ filter: "brightness(0) invert(1)", width: "auto", height: "auto" }}
           />
@@ -66,10 +66,10 @@ export default function Header() {
         {/* Right actions (Desktop) */}
         <div className="hidden md:flex items-center gap-4 lg:gap-6">
           <button onClick={() => router.push("/register")} className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base">
-            Register
+            {t("nav.register")}
           </button>
           <button onClick={() => router.push("/login")} className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base">
-            Login
+            {t("nav.login")}
           </button>
           
           <ThemeToggle />
@@ -135,7 +135,7 @@ export default function Header() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden absolute top-[85px] left-0 right-0 bg-[#269984] shadow-lg border-t border-white/20">
+        <div className="md:hidden absolute top-[var(--header-height)] left-0 right-0 bg-[#269984] shadow-lg border-t border-white/20">
           <nav className="flex flex-col p-6 gap-4">
             <Link href="/" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.home")}</Link>
             <Link href="/algorithms" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.algorithms")}</Link>
@@ -163,8 +163,8 @@ export default function Header() {
             </div>
 
             <hr className="border-white/20" />
-            <Link href="/register" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>Register</Link>
-            <Link href="/login" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>Login</Link>
+            <Link href="/register" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.register")}</Link>
+            <Link href="/login" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.login")}</Link>
             
             <div className="flex items-center gap-2 text-white">
                <ThemeToggle />

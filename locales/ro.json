@@ -5,7 +5,9 @@
     "algorithms": "Algoritmi",
     "profil": "Profil",
     "courses": "Cursuri",
-    "contact": "Contact"
+    "contact": "Contact",
+    "login": "Autentificare",
+    "register": "Înregistrare"
   },
   "aria": {
     "go_home": "Mergi la pagina principală",

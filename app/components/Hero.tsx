@@ -16,9 +16,10 @@ export default function Hero() {
           <Image
             src="/assets/group_23.svg"
             alt=""
-            width={0}
-            height={0}
-            sizes="100vw"
+            width={186}
+            height={361}
+            sizes="200px"
+            aria-hidden={true}
             className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180"
             style={{ left: "420px", width: "200px", top: "-7px", height: "auto" }}
           />
@@ -48,9 +49,10 @@ export default function Hero() {
           <Image
             src="/assets/hero_ground_path.svg"
             alt="Hero illustration"
-            width={0}
-            height={0}
-            sizes="100vw"
+            width={818}
+            height={744}
+            priority
+            sizes="(max-width: 768px) 100vw, 720px"
             className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180"
             style={{
               top: "0px",
@@ -66,9 +68,9 @@ export default function Hero() {
             <Image
               src="/assets/group_21.svg"
               alt="Hero illustration"
-              width={0}
-              height={0}
-              sizes="100vw"
+              width={818}
+              height={744}
+              sizes="(max-width: 768px) 80vw, 400px"
               className="w-[80%] max-w-[400px] h-auto dark:invert dark:hue-rotate-180"
               style={{ width: "80%", height: "auto" }}
             />
@@ -99,9 +101,10 @@ export default function Hero() {
         <Image
           src="/assets/group_25.svg"
           alt=""
-          width={0}
-          height={0}
+          width={2454}
+          height={632}
           sizes="100vw"
+          aria-hidden={true}
           className="w-full h-auto pointer-events-none select-none dark:invert dark:hue-rotate-180"
           style={{ display: "block", width: "100%", height: "auto" }}
         />

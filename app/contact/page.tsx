@@ -1,3 +1,4 @@
+// Client Component
 "use client";
 
 import { useState } from "react";
@@ -7,6 +8,39 @@ export default function ContactPage() {
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!name.trim()) newErrors.name = "Name is required";
+    if (!email.trim()) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Email is invalid";
+    if (!subject.trim()) newErrors.subject = "Subject is required";
+    if (!message.trim()) newErrors.message = "Message is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    
+    setIsSubmitting(false);
+    setIsSuccess(true);
+    setName("");
+    setEmail("");
+    setSubject("");
+    setMessage("");
+    setErrors({});
+  };
 
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a]">
@@ -69,40 +103,55 @@ export default function ContactPage() {
           <div className="flex-1">
             <div className="p-6 sm:p-8 lg:p-10 rounded-2xl bg-[#FAFAFA] dark:bg-[#1a1a1a]">
               <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-6 sm:mb-8">Send us a message</h2>
+              
+              {isSuccess ? (
+                 <div className="bg-green-100 dark:bg-green-900/30 border border-green-400 text-green-700 dark:text-green-400 px-4 py-3 rounded relative text-center">
+                  <strong className="font-bold">Message sent!</strong>
+                  <span className="block sm:inline"> We will get back to you shortly.</span>
+                  <button onClick={() => setIsSuccess(false)} className="mt-4 underline text-sm">Send another</button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-5">
+                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">Your name</label>
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                      className={`w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-12 border-2 ${errors.name ? 'border-red-500' : 'border-[#E0E0E0] dark:border-neutral-700'} rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors`}
+                      placeholder="John Doe" />
+                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                  </div>
 
-              <div className="mb-5">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">Your name</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-12 border-2 border-[#E0E0E0] dark:border-neutral-700 rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors"
-                  placeholder="John Doe" />
-              </div>
+                  <div className="mb-5">
+                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">Your email</label>
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                      className={`w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-12 border-2 ${errors.email ? 'border-red-500' : 'border-[#E0E0E0] dark:border-neutral-700'} rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors`}
+                      placeholder="john@example.com" />
+                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                  </div>
 
-              <div className="mb-5">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">Your email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-12 border-2 border-[#E0E0E0] dark:border-neutral-700 rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors"
-                  placeholder="john@example.com" />
-              </div>
+                  <div className="mb-5">
+                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">Subject</label>
+                    <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)}
+                      className={`w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-12 border-2 ${errors.subject ? 'border-red-500' : 'border-[#E0E0E0] dark:border-neutral-700'} rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors`}
+                      placeholder="How can we help?" />
+                    {errors.subject && <p className="text-red-500 text-xs mt-1">{errors.subject}</p>}
+                  </div>
 
-              <div className="mb-5">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">Subject</label>
-                <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)}
-                  className="w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-12 border-2 border-[#E0E0E0] dark:border-neutral-700 rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors"
-                  placeholder="How can we help?" />
-              </div>
+                  <div className="mb-6">
+                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">Message</label>
+                    <textarea value={message} onChange={(e) => setMessage(e.target.value)}
+                      className={`w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-36 border-2 ${errors.message ? 'border-red-500' : 'border-[#E0E0E0] dark:border-neutral-700'} rounded-lg p-4 text-base outline-none resize-none focus:border-[#36D6BA] transition-colors`}
+                      placeholder="Your message..." />
+                    {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
+                  </div>
 
-              <div className="mb-6">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">Message</label>
-                <textarea value={message} onChange={(e) => setMessage(e.target.value)}
-                  className="w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-36 border-2 border-[#E0E0E0] dark:border-neutral-700 rounded-lg p-4 text-base outline-none resize-none focus:border-[#36D6BA] transition-colors"
-                  placeholder="Your message..." />
-              </div>
-
-              <button className="w-full font-montserrat font-bold text-white h-12 sm:h-13 rounded-lg text-base sm:text-lg hover:opacity-90 transition-all cursor-pointer"
-                style={{ backgroundColor: "#269984", border: "none" }}
-              >
-                Send Message
-              </button>
+                  <button className="w-full font-montserrat font-bold text-white h-12 sm:h-13 rounded-lg text-base sm:text-lg hover:opacity-90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: "#269984", border: "none" }}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Sending..." : "Send Message"}
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </div>

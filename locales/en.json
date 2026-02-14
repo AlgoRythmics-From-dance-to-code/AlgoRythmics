@@ -5,7 +5,9 @@
     "algorithms": "Algorithms",
     "profil": "Profile",
     "courses": "Courses",
-    "contact": "Contact"
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register"
   },
   "aria": {
     "go_home": "Go to homepage",

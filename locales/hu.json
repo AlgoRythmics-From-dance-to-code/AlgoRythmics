@@ -5,7 +5,9 @@
     "algorithms": "Algoritmusok",
     "profil": "Profil",
     "courses": "Tanfolyamok",
-    "contact": "Kapcsolat"
+    "contact": "Kapcsolat",
+    "login": "Bejelentkezés",
+    "register": "Regisztráció"
   },
   "aria": {
     "go_home": "Ugrás a kezdőlapra",

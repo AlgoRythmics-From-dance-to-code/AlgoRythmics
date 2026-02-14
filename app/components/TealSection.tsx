@@ -8,14 +8,14 @@ export default function TealSection() {
   const { t } = useLocale();
 
   const cards = [
-    { title: t("nav.algorithms"), href: "/algorithms", illustration: "/assets/group_65.svg" },
-    { title: t("nav.courses"),    href: "/courses",    illustration: "/assets/group_70.svg" },
-    { title: t("nav.profil"),     href: "/profil",     illustration: "/assets/group_71.svg" },
-    { title: t("nav.contact"),    href: "/contact",    illustration: "/assets/group_75.svg" },
+    { title: t("nav.algorithms"), href: "/algorithms", illustration: "/assets/group_65.svg", width: 206, height: 203 },
+    { title: t("nav.courses"),    href: "/courses",    illustration: "/assets/group_70.svg", width: 246, height: 166 },
+    { title: t("nav.profil"),     href: "/profil",     illustration: "/assets/group_71.svg", width: 197, height: 202 },
+    { title: t("nav.contact"),    href: "/contact",    illustration: "/assets/group_75.svg", width: 215, height: 198 },
   ];
 
   return (
-    <section className="w-full" style={{ backgroundColor: "#269984" }}>
+    <section className="w-full bg-brand-teal">
       <div
         className="mx-auto px-6 py-10 md:py-14"
         style={{ maxWidth: "1200px" }}
@@ -49,9 +49,9 @@ export default function TealSection() {
                 <Image
                   src={card.illustration}
                   alt={card.title}
-                  width={0}
-                  height={0}
-                  sizes="100vw"
+                  width={card.width}
+                  height={card.height}
+                  sizes="200px"
                   className="w-full h-auto pointer-events-none select-none dark:invert dark:hue-rotate-180"
                   style={{ maxWidth: "180px", width: "100%", height: "auto" }}
                 />

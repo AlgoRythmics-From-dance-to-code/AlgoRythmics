@@ -1,13 +1,42 @@
+// Client Component
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!email.trim()) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Email is invalid";
+    if (!password.trim()) newErrors.password = "Password is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setIsLoading(true);
+    // Simulate login API call
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    
+    setIsLoading(false);
+    // Redirect to profile or home
+    router.push("/");
+  };
 
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a] min-h-[calc(100vh-85px)]">
@@ -40,43 +69,48 @@ export default function LoginPage() {
               Welcome back! Please login to your account.
             </p>
 
-            {/* Email field */}
-            <div className="mb-6">
-              <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base">Email address</label>
-              <input
-                type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                className="w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 sm:px-5 text-base outline-none focus:border-[#36D6BA] transition-colors"
-                placeholder="Enter your email"
-              />
-            </div>
+            <form onSubmit={handleSubmit}>
+              {/* Email field */}
+              <div className="mb-6">
+                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base">Email address</label>
+                <input
+                  type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 sm:px-5 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
+                  placeholder="Enter your email"
+                />
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              </div>
 
-            {/* Password field */}
-            <div className="mb-6">
-              <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base">Password</label>
-              <input
-                type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                className="w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 sm:px-5 text-base outline-none focus:border-[#36D6BA] transition-colors"
-                placeholder="Enter your password"
-              />
-            </div>
+              {/* Password field */}
+              <div className="mb-6">
+                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base">Password</label>
+                <input
+                  type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 sm:px-5 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
+                  placeholder="Enter your password"
+                />
+                 {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+              </div>
 
-            {/* Remember me + Forgot password */}
-            <div className="flex items-center justify-between mb-10">
-              <label className="flex items-center gap-2 cursor-pointer font-montserrat text-sm">
-                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="w-5 h-5 accent-[#36D6BA]" />
-                <span className="text-black dark:text-white">Remember me</span>
-              </label>
-              <Link href="#" className="font-montserrat font-bold text-sm hover:underline" style={{ color: "#36D6BA" }}>
-                Forgot password?
-              </Link>
-            </div>
+              {/* Remember me + Forgot password */}
+              <div className="flex items-center justify-between mb-10">
+                <label className="flex items-center gap-2 cursor-pointer font-montserrat text-sm">
+                  <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="w-5 h-5 accent-[#36D6BA]" />
+                  <span className="text-black dark:text-white">Remember me</span>
+                </label>
+                <Link href="#" className="font-montserrat font-bold text-sm hover:underline" style={{ color: "#36D6BA" }}>
+                  Forgot password?
+                </Link>
+              </div>
 
-            {/* Login button */}
-            <button className="w-full font-montserrat font-bold text-white h-12 sm:h-14 rounded-lg text-lg sm:text-xl hover:opacity-90 transition-all cursor-pointer"
-              style={{ backgroundColor: "#269984", border: "none" }}
-            >
-              Login
-            </button>
+              {/* Login button */}
+              <button className="w-full font-montserrat font-bold text-white h-12 sm:h-14 rounded-lg text-lg sm:text-xl hover:opacity-90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: "#269984", border: "none" }}
+                disabled={isLoading}
+              >
+                {isLoading ? "Logging in..." : "Login"}
+              </button>
+            </form>
 
             {/* Divider */}
             <div className="flex items-center gap-4 my-8">

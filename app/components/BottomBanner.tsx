@@ -14,9 +14,9 @@ export default function BottomBanner() {
         <Image
           src="/assets/illustration_no_bg.png"
           alt="AlgoRythmics illustration"
-          width={0}
-          height={0}
-          sizes="100vw"
+          width={2866}
+          height={1080}
+          sizes="(max-width: 768px) 100vw, 1100px"
           className="w-full h-auto object-contain pointer-events-none select-none dark:invert dark:hue-rotate-180"
           style={{ maxWidth: "1100px", width: "100%", height: "auto" }}
         />

@@ -1,5 +1,4 @@
-"use client";
-
+// Server Component
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -62,8 +61,8 @@ const courseData: Record<string, { title: string; description: string; color: st
   },
 };
 
-export default function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = React.use(params);
+export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const data = courseData[id] || courseData["video"];
 
   return (
