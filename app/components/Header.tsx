@@ -39,8 +39,7 @@ export default function Header() {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 h-[var(--header-height)]"
-      style={{ backgroundColor: "#269984" }}
+      className="fixed top-0 left-0 right-0 z-50 h-[var(--header-height)] bg-[#269984]"
     >
       <div className="max-w-[1400px] mx-auto h-full flex items-center justify-between px-6 lg:px-12">
         {/* Logo */}
@@ -119,10 +118,7 @@ export default function Header() {
             )}
           </div>
 
-          {/* Search */}
-          <button className="hover:opacity-80 transition-opacity">
-            <Image src="/assets/group_500.svg" alt="Search" width={0} height={0} sizes="100vw" className="w-8 h-8 lg:w-9 lg:h-9" style={{ filter: "brightness(0) invert(1)", width: "auto", height: "auto" }} />
-          </button>
+
         </div>
 
         {/* Mobile hamburger */}

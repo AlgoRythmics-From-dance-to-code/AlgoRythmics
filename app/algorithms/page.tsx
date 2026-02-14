@@ -81,7 +81,7 @@ export default function AlgorithmsPage() {
                   alt=""
                   width={23}
                   height={23}
-                  className={`w-5 h-5 ${isActive ? "invert brightness-0" : ""}`}
+                  className={`w-5 h-5 ${isActive ? "invert brightness-0" : "dark:invert"}`}
                 />
                 <span className="hidden sm:inline">{cat.label}</span>
                 <span className="sm:hidden">{cat.key.charAt(0).toUpperCase() + cat.key.slice(1)}</span>
@@ -118,7 +118,7 @@ export default function AlgorithmsPage() {
                 </p>
                 <Link
                   href={`/algorithms/${algo.id}`}
-                  className="inline-flex items-center justify-center font-montserrat font-bold transition-colors border-2 border-brand-teal-light text-brand-teal-light hover:bg-brand-teal-light hover:text-white px-8 py-2.5 text-base sm:text-lg rounded-lg"
+                  className="inline-flex items-center justify-center font-montserrat font-bold transition-colors border-2 border-brand-teal-light text-brand-teal-light hover:bg-brand-teal-light hover:text-white dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-black px-8 py-2.5 text-base sm:text-lg rounded-lg"
                 >
                   Read more
                 </Link>

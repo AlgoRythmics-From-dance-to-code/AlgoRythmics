@@ -28,7 +28,7 @@ export default function RegisterPage() {
     if (!password) newErrors.password = "Password is required";
     else if (password.length < 6) newErrors.password = "Password must be at least 6 characters";
     
-    if (password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match";
+    if (password && confirmPassword && password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match";
     
     if (!acceptTerms) newErrors.terms = "You must accept the terms";
     

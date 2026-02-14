@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -51,7 +52,7 @@ export default function Footer() {
           className="font-montserrat text-center text-xs sm:text-sm"
           style={{ color: "#ffffff" }}
         >
-          © 2020 | algorythmics.com | About Us
+          © {new Date().getFullYear()} | algorythmics.com | <Link href="/about" className="hover:underline">About Us</Link>
         </p>
       </div>
     </footer>

@@ -15,7 +15,7 @@ export default function TealSection() {
   ];
 
   return (
-    <section className="w-full bg-brand-teal">
+    <section className="w-full bg-gradient-to-b from-white from-[0px] via-[#269984] via-[30px] to-white to-[calc(100%-30px)] bg-[#269984]">
       <div
         className="mx-auto px-6 py-10 md:py-14"
         style={{ maxWidth: "1200px" }}
