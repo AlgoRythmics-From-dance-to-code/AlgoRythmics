@@ -1,9 +1,11 @@
 {
   "brand": "AlgoRythmics",
   "nav": {
+    "home": "Kezdőlap",
     "algorithms": "Algoritmusok",
     "profil": "Profil",
-    "courses": "Tanfolyamok"
+    "courses": "Tanfolyamok",
+    "contact": "Kapcsolat"
   },
   "aria": {
     "go_home": "Ugrás a kezdőlapra",
@@ -14,6 +16,33 @@
   "title": {
     "light_mode": "Világos mód",
     "dark_mode": "Sötét mód"
+  },
+  "hero": {
+    "title_line1": "Kreativitás.",
+    "title_line2": "Interaktivitás.",
+    "title_line3": "Programozás.",
+    "description": "A programozás mindenhol ott van. Bár sok lecke unalmas és nélkülözi a kreativitást. Csatlakozz hozzánk, ha másképp szeretnéd fejleszteni a készségeidet."
+  },
+  "features": {
+    "title": "Különböző tanulási lépések közül választhatsz",
+    "video": "Videó",
+    "animation": "Animáció",
+    "control": "Irányítás",
+    "create_code": "Kód írása",
+    "live_code": "Élő kód",
+    "quiz": "Kvíz"
+  },
+  "sidebar": {
+    "search_placeholder": "Algoritmusok keresése...",
+    "categories_title": "Kategóriák"
+  },
+  "algorithm_card": {
+    "read_more": "Olvass tovább",
+    "difficulty": {
+      "easy": "Könnyű",
+      "medium": "Közepes",
+      "hard": "Nehéz"
+    }
   },
   "footer": "© {year} AlgoRythmics. Minden jog fenntartva."
 }

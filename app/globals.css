@@ -1,74 +1,51 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-montserrat: var(--font-montserrat);
+  --color-brand-green: var(--brand-green);
+  --color-brand-dark: var(--brand-dark);
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  
+  --brand-dark: #ffffff; /* Invert brand dark for dark mode text if used */
+  
+  --card-bg: #1a1a1a;
+  --card-border: #333333;
+  --text-secondary: #a1a1aa;
+  
+  /* Course Colors Dark Mode Overrides */
+  --color-course-create: #4ADE80; /* Green shade replacing red in dark mode */
+}
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  --muted: rgba(0, 0, 0, 0.6);
-  --border: rgba(0, 0, 0, 0.06);
-}
+  --foreground: #000000;
+  
+  /* Design Tokens from Figma */
+  --brand-teal: #269984; /* "Angel Converter" Teal */
+  --brand-green: #269984; 
+  --brand-dark: #000000;
+  
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --text-secondary: #4b5563;
+  
+  --font-montserrat: 'Montserrat', sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --muted: rgba(255, 255, 255, 0.6);
-    --border: rgba(255, 255, 255, 0.06);
-  }
+  /* Course Colors */
+  --color-course-video: #269984;
+  --color-course-animation: #36D6BA;
+  --color-course-control: #FBB03B;
+  --color-course-create: #F15A24;
+  --color-course-alive: #6C63FF;
 }
-
-:root[data-theme="dark"],
-html[data-theme="dark"] {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --muted: rgba(255, 255, 255, 0.6);
-  --border: rgba(255, 255, 255, 0.06);
-}
-
-:root[data-theme="light"],
-html[data-theme="light"] {
-  --background: #ffffff;
-  --foreground: #171717;
-  --muted: rgba(0, 0, 0, 0.6);
-  --border: rgba(0, 0, 0, 0.06);
-}
-
-/* Theme change overlay animation (kept minimal) */
-html.theme-fade::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: var(--theme-overlay-color, var(--background));
-  z-index: 9999;
-  pointer-events: none;
-  animation: themeFade 380ms ease-out forwards;
-}
-
-@keyframes themeFade {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* minimal body transitions */
 body {
+  font-family: var(--font-montserrat);
+  background-color: var(--background);
+  color: var(--foreground);
   transition: background 180ms ease, color 180ms ease;
-}
-
-/* Mobile menu item entrance animation: fade in and slide up slightly */
-@keyframes mobileItemIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-mobile-item {
-  animation: mobileItemIn 220ms ease forwards;
 }

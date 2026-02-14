@@ -1,9 +1,11 @@
 {
   "brand": "AlgoRythmics",
   "nav": {
+    "home": "Acasă",
     "algorithms": "Algoritmi",
     "profil": "Profil",
-    "courses": "Cursuri"
+    "courses": "Cursuri",
+    "contact": "Contact"
   },
   "aria": {
     "go_home": "Mergi la pagina principală",
@@ -14,6 +16,33 @@
   "title": {
     "light_mode": "Mod luminos",
     "dark_mode": "Mod întunecat"
+  },
+  "hero": {
+    "title_line1": "Creativitate.",
+    "title_line2": "Interactivitate.",
+    "title_line3": "Programare.",
+    "description": "Programarea este peste tot. Deși multe lecții sunt plictisitoare și lipsite de creativitate. Alătură-te nouă dacă vrei să îți îmbunătățești abilitățile într-un mod diferit."
+  },
+  "features": {
+    "title": "Poți alege dintre diverse etape de învățare",
+    "video": "Video",
+    "animation": "Animație",
+    "control": "Control",
+    "create_code": "Scrie cod",
+    "live_code": "Cod live",
+    "quiz": "Quiz"
+  },
+  "sidebar": {
+    "search_placeholder": "Caută algoritmi...",
+    "categories_title": "Categorii"
+  },
+  "algorithm_card": {
+    "read_more": "Citește mai mult",
+    "difficulty": {
+      "easy": "Ușor",
+      "medium": "Mediu",
+      "hard": "Greu"
+    }
   },
   "footer": "© {year} AlgoRythmics. Toate drepturile rezervate."
 }
