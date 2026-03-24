@@ -7,6 +7,7 @@ import { Montserrat } from 'next/font/google';
 import '../globals.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import axios from 'axios';
 
 const montserrat = Montserrat({
   variable: '--font-montserrat',
@@ -19,7 +20,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
 
   if (token) {
     try {
-      const res = await fetch(
+      const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'}/api/users/me`,
         {
           headers: {
@@ -27,7 +28,6 @@ export default async function FrontendLayout({ children }: { children: React.Rea
           },
         },
       );
-      const data = await res.json();
       if (data?.user) {
         userImage = data.user.imageUrl || null;
       }

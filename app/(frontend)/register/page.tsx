@@ -5,6 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -45,20 +46,12 @@ export default function RegisterPage() {
     setErrors({});
 
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      await axios.post('/api/auth/register', { email, password });
+      router.push('/login');
+    } catch (error: any) {
+      setErrors({
+        email: error.response?.data?.error || 'Registration failed. User might already exist.',
       });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setErrors({ email: data.error || 'Registration failed. User might already exist.' });
-      } else {
-        router.push('/login');
-      }
-    } catch {
-      setErrors({ email: 'An error occurred during registration.' });
     } finally {
       setIsLoading(false);
     }

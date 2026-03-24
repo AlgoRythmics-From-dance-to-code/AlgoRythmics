@@ -27,6 +27,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
     },
+    push: true, // This automatically syncs the DB schema in development
   }),
   sharp,
   plugins: [

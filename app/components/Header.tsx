@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import { useLocale, Locale } from '../i18n/LocaleProvider';
 import ThemeToggle from './ThemeToggle';
 import { User as UserIcon } from 'lucide-react';
@@ -99,7 +100,7 @@ export default function Header({
           ) : (
             <button
               onClick={async () => {
-                await fetch('/api/auth/logout', { method: 'POST' });
+                await axios.post('/api/auth/logout');
                 router.push('/login');
                 router.refresh();
               }}
@@ -320,7 +321,7 @@ export default function Header({
                 <button
                   onClick={async () => {
                     setMenuOpen(false);
-                    await fetch('/api/auth/logout', { method: 'POST' });
+                    await axios.post('/api/auth/logout');
                     router.push('/login');
                     router.refresh();
                   }}
