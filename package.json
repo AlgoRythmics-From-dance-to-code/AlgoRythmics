@@ -2,18 +2,19 @@
   "name": "web",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "payload generate:importmap && payload migrate && next build --turbopack",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "payload": "payload",
-    "generate:migration": "payload migrations:create",
-    "migrate": "payload migrations:migrate",
-    "migrate:status": "payload migrations:status"
+    "generate:migration": "payload migrate:create",
+    "migrate": "payload migrate",
+    "migrate:status": "payload migrate:status"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "^3.80.0",
