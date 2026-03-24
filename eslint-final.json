@@ -1,0 +1,599 @@
+[
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\about\\page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\algorithms\\[id]\\AlgorithmDetailClient.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\algorithms\\[id]\\page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\algorithms\\page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\contact\\page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\courses\\[id]\\page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\courses\\page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\layout.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\login\\page.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'err' is defined but never used.",
+        "line": 49,
+        "column": 14,
+        "nodeType": null,
+        "messageId": "unusedVar",
+        "endLine": 49,
+        "endColumn": 17
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "severity": 1,
+        "message": "Unexpected any. Specify a different type.",
+        "line": 49,
+        "column": 19,
+        "nodeType": "TSAnyKeyword",
+        "messageId": "unexpectedAny",
+        "endLine": 49,
+        "endColumn": 22,
+        "suggestions": [
+          {
+            "messageId": "suggestUnknown",
+            "fix": { "range": [1560, 1563], "text": "unknown" },
+            "desc": "Use `unknown` instead, this will force you to explicitly, and safely assert the type is correct."
+          },
+          {
+            "messageId": "suggestNever",
+            "fix": { "range": [1560, 1563], "text": "never" },
+            "desc": "Use `never` instead, this is useful when instantiating generic type parameters that you don't need to know the type of."
+          }
+        ]
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 2,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": "// Client Component\r\n'use client';\r\n\r\nimport { useState } from 'react';\r\nimport Link from 'next/link';\r\nimport Image from 'next/image';\r\nimport { useRouter } from 'next/navigation';\r\n\r\nexport default function LoginPage() {\r\n  const router = useRouter();\r\n  const [email, setEmail] = useState('');\r\n  const [password, setPassword] = useState('');\r\n  const [remember, setRemember] = useState(false);\r\n\r\n  const [errors, setErrors] = useState<Record<string, string>>({});\r\n  const [isLoading, setIsLoading] = useState(false);\r\n\r\n  const validate = () => {\r\n    const newErrors: Record<string, string> = {};\r\n    if (!email.trim()) newErrors.email = 'Email is required';\r\n    else if (!/\\S+@\\S+\\.\\S+/.test(email)) newErrors.email = 'Email is invalid';\r\n    if (!password.trim()) newErrors.password = 'Password is required';\r\n\r\n    setErrors(newErrors);\r\n    return Object.keys(newErrors).length === 0;\r\n  };\r\n\r\n  const handleSubmit = async (e: React.FormEvent) => {\r\n    e.preventDefault();\r\n    if (!validate()) return;\r\n\r\n    setIsLoading(true);\r\n    setErrors({});\r\n\r\n    try {\r\n      const res = await fetch('/api/auth/login', {\r\n        method: 'POST',\r\n        headers: { 'Content-Type': 'application/json' },\r\n        body: JSON.stringify({ email, password }),\r\n      });\r\n      const data = await res.json();\r\n\r\n      if (!res.ok) {\r\n        setErrors({ email: data.error || 'Login failed. Please check your credentials.' });\r\n      } else {\r\n        router.push('/');\r\n        router.refresh(); // so layout uses correct state\r\n      }\r\n    } catch (err: any) {\r\n      setErrors({ email: 'An error occurred during login.' });\r\n    } finally {\r\n      setIsLoading(false);\r\n    }\r\n  };\r\n\r\n  return (\r\n    <div className=\"w-full bg-white dark:bg-[#0a0a0a] min-h-[calc(100vh-85px)]\">\r\n      <div className=\"flex flex-col lg:flex-row min-h-[calc(100vh-85px)]\">\r\n        {/* Left Side: Illustration */}\r\n        <div className=\"hidden lg:flex flex-col items-center justify-center relative overflow-hidden lg:w-[40%] xl:w-[45%] bg-[#F0FBF9] dark:bg-[#112220]\">\r\n          <div className=\"w-3/4 max-w-[500px]\">\r\n            <Image\r\n              src=\"/assets/algo_group_109.svg\"\r\n              alt=\"Login illustration\"\r\n              width={600}\r\n              height={600}\r\n              className=\"w-full h-auto opacity-90\"\r\n              style={{ width: 'auto', height: 'auto' }}\r\n            />\r\n          </div>\r\n          {/* Decorative circles */}\r\n          <div\r\n            className=\"absolute rounded-full\"\r\n            style={{\r\n              left: '8%',\r\n              top: '12%',\r\n              width: '120px',\r\n              height: '120px',\r\n              backgroundColor: '#36D6BA',\r\n              opacity: 0.15,\r\n            }}\r\n          />\r\n          <div\r\n            className=\"absolute rounded-full\"\r\n            style={{\r\n              right: '5%',\r\n              bottom: '10%',\r\n              width: '180px',\r\n              height: '180px',\r\n              backgroundColor: '#269984',\r\n              opacity: 0.1,\r\n            }}\r\n          />\r\n          <div\r\n            className=\"absolute rounded-full\"\r\n            style={{\r\n              right: '30%',\r\n              top: '5%',\r\n              width: '80px',\r\n              height: '80px',\r\n              backgroundColor: '#36D6BA',\r\n              opacity: 0.2,\r\n            }}\r\n          />\r\n        </div>\r\n\r\n        {/* Right Side: Login Form */}\r\n        <div className=\"flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10\">\r\n          <div className=\"w-full max-w-[500px]\">\r\n            <h1 className=\"font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3\">\r\n              Login\r\n            </h1>\r\n            <p className=\"font-montserrat text-base sm:text-lg mb-10 text-[#666] dark:text-gray-400\">\r\n              Welcome back! Please login to your account.\r\n            </p>\r\n\r\n            <form onSubmit={handleSubmit}>\r\n              {/* Email field */}\r\n              <div className=\"mb-6\">\r\n                <label className=\"font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base\">\r\n                  Email address\r\n                </label>\r\n                <input\r\n                  type=\"email\"\r\n                  value={email}\r\n                  onChange={(e) => setEmail(e.target.value)}\r\n                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 sm:px-5 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}\r\n                  placeholder=\"Enter your email\"\r\n                />\r\n                {errors.email && <p className=\"text-red-500 text-xs mt-1\">{errors.email}</p>}\r\n              </div>\r\n\r\n              {/* Password field */}\r\n              <div className=\"mb-6\">\r\n                <label className=\"font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base\">\r\n                  Password\r\n                </label>\r\n                <input\r\n                  type=\"password\"\r\n                  value={password}\r\n                  onChange={(e) => setPassword(e.target.value)}\r\n                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 sm:px-5 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}\r\n                  placeholder=\"Enter your password\"\r\n                />\r\n                {errors.password && <p className=\"text-red-500 text-xs mt-1\">{errors.password}</p>}\r\n              </div>\r\n\r\n              {/* Remember me + Forgot password */}\r\n              <div className=\"flex items-center justify-between mb-10\">\r\n                <label className=\"flex items-center gap-2 cursor-pointer font-montserrat text-sm\">\r\n                  <input\r\n                    type=\"checkbox\"\r\n                    checked={remember}\r\n                    onChange={(e) => setRemember(e.target.checked)}\r\n                    className=\"w-5 h-5 accent-[#36D6BA]\"\r\n                  />\r\n                  <span className=\"text-black dark:text-white\">Remember me</span>\r\n                </label>\r\n                <Link\r\n                  href=\"#\"\r\n                  className=\"font-montserrat font-bold text-sm hover:underline\"\r\n                  style={{ color: '#36D6BA' }}\r\n                >\r\n                  Forgot password?\r\n                </Link>\r\n              </div>\r\n\r\n              {/* Login button */}\r\n              <button\r\n                className=\"w-full font-montserrat font-bold text-white h-12 sm:h-14 rounded-lg text-lg sm:text-xl hover:opacity-90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed\"\r\n                style={{ backgroundColor: '#269984', border: 'none' }}\r\n                disabled={isLoading}\r\n              >\r\n                {isLoading ? 'Logging in...' : 'Login'}\r\n              </button>\r\n            </form>\r\n\r\n            {/* Divider */}\r\n            <div className=\"flex items-center gap-4 my-8\">\r\n              <div className=\"flex-1 h-px bg-[#E0E0E0] dark:bg-neutral-700\" />\r\n              <span className=\"font-montserrat text-sm text-[#999] dark:text-gray-500\">or</span>\r\n              <div className=\"flex-1 h-px bg-[#E0E0E0] dark:bg-neutral-700\" />\r\n            </div>\r\n\r\n            {/* Social login */}\r\n            <div className=\"flex gap-4 mb-8\">\r\n              <button className=\"flex-1 flex items-center justify-center gap-3 font-montserrat font-medium h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 rounded-lg text-sm sm:text-base text-[#333] dark:text-white bg-white dark:bg-[#2a2a2a] cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all\">\r\n                <svg width=\"20\" height=\"20\" viewBox=\"0 0 48 48\">\r\n                  <path\r\n                    fill=\"#FFC107\"\r\n                    d=\"M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z\"\r\n                  />\r\n                  <path\r\n                    fill=\"#FF3D00\"\r\n                    d=\"M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z\"\r\n                  />\r\n                  <path\r\n                    fill=\"#4CAF50\"\r\n                    d=\"M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z\"\r\n                  />\r\n                  <path\r\n                    fill=\"#1976D2\"\r\n                    d=\"M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z\"\r\n                  />\r\n                </svg>\r\n                Google\r\n              </button>\r\n              <button className=\"flex-1 flex items-center justify-center gap-3 font-montserrat font-medium h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 rounded-lg text-sm sm:text-base text-[#333] dark:text-white bg-white dark:bg-[#2a2a2a] cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all\">\r\n                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#1877F2\">\r\n                  <path d=\"M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z\" />\r\n                </svg>\r\n                Facebook\r\n              </button>\r\n            </div>\r\n\r\n            {/* Register link */}\r\n            <p className=\"text-center font-montserrat text-sm sm:text-base text-[#666] dark:text-gray-400\">\r\n              Don&apos;t have an account?{' '}\r\n              <Link\r\n                href=\"/register\"\r\n                className=\"font-bold hover:underline\"\r\n                style={{ color: '#36D6BA' }}\r\n              >\r\n                Register\r\n              </Link>\r\n            </p>\r\n          </div>\r\n        </div>\r\n      </div>\r\n    </div>\r\n  );\r\n}\r\n",
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\profil\\page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\register\\page.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'err' is defined but never used.",
+        "line": 60,
+        "column": 14,
+        "nodeType": null,
+        "messageId": "unusedVar",
+        "endLine": 60,
+        "endColumn": 17
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "severity": 1,
+        "message": "Unexpected any. Specify a different type.",
+        "line": 60,
+        "column": 19,
+        "nodeType": "TSAnyKeyword",
+        "messageId": "unexpectedAny",
+        "endLine": 60,
+        "endColumn": 22,
+        "suggestions": [
+          {
+            "messageId": "suggestUnknown",
+            "fix": { "range": [2130, 2133], "text": "unknown" },
+            "desc": "Use `unknown` instead, this will force you to explicitly, and safely assert the type is correct."
+          },
+          {
+            "messageId": "suggestNever",
+            "fix": { "range": [2130, 2133], "text": "never" },
+            "desc": "Use `never` instead, this is useful when instantiating generic type parameters that you don't need to know the type of."
+          }
+        ]
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 2,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": "// Client Component\r\n'use client';\r\n\r\nimport { useState } from 'react';\r\nimport Link from 'next/link';\r\nimport Image from 'next/image';\r\nimport { useRouter } from 'next/navigation';\r\n\r\nexport default function RegisterPage() {\r\n  const router = useRouter();\r\n  const [firstName, setFirstName] = useState('');\r\n  const [lastName, setLastName] = useState('');\r\n  const [email, setEmail] = useState('');\r\n  const [password, setPassword] = useState('');\r\n  const [confirmPassword, setConfirmPassword] = useState('');\r\n  const [acceptTerms, setAcceptTerms] = useState(false);\r\n\r\n  const [errors, setErrors] = useState<Record<string, string>>({});\r\n  const [isLoading, setIsLoading] = useState(false);\r\n\r\n  const validate = () => {\r\n    const newErrors: Record<string, string> = {};\r\n    if (!firstName.trim()) newErrors.firstName = 'First name is required';\r\n    if (!lastName.trim()) newErrors.lastName = 'Last name is required';\r\n    if (!email.trim()) newErrors.email = 'Email is required';\r\n    else if (!/\\S+@\\S+\\.\\S+/.test(email)) newErrors.email = 'Email is invalid';\r\n\r\n    if (!password) newErrors.password = 'Password is required';\r\n    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';\r\n\r\n    if (password && confirmPassword && password !== confirmPassword)\r\n      newErrors.confirmPassword = 'Passwords do not match';\r\n\r\n    if (!acceptTerms) newErrors.terms = 'You must accept the terms';\r\n\r\n    setErrors(newErrors);\r\n    return Object.keys(newErrors).length === 0;\r\n  };\r\n\r\n  const handleSubmit = async (e: React.FormEvent) => {\r\n    e.preventDefault();\r\n    if (!validate()) return;\r\n\r\n    setIsLoading(true);\r\n    setErrors({});\r\n\r\n    try {\r\n      const res = await fetch('/api/auth/register', {\r\n        method: 'POST',\r\n        headers: { 'Content-Type': 'application/json' },\r\n        body: JSON.stringify({ email, password }),\r\n      });\r\n      const data = await res.json();\r\n\r\n      if (!res.ok) {\r\n        setErrors({ email: data.error || 'Registration failed. User might already exist.' });\r\n      } else {\r\n        router.push('/login');\r\n      }\r\n    } catch (err: any) {\r\n      setErrors({ email: 'An error occurred during registration.' });\r\n    } finally {\r\n      setIsLoading(false);\r\n    }\r\n  };\r\n\r\n  return (\r\n    <div className=\"w-full bg-white dark:bg-[#0a0a0a] min-h-[calc(100vh-85px)]\">\r\n      <div className=\"flex flex-col lg:flex-row min-h-[calc(100vh-85px)]\">\r\n        {/* Left Side: Illustration */}\r\n        <div className=\"hidden lg:flex flex-col items-center justify-center relative overflow-hidden lg:w-[40%] xl:w-[45%] bg-[#F0FBF9] dark:bg-[#112220]\">\r\n          <div className=\"w-3/4 max-w-[500px]\">\r\n            <Image\r\n              src=\"/assets/algo_group_119.svg\"\r\n              alt=\"Register illustration\"\r\n              width={600}\r\n              height={600}\r\n              className=\"w-full h-auto opacity-90\"\r\n              style={{ width: 'auto', height: 'auto' }}\r\n            />\r\n          </div>\r\n          <div\r\n            className=\"absolute rounded-full\"\r\n            style={{\r\n              right: '5%',\r\n              top: '8%',\r\n              width: '140px',\r\n              height: '140px',\r\n              backgroundColor: '#36D6BA',\r\n              opacity: 0.15,\r\n            }}\r\n          />\r\n          <div\r\n            className=\"absolute rounded-full\"\r\n            style={{\r\n              left: '5%',\r\n              bottom: '8%',\r\n              width: '200px',\r\n              height: '200px',\r\n              backgroundColor: '#269984',\r\n              opacity: 0.1,\r\n            }}\r\n          />\r\n        </div>\r\n\r\n        {/* Right Side: Register Form */}\r\n        <div className=\"flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10\">\r\n          <div className=\"w-full max-w-[500px]\">\r\n            <h1 className=\"font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3\">\r\n              Register\r\n            </h1>\r\n            <p className=\"font-montserrat text-base sm:text-lg mb-8 text-[#666] dark:text-gray-400\">\r\n              Create your account to get started.\r\n            </p>\r\n\r\n            <form onSubmit={handleSubmit}>\r\n              {/* Name fields */}\r\n              <div className=\"flex flex-col sm:flex-row gap-4 mb-5\">\r\n                <div className=\"flex-1\">\r\n                  <label className=\"font-montserrat font-bold text-black dark:text-white block mb-2 text-sm\">\r\n                    First name\r\n                  </label>\r\n                  <input\r\n                    type=\"text\"\r\n                    value={firstName}\r\n                    onChange={(e) => setFirstName(e.target.value)}\r\n                    className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.firstName ? 'border-red-500' : ''}`}\r\n                    placeholder=\"First name\"\r\n                  />\r\n                  {errors.firstName && (\r\n                    <p className=\"text-red-500 text-xs mt-1\">{errors.firstName}</p>\r\n                  )}\r\n                </div>\r\n                <div className=\"flex-1\">\r\n                  <label className=\"font-montserrat font-bold text-black dark:text-white block mb-2 text-sm\">\r\n                    Last name\r\n                  </label>\r\n                  <input\r\n                    type=\"text\"\r\n                    value={lastName}\r\n                    onChange={(e) => setLastName(e.target.value)}\r\n                    className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.lastName ? 'border-red-500' : ''}`}\r\n                    placeholder=\"Last name\"\r\n                  />\r\n                  {errors.lastName && (\r\n                    <p className=\"text-red-500 text-xs mt-1\">{errors.lastName}</p>\r\n                  )}\r\n                </div>\r\n              </div>\r\n\r\n              {/* Email */}\r\n              <div className=\"mb-5\">\r\n                <label className=\"font-montserrat font-bold text-black dark:text-white block mb-2 text-sm\">\r\n                  Email address\r\n                </label>\r\n                <input\r\n                  type=\"email\"\r\n                  value={email}\r\n                  onChange={(e) => setEmail(e.target.value)}\r\n                  className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}\r\n                  placeholder=\"Enter your email\"\r\n                />\r\n                {errors.email && <p className=\"text-red-500 text-xs mt-1\">{errors.email}</p>}\r\n              </div>\r\n\r\n              {/* Password */}\r\n              <div className=\"mb-5\">\r\n                <label className=\"font-montserrat font-bold text-black dark:text-white block mb-2 text-sm\">\r\n                  Password\r\n                </label>\r\n                <input\r\n                  type=\"password\"\r\n                  value={password}\r\n                  onChange={(e) => setPassword(e.target.value)}\r\n                  className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}\r\n                  placeholder=\"Create a password\"\r\n                />\r\n                {errors.password && <p className=\"text-red-500 text-xs mt-1\">{errors.password}</p>}\r\n              </div>\r\n\r\n              {/* Confirm Password */}\r\n              <div className=\"mb-5\">\r\n                <label className=\"font-montserrat font-bold text-black dark:text-white block mb-2 text-sm\">\r\n                  Confirm password\r\n                </label>\r\n                <input\r\n                  type=\"password\"\r\n                  value={confirmPassword}\r\n                  onChange={(e) => setConfirmPassword(e.target.value)}\r\n                  className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.confirmPassword ? 'border-red-500' : ''}`}\r\n                  placeholder=\"Confirm your password\"\r\n                />\r\n                {errors.confirmPassword && (\r\n                  <p className=\"text-red-500 text-xs mt-1\">{errors.confirmPassword}</p>\r\n                )}\r\n              </div>\r\n\r\n              {/* Terms */}\r\n              <div className=\"mb-8\">\r\n                <label className=\"flex items-start gap-3 cursor-pointer font-montserrat text-sm\">\r\n                  <input\r\n                    type=\"checkbox\"\r\n                    checked={acceptTerms}\r\n                    onChange={(e) => setAcceptTerms(e.target.checked)}\r\n                    className=\"w-5 h-5 accent-[#36D6BA] mt-0.5\"\r\n                  />\r\n                  <span className=\"text-black dark:text-white\">\r\n                    I accept the{' '}\r\n                    <Link href=\"#\" className=\"font-bold\" style={{ color: '#36D6BA' }}>\r\n                      Terms of Service\r\n                    </Link>{' '}\r\n                    and{' '}\r\n                    <Link href=\"#\" className=\"font-bold\" style={{ color: '#36D6BA' }}>\r\n                      Privacy Policy\r\n                    </Link>\r\n                  </span>\r\n                </label>\r\n                {errors.terms && <p className=\"text-red-500 text-xs mt-1\">{errors.terms}</p>}\r\n              </div>\r\n\r\n              {/* Register button */}\r\n              <button\r\n                className=\"w-full font-montserrat font-bold text-white h-12 sm:h-14 rounded-lg text-lg sm:text-xl hover:opacity-90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed\"\r\n                style={{ backgroundColor: '#269984', border: 'none' }}\r\n                disabled={isLoading}\r\n              >\r\n                {isLoading ? 'Registering...' : 'Register'}\r\n              </button>\r\n            </form>\r\n\r\n            {/* Login link */}\r\n            <p className=\"text-center font-montserrat mt-6 text-sm sm:text-base text-[#666] dark:text-gray-400\">\r\n              Already have an account?{' '}\r\n              <Link\r\n                href=\"/login\"\r\n                className=\"font-bold hover:underline\"\r\n                style={{ color: '#36D6BA' }}\r\n              >\r\n                Login\r\n              </Link>\r\n            </p>\r\n          </div>\r\n        </div>\r\n      </div>\r\n    </div>\r\n  );\r\n}\r\n",
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(frontend)\\videos\\page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(payload)\\admin\\[[...segments]]\\page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(payload)\\admin\\importMap.js",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(payload)\\api\\[...slug]\\route.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\(payload)\\layout.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "severity": 1,
+        "message": "Unexpected any. Specify a different type.",
+        "line": 12,
+        "column": 46,
+        "nodeType": "TSAnyKeyword",
+        "messageId": "unexpectedAny",
+        "endLine": 12,
+        "endColumn": 49,
+        "suggestions": [
+          {
+            "messageId": "suggestUnknown",
+            "fix": { "range": [323, 326], "text": "unknown" },
+            "desc": "Use `unknown` instead, this will force you to explicitly, and safely assert the type is correct."
+          },
+          {
+            "messageId": "suggestNever",
+            "fix": { "range": [323, 326], "text": "never" },
+            "desc": "Use `never` instead, this is useful when instantiating generic type parameters that you don't need to know the type of."
+          }
+        ]
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 1,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": "import config from '../../payload.config';\nimport { handleServerFunctions, RootLayout } from '@payloadcms/next/layouts';\nimport React from 'react';\n\nimport { importMap } from './admin/importMap.js';\nimport '@payloadcms/next/css';\n\ntype Args = {\n  children: React.ReactNode;\n};\n\nconst serverFunction = async function (args: any) {\n  'use server';\n  return handleServerFunctions({\n    ...args,\n    config,\n    importMap,\n  });\n};\n\nexport default function Layout({ children }: Args) {\n  return (\n    <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>\n      {children}\n    </RootLayout>\n  );\n}\n",
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\api\\auth\\login\\route.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "severity": 1,
+        "message": "Unexpected any. Specify a different type.",
+        "line": 28,
+        "column": 19,
+        "nodeType": "TSAnyKeyword",
+        "messageId": "unexpectedAny",
+        "endLine": 28,
+        "endColumn": 22,
+        "suggestions": [
+          {
+            "messageId": "suggestUnknown",
+            "fix": { "range": [818, 821], "text": "unknown" },
+            "desc": "Use `unknown` instead, this will force you to explicitly, and safely assert the type is correct."
+          },
+          {
+            "messageId": "suggestNever",
+            "fix": { "range": [818, 821], "text": "never" },
+            "desc": "Use `never` instead, this is useful when instantiating generic type parameters that you don't need to know the type of."
+          }
+        ]
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 1,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": "import { getPayload } from 'payload';\nimport configPromise from '../../../../payload.config';\nimport { NextResponse } from 'next/server';\nimport { cookies } from 'next/headers';\n\nexport async function POST(req: Request) {\n  try {\n    const { email, password } = await req.json();\n    const payload = await getPayload({ config: configPromise });\n\n    const result = await payload.login({\n      collection: 'users',\n      data: { email, password },\n    });\n\n    if (result.token) {\n      const cookieStore = await cookies();\n      cookieStore.set('payload-token', result.token, {\n        path: '/',\n        httpOnly: true,\n        secure: process.env.NODE_ENV === 'production',\n        sameSite: 'lax',\n        maxAge: 60 * 60 * 24 * 7, // 7 days\n      });\n    }\n\n    return NextResponse.json(result);\n  } catch (error: any) {\n    return NextResponse.json({ error: error.message }, { status: 401 });\n  }\n}\n",
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\api\\auth\\logout\\route.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\api\\auth\\register\\route.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "severity": 1,
+        "message": "Unexpected any. Specify a different type.",
+        "line": 20,
+        "column": 19,
+        "nodeType": "TSAnyKeyword",
+        "messageId": "unexpectedAny",
+        "endLine": 20,
+        "endColumn": 22,
+        "suggestions": [
+          {
+            "messageId": "suggestUnknown",
+            "fix": { "range": [570, 573], "text": "unknown" },
+            "desc": "Use `unknown` instead, this will force you to explicitly, and safely assert the type is correct."
+          },
+          {
+            "messageId": "suggestNever",
+            "fix": { "range": [570, 573], "text": "never" },
+            "desc": "Use `never` instead, this is useful when instantiating generic type parameters that you don't need to know the type of."
+          }
+        ]
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 1,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": "import { getPayload } from 'payload';\nimport configPromise from '../../../../payload.config';\nimport { NextResponse } from 'next/server';\n\nexport async function POST(req: Request) {\n  try {\n    const { email, password, role } = await req.json();\n    const payload = await getPayload({ config: configPromise });\n\n    const user = await payload.create({\n      collection: 'users',\n      data: {\n        email,\n        password,\n        role: role || 'user',\n      },\n    });\n\n    return NextResponse.json({ message: 'User created successfully', user });\n  } catch (error: any) {\n    return NextResponse.json({ error: error.message }, { status: 400 });\n  }\n}\n",
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\components\\AlgorithmCard.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\components\\BottomBanner.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\components\\Features.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\components\\Footer.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\components\\Header.tsx",
+    "messages": [
+      {
+        "ruleId": "@next/next/no-img-element",
+        "severity": 1,
+        "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "line": 140,
+        "column": 15,
+        "nodeType": "JSXOpeningElement",
+        "endLine": 146,
+        "endColumn": 17
+      },
+      {
+        "ruleId": "@next/next/no-img-element",
+        "severity": 1,
+        "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "line": 181,
+        "column": 21,
+        "nodeType": "JSXOpeningElement",
+        "endLine": 187,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "@next/next/no-img-element",
+        "severity": 1,
+        "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "line": 263,
+        "column": 21,
+        "nodeType": "JSXOpeningElement",
+        "endLine": 269,
+        "endColumn": 23
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 3,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": "'use client';\r\n\r\nimport { useRouter, usePathname } from 'next/navigation';\r\nimport Link from 'next/link';\r\nimport Image from 'next/image';\r\nimport { useState, useRef, useEffect } from 'react';\r\nimport { useLocale, Locale } from '../i18n/LocaleProvider';\r\nimport ThemeToggle from './ThemeToggle';\r\nimport { User as UserIcon } from 'lucide-react';\r\n\r\nexport default function Header({\r\n  isAuthenticated,\r\n  userImage,\r\n}: {\r\n  isAuthenticated?: boolean;\r\n  userImage?: string | null;\r\n}) {\r\n  const router = useRouter();\r\n  const pathname = usePathname();\r\n  const [menuOpen, setMenuOpen] = useState(false);\r\n  const [langDropdownOpen, setLangDropdownOpen] = useState(false);\r\n  const { locale, setLocale, t } = useLocale();\r\n  const dropdownRef = useRef<HTMLDivElement>(null);\r\n\r\n  // ... (keep logic same)\r\n  // Close dropdown when clicking outside\r\n  useEffect(() => {\r\n    function handleClickOutside(event: MouseEvent) {\r\n      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {\r\n        setLangDropdownOpen(false);\r\n      }\r\n    }\r\n    document.addEventListener('mousedown', handleClickOutside);\r\n    return () => {\r\n      document.removeEventListener('mousedown', handleClickOutside);\r\n    };\r\n  }, []);\r\n\r\n  const languages: { code: Locale; label: string; flag: string }[] = [\r\n    { code: 'en', label: 'EN', flag: '/flags/gb.png' },\r\n    { code: 'hu', label: 'HU', flag: '/flags/hu.png' },\r\n    { code: 'ro', label: 'RO', flag: '/flags/ro.png' },\r\n  ];\r\n\r\n  const currentLang = languages.find((l) => l.code === locale) || languages[0];\r\n\r\n  return (\r\n    <header className=\"fixed top-0 left-0 right-0 z-50 h-[var(--header-height)] bg-[#269984]\">\r\n      <div className=\"max-w-[1400px] mx-auto h-full flex items-center justify-between px-6 lg:px-12\">\r\n        {/* Logo */}\r\n        <Link href=\"/\" className=\"flex-shrink-0\">\r\n          <Image\r\n            src=\"/assets/group_20.svg\"\r\n            alt=\"AlgoRythmics Logo\"\r\n            width={294}\r\n            height={57}\r\n            sizes=\"(max-width: 768px) 150px, 200px\"\r\n            className=\"pointer-events-none select-none\"\r\n            style={{\r\n              filter: 'brightness(0) invert(1)',\r\n              height: 'clamp(40px, 4vw, 48px)',\r\n              width: 'auto',\r\n            }}\r\n          />\r\n        </Link>\r\n\r\n        {/* Desktop Nav — centre links */}\r\n        <nav className=\"hidden md:flex items-center gap-5 lg:gap-8\">\r\n          <NavLink href=\"/\" label={t('nav.home')} active={pathname === '/'} />\r\n          {isAuthenticated && (\r\n            <>\r\n              <NavLink\r\n                href=\"/algorithms\"\r\n                label={t('nav.algorithms')}\r\n                active={pathname?.startsWith('/algorithms') ?? false}\r\n              />\r\n              <NavLink href=\"/courses\" label={t('nav.courses')} active={pathname === '/courses'} />\r\n            </>\r\n          )}\r\n        </nav>\r\n\r\n        {/* Right actions (Desktop) */}\r\n        <div className=\"hidden md:flex items-center gap-4 lg:gap-6\">\r\n          {!isAuthenticated ? (\r\n            <>\r\n              <button\r\n                onClick={() => router.push('/register')}\r\n                className=\"font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base\"\r\n              >\r\n                {t('nav.register')}\r\n              </button>\r\n              <button\r\n                onClick={() => router.push('/login')}\r\n                className=\"font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base\"\r\n              >\r\n                {t('nav.login')}\r\n              </button>\r\n            </>\r\n          ) : (\r\n            <button\r\n              onClick={async () => {\r\n                await fetch('/api/auth/logout', { method: 'POST' });\r\n                router.push('/login');\r\n                router.refresh();\r\n              }}\r\n              className=\"font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base font-bold\"\r\n            >\r\n              Logout\r\n            </button>\r\n          )}\r\n\r\n          {isAuthenticated && (\r\n            <Link\r\n              href=\"/profil\"\r\n              className=\"flex items-center justify-center w-10 h-10 rounded-full border-2 border-white/20 hover:border-white/50 transition-colors overflow-hidden bg-white/10\"\r\n            >\r\n              {userImage ? (\r\n                <Image\r\n                  src={userImage}\r\n                  alt=\"Profile\"\r\n                  width={40}\r\n                  height={40}\r\n                  className=\"w-full h-full object-cover\"\r\n                  style={{ width: 'auto', height: 'auto' }}\r\n                />\r\n              ) : (\r\n                <UserIcon className=\"w-6 h-6 text-white\" />\r\n              )}\r\n            </Link>\r\n          )}\r\n\r\n          <ThemeToggle />\r\n\r\n          {/* Language Dropdown */}\r\n          <div className=\"relative\" ref={dropdownRef}>\r\n            <button\r\n              onClick={() => setLangDropdownOpen(!langDropdownOpen)}\r\n              className=\"flex items-center gap-2 hover:opacity-80 transition-opacity p-2\"\r\n            >\r\n              <img\r\n                src={currentLang.flag}\r\n                alt={currentLang.code}\r\n                width={20}\r\n                height={15}\r\n                className=\"rounded-sm object-cover\"\r\n              />\r\n              <span className=\"font-montserrat text-white text-sm lg:text-base uppercase\">\r\n                {currentLang.code}\r\n              </span>\r\n              <Image\r\n                src=\"/assets/path_1568.svg\"\r\n                alt=\"\"\r\n                width={10}\r\n                height={10}\r\n                style={{\r\n                  width: 'auto',\r\n                  height: 'auto',\r\n                  filter: 'brightness(0) invert(1)',\r\n                  transform: langDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',\r\n                  transition: 'transform 0.2s',\r\n                }}\r\n              />\r\n            </button>\r\n\r\n            {/* Dropdown Menu */}\r\n            {langDropdownOpen && (\r\n              <div className=\"absolute top-full right-0 mt-2 w-32 bg-white rounded-lg shadow-xl overflow-hidden py-1 border border-gray-100\">\r\n                {languages.map((lang) => (\r\n                  <button\r\n                    key={lang.code}\r\n                    onClick={() => {\r\n                      setLocale(lang.code);\r\n                      setLangDropdownOpen(false);\r\n                    }}\r\n                    className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors ${\r\n                      locale === lang.code\r\n                        ? 'bg-gray-50 font-bold text-[var(--brand-teal)]'\r\n                        : 'text-gray-700'\r\n                    }`}\r\n                  >\r\n                    <img\r\n                      src={lang.flag}\r\n                      alt={lang.code}\r\n                      width={20}\r\n                      height={15}\r\n                      className=\"rounded-sm object-cover\"\r\n                    />\r\n                    <span className=\"font-montserrat text-sm uppercase\">{lang.label}</span>\r\n                  </button>\r\n                ))}\r\n              </div>\r\n            )}\r\n          </div>\r\n        </div>\r\n\r\n        {/* Mobile hamburger */}\r\n        <button\r\n          className=\"md:hidden flex flex-col gap-1.5 p-2\"\r\n          onClick={() => setMenuOpen(!menuOpen)}\r\n        >\r\n          <span\r\n            className={`block w-6 h-0.5 bg-white transition-transform ${menuOpen ? 'rotate-45 translate-y-2' : ''}`}\r\n          />\r\n          <span\r\n            className={`block w-6 h-0.5 bg-white transition-opacity ${menuOpen ? 'opacity-0' : ''}`}\r\n          />\r\n          <span\r\n            className={`block w-6 h-0.5 bg-white transition-transform ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`}\r\n          />\r\n        </button>\r\n      </div>\r\n\r\n      {/* Mobile menu */}\r\n      {menuOpen && (\r\n        <div className=\"md:hidden absolute top-[var(--header-height)] left-0 right-0 bg-[#269984] shadow-lg border-t border-white/20\">\r\n          <nav className=\"flex flex-col p-6 gap-4\">\r\n            <Link\r\n              href=\"/\"\r\n              className=\"font-montserrat text-white text-lg\"\r\n              onClick={() => setMenuOpen(false)}\r\n            >\r\n              {t('nav.home')}\r\n            </Link>\r\n            {isAuthenticated && (\r\n              <>\r\n                <Link\r\n                  href=\"/algorithms\"\r\n                  className=\"font-montserrat text-white text-lg\"\r\n                  onClick={() => setMenuOpen(false)}\r\n                >\r\n                  {t('nav.algorithms')}\r\n                </Link>\r\n                <Link\r\n                  href=\"/courses\"\r\n                  className=\"font-montserrat text-white text-lg\"\r\n                  onClick={() => setMenuOpen(false)}\r\n                >\r\n                  {t('nav.courses')}\r\n                </Link>\r\n              </>\r\n            )}\r\n            <Link\r\n              href=\"/contact\"\r\n              className=\"font-montserrat text-white text-lg\"\r\n              onClick={() => setMenuOpen(false)}\r\n            >\r\n              {t('nav.contact')}\r\n            </Link>\r\n\r\n            <div className=\"border-t border-white/20 pt-4 mt-2\">\r\n              <p className=\"text-white/60 text-sm font-montserrat mb-2\">Language</p>\r\n              <div className=\"flex gap-4\">\r\n                {languages.map((lang) => (\r\n                  <button\r\n                    key={lang.code}\r\n                    onClick={() => setLocale(lang.code)}\r\n                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md border ${\r\n                      locale === lang.code\r\n                        ? 'bg-white text-[#269984] border-white'\r\n                        : 'text-white border-white/30'\r\n                    }`}\r\n                  >\r\n                    <img\r\n                      src={lang.flag}\r\n                      alt={lang.code}\r\n                      width={20}\r\n                      height={15}\r\n                      className=\"rounded-sm object-cover\"\r\n                    />\r\n                    <span className=\"font-montserrat text-sm uppercase font-bold\">{lang.code}</span>\r\n                  </button>\r\n                ))}\r\n              </div>\r\n            </div>\r\n\r\n            <hr className=\"border-white/20\" />\r\n            {!isAuthenticated ? (\r\n              <>\r\n                <Link\r\n                  href=\"/register\"\r\n                  className=\"font-montserrat text-white text-lg\"\r\n                  onClick={() => setMenuOpen(false)}\r\n                >\r\n                  {t('nav.register')}\r\n                </Link>\r\n                <Link\r\n                  href=\"/login\"\r\n                  className=\"font-montserrat text-white text-lg\"\r\n                  onClick={() => setMenuOpen(false)}\r\n                >\r\n                  {t('nav.login')}\r\n                </Link>\r\n              </>\r\n            ) : (\r\n              <>\r\n                <Link\r\n                  href=\"/profil\"\r\n                  className=\"flex items-center gap-3 font-montserrat text-white text-lg\"\r\n                  onClick={() => setMenuOpen(false)}\r\n                >\r\n                  <div className=\"w-8 h-8 rounded-full border border-white/30 overflow-hidden bg-white/10 flex items-center justify-center\">\r\n                    {userImage ? (\r\n                      <Image\r\n                        src={userImage}\r\n                        alt=\"Profile\"\r\n                        width={32}\r\n                        height={32}\r\n                        className=\"w-full h-full object-cover\"\r\n                        style={{ width: 'auto', height: 'auto' }}\r\n                      />\r\n                    ) : (\r\n                      <UserIcon className=\"w-5 h-5 flex-shrink-0\" />\r\n                    )}\r\n                  </div>\r\n                  Profile\r\n                </Link>\r\n                <button\r\n                  onClick={async () => {\r\n                    setMenuOpen(false);\r\n                    await fetch('/api/auth/logout', { method: 'POST' });\r\n                    router.push('/login');\r\n                    router.refresh();\r\n                  }}\r\n                  className=\"font-montserrat text-white text-lg text-left font-bold\"\r\n                >\r\n                  Logout\r\n                </button>\r\n              </>\r\n            )}\r\n\r\n            <div className=\"flex items-center gap-2 text-white\">\r\n              <ThemeToggle />\r\n              <span className=\"font-montserrat\">Switch Theme</span>\r\n            </div>\r\n          </nav>\r\n        </div>\r\n      )}\r\n    </header>\r\n  );\r\n}\r\n\r\nfunction NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {\r\n  return (\r\n    <Link\r\n      href={href}\r\n      className={`font-montserrat transition-colors text-sm lg:text-[17px] ${\r\n        active ? 'text-white font-bold' : 'text-white/90 hover:text-white'\r\n      }`}\r\n    >\r\n      {label}\r\n    </Link>\r\n  );\r\n}\r\n",
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\components\\Hero.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\components\\TealSection.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\components\\ThemeProviderClient.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\components\\ThemeToggle.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\app\\i18n\\LocaleProvider.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\collections\\Users.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\eslint.config.mjs",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\next.config.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\payload.config.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\postcss.config.mjs",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\proxy.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\tailwind.config.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "C:\\Users\\arman\\Desktop\\AlgoRythmics\\nextjs-frontend\\types\\global.d.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  }
+]

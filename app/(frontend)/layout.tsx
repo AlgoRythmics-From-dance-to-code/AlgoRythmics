@@ -1,42 +1,38 @@
-import { cookies } from "next/headers";
-import ThemeProviderClient from "../components/ThemeProviderClient";
-import LocaleProvider from "../i18n/LocaleProvider";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
-import { Montserrat } from "next/font/google";
-import "../globals.css";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import { cookies } from 'next/headers';
+import ThemeProviderClient from '../components/ThemeProviderClient';
+import LocaleProvider from '../i18n/LocaleProvider';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/next';
+import { Montserrat } from 'next/font/google';
+import '../globals.css';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
+  variable: '--font-montserrat',
+  subsets: ['latin'],
 });
 
-export default async function FrontendLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const token = (await cookies()).get("payload-token")?.value;
+export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
+  const token = (await cookies()).get('payload-token')?.value;
   let userImage: string | null = null;
 
   if (token) {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3000"}/api/users/me`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'}/api/users/me`,
         {
           headers: {
             Authorization: `JWT ${token}`,
           },
-        }
+        },
       );
       const data = await res.json();
       if (data?.user) {
         userImage = data.user.imageUrl || null;
       }
     } catch (e) {
-      console.error("Layout auth check failed", e);
+      console.error('Layout auth check failed', e);
     }
   }
 

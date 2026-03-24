@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 export async function POST() {
-  const cookieStore = await cookies()
-  cookieStore.delete('payload-token')
-  
-  return NextResponse.json({ success: true })
+  const cookieStore = await cookies();
+  cookieStore.delete('payload-token');
+
+  return NextResponse.json({ success: true });
 }

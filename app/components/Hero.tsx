@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { useLocale } from "../i18n/LocaleProvider";
+import Image from 'next/image';
+import { useLocale } from '../i18n/LocaleProvider';
 
 export default function Hero() {
   const { t } = useLocale();
@@ -11,7 +11,7 @@ export default function Hero() {
       {/* ━━━ HERO SECTION ━━━ WHITE background matching Figma */}
       <section className="w-full relative overflow-hidden bg-white dark:bg-[#0a0a0a]">
         {/* Content wrapper – 1920 based layout */}
-        <div className="relative mx-auto" style={{ maxWidth: "1920px" }}>
+        <div className="relative mx-auto" style={{ maxWidth: '1920px' }}>
           {/* ── Decorative vine/dots (top-left) ── */}
           <Image
             src="/assets/group_23.svg"
@@ -21,27 +21,29 @@ export default function Hero() {
             sizes="200px"
             aria-hidden={true}
             className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180"
-            style={{ left: "420px", width: "200px", top: "-7px", height: "auto" }}
+            style={{ left: '420px', width: '200px', top: '-7px', height: 'auto' }}
           />
 
           {/* ── Text block (left side) ── */}
           <div
             className="absolute hidden md:block"
-            style={{ top: "250px", left: "90px", width: "440px" }}
+            style={{ top: '250px', left: '90px', width: '440px' }}
           >
             <h1
               className="font-montserrat font-bold leading-[1.12] text-black dark:text-white"
-              style={{ fontSize: "55px" }}
+              style={{ fontSize: '55px' }}
             >
-              {t("hero.title_line1")}<br />
-              {t("hero.title_line2")}<br />
-              {t("hero.title_line3")}
+              {t('hero.title_line1')}
+              <br />
+              {t('hero.title_line2')}
+              <br />
+              {t('hero.title_line3')}
             </h1>
             <p
               className="font-montserrat mt-5 text-black dark:text-white"
-              style={{ fontSize: "17px", lineHeight: "1.7em" }}
+              style={{ fontSize: '17px', lineHeight: '1.7em' }}
             >
-              {t("hero.description")}
+              {t('hero.description')}
             </p>
           </div>
 
@@ -55,10 +57,10 @@ export default function Hero() {
             sizes="(max-width: 768px) 100vw, 720px"
             className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180 w-[450px] lg:w-[600px] xl:w-[720px]"
             style={{
-              top: "0px",
-              right: "100px",
-              width: "clamp(450px, 40vw, 720px)",
-              height: "auto",
+              top: '0px',
+              right: '100px',
+              width: 'clamp(450px, 40vw, 720px)',
+              height: 'auto',
               zIndex: 2,
             }}
           />
@@ -72,28 +74,28 @@ export default function Hero() {
               height={744}
               sizes="(max-width: 768px) 80vw, 400px"
               className="max-w-[400px] pointer-events-none select-none dark:invert dark:hue-rotate-180"
-              style={{ width: "80%", height: "auto" }}
+              style={{ width: '80%', height: 'auto' }}
             />
             <div className="text-center">
-              <h1
-                className="font-montserrat font-bold text-3xl leading-[1.15] mb-4 text-black dark:text-white"
-              >
-                {t("hero.title_line1")}<br />
-                {t("hero.title_line2")}<br />
-                {t("hero.title_line3")}
+              <h1 className="font-montserrat font-bold text-3xl leading-[1.15] mb-4 text-black dark:text-white">
+                {t('hero.title_line1')}
+                <br />
+                {t('hero.title_line2')}
+                <br />
+                {t('hero.title_line3')}
               </h1>
               <p
                 className="font-montserrat text-sm mx-auto text-black dark:text-white"
-                style={{ lineHeight: "1.7em", maxWidth: "340px" }}
+                style={{ lineHeight: '1.7em', maxWidth: '340px' }}
               >
-                {t("hero.description")}
+                {t('hero.description')}
               </p>
             </div>
           </div>
         </div>
 
         {/* Spacer for absolute content */}
-        <div className="hidden md:block" style={{ height: "655px" }} />
+        <div className="hidden md:block" style={{ height: '655px' }} />
       </section>
 
       {/* ━━━ TRANSITION: group_25.svg ━━━ */}
@@ -106,7 +108,7 @@ export default function Hero() {
           sizes="100vw"
           aria-hidden={true}
           className="w-full h-auto pointer-events-none select-none dark:invert dark:hue-rotate-180"
-          style={{ display: "block", width: "100%", height: "auto" }}
+          style={{ display: 'block', width: '100%', height: 'auto' }}
         />
       </div>
     </>

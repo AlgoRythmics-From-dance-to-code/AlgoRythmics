@@ -1,29 +1,97 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState } from 'react';
+import Image from 'next/image';
 
 const videos = [
-  { id: "bubble-sort-dance", title: "Bubble Sort Dance", duration: "4:32", views: "125K", category: "Sorting", thumbnail: "algo_group_109.svg" },
-  { id: "insertion-sort-folk", title: "Insertion Sort Folk Dance", duration: "5:18", views: "98K", category: "Sorting", thumbnail: "algo_group_142.svg" },
-  { id: "selection-sort-waltz", title: "Selection Sort Waltz", duration: "3:45", views: "87K", category: "Sorting", thumbnail: "algo_group_119.svg" },
-  { id: "merge-sort-tango", title: "Merge Sort Tango", duration: "6:12", views: "156K", category: "Sorting", thumbnail: "algo_group_166.svg" },
-  { id: "quick-sort-salsa", title: "Quick Sort Salsa", duration: "5:55", views: "134K", category: "Sorting", thumbnail: "algo_group_167.svg" },
-  { id: "heap-sort-ballet", title: "Heap Sort Ballet", duration: "7:08", views: "92K", category: "Sorting", thumbnail: "algo_group_168.svg" },
-  { id: "shell-sort-flamenco", title: "Shell Sort Flamenco", duration: "4:45", views: "78K", category: "Sorting", thumbnail: "algo_group_132.svg" },
-  { id: "linear-search-hip-hop", title: "Linear Search Hip Hop", duration: "3:22", views: "112K", category: "Searching", thumbnail: "algo_group_109.svg" },
-  { id: "binary-search-swing", title: "Binary Search Swing", duration: "4:15", views: "145K", category: "Searching", thumbnail: "algo_group_142.svg" },
+  {
+    id: 'bubble-sort-dance',
+    title: 'Bubble Sort Dance',
+    duration: '4:32',
+    views: '125K',
+    category: 'Sorting',
+    thumbnail: 'algo_group_109.svg',
+  },
+  {
+    id: 'insertion-sort-folk',
+    title: 'Insertion Sort Folk Dance',
+    duration: '5:18',
+    views: '98K',
+    category: 'Sorting',
+    thumbnail: 'algo_group_142.svg',
+  },
+  {
+    id: 'selection-sort-waltz',
+    title: 'Selection Sort Waltz',
+    duration: '3:45',
+    views: '87K',
+    category: 'Sorting',
+    thumbnail: 'algo_group_119.svg',
+  },
+  {
+    id: 'merge-sort-tango',
+    title: 'Merge Sort Tango',
+    duration: '6:12',
+    views: '156K',
+    category: 'Sorting',
+    thumbnail: 'algo_group_166.svg',
+  },
+  {
+    id: 'quick-sort-salsa',
+    title: 'Quick Sort Salsa',
+    duration: '5:55',
+    views: '134K',
+    category: 'Sorting',
+    thumbnail: 'algo_group_167.svg',
+  },
+  {
+    id: 'heap-sort-ballet',
+    title: 'Heap Sort Ballet',
+    duration: '7:08',
+    views: '92K',
+    category: 'Sorting',
+    thumbnail: 'algo_group_168.svg',
+  },
+  {
+    id: 'shell-sort-flamenco',
+    title: 'Shell Sort Flamenco',
+    duration: '4:45',
+    views: '78K',
+    category: 'Sorting',
+    thumbnail: 'algo_group_132.svg',
+  },
+  {
+    id: 'linear-search-hip-hop',
+    title: 'Linear Search Hip Hop',
+    duration: '3:22',
+    views: '112K',
+    category: 'Searching',
+    thumbnail: 'algo_group_109.svg',
+  },
+  {
+    id: 'binary-search-swing',
+    title: 'Binary Search Swing',
+    duration: '4:15',
+    views: '145K',
+    category: 'Searching',
+    thumbnail: 'algo_group_142.svg',
+  },
 ];
 
 export default function VideosPage() {
-  const [activeFilter, setActiveFilter] = useState<string>("all");
-  const filtered = activeFilter === "all" ? videos : videos.filter((v) => v.category.toLowerCase() === activeFilter);
+  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const filtered =
+    activeFilter === 'all'
+      ? videos
+      : videos.filter((v) => v.category.toLowerCase() === activeFilter);
 
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a]">
       {/* Hero */}
       <div className="flex flex-col items-center justify-center px-6 py-14 md:py-20 bg-[#F0FBF9] dark:bg-[#112220]">
-        <h1 className="font-montserrat font-bold text-black dark:text-white text-3xl sm:text-4xl lg:text-5xl mb-4 text-center">Videos</h1>
+        <h1 className="font-montserrat font-bold text-black dark:text-white text-3xl sm:text-4xl lg:text-5xl mb-4 text-center">
+          Videos
+        </h1>
         <p className="font-montserrat text-center text-base sm:text-lg text-[#666] dark:text-gray-400">
           Watch algorithm sorting dances and learn through visual demonstrations
         </p>
@@ -31,17 +99,17 @@ export default function VideosPage() {
 
       {/* Filter Tabs */}
       <div className="flex gap-3 sm:gap-4 justify-center px-4 py-8">
-        {["all", "sorting", "searching"].map((filter) => (
+        {['all', 'sorting', 'searching'].map((filter) => (
           <button
             key={filter}
             onClick={() => setActiveFilter(filter)}
             className={`font-montserrat font-bold transition-all capitalize px-5 sm:px-8 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base cursor-pointer border ${
-              activeFilter === filter 
-                ? "bg-[#269984] text-white border-[#269984]" 
-                : "bg-white dark:bg-[#1a1a1a] text-[#666] dark:text-gray-400 border-[#E0E0E0] dark:border-neutral-700 hover:border-[#269984] dark:hover:border-[#269984]"
+              activeFilter === filter
+                ? 'bg-[#269984] text-white border-[#269984]'
+                : 'bg-white dark:bg-[#1a1a1a] text-[#666] dark:text-gray-400 border-[#E0E0E0] dark:border-neutral-700 hover:border-[#269984] dark:hover:border-[#269984]'
             }`}
           >
-            {filter === "all" ? "All Videos" : filter}
+            {filter === 'all' ? 'All Videos' : filter}
           </button>
         ))}
       </div>
@@ -68,21 +136,28 @@ export default function VideosPage() {
                 {/* Play button */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all">
                   <div className="flex items-center justify-center rounded-full bg-white/90 group-hover:bg-white shadow-lg transition-all group-hover:scale-110 w-14 h-14 sm:w-16 sm:h-16">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#269984"><polygon points="5,3 19,12 5,21" /></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#269984">
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
                   </div>
                 </div>
                 {/* Duration */}
-                <div className="absolute bottom-3 right-3 font-montserrat font-bold text-white text-xs px-2.5 py-1 rounded"
-                  style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
+                <div
+                  className="absolute bottom-3 right-3 font-montserrat font-bold text-white text-xs px-2.5 py-1 rounded"
+                  style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
                 >
                   {video.duration}
                 </div>
               </div>
               {/* Info */}
               <div className="p-4 sm:p-5">
-                <h3 className="font-montserrat font-bold text-base sm:text-lg text-black dark:text-white mb-2">{video.title}</h3>
+                <h3 className="font-montserrat font-bold text-base sm:text-lg text-black dark:text-white mb-2">
+                  {video.title}
+                </h3>
                 <div className="flex items-center justify-between">
-                  <span className="font-montserrat text-xs sm:text-sm text-[#999] dark:text-gray-500">{video.views} views</span>
+                  <span className="font-montserrat text-xs sm:text-sm text-[#999] dark:text-gray-500">
+                    {video.views} views
+                  </span>
                   <span className="font-montserrat font-bold text-xs px-3 py-1 rounded-full bg-[#F0FBF9] dark:bg-[#112220] text-[#269984]">
                     {video.category}
                   </span>

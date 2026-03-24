@@ -1,7 +1,7 @@
-import Hero from "../components/Hero";
-import Features from "../components/Features";
-import TealSection from "../components/TealSection";
-import BottomBanner from "../components/BottomBanner";
+import Hero from '../components/Hero';
+import Features from '../components/Features';
+import TealSection from '../components/TealSection';
+import BottomBanner from '../components/BottomBanner';
 
 export default function Home() {
   return (

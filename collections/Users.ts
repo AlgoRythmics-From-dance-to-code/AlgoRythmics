@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig } from 'payload';
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -23,6 +23,6 @@ export const Users: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
-    }
+    },
   ],
-}
+};

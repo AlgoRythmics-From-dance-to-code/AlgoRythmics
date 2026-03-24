@@ -1,53 +1,53 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
-
-
 
 .dark {
   --background: #0a0a0a;
   --foreground: #ffffff;
-  
+
   --brand-dark: #ffffff; /* Invert brand dark for dark mode text if used */
-  
+
   --card-bg: #1a1a1a;
   --card-border: #333333;
   --text-secondary: #a1a1aa;
-  
+
   /* Course Colors Dark Mode Overrides */
-  --color-course-create: #4ADE80; /* Green shade replacing red in dark mode */
-  
+  --color-course-create: #4ade80; /* Green shade replacing red in dark mode */
+
   --muted: rgba(255, 255, 255, 0.6);
   --border: rgba(255, 255, 255, 0.06);
 }
 :root {
   --background: #ffffff;
   --foreground: #000000;
-  
+
   /* Design Tokens from Figma */
   --brand-teal: #269984; /* "Angel Converter" Teal */
-  --brand-green: #269984; 
+  --brand-green: #269984;
   --brand-dark: #000000;
-  
+
   --card-bg: #ffffff;
   --card-border: #e5e7eb;
   --text-secondary: #4b5563;
   --muted: rgba(0, 0, 0, 0.6);
   --border: #e5e7eb;
-  
+
   --font-montserrat: 'Montserrat', sans-serif;
   --header-height: 85px;
 
   /* Course Colors */
   --color-course-video: #269984;
-  --color-course-animation: #36D6BA;
-  --color-course-control: #FBB03B;
-  --color-course-create: #F15A24;
-  --color-course-alive: #6C63FF;
+  --color-course-animation: #36d6ba;
+  --color-course-control: #fbb03b;
+  --color-course-create: #f15a24;
+  --color-course-alive: #6c63ff;
 }
 body {
   font-family: var(--font-montserrat);
   background-color: var(--background);
   color: var(--foreground);
-  transition: background 180ms ease, color 180ms ease;
+  transition:
+    background 180ms ease,
+    color 180ms ease;
 }
