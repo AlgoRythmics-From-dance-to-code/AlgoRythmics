@@ -86,7 +86,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
 
 
             <div className="flex-shrink-0 w-40 sm:w-48 md:w-56 lg:w-64">
-              <Image src={`/assets/${data.illAsset}`} alt={data.title} width={280} height={280} className="w-full h-auto dark:invert dark:hue-rotate-180" />
+              <Image src={`/assets/${data.illAsset}`} alt={data.title} width={280} height={280} className="w-full h-auto dark:invert dark:hue-rotate-180" style={{ width: 'auto', height: 'auto' }} />
             </div>
 
           </div>

@@ -63,6 +63,7 @@ export default function VideosPage() {
                   width={280}
                   height={280}
                   className="w-3/4 max-w-[280px] h-auto object-contain dark:opacity-80"
+                  style={{ width: 'auto', height: 'auto' }}
                 />
                 {/* Play button */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all">

@@ -45,7 +45,7 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="flex-shrink-0 w-60 sm:w-72 md:w-80 lg:w-96">
-            <Image src="/assets/algo_group_166.svg" alt="Our Mission" width={400} height={400} className="w-full h-auto dark:invert dark:hue-rotate-180" />
+            <Image src="/assets/algo_group_166.svg" alt="Our Mission" width={400} height={400} className="w-full h-auto dark:invert dark:hue-rotate-180" style={{ width: 'auto', height: 'auto' }} />
           </div>
         </div>
       </div>

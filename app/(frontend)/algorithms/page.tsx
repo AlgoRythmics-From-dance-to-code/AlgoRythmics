@@ -56,7 +56,7 @@ export default function AlgorithmsPage() {
       {/* All algorithms bar + category tabs */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-6">
         <div className="flex items-center gap-3 p-4 border border-black dark:border-white/20">
-          <Image src="/assets/algo_list_icon.svg" alt="" width={23} height={19} className="w-5 h-4 dark:invert dark:hue-rotate-180" />
+          <Image src="/assets/algo_list_icon.svg" alt="" width={23} height={19} className="w-5 h-4 dark:invert dark:hue-rotate-180" style={{ width: 'auto', height: 'auto' }} />
           <span className="font-montserrat font-bold text-black dark:text-white text-lg sm:text-2xl">
             All algorithms
           </span>
@@ -82,6 +82,7 @@ export default function AlgorithmsPage() {
                   width={23}
                   height={23}
                   className={`w-5 h-5 ${isActive ? "invert brightness-0" : "dark:invert"}`}
+                  style={{ width: 'auto', height: 'auto' }}
                 />
                 <span className="hidden sm:inline">{cat.label}</span>
                 <span className="sm:hidden">{cat.key.charAt(0).toUpperCase() + cat.key.slice(1)}</span>
@@ -105,6 +106,7 @@ export default function AlgorithmsPage() {
                   width={330}
                   height={330}
                   className="w-full h-auto dark:invert dark:hue-rotate-180"
+                  style={{ width: 'auto', height: 'auto' }}
                 />
               </div>
 

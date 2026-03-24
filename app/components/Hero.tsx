@@ -57,6 +57,7 @@ export default function Hero() {
             style={{
               top: "0px",
               right: "100px",
+              width: "clamp(450px, 40vw, 720px)",
               height: "auto",
               zIndex: 2,
             }}
@@ -70,7 +71,7 @@ export default function Hero() {
               width={818}
               height={744}
               sizes="(max-width: 768px) 80vw, 400px"
-              className="w-[80%] max-w-[400px] h-auto dark:invert dark:hue-rotate-180"
+              className="max-w-[400px] pointer-events-none select-none dark:invert dark:hue-rotate-180"
               style={{ width: "80%", height: "auto" }}
             />
             <div className="text-center">

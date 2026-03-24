@@ -6,8 +6,15 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { useLocale, Locale } from "../i18n/LocaleProvider";
 import ThemeToggle from "./ThemeToggle";
+import { User as UserIcon } from "lucide-react";
 
-export default function Header() {
+export default function Header({ 
+  isAuthenticated,
+  userImage
+}: { 
+  isAuthenticated?: boolean;
+  userImage?: string | null;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -50,26 +57,69 @@ export default function Header() {
             width={294}
             height={57}
             sizes="(max-width: 768px) 150px, 200px"
-            className="h-10 sm:h-11 md:h-12 w-auto"
-            style={{ filter: "brightness(0) invert(1)", width: "auto", height: "auto" }}
+            className="pointer-events-none select-none"
+            style={{ 
+              filter: "brightness(0) invert(1)",
+              height: "clamp(40px, 4vw, 48px)",
+              width: "auto"
+            }}
           />
         </Link>
         
         {/* Desktop Nav — centre links */}
         <nav className="hidden md:flex items-center gap-5 lg:gap-8">
           <NavLink href="/" label={t("nav.home")} active={pathname === "/"} />
-          <NavLink href="/algorithms" label={t("nav.algorithms")} active={pathname?.startsWith("/algorithms") ?? false} />
-          <NavLink href="/courses" label={t("nav.courses")} active={pathname === "/courses"} />
+          {isAuthenticated && (
+            <>
+              <NavLink href="/algorithms" label={t("nav.algorithms")} active={pathname?.startsWith("/algorithms") ?? false} />
+              <NavLink href="/courses" label={t("nav.courses")} active={pathname === "/courses"} />
+            </>
+          )}
         </nav>
 
         {/* Right actions (Desktop) */}
         <div className="hidden md:flex items-center gap-4 lg:gap-6">
-          <button onClick={() => router.push("/register")} className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base">
-            {t("nav.register")}
-          </button>
-          <button onClick={() => router.push("/login")} className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base">
-            {t("nav.login")}
-          </button>
+          {!isAuthenticated ? (
+            <>
+              <button onClick={() => router.push("/register")} className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base">
+                {t("nav.register")}
+              </button>
+              <button onClick={() => router.push("/login")} className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base">
+                {t("nav.login")}
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={async () => {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                router.push('/login');
+                router.refresh();
+              }} 
+              className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base font-bold"
+            >
+              Logout
+            </button>
+          )}
+
+          {isAuthenticated && (
+            <Link 
+              href="/profil"
+              className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white/20 hover:border-white/50 transition-colors overflow-hidden bg-white/10"
+            >
+              {userImage ? (
+                <Image 
+                  src={userImage} 
+                  alt="Profile" 
+                  width={40} 
+                  height={40} 
+                  className="w-full h-full object-cover"
+                  style={{ width: 'auto', height: 'auto' }}
+                />
+              ) : (
+                <UserIcon className="w-6 h-6 text-white" />
+              )}
+            </Link>
+          )}
           
           <ThemeToggle />
           
@@ -79,7 +129,7 @@ export default function Header() {
               onClick={() => setLangDropdownOpen(!langDropdownOpen)} 
               className="flex items-center gap-2 hover:opacity-80 transition-opacity p-2"
             >
-              <Image src={currentLang.flag} alt={currentLang.code} width={20} height={15} className="w-5 h-auto rounded-sm object-cover" />
+              <img src={currentLang.flag} alt={currentLang.code} width={20} height={15} className="rounded-sm object-cover" />
               <span className="font-montserrat text-white text-sm lg:text-base uppercase">{currentLang.code}</span>
               <Image 
                 src="/assets/path_1568.svg" 
@@ -87,7 +137,7 @@ export default function Header() {
                 width={10}
                 height={10}
                 style={{ 
-                  width: "10px", 
+                  width: "auto", 
                   height: "auto", 
                   filter: "brightness(0) invert(1)",
                   transform: langDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
@@ -110,7 +160,7 @@ export default function Header() {
                       locale === lang.code ? "bg-gray-50 font-bold text-[var(--brand-teal)]" : "text-gray-700"
                     }`}
                   >
-                    <Image src={lang.flag} alt={lang.code} width={20} height={15} className="w-5 h-auto rounded-sm object-cover" />
+                    <img src={lang.flag} alt={lang.code} width={20} height={15} className="rounded-sm object-cover" />
                     <span className="font-montserrat text-sm uppercase">{lang.label}</span>
                   </button>
                 ))}
@@ -134,8 +184,12 @@ export default function Header() {
         <div className="md:hidden absolute top-[var(--header-height)] left-0 right-0 bg-[#269984] shadow-lg border-t border-white/20">
           <nav className="flex flex-col p-6 gap-4">
             <Link href="/" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.home")}</Link>
-            <Link href="/algorithms" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.algorithms")}</Link>
-            <Link href="/courses" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.courses")}</Link>
+            {isAuthenticated && (
+              <>
+                <Link href="/algorithms" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.algorithms")}</Link>
+                <Link href="/courses" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.courses")}</Link>
+              </>
+            )}
             <Link href="/contact" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.contact")}</Link>
             
             <div className="border-t border-white/20 pt-4 mt-2">
@@ -151,7 +205,7 @@ export default function Header() {
                         : "text-white border-white/30"
                     }`}
                    >
-                      <Image src={lang.flag} alt={lang.code} width={20} height={15} className="w-5 h-auto rounded-sm object-cover" />
+                      <img src={lang.flag} alt={lang.code} width={20} height={15} className="rounded-sm object-cover" />
                       <span className="font-montserrat text-sm uppercase font-bold">{lang.code}</span>
                    </button>
                 ))}
@@ -159,8 +213,36 @@ export default function Header() {
             </div>
 
             <hr className="border-white/20" />
-            <Link href="/register" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.register")}</Link>
-            <Link href="/login" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.login")}</Link>
+            {!isAuthenticated ? (
+              <>
+                <Link href="/register" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.register")}</Link>
+                <Link href="/login" className="font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>{t("nav.login")}</Link>
+              </>
+            ) : (
+              <>
+                <Link href="/profil" className="flex items-center gap-3 font-montserrat text-white text-lg" onClick={() => setMenuOpen(false)}>
+                  <div className="w-8 h-8 rounded-full border border-white/30 overflow-hidden bg-white/10 flex items-center justify-center">
+                    {userImage ? (
+                      <Image src={userImage} alt="Profile" width={32} height={32} className="w-full h-full object-cover" style={{ width: 'auto', height: 'auto' }} />
+                    ) : (
+                      <UserIcon className="w-5 h-5 flex-shrink-0" />
+                    )}
+                  </div>
+                  Profile
+                </Link>
+              <button 
+                onClick={async () => {
+                  setMenuOpen(false);
+                  await fetch('/api/auth/logout', { method: 'POST' });
+                  router.push('/login');
+                  router.refresh();
+                }} 
+                className="font-montserrat text-white text-lg text-left font-bold"
+              >
+                Logout
+              </button>
+              </>
+            )}
             
             <div className="flex items-center gap-2 text-white">
                <ThemeToggle />

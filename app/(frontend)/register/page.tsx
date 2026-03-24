@@ -41,12 +41,26 @@ export default function RegisterPage() {
     if (!validate()) return;
 
     setIsLoading(true);
-    // Simulate register API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setErrors({});
     
-    setIsLoading(false);
-    // Redirect to login
-    router.push("/login");
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setErrors({ email: data.error || 'Registration failed. User might already exist.' });
+      } else {
+        router.push('/login');
+      }
+    } catch (err: any) {
+      setErrors({ email: 'An error occurred during registration.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -62,6 +76,7 @@ export default function RegisterPage() {
               width={600}
               height={600}
               className="w-full h-auto opacity-90"
+              style={{ width: 'auto', height: 'auto' }}
             />
           </div>
           <div className="absolute rounded-full" style={{ right: "5%", top: "8%", width: "140px", height: "140px", backgroundColor: "#36D6BA", opacity: 0.15 }} />

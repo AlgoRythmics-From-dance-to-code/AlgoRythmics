@@ -30,12 +30,27 @@ export default function LoginPage() {
     if (!validate()) return;
 
     setIsLoading(true);
-    // Simulate login API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setErrors({});
     
-    setIsLoading(false);
-    // Redirect to profile or home
-    router.push("/");
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setErrors({ email: data.error || 'Login failed. Please check your credentials.' });
+      } else {
+        router.push('/');
+        router.refresh(); // so layout uses correct state
+      }
+    } catch (err: any) {
+      setErrors({ email: 'An error occurred during login.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,6 +66,7 @@ export default function LoginPage() {
               width={600}
               height={600}
               className="w-full h-auto opacity-90"
+              style={{ width: 'auto', height: 'auto' }}
             />
           </div>
           {/* Decorative circles */}
