@@ -123,6 +123,8 @@ export interface User {
   id: number;
   role: 'admin' | 'user';
   imageUrl?: string | null;
+  authProvider?: ('email' | 'google' | 'facebook' | 'discord' | 'github') | null;
+  authProviderId?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -220,6 +222,8 @@ export interface PayloadMigration {
 export interface UsersSelect<T extends boolean = true> {
   role?: T;
   imageUrl?: T;
+  authProvider?: T;
+  authProviderId?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

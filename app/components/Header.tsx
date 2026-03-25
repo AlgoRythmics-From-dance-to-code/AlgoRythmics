@@ -72,9 +72,9 @@ export default function Header({
 
         {/* Desktop Nav — centre links */}
         <nav className="hidden md:flex items-center gap-5 lg:gap-8">
-          <NavLink href="/" label={t('nav.home')} active={pathname === '/'} />
           {isAuthenticated && (
             <>
+              <NavLink href="/" label={t('nav.home')} active={pathname === '/'} />
               <NavLink
                 href="/algorithms"
                 label={t('nav.algorithms')}
@@ -258,15 +258,15 @@ export default function Header({
       {menuOpen && (
         <div className="md:hidden absolute top-[var(--header-height)] left-0 right-0 bg-[#269984] shadow-lg border-t border-white/20">
           <nav className="flex flex-col p-6 gap-4">
-            <Link
-              href="/"
-              className="font-montserrat text-white text-lg"
-              onClick={() => setMenuOpen(false)}
-            >
-              {t('nav.home')}
-            </Link>
             {isAuthenticated && (
               <>
+                <Link
+                  href="/"
+                  className="font-montserrat text-white text-lg"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('nav.home')}
+                </Link>
                 <Link
                   href="/algorithms"
                   className="font-montserrat text-white text-lg"

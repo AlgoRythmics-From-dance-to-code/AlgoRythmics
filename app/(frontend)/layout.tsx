@@ -9,6 +9,8 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import axios from 'axios';
 
+import NextAuthProvider from '../components/NextAuthProvider';
+
 const montserrat = Montserrat({
   variable: '--font-montserrat',
   subsets: ['latin'],
@@ -41,13 +43,15 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${montserrat.variable} antialiased min-h-screen flex flex-col`}>
-        <ThemeProviderClient>
-          <LocaleProvider>
-            <Header isAuthenticated={isAuthenticated} userImage={userImage} />
-            <main className="flex-1 pt-[var(--header-height)]">{children}</main>
-            <Footer />
-          </LocaleProvider>
-        </ThemeProviderClient>
+        <NextAuthProvider>
+          <ThemeProviderClient>
+            <LocaleProvider>
+              <Header isAuthenticated={isAuthenticated} userImage={userImage} />
+              <main className="flex-1 pt-[var(--header-height)]">{children}</main>
+              <Footer />
+            </LocaleProvider>
+          </ThemeProviderClient>
+        </NextAuthProvider>
         <SpeedInsights />
         <Analytics />
       </body>

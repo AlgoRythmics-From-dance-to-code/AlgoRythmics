@@ -80,5 +80,27 @@ export const Users: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    {
+      name: 'authProvider',
+      type: 'select',
+      options: [
+        { label: 'Email', value: 'email' },
+        { label: 'Google', value: 'google' },
+        { label: 'Facebook', value: 'facebook' },
+        { label: 'Discord', value: 'discord' },
+        { label: 'GitHub', value: 'github' },
+      ],
+      defaultValue: 'email',
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'authProviderId',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+      },
+    },
   ],
 };
