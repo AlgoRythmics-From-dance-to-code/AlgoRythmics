@@ -18,6 +18,7 @@ export default function RegisterPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -47,7 +48,7 @@ export default function RegisterPage() {
 
     try {
       await axios.post('/api/auth/register', { email, password });
-      router.push('/login');
+      setIsSuccess(true);
     } catch (error: any) {
       setErrors({
         email: error.response?.data?.error || 'Registration failed. User might already exist.',
@@ -99,139 +100,164 @@ export default function RegisterPage() {
         {/* Right Side: Register Form */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10">
           <div className="w-full max-w-[500px]">
-            <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3">
-              Register
-            </h1>
-            <p className="font-montserrat text-base sm:text-lg mb-8 text-[#666] dark:text-gray-400">
-              Create your account to get started.
-            </p>
-
-            <form onSubmit={handleSubmit}>
-              {/* Name fields */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-5">
-                <div className="flex-1">
-                  <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                    First name
-                  </label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.firstName ? 'border-red-500' : ''}`}
-                    placeholder="First name"
-                  />
-                  {errors.firstName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
-                  )}
+            {isSuccess ? (
+              <div className="text-center">
+                <div className="w-20 h-20 bg-[#36D6BA] bg-opacity-20 rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#36D6BA" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
                 </div>
-                <div className="flex-1">
-                  <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                    Last name
-                  </label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.lastName ? 'border-red-500' : ''}`}
-                    placeholder="Last name"
-                  />
-                  {errors.lastName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
-                  )}
-                </div>
+                <h1 className="font-montserrat font-bold text-3xl sm:text-4xl text-black dark:text-white mb-4">
+                  Confirm your email
+                </h1>
+                <p className="font-montserrat text-lg mb-8 text-[#666] dark:text-gray-400">
+                  We have sent a verification link to <span className="font-bold text-black dark:text-white">{email}</span>. Please check your inbox and click the link to activate your account.
+                </p>
+                <Link
+                  href="/login"
+                  className="w-full font-montserrat font-bold text-white h-12 sm:h-14 rounded-lg text-lg sm:text-xl flex items-center justify-center hover:opacity-90 transition-all cursor-pointer"
+                  style={{ backgroundColor: '#269984' }}
+                >
+                  Go to Login
+                </Link>
               </div>
+            ) : (
+              <>
+                <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3">
+                  Register
+                </h1>
+                <p className="font-montserrat text-base sm:text-lg mb-8 text-[#666] dark:text-gray-400">
+                  Create your account to get started.
+                </p>
 
-              {/* Email */}
-              <div className="mb-5">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                  Email address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
-                  placeholder="Enter your email"
-                />
-                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-              </div>
+                <form onSubmit={handleSubmit}>
+                  {/* Name fields */}
+                  <div className="flex flex-col sm:flex-row gap-4 mb-5">
+                    <div className="flex-1">
+                      <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                        First name
+                      </label>
+                      <input
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.firstName ? 'border-red-500' : ''}`}
+                        placeholder="First name"
+                      />
+                      {errors.firstName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                        Last name
+                      </label>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.lastName ? 'border-red-500' : ''}`}
+                        placeholder="Last name"
+                      />
+                      {errors.lastName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                      )}
+                    </div>
+                  </div>
 
-              {/* Password */}
-              <div className="mb-5">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
-                  placeholder="Create a password"
-                />
-                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-              </div>
+                  {/* Email */}
+                  <div className="mb-5">
+                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                      Email address
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
+                      placeholder="Enter your email"
+                    />
+                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                  </div>
 
-              {/* Confirm Password */}
-              <div className="mb-5">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                  Confirm password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.confirmPassword ? 'border-red-500' : ''}`}
-                  placeholder="Confirm your password"
-                />
-                {errors.confirmPassword && (
-                  <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
-                )}
-              </div>
+                  {/* Password */}
+                  <div className="mb-5">
+                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
+                      placeholder="Create a password"
+                    />
+                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                  </div>
 
-              {/* Terms */}
-              <div className="mb-8">
-                <label className="flex items-start gap-3 cursor-pointer font-montserrat text-sm">
-                  <input
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                    className="w-5 h-5 accent-[#36D6BA] mt-0.5"
-                  />
-                  <span className="text-black dark:text-white">
-                    I accept the{' '}
-                    <Link href="#" className="font-bold" style={{ color: '#36D6BA' }}>
-                      Terms of Service
-                    </Link>{' '}
-                    and{' '}
-                    <Link href="#" className="font-bold" style={{ color: '#36D6BA' }}>
-                      Privacy Policy
-                    </Link>
-                  </span>
-                </label>
-                {errors.terms && <p className="text-red-500 text-xs mt-1">{errors.terms}</p>}
-              </div>
+                  {/* Confirm Password */}
+                  <div className="mb-5">
+                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                      Confirm password
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                      placeholder="Confirm your password"
+                    />
+                    {errors.confirmPassword && (
+                      <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                    )}
+                  </div>
 
-              {/* Register button */}
-              <button
-                className="w-full font-montserrat font-bold text-white h-12 sm:h-14 rounded-lg text-lg sm:text-xl hover:opacity-90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#269984', border: 'none' }}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Registering...' : 'Register'}
-              </button>
-            </form>
+                  {/* Terms */}
+                  <div className="mb-8">
+                    <label className="flex items-start gap-3 cursor-pointer font-montserrat text-sm">
+                      <input
+                        type="checkbox"
+                        checked={acceptTerms}
+                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        className="w-5 h-5 accent-[#36D6BA] mt-0.5"
+                      />
+                      <span className="text-black dark:text-white">
+                        I accept the{' '}
+                        <Link href="#" className="font-bold" style={{ color: '#36D6BA' }}>
+                          Terms of Service
+                        </Link>{' '}
+                        and{' '}
+                        <Link href="#" className="font-bold" style={{ color: '#36D6BA' }}>
+                          Privacy Policy
+                        </Link>
+                      </span>
+                    </label>
+                    {errors.terms && <p className="text-red-500 text-xs mt-1">{errors.terms}</p>}
+                  </div>
 
-            {/* Login link */}
-            <p className="text-center font-montserrat mt-6 text-sm sm:text-base text-[#666] dark:text-gray-400">
-              Already have an account?{' '}
-              <Link
-                href="/login"
-                className="font-bold hover:underline"
-                style={{ color: '#36D6BA' }}
-              >
-                Login
-              </Link>
-            </p>
+                  {/* Register button */}
+                  <button
+                    className="w-full font-montserrat font-bold text-white h-12 sm:h-14 rounded-lg text-lg sm:text-xl hover:opacity-90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: '#269984', border: 'none' }}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Registering...' : 'Register'}
+                  </button>
+                </form>
+
+                {/* Login link */}
+                <p className="text-center font-montserrat mt-6 text-sm sm:text-base text-[#666] dark:text-gray-400">
+                  Already have an account?{' '}
+                  <Link
+                    href="/login"
+                    className="font-bold hover:underline"
+                    style={{ color: '#36D6BA' }}
+                  >
+                    Login
+                  </Link>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>

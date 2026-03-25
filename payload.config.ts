@@ -1,3 +1,4 @@
+import { resendAdapter } from '@payloadcms/email-resend';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import path from 'path';
@@ -27,9 +28,14 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
-    push: false, // Turn off DB push for migrations
+    push: true, // Turn on DB push to sync verification fields
   }),
   sharp,
+  email: resendAdapter({
+    apiKey: process.env.RESEND_API_KEY || '',
+    defaultFromAddress: 'onboarding@resend.dev',
+    defaultFromName: 'AlgoRythmics',
+  }),
   plugins: [
     // Add plugins here
   ],

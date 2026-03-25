@@ -3,12 +3,12 @@ import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
   // Check for the payload token cookie
-  const token = request.cookies.get('payload-token');
+  const token = request.cookies.get('payload-token')?.value;
 
   const { pathname } = request.nextUrl;
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
   const isHomePage = pathname === '/';
-  const isPublicPage = isHomePage || pathname === '/about';
+  const isPublicPage = isHomePage || pathname === '/about' || pathname.startsWith('/verify');
   const isAdmin = pathname.startsWith('/admin');
   const isApiOrStatic =
     pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname.includes('.');
