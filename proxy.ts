@@ -30,19 +30,13 @@ export function proxy(request: NextRequest) {
 
   // Define truly protected paths
   const isProtectedRoute = pathname.startsWith(ROUTES.ALGORITHMS) || pathname.startsWith(ROUTES.COURSES);
-
-  console.log(`[Proxy] Path: ${pathname} | Auth: ${isAuthPage} | Protected: ${isProtectedRoute}`);
-  console.log(`[Proxy] payload-token: ${!!payloadToken} | next-auth: ${!!nextAuthToken}`);
-
   // If unauthenticated and trying to access protected frontend route (Algorithms, Courses)
   if (!token && isProtectedRoute) {
-    console.log(`[Proxy] Redirecting to login because missing token on protected route.`);
     return NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
   }
 
   // If authenticated and trying to access auth pages (Login/Register), redirect to home
   if (token && isAuthPage) {
-    console.log(`[Proxy] Redirecting to home because token exists on auth page.`);
     return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
   }
 
