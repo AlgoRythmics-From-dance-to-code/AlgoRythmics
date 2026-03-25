@@ -8,6 +8,8 @@ import axios from 'axios';
 import { useLocale, Locale } from '../i18n/LocaleProvider';
 import ThemeToggle from './ThemeToggle';
 import { User as UserIcon } from 'lucide-react';
+import { signOut } from 'next-auth/react';
+import { ROUTES, API_ROUTES } from '../../lib/constants';
 
 export default function Header({
   isAuthenticated,
@@ -25,7 +27,6 @@ export default function Header({
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
-  // ... (keep logic same)
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -54,7 +55,7 @@ export default function Header({
     <header className="fixed top-0 left-0 right-0 z-50 h-[var(--header-height)] bg-[#269984]">
       <div className="max-w-[1400px] mx-auto h-full flex items-center justify-between px-6 lg:px-12">
         {/* Logo */}
-        <Link href="/" className="flex-shrink-0">
+        <Link href={ROUTES.HOME} className="flex-shrink-0">
           <Image
             src="/assets/group_20.svg"
             alt="AlgoRythmics Logo"
@@ -74,13 +75,13 @@ export default function Header({
         <nav className="hidden md:flex items-center gap-5 lg:gap-8">
           {isAuthenticated && (
             <>
-              <NavLink href="/" label={t('nav.home')} active={pathname === '/'} />
+              <NavLink href={ROUTES.HOME} label={t('nav.home')} active={pathname === ROUTES.HOME} />
               <NavLink
-                href="/algorithms"
+                href={ROUTES.ALGORITHMS}
                 label={t('nav.algorithms')}
-                active={pathname?.startsWith('/algorithms') ?? false}
+                active={pathname?.startsWith(ROUTES.ALGORITHMS) ?? false}
               />
-              <NavLink href="/courses" label={t('nav.courses')} active={pathname === '/courses'} />
+              <NavLink href={ROUTES.COURSES} label={t('nav.courses')} active={pathname === ROUTES.COURSES} />
             </>
           )}
         </nav>
@@ -90,13 +91,13 @@ export default function Header({
           {!isAuthenticated && (
             <>
               <button
-                onClick={() => router.push('/register')}
+                onClick={() => router.push(ROUTES.REGISTER)}
                 className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base"
               >
                 {t('nav.register')}
               </button>
               <button
-                onClick={() => router.push('/login')}
+                onClick={() => router.push(ROUTES.LOGIN)}
                 className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base"
               >
                 {t('nav.login')}
@@ -192,7 +193,7 @@ export default function Header({
               {profileDropdownOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl overflow-hidden py-2 border border-blue-50/50 transform origin-top-right transition-all animate-in fade-in zoom-in duration-200">
                   <Link
-                    href="/profil"
+                    href={ROUTES.PROFILE}
                     onClick={() => setProfileDropdownOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50/50 transition-colors group"
                   >
@@ -205,8 +206,9 @@ export default function Header({
                   <button
                     onClick={async () => {
                       setProfileDropdownOpen(false);
-                      await axios.post('/api/auth/logout');
-                      router.push('/login');
+                      await axios.post(API_ROUTES.AUTH.LOGOUT);
+                      await signOut({ redirect: false });
+                      router.push(ROUTES.LOGIN);
                       router.refresh();
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors group"
@@ -261,21 +263,21 @@ export default function Header({
             {isAuthenticated && (
               <>
                 <Link
-                  href="/"
+                  href={ROUTES.HOME}
                   className="font-montserrat text-white text-lg"
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.home')}
                 </Link>
                 <Link
-                  href="/algorithms"
+                  href={ROUTES.ALGORITHMS}
                   className="font-montserrat text-white text-lg"
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.algorithms')}
                 </Link>
                 <Link
-                  href="/courses"
+                  href={ROUTES.COURSES}
                   className="font-montserrat text-white text-lg"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -322,14 +324,14 @@ export default function Header({
             {!isAuthenticated ? (
               <>
                 <Link
-                  href="/register"
+                  href={ROUTES.REGISTER}
                   className="font-montserrat text-white text-lg"
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.register')}
                 </Link>
                 <Link
-                  href="/login"
+                  href={ROUTES.LOGIN}
                   className="font-montserrat text-white text-lg"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -339,7 +341,7 @@ export default function Header({
             ) : (
               <>
                 <Link
-                  href="/profil"
+                  href={ROUTES.PROFILE}
                   className="flex items-center gap-3 font-montserrat text-white text-lg"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -362,8 +364,9 @@ export default function Header({
                 <button
                   onClick={async () => {
                     setMenuOpen(false);
-                    await axios.post('/api/auth/logout');
-                    router.push('/login');
+                    await axios.post(API_ROUTES.AUTH.LOGOUT);
+                    await signOut({ redirect: false });
+                    router.push(ROUTES.LOGIN);
                     router.refresh();
                   }}
                   className="font-montserrat text-white text-lg text-left font-bold"

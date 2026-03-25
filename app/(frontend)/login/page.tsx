@@ -1,24 +1,38 @@
 // Client Component
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { signIn } from 'next-auth/react';
+import { ROUTES, API_ROUTES } from '../../../lib/constants';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [systemError, setSystemError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const detail = searchParams.get('detail');
+    if (error) {
+      let msg = 'Authentication failed.';
+      if (error === 'social-login-failed') msg = 'Social login failed.';
+      if (detail) msg += ` Error: ${detail}`;
+      setSystemError(msg);
+    }
+  }, [searchParams]);
 
   const socialLogin = (provider: string) => {
-    signIn(provider, { callbackUrl: '/api/auth/social-callback' });
+    signIn(provider, { callbackUrl: API_ROUTES.AUTH.SOCIAL_CALLBACK });
   };
 
   const validate = () => {
@@ -37,14 +51,17 @@ export default function LoginPage() {
 
     setIsLoading(true);
     setErrors({});
+    setSystemError(null);
 
     try {
-      await axios.post('/api/auth/login', { email, password });
-      router.push('/');
+      await axios.post(API_ROUTES.AUTH.LOGIN, { email, password });
+      router.push(ROUTES.HOME);
       router.refresh();
     } catch (error: any) {
+      const backendError = error.response?.data?.error || 'Login failed.';
+      setSystemError(backendError);
       setErrors({
-        email: error.response?.data?.error || 'Login failed. Please check your credentials.',
+        email: 'Check your credentials',
       });
     } finally {
       setIsLoading(false);
@@ -63,7 +80,6 @@ export default function LoginPage() {
               width={600}
               height={600}
               className="w-full h-auto opacity-90"
-              style={{ width: 'auto', height: 'auto' }}
             />
           </div>
           {/* Decorative circles */}
@@ -108,9 +124,15 @@ export default function LoginPage() {
             <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3">
               Login
             </h1>
-            <p className="font-montserrat text-base sm:text-lg mb-10 text-[#666] dark:text-gray-400">
+            <p className="font-montserrat text-base sm:text-lg mb-6 text-[#666] dark:text-gray-400">
               Welcome back! Please login to your account.
             </p>
+
+            {systemError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-6 font-montserrat text-sm">
+                {systemError}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit}>
               {/* Email field */}
@@ -250,7 +272,7 @@ export default function LoginPage() {
             <p className="text-center font-montserrat text-sm sm:text-base text-[#666] dark:text-gray-400">
               Don&apos;t have an account?{' '}
               <Link
-                href="/register"
+                href={ROUTES.REGISTER}
                 className="font-bold hover:underline"
                 style={{ color: '#36D6BA' }}
               >

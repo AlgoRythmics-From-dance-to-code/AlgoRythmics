@@ -2,6 +2,7 @@ import { getPayload } from 'payload';
 import configPromise from '../../../../payload.config';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { APP_CONFIG } from '../../../../lib/constants';
 
 export async function POST(req: Request) {
   try {
@@ -15,18 +16,23 @@ export async function POST(req: Request) {
 
     if (result.token) {
       const cookieStore = await cookies();
-      cookieStore.set('payload-token', result.token, {
+      cookieStore.set(APP_CONFIG.COOKIE_TOKEN_NAME, result.token, {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: APP_CONFIG.TOKEN_EXPIRATION,
       });
     }
 
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Login failed';
+    console.error('Login Route Error:', {
+      message,
+      error,
+      env: process.env.NODE_ENV
+    });
     return NextResponse.json({ error: message }, { status: 401 });
   }
 }

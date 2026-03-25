@@ -4,15 +4,16 @@ import configPromise from '../../../../payload.config';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jsonwebtoken from 'jsonwebtoken';
+import { APP_CONFIG, ROUTES } from '../../../../lib/constants';
 
 export async function GET() {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const baseUrl = APP_CONFIG.BASE_URL;
 
   try {
     const session = await auth();
 
     if (!session?.user?.email) {
-      return NextResponse.redirect(new URL('/login?error=no-session', baseUrl));
+      return NextResponse.redirect(new URL(`${ROUTES.LOGIN}?error=no-session`, baseUrl));
     }
 
     const payload = await getPayload({ config: configPromise });
@@ -27,14 +28,14 @@ export async function GET() {
     });
 
     if (result.docs.length === 0) {
-      return NextResponse.redirect(new URL('/login?error=user-not-found', baseUrl));
+      return NextResponse.redirect(new URL(`${ROUTES.LOGIN}?error=user-not-found`, baseUrl));
     }
 
     const user = result.docs[0];
 
     // Generate a Payload-compatible JWT token directly
     // Payload uses the PAYLOAD_SECRET env var to sign tokens
-    const payloadSecret = process.env.PAYLOAD_SECRET || process.env.DATABASE_URL || '';
+    const payloadSecret = process.env.PAYLOAD_SECRET || 'fallback-secret';
     const token = jsonwebtoken.sign(
       {
         id: user.id,
@@ -46,17 +47,18 @@ export async function GET() {
     );
 
     const cookieStore = await cookies();
-    cookieStore.set('payload-token', token, {
+    cookieStore.set(APP_CONFIG.COOKIE_TOKEN_NAME, token, {
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: APP_CONFIG.TOKEN_EXPIRATION,
     });
 
-    return NextResponse.redirect(new URL('/', baseUrl));
+    return NextResponse.redirect(new URL(ROUTES.HOME, baseUrl));
   } catch (error) {
-    console.error('Social callback error:', error);
-    return NextResponse.redirect(new URL('/login?error=social-login-failed', baseUrl));
+    const message = error instanceof Error ? error.message : 'Unknown social error';
+    console.error('Social callback error details:', { message, error });
+    return NextResponse.redirect(new URL(`${ROUTES.LOGIN}?error=social-login-failed&detail=${encodeURIComponent(message)}`, baseUrl));
   }
 }

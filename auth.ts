@@ -4,6 +4,7 @@ import Google from 'next-auth/providers/google';
 import Facebook from 'next-auth/providers/facebook';
 import Discord from 'next-auth/providers/discord';
 import GitHub from 'next-auth/providers/github';
+import { ROLES, ROUTES, API_ROUTES } from './lib/constants';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -27,7 +28,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   trustHost: true,
   pages: {
-    signIn: '/login',
+    signIn: ROUTES.LOGIN,
   },
   callbacks: {
     async signIn({ user, account }) {
@@ -66,7 +67,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             data: {
               email: user.email,
               password: `social_${randomUUID()}`,
-              role: 'user',
+              role: ROLES.USER,
               _verified: true,
               authProvider: account.provider,
               authProviderId: account.providerAccountId,
@@ -117,9 +118,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
 
-    async redirect({ baseUrl }) {
-      // After social login, redirect to our custom callback to set Payload cookie
-      return `${baseUrl}/api/auth/social-callback`;
+    async redirect({ url, baseUrl }) {
+      // After social login, redirect to our custom callback ONLY if we're completing sign-in
+      // This prevents sign-out or other redirects from being trapped in a loop
+      if (url.includes('/api/auth/callback') || url.includes('callback')) {
+        return `${baseUrl}${API_ROUTES.AUTH.SOCIAL_CALLBACK}`;
+      }
+ 
+      // If it's a relative URL, resolve it to our domain
+      if (url.startsWith('/')) return `${baseUrl}${url}`;
+      
+      // Allow only same-origin redirects
+      if (new URL(url).origin === baseUrl) return url;
+ 
+      return baseUrl;
     },
   },
 });

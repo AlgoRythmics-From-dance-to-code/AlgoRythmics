@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import Link from 'next/link';
+import { ROUTES, API_ROUTES } from '../../../lib/constants';
 
 function VerifyContent() {
   const searchParams = useSearchParams();
@@ -20,7 +21,7 @@ function VerifyContent() {
 
     const verifyEmail = async () => {
       try {
-        await axios.post('/api/verify-account', { token });
+        await axios.post(API_ROUTES.AUTH.VERIFY_ACCOUNT, { token });
         setStatus('success');
         setMessage('Your email has been successfully verified! You can now log in.');
       } catch (err: any) {
@@ -55,7 +56,7 @@ function VerifyContent() {
             <h1 className="text-2xl font-montserrat font-bold text-black dark:text-white mb-2">Success!</h1>
             <p className="text-gray-600 dark:text-gray-400 font-montserrat mb-8">{message}</p>
             <Link
-              href="/login"
+              href={ROUTES.LOGIN}
               className="w-full font-montserrat font-bold text-white h-12 rounded-lg flex items-center justify-center hover:opacity-90 transition-all cursor-pointer"
               style={{ backgroundColor: '#269984' }}
             >
@@ -75,7 +76,7 @@ function VerifyContent() {
             <h1 className="text-2xl font-montserrat font-bold text-black dark:text-white mb-2">Verification Failed</h1>
             <p className="text-gray-600 dark:text-gray-400 font-montserrat mb-8">{message}</p>
             <Link
-              href="/register"
+              href={ROUTES.REGISTER}
               className="w-full font-montserrat font-bold text-white h-12 rounded-lg flex items-center justify-center hover:opacity-90 transition-all cursor-pointer"
               style={{ backgroundColor: '#ef4444' }}
             >

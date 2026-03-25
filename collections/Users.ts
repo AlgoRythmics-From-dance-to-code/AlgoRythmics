@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { ROLES, ROUTES, AUTH_PROVIDERS, APP_CONFIG } from '../lib/constants';
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -8,7 +9,7 @@ export const Users: CollectionConfig = {
   auth: {
     verify: {
       generateEmailHTML: ({ token }) => {
-        const url = `${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'}/verify?token=${token}`;
+        const url = `${APP_CONFIG.BASE_URL}${ROUTES.VERIFY}?token=${token}`;
         return `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
             <h2 style="color: #269984;">Welcome to AlgoRythmics!</h2>
@@ -29,7 +30,7 @@ export const Users: CollectionConfig = {
     beforeLogin: [
       async ({ user, req }) => {
         // Automatically verify admins on login if they aren't verified yet
-        if (user && user.role === 'admin' && !user._verified) {
+        if (user && user.role === ROLES.ADMIN && !user._verified) {
           try {
             await req.payload.update({
               collection: 'users',
@@ -45,7 +46,7 @@ export const Users: CollectionConfig = {
         }
 
         // Only block verification for 'user' role
-        if (user && user.role === 'user' && !user._verified) {
+        if (user && user.role === ROLES.USER && !user._verified) {
           throw new Error('Ellenőrizze az e-mail címét a belépéshez! (Kérjük, kattintson a megerősítő linkre az e-mailben.)');
         }
         return user;
@@ -54,7 +55,7 @@ export const Users: CollectionConfig = {
     beforeChange: [
       async ({ data }) => {
         // Automatically verify admins to prevent verification emails and admin banners
-        if (data.role === 'admin') {
+        if (data.role === ROLES.ADMIN) {
           data._verified = true;
           data._verificationToken = null;
         }
@@ -67,10 +68,10 @@ export const Users: CollectionConfig = {
       name: 'role',
       type: 'select',
       options: [
-        { label: 'Admin', value: 'admin' },
-        { label: 'User', value: 'user' },
+        { label: 'Admin', value: ROLES.ADMIN },
+        { label: 'User', value: ROLES.USER },
       ],
-      defaultValue: 'user',
+      defaultValue: ROLES.USER,
       required: true,
     },
     {
@@ -84,13 +85,13 @@ export const Users: CollectionConfig = {
       name: 'authProvider',
       type: 'select',
       options: [
-        { label: 'Email', value: 'email' },
-        { label: 'Google', value: 'google' },
-        { label: 'Facebook', value: 'facebook' },
-        { label: 'Discord', value: 'discord' },
-        { label: 'GitHub', value: 'github' },
+        { label: 'Email', value: AUTH_PROVIDERS.EMAIL },
+        { label: 'Google', value: AUTH_PROVIDERS.GOOGLE },
+        { label: 'Facebook', value: AUTH_PROVIDERS.FACEBOOK },
+        { label: 'Discord', value: AUTH_PROVIDERS.DISCORD },
+        { label: 'GitHub', value: AUTH_PROVIDERS.GITHUB },
       ],
-      defaultValue: 'email',
+      defaultValue: AUTH_PROVIDERS.EMAIL,
       admin: {
         position: 'sidebar',
       },

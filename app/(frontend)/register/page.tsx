@@ -70,7 +70,6 @@ export default function RegisterPage() {
               width={600}
               height={600}
               className="w-full h-auto opacity-90"
-              style={{ width: 'auto', height: 'auto' }}
             />
           </div>
           <div
