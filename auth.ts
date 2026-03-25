@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Facebook from 'next-auth/providers/facebook';
@@ -31,7 +32,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (!account || !user.email) {
-        console.error('NextAuth signIn error: Missing account or email', { account, user });
+        console.error('NextAuth signIn error: Missing account or email', { 
+          provider: account?.provider, 
+          hasEmail: !!user.email 
+        });
         return false;
       }
 
@@ -42,8 +46,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const configPromise = (await import('./payload.config')).default;
         const payload = await getPayload({ config: configPromise });
 
+        if (!payload) {
+          throw new Error('Could not initialize Payload');
+        }
 
-        // Check if user already exists with this provider
+        // Check if user already exists with this email
         const existing = await payload.find({
           collection: 'users',
           where: {
@@ -58,7 +65,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             collection: 'users',
             data: {
               email: user.email,
-              password: `social_${crypto.randomUUID()}`,
+              password: `social_${randomUUID()}`,
               role: 'user',
               _verified: true,
               authProvider: account.provider,
@@ -67,10 +74,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             } as any,
             disableVerificationEmail: true,
           } as any);
+          console.log(`New user created via ${account.provider}: ${user.email}`);
         } else {
           // Update existing user with provider info if missing
           const existingUser = existing.docs[0] as any;
           const updateData: Record<string, unknown> = {};
+          
           if (!existingUser.authProvider) {
             updateData.authProvider = account.provider;
             updateData.authProviderId = account.providerAccountId;
@@ -81,6 +90,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (!existingUser._verified) {
             updateData._verified = true;
           }
+
           if (Object.keys(updateData).length > 0) {
             await payload.update({
               collection: 'users',
@@ -88,6 +98,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               data: updateData,
               disableVerificationEmail: true,
             } as any);
+            console.log(`Updated user ${user.email} with ${account.provider} info`);
           }
         }
 
