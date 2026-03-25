@@ -47,7 +47,7 @@ export default function RegisterPage() {
     setErrors({});
 
     try {
-      await axios.post('/api/auth/register', { email, password });
+      await axios.post('/api/auth/register', { email, password, firstName, lastName });
       setIsSuccess(true);
     } catch (error: any) {
       setErrors({

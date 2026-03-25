@@ -8,18 +8,33 @@ import axios from 'axios';
 import { useLocale, Locale } from '../i18n/LocaleProvider';
 import ThemeToggle from './ThemeToggle';
 import { User as UserIcon } from 'lucide-react';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { ROUTES, API_ROUTES } from '../../lib/constants';
 
 export default function Header({
-  isAuthenticated,
-  userImage,
+  isAuthenticated: propIsAuthenticated,
+  userImage: propUserImage,
 }: {
   isAuthenticated?: boolean;
   userImage?: string | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const isAuthenticated = !!session || propIsAuthenticated;
+  const firstName = (session?.user as any)?.firstName || '';
+  const lastName = (session?.user as any)?.lastName || '';
+  const avatarUrl = (session?.user as any)?.imageUrl || (session?.user as any)?.image || propUserImage;
+
+  const getInitials = () => {
+    if (firstName && lastName) return (firstName[0] + lastName[0]).toUpperCase();
+    if (firstName) return firstName[0].toUpperCase();
+    if (lastName) return lastName[0].toUpperCase();
+    return '';
+  };
+  const initials = getInitials();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const { locale, setLocale, t } = useLocale();
@@ -176,19 +191,21 @@ export default function Header({
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white/20 hover:border-white/50 transition-colors overflow-hidden bg-white/10"
               >
-                {userImage ? (
-                  <Image
-                    src={userImage}
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
                     alt="Profile"
                     width={40}
                     height={40}
                     className="w-full h-full object-cover"
-                    style={{ width: 'auto', height: 'auto' }}
                   />
+                ) : initials ? (
+                  <span className="text-white text-sm font-bold uppercase">{initials}</span>
                 ) : (
-                  <UserIcon className="w-6 h-6 text-white" />
+                  <UserIcon className="w-6 h-6 text-white/70" />
                 )}
               </button>
+
 
               {profileDropdownOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl overflow-hidden py-2 border border-blue-50/50 transform origin-top-right transition-all animate-in fade-in zoom-in duration-200">
@@ -206,10 +223,9 @@ export default function Header({
                   <button
                     onClick={async () => {
                       setProfileDropdownOpen(false);
-                      await axios.post(API_ROUTES.AUTH.LOGOUT);
+                      await axios.post(API_ROUTES.AUTH.LOGOUT).catch(() => {});
                       await signOut({ redirect: false });
-                      router.push(ROUTES.LOGIN);
-                      router.refresh();
+                      window.location.href = ROUTES.LOGIN;
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors group"
                   >
@@ -346,17 +362,18 @@ export default function Header({
                   onClick={() => setMenuOpen(false)}
                 >
                   <div className="w-8 h-8 rounded-full border border-white/30 overflow-hidden bg-white/10 flex items-center justify-center">
-                    {userImage ? (
-                      <Image
-                        src={userImage}
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
                         alt="Profile"
                         width={32}
                         height={32}
                         className="w-full h-full object-cover"
-                        style={{ width: 'auto', height: 'auto' }}
                       />
+                    ) : initials ? (
+                      <span className="text-white text-[10px] font-bold uppercase">{initials}</span>
                     ) : (
-                      <UserIcon className="w-5 h-5 flex-shrink-0" />
+                      <UserIcon className="w-5 h-5 text-white/70" />
                     )}
                   </div>
                   Profile
@@ -364,10 +381,9 @@ export default function Header({
                 <button
                   onClick={async () => {
                     setMenuOpen(false);
-                    await axios.post(API_ROUTES.AUTH.LOGOUT);
+                    await axios.post(API_ROUTES.AUTH.LOGOUT).catch(() => {});
                     await signOut({ redirect: false });
-                    router.push(ROUTES.LOGIN);
-                    router.refresh();
+                    window.location.href = ROUTES.LOGIN;
                   }}
                   className="font-montserrat text-white text-lg text-left font-bold"
                 >

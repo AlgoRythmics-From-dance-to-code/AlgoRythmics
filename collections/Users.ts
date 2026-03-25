@@ -75,6 +75,24 @@ export const Users: CollectionConfig = {
       required: true,
     },
     {
+      name: 'firstName',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'lastName',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'bio',
+      type: 'textarea',
+    },
+    {
       name: 'imageUrl',
       type: 'text',
       admin: {

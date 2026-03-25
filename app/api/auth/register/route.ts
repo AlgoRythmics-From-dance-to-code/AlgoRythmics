@@ -5,7 +5,7 @@ import { ROLES } from '../../../../lib/constants';
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const { email, password, firstName, lastName } = await req.json();
     const payload = await getPayload({ config: configPromise });
 
     const user = await payload.create({
@@ -13,8 +13,10 @@ export async function POST(req: Request) {
       data: {
         email,
         password,
+        firstName,
+        lastName,
         role: ROLES.USER, // Force user role to prevent unauthorized admin creation
-      },
+      } as any,
     });
 
     return NextResponse.json({ message: 'User created successfully', user });
