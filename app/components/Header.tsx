@@ -22,6 +22,8 @@ export default function Header({
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const { locale, setLocale, t } = useLocale();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   // ... (keep logic same)
   // Close dropdown when clicking outside
@@ -29,6 +31,9 @@ export default function Header({
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setLangDropdownOpen(false);
+      }
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setProfileDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -82,7 +87,7 @@ export default function Header({
 
         {/* Right actions (Desktop) */}
         <div className="hidden md:flex items-center gap-4 lg:gap-6">
-          {!isAuthenticated ? (
+          {!isAuthenticated && (
             <>
               <button
                 onClick={() => router.push('/register')}
@@ -97,39 +102,7 @@ export default function Header({
                 {t('nav.login')}
               </button>
             </>
-          ) : (
-            <button
-              onClick={async () => {
-                await axios.post('/api/auth/logout');
-                router.push('/login');
-                router.refresh();
-              }}
-              className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base font-bold"
-            >
-              Logout
-            </button>
           )}
-
-          {isAuthenticated && (
-            <Link
-              href="/profil"
-              className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white/20 hover:border-white/50 transition-colors overflow-hidden bg-white/10"
-            >
-              {userImage ? (
-                <Image
-                  src={userImage}
-                  alt="Profile"
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-cover"
-                  style={{ width: 'auto', height: 'auto' }}
-                />
-              ) : (
-                <UserIcon className="w-6 h-6 text-white" />
-              )}
-            </Link>
-          )}
-
           <ThemeToggle />
 
           {/* Language Dropdown */}
@@ -164,7 +137,7 @@ export default function Header({
               />
             </button>
 
-            {/* Dropdown Menu */}
+            {/* Language Selection Menu */}
             {langDropdownOpen && (
               <div className="absolute top-full right-0 mt-2 w-32 bg-white rounded-lg shadow-xl overflow-hidden py-1 border border-gray-100">
                 {languages.map((lang) => (
@@ -194,6 +167,74 @@ export default function Header({
               </div>
             )}
           </div>
+
+          {/* Profile Dropdown (Far Right) */}
+          {isAuthenticated && (
+            <div className="relative" ref={profileDropdownRef}>
+              <button
+                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white/20 hover:border-white/50 transition-colors overflow-hidden bg-white/10"
+              >
+                {userImage ? (
+                  <Image
+                    src={userImage}
+                    alt="Profile"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                    style={{ width: 'auto', height: 'auto' }}
+                  />
+                ) : (
+                  <UserIcon className="w-6 h-6 text-white" />
+                )}
+              </button>
+
+              {profileDropdownOpen && (
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl overflow-hidden py-2 border border-blue-50/50 transform origin-top-right transition-all animate-in fade-in zoom-in duration-200">
+                  <Link
+                    href="/profil"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50/50 transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                      <UserIcon className="w-4 h-4 text-[#269984]" />
+                    </div>
+                    <span className="font-montserrat text-sm font-semibold">Profil</span>
+                  </Link>
+                  <div className="h-px bg-gray-100 my-1 mx-4" />
+                  <button
+                    onClick={async () => {
+                      setProfileDropdownOpen(false);
+                      await axios.post('/api/auth/logout');
+                      router.push('/login');
+                      router.refresh();
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center group-hover:bg-red-100 transition-colors">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                        />
+                      </svg>
+                    </div>
+                    <span className="font-montserrat text-sm font-bold uppercase tracking-wider">
+                      Logout
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Mobile hamburger */}

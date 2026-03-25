@@ -20,7 +20,7 @@ function VerifyContent() {
 
     const verifyEmail = async () => {
       try {
-        await axios.post('/api/users/verify', { token });
+        await axios.post('/api/verify-account', { token });
         setStatus('success');
         setMessage('Your email has been successfully verified! You can now log in.');
       } catch (err: any) {
