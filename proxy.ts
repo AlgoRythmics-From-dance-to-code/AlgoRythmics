@@ -9,25 +9,26 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthPage = pathname.startsWith(ROUTES.LOGIN) || pathname.startsWith(ROUTES.REGISTER);
   const isHomePage = pathname === ROUTES.HOME;
-  const isPublicPage = isHomePage || pathname === '/about' || pathname.startsWith(ROUTES.VERIFY);
+  // Admin logic: Payload handles its own auth, so we don't redirect to /login
   const isAdmin = pathname.startsWith('/admin');
+  
   const isApiOrStatic =
     pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname.includes('.');
 
   // Bypass API routes and static files immediately
-  if (isApiOrStatic) {
+  if (isApiOrStatic || isAdmin) {
     return NextResponse.next();
   }
 
   // Define truly protected paths
   const isProtectedRoute = pathname.startsWith(ROUTES.ALGORITHMS) || pathname.startsWith(ROUTES.COURSES);
 
-  // If unauthenticated and trying to access protected route
-  if (!token && (isProtectedRoute || isAdmin)) {
+  // If unauthenticated and trying to access protected frontend route (Algorithms, Courses)
+  if (!token && isProtectedRoute) {
     return NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
   }
 
-  // If authenticated and trying to access auth pages, redirect to home
+  // If authenticated and trying to access auth pages (Login/Register), redirect to home
   if (token && isAuthPage) {
     return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
   }
