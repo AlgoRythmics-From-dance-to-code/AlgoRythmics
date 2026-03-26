@@ -25,7 +25,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
-    migrationDir: path.resolve(process.cwd(), 'migrations'),
+    migrationDir: path.resolve(dirname, 'migrations'), // Use dirname for more robust ESM path resolution
   }),
   sharp,
   email: resendAdapter({
