@@ -122,6 +122,9 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   role: 'admin' | 'user';
+  firstName?: string | null;
+  lastName?: string | null;
+  bio?: string | null;
   imageUrl?: string | null;
   authProvider?: ('email' | 'google' | 'facebook' | 'discord' | 'github') | null;
   authProviderId?: string | null;
@@ -221,6 +224,9 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   role?: T;
+  firstName?: T;
+  lastName?: T;
+  bio?: T;
   imageUrl?: T;
   authProvider?: T;
   authProviderId?: T;

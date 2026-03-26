@@ -9,6 +9,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import axios from 'axios';
 
+import { auth } from '../../auth';
 import NextAuthProvider from '../components/NextAuthProvider';
 
 const montserrat = Montserrat({
@@ -17,6 +18,7 @@ const montserrat = Montserrat({
 });
 
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
   const token = (await cookies()).get('payload-token')?.value;
   let userImage: string | null = null;
 
@@ -34,11 +36,11 @@ export default async function FrontendLayout({ children }: { children: React.Rea
         userImage = data.user.imageUrl || null;
       }
     } catch (e) {
-      console.error('Layout auth check failed', e);
+      console.error('Layout auth check failed:', e instanceof Error ? e.message : e);
     }
   }
 
-  const isAuthenticated = !!token;
+  const isAuthenticated = !!token || !!session;
 
   return (
     <html lang="en" suppressHydrationWarning>

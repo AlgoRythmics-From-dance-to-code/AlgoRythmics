@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 });
     }
   } catch (error: any) {
-    console.error('Verify Account error:', error);
+    console.error('Verify Account error:', error.message || error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

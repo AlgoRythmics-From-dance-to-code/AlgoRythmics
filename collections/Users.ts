@@ -41,7 +41,7 @@ export const Users: CollectionConfig = {
             });
             user._verified = true;
           } catch (e) {
-            console.error('Failed to auto-verify admin:', e);
+            console.error('Failed to auto-verify admin:', e instanceof Error ? e.message : e);
           }
         }
 
@@ -73,6 +73,24 @@ export const Users: CollectionConfig = {
       ],
       defaultValue: ROLES.USER,
       required: true,
+    },
+    {
+      name: 'firstName',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'lastName',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'bio',
+      type: 'textarea',
     },
     {
       name: 'imageUrl',

@@ -4,7 +4,15 @@ import { APP_CONFIG, ROUTES } from './lib/constants';
 
 export function proxy(request: NextRequest) {
   // Check for the payload token cookie
-  const token = request.cookies.get(APP_CONFIG.COOKIE_TOKEN_NAME)?.value;
+  const payloadToken = request.cookies.get(APP_CONFIG.COOKIE_TOKEN_NAME)?.value;
+  // Check for NextAuth token
+  const nextAuthToken = 
+    request.cookies.get('next-auth.session-token')?.value || 
+    request.cookies.get('__Secure-next-auth.session-token')?.value ||
+    request.cookies.get('authjs.session-token')?.value ||
+    request.cookies.get('__Secure-authjs.session-token')?.value;
+
+  const token = payloadToken || nextAuthToken;
 
   const { pathname } = request.nextUrl;
   const isAuthPage = pathname.startsWith(ROUTES.LOGIN) || pathname.startsWith(ROUTES.REGISTER);
@@ -22,7 +30,6 @@ export function proxy(request: NextRequest) {
 
   // Define truly protected paths
   const isProtectedRoute = pathname.startsWith(ROUTES.ALGORITHMS) || pathname.startsWith(ROUTES.COURSES);
-
   // If unauthenticated and trying to access protected frontend route (Algorithms, Courses)
   if (!token && isProtectedRoute) {
     return NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));

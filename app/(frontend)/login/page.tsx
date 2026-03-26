@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import axios from 'axios';
 import { signIn } from 'next-auth/react';
 import { ROUTES, API_ROUTES } from '../../../lib/constants';
 
@@ -54,15 +53,21 @@ export default function LoginPage() {
     setSystemError(null);
 
     try {
-      await axios.post(API_ROUTES.AUTH.LOGIN, { email, password });
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setSystemError('Hibás e-mail vagy jelszó, vagy nem erősítetted meg a fiókodat!');
+        return;
+      }
+
       router.push(ROUTES.HOME);
       router.refresh();
     } catch (error: any) {
-      const backendError = error.response?.data?.error || 'Login failed.';
-      setSystemError(backendError);
-      setErrors({
-        email: 'Check your credentials',
-      });
+      setSystemError('Hiba történt a bejelentkezés során.');
     } finally {
       setIsLoading(false);
     }

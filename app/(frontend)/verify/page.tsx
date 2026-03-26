@@ -25,7 +25,7 @@ function VerifyContent() {
         setStatus('success');
         setMessage('Your email has been successfully verified! You can now log in.');
       } catch (err: any) {
-        console.error('Verification error:', err);
+        console.error('Verification error:', err.message || err);
         setStatus('error');
         const errDetail = err.response?.data?.errors?.[0]?.message || err.response?.data?.error || err.message;
         setMessage(`Verification failed: ${errDetail}. The link may be expired or invalid.`);

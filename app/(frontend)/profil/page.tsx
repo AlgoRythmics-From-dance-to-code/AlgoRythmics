@@ -1,57 +1,202 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { AlertTriangle } from 'lucide-react';
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  
+  const day = date.getDate();
+  const suffix = (day: number) => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1:  return 'st';
+      case 2:  return 'nd';
+      case 3:  return 'rd';
+      default: return 'th';
+    }
+  };
+
+  const month = date.toLocaleString('en-US', { month: 'long' });
+  const year = date.getFullYear();
+  const time = date.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+  return `${month} ${day}${suffix(day)} ${year}, ${time}`;
+};
 
 const sidebarLinks = [
   { key: 'public', label: 'Public Profile' },
   { key: 'edit', label: 'Edit Profile' },
-  { key: 'password', label: 'Password' },
-  { key: 'external', label: 'External Logins' },
-  { key: 'auth', label: 'Two-Factor Auth' },
+  { key: 'password', label: 'Security' },
   { key: 'delete', label: 'Delete Account' },
 ];
 
 export default function ProfilePage() {
+  const { data: session, status, update } = useSession();
+  const router = useRouter();
+  
   const [activeTab, setActiveTab] = useState('public');
-  const [firstName, setFirstName] = useState('John');
-  const [lastName, setLastName] = useState('Doe');
-  const email = 'john@example.com';
-  const [bio, setBio] = useState(
-    'Computer science enthusiast learning algorithms through dance and music.',
-  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState({ text: '', type: '' });
+
+  // Form states
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [bio, setBio] = useState('');
+  
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleteConfirmed, setIsDeleteConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (session?.user) {
+      setFirstName((session.user as any).firstName || '');
+      setLastName((session.user as any).lastName || '');
+      setBio((session.user as any).bio || '');
+    }
+  }, [session]);
+
+  if (status === 'loading') {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-[#269984] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!session) return null;
+
+  const user = session.user as any;
+  const fullName = `${firstName} ${lastName}`.trim() || user.email;
+  
+  const getInitials = () => {
+    if (firstName && lastName) return (firstName[0] + lastName[0]).toUpperCase();
+    if (firstName) return firstName[0].toUpperCase();
+    if (lastName) return lastName[0].toUpperCase();
+    return (user.email?.[0] || 'U').toUpperCase();
+  };
+  
+  const initials = getInitials();
+  const avatarUrl = user.imageUrl || user.image;
+
+  const handleUpdateProfile = async () => {
+    setIsSaving(true);
+    setSaveMessage({ text: '', type: '' });
+
+    try {
+      await axios.post('/api/profile/update', { firstName, lastName, bio });
+      setSaveMessage({ text: 'Profil sikeresen frissítve!', type: 'success' });
+      
+      // Refresh the session to get latest data from DB
+      await update();
+    } catch (error: any) {
+      setSaveMessage({ text: error.response?.data?.error || 'Hiba történt a mentés során.', type: 'error' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setSaveMessage({ text: 'Kérlek tölts ki minden jelszó mezőt!', type: 'error' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setSaveMessage({ text: 'Az új jelszavak nem egyeznek!', type: 'error' });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await axios.post('/api/profile/update-password', { currentPassword, newPassword });
+      setSaveMessage({ text: 'Jelszó sikeresen módosítva!', type: 'success' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      setSaveMessage({ text: error.response?.data?.error || 'Hiba történt a jelszó módosítása során.', type: 'error' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== user.email) {
+      setSaveMessage({ text: 'Kérlek írd be pontosan az e-mail címedet a törléshez!', type: 'error' });
+      return;
+    }
+    if (!isDeleteConfirmed) {
+      setSaveMessage({ text: 'Kérlek jelöld be az elfogadó négyzetet!', type: 'error' });
+      return;
+    }
+
+    if (!confirm('VIGYÁZAT! Biztosan és végérvényesen törölni szeretnéd a fiókodat?')) return;
+    
+    setIsSaving(true);
+    try {
+      await axios.delete('/api/profile/delete');
+      await signOut({ callbackUrl: '/' });
+    } catch (error: any) {
+      setSaveMessage({ text: 'Hiba történt a fiók törlése során.', type: 'error' });
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a] min-h-screen">
       {/* Hero */}
-      <div className="flex flex-col items-center justify-center px-6 py-12 md:py-16 bg-[#F0FBF9] dark:bg-[#112220]">
-        <h1 className="font-montserrat font-bold text-black dark:text-white text-3xl sm:text-4xl">
-          Profile Settings
-        </h1>
+      <div className="bg-[#269984] py-12 md:py-20 px-6 sm:px-12">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="font-montserrat font-black text-3xl sm:text-4xl lg:text-5xl text-white mb-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            Account Settings
+          </h1>
+          <p className="font-montserrat text-white/80 text-base sm:text-lg max-w-2xl">
+            Kezeld a profilodat, biztonsági beállításaidat és regisztrációs adataidat egy helyen.
+          </p>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 md:py-16">
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12">
-          {/* Sidebar */}
-          <div className="md:w-64 lg:w-72 flex-shrink-0">
-            {/* Mobile: horizontal scroll tabs */}
-            <div className="flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
-              {sidebarLinks.map((link) => (
-                <button
-                  key={link.key}
-                  onClick={() => setActiveTab(link.key)}
-                  className={`font-montserrat font-bold transition-all rounded-lg text-left whitespace-nowrap px-4 py-3 sm:px-5 sm:py-3.5 text-sm sm:text-base cursor-pointer ${
-                    activeTab === link.key
-                      ? 'bg-[#269984] text-white'
-                      : 'bg-transparent text-[#333] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5'
-                  }`}
-                >
-                  {link.label}
-                </button>
-              ))}
+      <div className="max-w-6xl mx-auto px-6 sm:px-12 py-10 md:py-16">
+        <div className="flex flex-col lg:flex-row gap-10 md:gap-16">
+          {/* Sidebar Nav */}
+          <div className="w-full lg:w-64 flex-shrink-0">
+            <div className="flex lg:flex-col overflow-x-auto lg:overflow-visible no-scrollbar gap-2 pb-4 lg:pb-0 sticky top-24">
+              {sidebarLinks
+                .filter(link => {
+                  if (link.key === 'password' && user.authProvider && user.authProvider !== 'email') {
+                    return false;
+                  }
+                  return true;
+                })
+                .map((link) => (
+                  <button
+                    key={link.key}
+                    onClick={() => {
+                      setActiveTab(link.key);
+                      setSaveMessage({ text: '', type: '' });
+                    }}
+                    className={`flex-shrink-0 lg:w-full text-left px-5 py-3.5 rounded-xl font-montserrat font-bold text-sm transition-all duration-300 ${
+                      activeTab === link.key
+                        ? 'bg-[#269984] text-white'
+                        : 'bg-transparent text-[#333] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    {link.label}
+                  </button>
+                ))}
             </div>
           </div>
 
@@ -64,20 +209,24 @@ export default function ProfilePage() {
                 </h2>
                 <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 mb-8 p-6 sm:p-8 rounded-2xl bg-[#FAFAFA] dark:bg-[#1a1a1a]">
                   <div
-                    className="flex items-center justify-center rounded-full font-montserrat font-bold text-white w-20 h-20 sm:w-24 sm:h-24 text-2xl sm:text-4xl flex-shrink-0"
+                    className="flex items-center justify-center rounded-full font-montserrat font-bold text-white w-20 h-20 sm:w-24 sm:h-24 text-2xl sm:text-4xl flex-shrink-0 uppercase overflow-hidden"
                     style={{ backgroundColor: '#269984' }}
                   >
-                    JD
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+                    ) : (
+                      initials
+                    )}
                   </div>
                   <div className="text-center sm:text-left">
                     <h3 className="font-montserrat font-bold text-xl sm:text-2xl text-black dark:text-white">
-                      John Doe
+                      {fullName}
                     </h3>
                     <p className="font-montserrat text-sm sm:text-base text-[#666] dark:text-gray-400">
-                      {email}
+                      {user.email}
                     </p>
                     <p className="font-montserrat mt-2 text-xs sm:text-sm text-[#999] dark:text-gray-500">
-                      Member since January 2024
+                      Created: {formatDate(user.createdAt)}
                     </p>
                   </div>
                 </div>
@@ -86,7 +235,7 @@ export default function ProfilePage() {
                     Bio
                   </h4>
                   <p className="font-montserrat text-sm sm:text-base text-[#666] dark:text-gray-400 leading-relaxed">
-                    {bio}
+                    {bio || 'Nincs megadva biográfia.'}
                   </p>
                 </div>
               </div>
@@ -132,9 +281,19 @@ export default function ProfilePage() {
                       className="w-full font-montserrat h-28 border-2 border-[#E0E0E0] dark:border-white/20 dark:bg-[#1a1a1a] dark:text-white rounded-lg p-4 text-base outline-none resize-none focus:border-[#36D6BA] transition-colors"
                     />
                   </div>
-                  <button className="font-montserrat font-bold text-white h-12 px-8 rounded-lg text-base hover:opacity-90 transition-all cursor-pointer bg-[#269984]">
-                    Save Changes
+                  <button 
+                    onClick={handleUpdateProfile}
+                    disabled={isSaving}
+                    className="font-montserrat font-bold text-white h-12 px-8 rounded-lg text-base hover:opacity-90 transition-all cursor-pointer bg-[#269984] disabled:opacity-50"
+                  >
+                    {isSaving ? 'Mentés...' : 'Save Changes'}
                   </button>
+
+                  {saveMessage.text && (
+                    <p className={`text-sm mt-3 ${saveMessage.type === 'success' ? 'text-[#269984]' : 'text-red-500'}`}>
+                      {saveMessage.text}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -142,150 +301,141 @@ export default function ProfilePage() {
             {activeTab === 'password' && (
               <div>
                 <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-6 md:mb-8">
-                  Change Password
+                  Security
                 </h2>
-                <div className="space-y-5 max-w-md">
-                  <div>
-                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                      Current password
-                    </label>
-                    <input
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full font-montserrat h-12 border-2 border-[#E0E0E0] dark:border-white/20 dark:bg-[#1a1a1a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors"
-                    />
+                {user.authProvider && user.authProvider !== 'email' ? (
+                  <div className="p-6 sm:p-8 rounded-2xl bg-blue-50 dark:bg-blue-900/10 border-2 border-blue-100 dark:border-blue-900/20 max-w-2xl">
+                    <h3 className="font-montserrat font-bold text-lg text-blue-800 dark:text-blue-400 mb-3">
+                      Social Login
+                    </h3>
+                    <p className="font-montserrat text-sm sm:text-base text-blue-700 dark:text-blue-300/80 leading-relaxed">
+                      Jelenleg a(z) <strong className="uppercase">{user.authProvider}</strong> szolgáltatóval vagy bejelentkezve. A jelszavadat a szolgáltató oldalán tudod módosítani.
+                    </p>
                   </div>
-                  <div>
-                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                      New password
-                    </label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full font-montserrat h-12 border-2 border-[#E0E0E0] dark:border-white/20 dark:bg-[#1a1a1a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                      Confirm new password
-                    </label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full font-montserrat h-12 border-2 border-[#E0E0E0] dark:border-white/20 dark:bg-[#1a1a1a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors"
-                    />
-                  </div>
-                  <button className="font-montserrat font-bold text-white h-12 px-8 rounded-lg text-base hover:opacity-90 transition-all cursor-pointer bg-[#269984]">
-                    Update Password
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'external' && (
-              <div>
-                <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-6 md:mb-8">
-                  External Logins
-                </h2>
-                <div className="space-y-4 max-w-lg">
-                  <div className="flex items-center justify-between p-4 sm:p-5 rounded-xl border-2 border-[#E0E0E0] dark:border-white/20 bg-white dark:bg-[#1a1a1a]">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <svg width="24" height="24" viewBox="0 0 48 48">
-                        <path
-                          fill="#FFC107"
-                          d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
-                        />
-                        <path
-                          fill="#FF3D00"
-                          d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"
-                        />
-                        <path
-                          fill="#4CAF50"
-                          d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"
-                        />
-                        <path
-                          fill="#1976D2"
-                          d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
-                        />
-                      </svg>
-                      <span className="font-montserrat font-bold text-sm sm:text-base text-black dark:text-white">
-                        Google
-                      </span>
+                ) : (
+                  <div className="space-y-5 max-w-md">
+                    <div>
+                      <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                        Current password
+                      </label>
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full font-montserrat h-12 border-2 border-[#E0E0E0] dark:border-white/20 dark:bg-[#1a1a1a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors"
+                      />
                     </div>
-                    <button className="font-montserrat font-bold text-sm border-2 border-[#269984] text-[#269984] bg-transparent rounded-lg px-4 sm:px-5 py-2 cursor-pointer hover:bg-[#269984] hover:text-white transition-all">
-                      Connect
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between p-4 sm:p-5 rounded-xl border-2 border-[#E0E0E0] dark:border-white/20 bg-white dark:bg-[#1a1a1a]">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#1877F2">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                      </svg>
-                      <span className="font-montserrat font-bold text-sm sm:text-base text-black dark:text-white">
-                        Facebook
-                      </span>
+                    <div>
+                      <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                        New password
+                      </label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full font-montserrat h-12 border-2 border-[#E0E0E0] dark:border-white/20 dark:bg-[#1a1a1a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors"
+                      />
                     </div>
-                    <button className="font-montserrat font-bold text-sm border-2 border-[#269984] text-[#269984] bg-transparent rounded-lg px-4 sm:px-5 py-2 cursor-pointer hover:bg-[#269984] hover:text-white transition-all">
-                      Connect
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'auth' && (
-              <div>
-                <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-4 md:mb-6">
-                  Two-Factor Authentication
-                </h2>
-                <p
-                  className="font-montserrat text-sm sm:text-base mb-6 text-[#666] dark:text-gray-400"
-                  style={{ lineHeight: '1.8em' }}
-                >
-                  Add an extra layer of security to your account by enabling two-factor
-                  authentication.
-                </p>
-                <div className="p-5 sm:p-6 rounded-xl border-2 border-[#E0E0E0] dark:border-white/20 max-w-lg bg-white dark:bg-[#1a1a1a]">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <span className="font-montserrat font-bold text-sm sm:text-base text-black dark:text-white">
-                      Two-Factor Authentication
-                    </span>
-                    <span
-                      className="font-montserrat font-bold text-xs px-3 py-1 rounded-full"
-                      style={{ color: '#E74C3C', backgroundColor: '#FDEDEC' }}
+                    <div>
+                      <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                        Confirm new password
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full font-montserrat h-12 border-2 border-[#E0E0E0] dark:border-white/20 dark:bg-[#1a1a1a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors"
+                      />
+                    </div>
+                    <button 
+                      onClick={handleUpdatePassword}
+                      disabled={isSaving}
+                      className="font-montserrat font-bold text-white h-12 px-8 rounded-lg text-base hover:opacity-90 transition-all cursor-pointer bg-[#269984] disabled:opacity-50"
                     >
-                      Disabled
-                    </span>
+                      {isSaving ? 'Jelszó mentése...' : 'Update Password'}
+                    </button>
+                    {saveMessage.text && (
+                      <p className={`text-sm mt-3 ${saveMessage.type === 'success' ? 'text-[#269984]' : 'text-red-500'}`}>
+                        {saveMessage.text}
+                      </p>
+                    )}
                   </div>
-                  <button className="font-montserrat font-bold text-white mt-4 h-10 px-6 rounded-lg text-sm cursor-pointer hover:opacity-90 transition-all bg-[#269984]">
-                    Enable 2FA
-                  </button>
-                </div>
+                )}
               </div>
             )}
+
 
             {activeTab === 'delete' && (
               <div>
-                <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl mb-4 md:mb-6 text-[#E74C3C]">
-                  Delete Account
+                <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-red-600 mb-6 md:mb-8">
+                  Veszélyzóna: Fiók törlése
                 </h2>
-                <div className="p-6 sm:p-8 rounded-xl max-w-xl bg-[#FFF5F5] dark:bg-[#330000] border-2 border-[#FDEDEC] dark:border-[#E74C3C]/30">
-                  <p
-                    className="font-montserrat text-sm sm:text-base mb-4 text-[#333] dark:text-gray-200"
-                    style={{ lineHeight: '1.8em' }}
-                  >
-                    Once you delete your account, all of your data will be permanently removed. This
-                    action cannot be undone.
-                  </p>
-                  <button className="font-montserrat font-bold text-white h-10 px-6 rounded-lg text-sm cursor-pointer hover:opacity-90 transition-all bg-[#E74C3C]">
-                    Delete My Account
-                  </button>
+                <div className="p-6 sm:p-8 rounded-2xl bg-red-50 dark:bg-red-900/10 border-2 border-red-200 dark:border-red-900/30 max-w-2xl">
+                  <div className="flex items-center gap-3 mb-4 text-red-600">
+                    <AlertTriangle className="w-8 h-8" />
+                    <h3 className="font-montserrat font-black text-xl">
+                      FIGYELEM! A művelet nem vonható vissza.
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4 mb-8">
+                    <p className="font-montserrat text-sm sm:text-base text-red-700 dark:text-red-300 leading-relaxed uppercase font-bold">
+                       A fiókod törlésével minden adatod véglegesen megsemmisül!
+                    </p>
+                    <ul className="list-disc list-inside font-montserrat text-sm text-red-600/80 dark:text-red-400/80 space-y-1 ml-2">
+                       <li>Minden vásárolt kurzusod elveszik</li>
+                       <li>Minden elért pontod és jelvényed törlődik</li>
+                       <li>A statisztikáid megsemmisülnek</li>
+                       <li>Profilod és elért eredményeid eltűnnek</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="bg-white dark:bg-black/20 p-4 rounded-xl border border-red-200 dark:border-red-900/40">
+                      <p className="font-montserrat text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        A törlés megerősítéséhez kérlek írd be ide az e-mail címedet: <strong className="text-black dark:text-white select-all">{user.email}</strong>
+                      </p>
+                      <input
+                        type="email"
+                        value={deleteConfirmation}
+                        onChange={(e) => setDeleteConfirmation(e.target.value)}
+                        placeholder="E-mail címed"
+                        className="w-full font-montserrat h-12 border-2 border-red-100 dark:border-red-900/40 bg-white dark:bg-[#1a1a1a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-red-500 transition-colors"
+                      />
+                    </div>
+
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={isDeleteConfirmed}
+                        onChange={(e) => setIsDeleteConfirmed(e.target.checked)}
+                        className="mt-1 w-5 h-5 accent-red-600 cursor-pointer"
+                      />
+                      <span className="font-montserrat text-sm text-gray-700 dark:text-gray-300 group-hover:text-red-600 transition-colors">
+                        Megértettem, hogy a törlés után nem állítható vissza a fiókom és az összes haladásom elveszik.
+                      </span>
+                    </label>
+
+                    <div>
+                      <button 
+                        onClick={handleDeleteAccount}
+                        disabled={isSaving || deleteConfirmation !== user.email || !isDeleteConfirmed}
+                        className="w-full sm:w-auto font-montserrat font-black text-white h-14 px-10 rounded-xl text-lg hover:bg-red-700 focus:ring-4 focus:ring-red-200 transition-all cursor-pointer bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-red-200 dark:shadow-none"
+                      >
+                        {isSaving ? 'Fiók törlése folyamatban...' : 'FIÓK VÉGLEGES TÖRLÉSE'}
+                      </button>
+                      
+                      {saveMessage.text && saveMessage.type === 'error' && (
+                        <p className="text-red-600 font-bold text-sm mt-4 animate-bounce">
+                          {saveMessage.text}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
+
           </div>
         </div>
       </div>
