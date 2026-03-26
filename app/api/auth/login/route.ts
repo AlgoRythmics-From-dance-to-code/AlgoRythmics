@@ -28,11 +28,7 @@ export async function POST(req: Request) {
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Login failed';
-    console.error('Login Route Error:', {
-      message,
-      error,
-      env: process.env.NODE_ENV
-    });
+    console.error('Login Route Error:', message);
     return NextResponse.json({ error: message }, { status: 401 });
   }
 }

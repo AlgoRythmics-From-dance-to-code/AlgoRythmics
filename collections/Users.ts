@@ -41,7 +41,7 @@ export const Users: CollectionConfig = {
             });
             user._verified = true;
           } catch (e) {
-            console.error('Failed to auto-verify admin:', e);
+            console.error('Failed to auto-verify admin:', e instanceof Error ? e.message : e);
           }
         }
 

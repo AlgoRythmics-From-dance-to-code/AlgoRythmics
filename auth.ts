@@ -84,7 +84,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
           
           if (result && result.user) {
-            console.log('Authorize: Success for', credentials.email);
             return {
               id: result.user.id.toString(),
               name: (result.user as any).firstName ? `${(result.user as any).firstName} ${(result.user as any).lastName}` : result.user.email,
@@ -92,10 +91,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               role: (result.user as any).role,
             };
           }
-          console.warn('Authorize: Failed for', credentials.email, 'result was', !!result);
+          console.warn('Authorize: Failed (credentials), result was', !!result);
           return null;
         } catch (error: any) {
-          console.error('Authorize: Error for', credentials.email, ':', error.message || error);
+          console.error('Authorize: Error (credentials):', error.message || error);
           return null;
         }
       },
@@ -108,7 +107,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async signIn({ user, account }) {
-      console.log('SignIn Callback: Start for', user.email, 'with provider', account?.provider);
       if (!account || !user.email) {
         console.error('NextAuth signIn error: Missing account or email', { 
           provider: account?.provider, 
@@ -118,7 +116,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (account.provider === 'credentials') {
-        console.log('SignIn Callback: Skipping sync for credentials user', user.email);
         return true;
       }
 
@@ -160,7 +157,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             } as any,
             disableVerificationEmail: true,
           } as any);
-          console.log(`New user created via ${account.provider}: ${user.email}`);
+          console.log(`New user created via ${account.provider}`);
         } else {
           // Update existing user with latest provider info
           const existingUser = existing.docs[0] as any;
@@ -191,7 +188,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               data: updateData,
               disableVerificationEmail: true,
             } as any);
-            console.log(`Updated user ${user.email} with latest ${account.provider} info`);
+            console.log(`Updated user with latest ${account.provider} info`);
           }
         }
 
@@ -208,8 +205,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.email = user.email;
       }
       
-      // Update from DB on sign in OR when session.update() is called OR if email exists
-      if (token.email) {
+      // ONLY update from DB on sign-in (account present) OR when session.update() is triggered
+      if (token.email && (account || trigger === 'update')) {
         try {
           const { getPayload } = await import('payload');
           const configPromise = (await import('./payload.config')).default;

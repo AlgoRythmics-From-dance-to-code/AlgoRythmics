@@ -36,7 +36,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
         userImage = data.user.imageUrl || null;
       }
     } catch (e) {
-      console.error('Layout auth check failed', e);
+      console.error('Layout auth check failed:', e instanceof Error ? e.message : e);
     }
   }
 

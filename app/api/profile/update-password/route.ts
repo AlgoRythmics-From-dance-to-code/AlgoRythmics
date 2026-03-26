@@ -11,15 +11,37 @@ export async function POST(req: Request) {
     }
 
     const { currentPassword, newPassword } = await req.json();
+
+    if (!newPassword || newPassword.length < 6) {
+      return NextResponse.json({ error: 'A jelszónak legalább 6 karakterből kell állnia.' }, { status: 400 });
+    }
+
     const payload = await getPayload({ config: configPromise });
+
+    // Verify current password first to ensure requester is the account owner
+    try {
+      await payload.login({
+        collection: 'users',
+        data: {
+          email: session.user.email,
+          password: currentPassword,
+        },
+      });
+    } catch (e) {
+      return NextResponse.json({ error: 'A jelenlegi jelszó hibás.' }, { status: 400 });
+    }
 
     // Find the user by email
     const result = await payload.find({
       collection: 'users',
       where: { email: { equals: session.user.email } },
       limit: 1,
-      showHiddenFields: true, // Need this to access password field
+      showHiddenFields: true, // Need this to access authProvider field
     });
+
+    if (result.docs.length === 0) {
+      return NextResponse.json({ error: 'Sajnos nem találjuk a felhasználót.' }, { status: 404 });
+    }
 
     const dbUser = result.docs[0] as any;
 

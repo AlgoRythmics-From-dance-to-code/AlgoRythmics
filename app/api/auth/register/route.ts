@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'User created successfully', user });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Registration failed';
-    console.error('Registration Route Error:', { message, error });
+    console.error('Registration Route Error:', message);
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

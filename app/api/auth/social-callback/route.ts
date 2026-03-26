@@ -58,7 +58,7 @@ export async function GET() {
     return NextResponse.redirect(new URL(ROUTES.HOME, baseUrl));
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown social error';
-    console.error('Social callback error details:', { message, error });
+    console.error('Social callback error details:', message);
     return NextResponse.redirect(new URL(`${ROUTES.LOGIN}?error=social-login-failed&detail=${encodeURIComponent(message)}`, baseUrl));
   }
 }

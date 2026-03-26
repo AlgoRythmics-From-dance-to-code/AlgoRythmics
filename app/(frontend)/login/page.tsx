@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import axios from 'axios';
 import { signIn } from 'next-auth/react';
 import { ROUTES, API_ROUTES } from '../../../lib/constants';
 

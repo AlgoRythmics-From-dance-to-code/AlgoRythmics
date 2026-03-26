@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Profile updated successfully' });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Update failed';
-    console.error('Profile Update Route Error:', { message, error });
+    console.error('Profile Update Route Error:', message);
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
