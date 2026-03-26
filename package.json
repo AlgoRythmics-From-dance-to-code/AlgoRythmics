@@ -8,7 +8,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "payload generate:importmap && payload migrate && next build --turbopack",
+    "build": "next build",
+    "vercel-build": "payload generate:importmap && payload migrate && next build",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
