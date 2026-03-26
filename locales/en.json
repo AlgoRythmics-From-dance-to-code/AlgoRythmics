@@ -59,8 +59,9 @@
     "unexpected_error": "Unexpected error",
     "unexpected_error_desc": "Please try again later.",
     "register_success": "Registration successful!",
-    "register_success_desc": "Please check your email to confirm your account.",
+     "register_success_desc": "Please check your email to confirm your account.",
     "register_error": "Registration error",
+    "register_error_desc": "Registration failed. Please check your data or try again later.",
     "profile_updated": "Profile updated",
     "profile_updated_desc": "Changes have been saved.",
     "profile_update_error": "Save error",
@@ -99,7 +100,9 @@
       "bio_title": "About me",
       "no_bio": "No bio yet.",
       "member_since": "Member since",
-      "account_details": "Account Details",
+       "account_details": "Account Details",
+      "provider": "Provider",
+      "status": "Status",
       "progress_title": "Your progress",
       "progress_subtitle": "Ready for next lesson?",
       "verified_status": "Verified Account"
@@ -182,8 +185,9 @@
     }
   },
   "verify": {
-    "loading": "Verifying your email...",
+     "loading": "Verifying your email...",
     "no_token": "No verification token found.",
+    "invalid_token": "The verification token is invalid or has expired.",
     "success_msg": "Your email has been successfully verified! You can now log in.",
     "error_msg": "Verification failed: {error}. The link may be expired or invalid.",
     "title_verifying": "Verifying...",

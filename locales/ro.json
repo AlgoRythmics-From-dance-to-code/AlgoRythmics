@@ -61,6 +61,7 @@
     "register_success": "Înregistrare reușită!",
     "register_success_desc": "Vă rugăm să vă verificați e-mailul pentru a confirma contul.",
     "register_error": "Eroare de înregistrare",
+    "register_error_desc": "Înregistrarea a eșuat. Vă rugăm să vă verificați datele sau să încercați mai târziu.",
     "profile_updated": "Profil actualizat",
     "profile_updated_desc": "Modificările au fost salvate.",
     "profile_update_error": "Eroare la salvare",
@@ -100,6 +101,8 @@
       "no_bio": "Niciun bio încă.",
       "member_since": "Membru din",
       "account_details": "Detalii cont",
+      "provider": "Furnizor",
+      "status": "Stare",
       "progress_title": "Progresul tău",
       "progress_subtitle": "Ești gata pentru următoarea lecție?",
       "verified_status": "Cont verificat"
@@ -184,6 +187,7 @@
   "verify": {
     "loading": "Se verifică adresa de e-mail...",
     "no_token": "Nu a fost găsit niciun token de verificare.",
+    "invalid_token": "Tokenul de verificare este invalid sau a expirat.",
     "success_msg": "Adresa de e-mail a fost verificată cu succes! Acum te poți autentifica.",
     "error_msg": "Verificarea a eșuat: {error}. Link-ul poate fi expirat sau invalid.",
     "title_verifying": "Se verifică...",

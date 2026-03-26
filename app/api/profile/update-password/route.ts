@@ -10,13 +10,13 @@ export async function POST(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.email) {
-      return NextResponse.json({ error: t('toasts.unexpected_error_desc') }, { status: 401 });
+      return NextResponse.json({ error: t('errors.unauthorized') }, { status: 401 });
     }
 
     const { currentPassword, newPassword } = await req.json();
 
     if (!newPassword || newPassword.length < 6) {
-      return NextResponse.json({ error: t('locales.password_min') }, { status: 400 });
+      return NextResponse.json({ error: t('toasts.password_min') }, { status: 400 });
     }
 
     const payload = await getPayload({ config: configPromise });
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         },
       });
     } catch (e) {
-      return NextResponse.json({ error: t('locales.password_current_incorrect') }, { status: 400 });
+      return NextResponse.json({ error: t('toasts.password_current_incorrect') }, { status: 400 });
     }
 
     // Find the user by email
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     });
 
     if (result.docs.length === 0) {
-      return NextResponse.json({ error: t('toasts.delete_error') }, { status: 404 });
+      return NextResponse.json({ error: t('errors.user_not_found') }, { status: 404 });
     }
 
     const dbUser = result.docs[0] as any;
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     // Check if user is a social user
     if (dbUser.authProvider && dbUser.authProvider !== 'email') {
       return NextResponse.json(
-        { error: t('locales.password_social_error') },
+        { error: t('toasts.password_social_error') },
         { status: 400 }
       );
     }

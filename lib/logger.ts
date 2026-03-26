@@ -1,3 +1,4 @@
+import 'server-only';
 import pino, { Logger } from 'pino';
 
 const isDevelopment = process.env.NODE_ENV === 'development';

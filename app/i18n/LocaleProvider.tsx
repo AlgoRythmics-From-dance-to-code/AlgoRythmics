@@ -43,6 +43,7 @@ export default function LocaleProvider({ children }: { children: React.ReactNode
     setLocaleState(l);
     try {
       localStorage.setItem('locale', l);
+      document.cookie = `locale=${l};path=/;max-age=31536000;SameSite=Lax`;
     } catch {}
   }
 

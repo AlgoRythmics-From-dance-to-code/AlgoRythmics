@@ -61,6 +61,7 @@
     "register_success": "Sikeres regisztráció!",
     "register_success_desc": "Kérjük, ellenőrizd az e-mail címedet a megerősítéshez.",
     "register_error": "Regisztrációs hiba",
+    "register_error_desc": "A regisztráció sikertelen. Kérjük, ellenőrizd az adataidat vagy próbáld meg később.",
     "profile_updated": "Profil frissítve",
     "profile_updated_desc": "A módosítások mentésre kerültek.",
     "profile_update_error": "Hiba a mentésnél",
@@ -100,6 +101,8 @@
       "no_bio": "Még nincs bemutatkozás.",
       "member_since": "Tag ekkortól",
       "account_details": "Fiók részletei",
+      "provider": "Szolgáltató",
+      "status": "Állapot",
       "progress_title": "Haladásod",
       "progress_subtitle": "Készen állsz a következő leckére?",
       "verified_status": "Ellenőrzött fiók"
@@ -184,6 +187,7 @@
   "verify": {
     "loading": "E-mail cím megerősítése folyamatban...",
     "no_token": "Nem található megerősítő token.",
+    "invalid_token": "A megerősítő token érvénytelen vagy lejárt.",
     "success_msg": "Az e-mail címedet sikeresen megerősítettük! Most már bejelentkezhetsz.",
     "error_msg": "Megerősítés sikertelen: {error}. A link érvénytelen vagy már lejárt.",
     "title_verifying": "Ellenőrzés...",

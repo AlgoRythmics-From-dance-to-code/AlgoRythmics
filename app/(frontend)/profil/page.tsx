@@ -328,13 +328,13 @@ export default function ProfilePage() {
                               <span className="text-sm font-bold text-gray-800 dark:text-gray-200">{user.email}</span>
                            </div>
                            <div className="flex justify-between items-center py-2 border-b border-[#269984]/10">
-                              <span className="text-sm font-semibold text-gray-500">Provider</span>
+                              <span className="text-sm font-semibold text-gray-500">{t('profile.public.provider')}</span>
                               <span className="text-xs font-black uppercase bg-white dark:bg-neutral-800 px-2 py-1 rounded shadow-sm">
                                 {(user as any).authProvider || 'Email'}
                               </span>
                            </div>
                            <div className="flex justify-between items-center py-2">
-                              <span className="text-sm font-semibold text-gray-500">Status</span>
+                              <span className="text-sm font-semibold text-gray-500">{t('profile.public.status')}</span>
                               <span className="flex items-center gap-1.5 text-xs font-bold text-[#269984]">
                                 <CheckCircle2 size={14} /> {t('profile.public.verified_status')}
                               </span>

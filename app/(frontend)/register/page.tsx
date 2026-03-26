@@ -55,7 +55,7 @@ export default function RegisterPage() {
         description: t('toasts.register_success_desc'),
       });
     } catch (error: any) {
-      const errMsg = error.response?.data?.error || t('toasts.register_error_desc');
+      const errMsg = error.response?.data?.error || t('toasts.register_error');
       setErrors({
         email: errMsg,
       });
@@ -119,7 +119,7 @@ export default function RegisterPage() {
                   {t('register.success_title')}
                 </h1>
                 <p className="font-montserrat text-lg mb-8 text-[#666] dark:text-gray-400">
-                  {t('register.success_desc', { email: <span className="font-bold text-black dark:text-white">{email}</span> as any })}
+                  {t('register.success_desc', { email })}
                 </p>
                 <Link
                   href="/login"

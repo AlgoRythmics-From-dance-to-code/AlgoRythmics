@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     logger.info({ email }, t('toasts.register_success'));
     return NextResponse.json({ message: t('toasts.register_success') });
   } catch (error) {
-    const message = error instanceof Error ? error.message : t('toasts.register_error_desc');
+    const message = error instanceof Error ? error.message : t('toasts.register_error');
     logger.error({ error: message }, t('toasts.register_error'));
     return NextResponse.json({ error: message }, { status: 400 });
   }

@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       logger.info({ userId: user.id }, t('toasts.verify_success'));
       return NextResponse.json({ message: t('toasts.verify_success') });
     } else {
-      return NextResponse.json({ error: t('verify.no_token') }, { status: 400 });
+      return NextResponse.json({ error: t('verify.invalid_token') }, { status: 400 });
     }
   } catch (error: any) {
     logger.error({ error: error.message || error }, t('toasts.verify_error'));

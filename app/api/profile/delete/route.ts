@@ -10,7 +10,7 @@ export async function DELETE(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.email) {
-      return NextResponse.json({ error: t('toasts.unexpected_error_desc') }, { status: 401 });
+      return NextResponse.json({ error: t('errors.unauthorized') }, { status: 401 });
     }
 
     const payload = await getPayload({ config: configPromise });
@@ -23,7 +23,7 @@ export async function DELETE(req: Request) {
     });
 
     if (result.docs.length === 0) {
-      return NextResponse.json({ error: t('toasts.delete_error') }, { status: 404 });
+      return NextResponse.json({ error: t('errors.user_not_found') }, { status: 404 });
     }
 
     const dbUser = result.docs[0];

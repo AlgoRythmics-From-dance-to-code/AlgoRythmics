@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.email) {
-      return NextResponse.json({ error: t('toasts.unexpected_error_desc') }, { status: 401 });
+      return NextResponse.json({ error: t('errors.unauthorized') }, { status: 401 });
     }
 
     const { firstName, lastName, bio } = await req.json();
@@ -24,13 +24,13 @@ export async function POST(req: Request) {
     });
 
     if (result.docs.length === 0) {
-      logger.warn({ email: session.user.email }, t('toasts.delete_error')); // Simple fallback
-      return NextResponse.json({ error: t('toasts.delete_error') }, { status: 404 });
+      logger.warn({ email: session.user.email }, t('errors.user_not_found')); // User not found during profile update
+      return NextResponse.json({ error: t('errors.user_not_found') }, { status: 404 });
     }
 
     const dbUser = result.docs[0];
 
-    const updatedUser = await payload.update({
+    await payload.update({
       collection: 'users',
       id: dbUser.id,
       data: {

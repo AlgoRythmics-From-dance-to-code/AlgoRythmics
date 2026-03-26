@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import Link from 'next/link';
 import { ROUTES, API_ROUTES } from '../../../lib/constants';
-import logger from '../../../lib/logger';
 import { toast } from 'sonner';
 import { useLocale } from '../../i18n/LocaleProvider';
 
@@ -31,9 +30,9 @@ function VerifyContent() {
         toast.success(t('toasts.verify_success'), {
           description: t('toasts.verify_success_desc'),
         });
-      } catch (err: any) {
-        logger.error({ error: err.message || err }, 'Verification error');
-        setStatus('error');
+        } catch (err: any) {
+          console.error('Verification error:', err.message || err);
+          setStatus('error');
         const errDetail = err.response?.data?.errors?.[0]?.message || err.response?.data?.error || err.message;
         setMessage(t('verify.error_msg', { error: errDetail }));
         toast.error(t('toasts.verify_error'), {
