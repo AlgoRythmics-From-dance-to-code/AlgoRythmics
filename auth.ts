@@ -6,6 +6,7 @@ import Discord from 'next-auth/providers/discord';
 import GitHub from 'next-auth/providers/github';
 import Credentials from 'next-auth/providers/credentials';
 import { ROLES, ROUTES, API_ROUTES } from './lib/constants';
+import logger from './lib/logger';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -91,10 +92,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               role: (result.user as any).role,
             };
           }
-          console.warn('Authorize: Failed (credentials), result was', !!result);
+          logger.warn({ result: !!result }, 'Authorize: Failed (credentials)');
           return null;
         } catch (error: any) {
-          console.error('Authorize: Error (credentials):', error.message || error);
+          logger.error({ error: error.message || error }, 'Authorize: Error (credentials)');
           return null;
         }
       },
@@ -108,10 +109,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (!account || !user.email) {
-        console.error('NextAuth signIn error: Missing account or email', { 
+        logger.error({ 
           provider: account?.provider, 
           hasEmail: !!user.email 
-        });
+        }, 'NextAuth signIn error: Missing account or email');
         return false;
       }
 
@@ -157,7 +158,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             } as any,
             disableVerificationEmail: true,
           } as any);
-          console.log(`New user created via ${account.provider}`);
+          logger.info({ provider: account.provider }, 'New user created');
         } else {
           // Update existing user with latest provider info
           const existingUser = existing.docs[0] as any;
@@ -188,13 +189,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               data: updateData,
               disableVerificationEmail: true,
             } as any);
-            console.log(`Updated user with latest ${account.provider} info`);
+            logger.info({ provider: account.provider }, 'Updated user with latest provider info');
           }
         }
 
         return true;
       } catch (error) {
-        console.error('NextAuth signIn callback: CRITICAL ERROR:', error);
+        logger.error({ error }, 'NextAuth signIn callback: CRITICAL ERROR');
         return false;
       }
     },
@@ -205,7 +206,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.email = user.email;
       }
       
-      // ONLY update from DB on sign-in (account present) OR when session.update() is triggered
+      // If manually updated via update() in the frontend
+      if (trigger === 'update' && session) {
+        // Merge provided session data into token
+        if (session.firstName) token.firstName = session.firstName;
+        if (session.lastName) token.lastName = session.lastName;
+        if (session.bio) token.bio = session.bio;
+        token.updatedAt = Date.now(); // Force update
+      }
+
+      // Sync from DB on sign-in or session update
       if (token.email && (account || trigger === 'update')) {
         try {
           const { getPayload } = await import('payload');
@@ -231,7 +241,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.createdAt = dbUser.createdAt;
           }
         } catch (error) {
-          console.error('JWT callback profile sync error:', error);
+          logger.error({ error }, 'JWT callback profile sync error');
         }
       }
       return token;

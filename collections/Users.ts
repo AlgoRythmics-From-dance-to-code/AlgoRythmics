@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { ROLES, ROUTES, AUTH_PROVIDERS, APP_CONFIG } from '../lib/constants';
+import logger from '../lib/logger';
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -41,7 +42,7 @@ export const Users: CollectionConfig = {
             });
             user._verified = true;
           } catch (e) {
-            console.error('Failed to auto-verify admin:', e instanceof Error ? e.message : e);
+            logger.error({ error: e instanceof Error ? e.message : e }, 'Failed to auto-verify admin');
           }
         }
 

@@ -50,4 +50,13 @@ body {
   transition:
     background 180ms ease,
     color 180ms ease;
+  caret-color: transparent; /* Prevent caret cursor on normal text clicks */
+}
+
+input, textarea, [contenteditable="true"] {
+  caret-color: auto; /* Restore caret for inputs */
+}
+
+button, a {
+  user-select: none; /* Prevent text selection on buttons */
 }

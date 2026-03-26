@@ -7,7 +7,12 @@
     "courses": "Tanfolyamok",
     "contact": "Kapcsolat",
     "login": "Bejelentkezés",
-    "register": "Regisztráció"
+    "register": "Regisztráció",
+    "logout": "Kijelentkezés",
+    "profile": "Profil",
+    "language": "Nyelv",
+    "switch_theme": "Séma váltása",
+    "about": "Rólunk"
   },
   "aria": {
     "go_home": "Ugrás a kezdőlapra",
@@ -46,5 +51,339 @@
       "hard": "Nehéz"
     }
   },
-  "footer": "© {year} AlgoRythmics. Minden jog fenntartva."
+  "footer": "© {year} AlgoRythmics. Minden jog fenntartva.",
+  "toasts": {
+    "login_success": "Sikeres bejelentkezés!",
+    "login_error": "Sikertelen bejelentkezés",
+    "login_error_desc": "Hibás adatok vagy meg nem erősített fiók.",
+    "unexpected_error": "Váratlan hiba",
+    "unexpected_error_desc": "Kérjük, próbáld meg később.",
+    "register_success": "Sikeres regisztráció!",
+    "register_success_desc": "Kérjük, ellenőrizd az e-mail címedet a megerősítéshez.",
+    "register_error": "Regisztrációs hiba",
+    "register_error_desc": "A regisztráció sikertelen. Kérjük, ellenőrizd az adataidat vagy próbáld meg később.",
+    "profile_updated": "Profil frissítve",
+    "profile_updated_desc": "A módosítások mentésre kerültek.",
+    "profile_update_error": "Hiba a mentésnél",
+    "password_updated": "Jelszó módosítva",
+    "password_updated_desc": "A jelszavad megváltozott.",
+    "password_update_error": "Jelszó módosítása sikertelen.",
+    "password_min": "A jelszónak legalább 6 karakterből kell állnia.",
+    "password_current_incorrect": "A jelenlegi jelszó hibás.",
+    "password_social_error": "Közösségi bejelentkezéssel nem módosíthatod a jelszavadat.",
+    "account_deleted": "Fiók törölve",
+    "account_deleted_desc": "A fiókod véglegesen törlésre került. Sajnáljuk, hogy elmész!",
+    "delete_error": "Sikertelen törlés",
+    "verify_success": "Sikeres megerősítés!",
+    "verify_success_desc": "Most már bejelentkezhetsz a fiókodba.",
+    "verify_error": "Megerősítés sikertelen",
+    "verify_error_desc": "A link érvénytelen vagy már lejárt."
+  },
+  "errors": {
+    "unauthorized": "Nincs jogosultság",
+    "user_not_found": "Felhasználó nem található",
+    "save_failed": "Mentés sikertelen",
+    "update_failed": "Frissítés sikertelen"
+  },
+  "profile": {
+    "title": "Profilod",
+    "hero": {
+      "subtitle": "Fiókbeállítások, adatvédelem és személyes adatok kezelése."
+    },
+    "tabs": {
+      "public": "Nyilvános profil",
+      "edit": "Profil szerkesztése",
+      "security": "Fiók biztonság",
+      "delete": "Fiók törlése"
+    },
+    "public": {
+      "bio_title": "Rólam",
+      "no_bio": "Még nincs bemutatkozás.",
+      "member_since": "Tag ekkortól",
+      "account_details": "Fiók részletei",
+      "provider": "Szolgáltató",
+      "status": "Állapot",
+      "progress_title": "Haladásod",
+      "progress_subtitle": "Készen állsz a következő leckére?",
+      "verified_status": "Ellenőrzött fiók"
+    },
+    "edit": {
+      "title": "Profil szerkesztése",
+      "first_name": "Keresztnév",
+      "last_name": "Vezetéknév",
+      "email": "E-mail cím",
+      "bio": "Bemutatkozás",
+      "save": "Módosítások mentése",
+      "saving": "Mentés..."
+    },
+    "security": {
+      "title": "Jelszó módosítása",
+      "current_password": "Jelenlegi jelszó",
+      "new_password": "Új jelszó",
+      "confirm_password": "Új jelszó megerősítése",
+      "update_btn": "Jelszó frissítése"
+    },
+    "delete": {
+      "warning": "Ez a művelet végleges és nem vonható vissza.",
+      "confirm_text": "A megerősítéshez írd be a \"DELETE\" szót alább:",
+      "delete_btn": "Fiókom végleges törlése"
+    }
+  },
+  "login": {
+    "title": "Bejelentkezés",
+    "subtitle": "Üdvözlünk újra! Kérjük, jelentkezz be a fiókodba.",
+    "email_label": "E-mail cím",
+    "email_placeholder": "Add meg az e-mail címed",
+    "password_label": "Jelszó",
+    "password_placeholder": "Add meg a jelszavad",
+    "remember_me": "Emlékezz rám",
+    "forgot_password": "Elfelejtetted a jelszavad?",
+    "login_btn": "Bejelentkezés",
+    "logging_in": "Bejelentkezés...",
+    "or": "vagy",
+    "no_account": "Nincs még fiókod?",
+    "register_link": "Regisztráció",
+    "errors": {
+      "email_required": "E-mail megadása kötelező",
+      "email_invalid": "Érvénytelen e-mail cím",
+      "password_required": "Jelszó megadása kötelező",
+      "auth_failed": "Hibás e-mail vagy jelszó, vagy a fiók nincs megerősítve!"
+    }
+  },
+  "register": {
+    "title": "Regisztráció",
+    "subtitle": "Hozd létre a fiókodat a kezdéshez.",
+    "first_name_label": "Keresztnév",
+    "first_name_placeholder": "Keresztnév",
+    "last_name_label": "Vezetéknév",
+    "last_name_placeholder": "Vezetéknév",
+    "email_label": "E-mail cím",
+    "email_placeholder": "Add meg az e-mail címed",
+    "password_label": "Jelszó",
+    "password_placeholder": "Adj meg egy jelszót",
+    "confirm_password_label": "Jelszó megerősítése",
+    "confirm_password_placeholder": "Erősítsd meg a jelszavad",
+    "terms_accept": "Elfogadom a {terms} és a {privacy} feltételeit",
+    "terms_link": "Szolgáltatási feltételek",
+    "privacy_link": "Adatvédelmi irányelvek",
+    "register_btn": "Regisztráció",
+    "registering": "Regisztráció...",
+    "already_have_account": "Van már fiókod?",
+    "login_link": "Bejelentkezés",
+    "success_title": "Erősítsd meg az e-mail címed",
+    "success_desc": "Küldtünk egy megerősítő linket a(z) {email} címre. Kérjük, ellenőrizd a fiókodat és kattints a linkre az aktiváláshoz.",
+    "success_btn": "Bejelentkezéshez",
+    "errors": {
+      "first_name_required": "Keresztnév megadása kötelező",
+      "last_name_required": "Vezetéknév megadása kötelező",
+      "email_required": "E-mail megadása kötelező",
+      "email_invalid": "Érvénytelen e-mail cím",
+      "password_required": "Jelszó megadása kötelező",
+      "password_min": "A jelszónak legalább 6 karakternek kell lennie",
+      "password_mismatch": "A jelszavak nem egyeznek",
+      "terms_required": "El kell fogadnod a feltételeket"
+    }
+  },
+  "verify": {
+    "loading": "E-mail cím megerősítése folyamatban...",
+    "no_token": "Nem található megerősítő token.",
+    "invalid_token": "A megerősítő token érvénytelen vagy lejárt.",
+    "success_msg": "Az e-mail címedet sikeresen megerősítettük! Most már bejelentkezhetsz.",
+    "error_msg": "Megerősítés sikertelen: {error}. A link érvénytelen vagy már lejárt.",
+    "title_verifying": "Ellenőrzés...",
+    "title_success": "Siker!",
+    "title_failed": "Megerősítés sikertelen",
+    "login_btn": "Bejelentkezéshez",
+    "register_btn": "Vissza a regisztrációhoz"
+  },
+  "contact": {
+    "title": "Kapcsolat",
+    "subtitle": "Örömmel vesszük megkeresésedet",
+    "get_in_touch": "Kapcsolatfelvétel",
+    "email": "E-mail",
+    "address": "Cím",
+    "phone": "Telefon",
+    "send_us_message": "Küldj nekünk üzenetet",
+    "success_title": "Üzenet elküldve!",
+    "success_desc": "Hamarosan válaszolunk megkeresésedre.",
+    "send_another": "Új üzenet küldése",
+    "name_label": "Neved",
+    "email_label": "E-mail címed",
+    "subject_label": "Tárgy",
+    "message_label": "Üzenet",
+    "name_placeholder": "Kovács János",
+    "email_placeholder": "janos@pelda.hu",
+    "subject_placeholder": "Miben segíthetünk?",
+    "message_placeholder": "Üzeneted...",
+    "sending": "Küldés...",
+    "send_btn": "Üzenet küldése",
+    "errors": {
+      "name_required": "A név megadása kötelező",
+      "email_required": "Az e-mail cím megadása kötelező",
+      "email_invalid": "Érvénytelen e-mail cím",
+      "subject_required": "A tárgy megadása kötelező",
+      "message_required": "Az üzenet megadása kötelező"
+    }
+  },
+  "about": {
+    "title": "Rólunk",
+    "subtitle": "Az AlgoRythmics az algoritmusok tanulását egy magával ragadó, zenei élménnyé alakítja. A táncot, a zenét és az interaktív technológiát ötvözzük, hogy az összetett fogalmakat intuitívvá és szórakoztatóvá tegyük.",
+    "mission_title": "Küldetésünk",
+    "mission_text1": "Hisszük, hogy az algoritmusoknak nem kell ijesztőnek lenniük. A zene és a mozgás egyetemes nyelvén keresztül mindenki számára elérhetővé tesszük a rendező és kereső algoritmusokat – az elsőéves informatikus hallgatóktól az érdeklődő tanulók minden korosztályáig.",
+    "mission_text2": "Platformunk a világ minden tájáról származó néptánc hagyományokat ötvöz az algoritmikus vizualizációkkal, egyedülálló és emlékezetes tanulási élményt teremtve a kultúra és a technológia között.",
+    "mission_alt": "Küldetésünk",
+    "team_title": "Csapatunk",
+    "team_subtitle": "Ismerd meg az AlgoRythmics mögött álló lelkes csapatot",
+    "team": {
+      "sarah": { "name": "Dr. Sarah Chen", "role": "Alapító és vezető kutató" },
+      "mark": { "name": "Mark Williams", "role": "Kreatív igazgató" },
+      "anna": { "name": "Kovács Anna", "role": "Frontend fejlesztő" },
+      "david": { "name": "David Park", "role": "Algoritmus szakértő" }
+    },
+    "how_it_works": "Hogyan működik?",
+    "steps": {
+      "01": {
+        "title": "Válassz egy algoritmust",
+        "desc": "Válassz átfogó könyvtárunkból: rendező, kereső és visszalépéses algoritmusok."
+      },
+      "02": {
+        "title": "Válassz tanulási módot",
+        "desc": "Válaszd ki a kedvenc tanulási módszered – videók, animációk vagy manuális vezérlés."
+      },
+      "03": {
+        "title": "Tanulj és gyakorolj",
+        "desc": "Értsd meg az algoritmust lépésről lépésre vizuális segédeszközök, zene és tánckoreográfia segítségével."
+      },
+      "04": {
+        "title": "Alkotás és megosztás",
+        "desc": "Hozd létre saját bemeneteidet, teszteld a határeseteket, és oszd meg előrehaladásodat a közösséggel."
+      }
+    },
+    "cta_title": "Készen állsz a tanulásra?",
+    "cta_subtitle": "Csatlakozz több ezer diákhoz, akik már felfedezték az algoritmusok tanulásának örömét zene és tánc segítségével.",
+    "cta_btn": "Kezdjük el"
+  },
+  "algorithms": {
+    "title": "Minden algoritmus",
+    "categories": {
+      "sorting": "Rendező algoritmusok",
+      "searching": "Kereső algoritmusok",
+      "backtracking": "Visszalépéses algoritmusok"
+    },
+    "read_more": "Olvass tovább",
+    "list": {
+      "bubble-sort": {
+        "name": "Buborékrendezés",
+        "description": "A buborékrendezés egy egyszerű rendezési algoritmus, amely egymás után összehasonlítja a szomszédos elemeket, és felcseréli őket, ha rossz sorrendben vannak."
+      },
+      "insertion-sort": {
+        "name": "Beszúró rendezés",
+        "description": "A beszúró rendezés egy egyszerű algoritmus, amely a végső rendezett tömböt elemenként építi fel. Kevésbé hatékony nagy listákon, mint a fejlettebb algoritmusok."
+      },
+      "selection-sort": {
+        "name": "Kiválasztó rendezés",
+        "description": "A kiválasztó rendezés egy helyben végzett összehasonlító rendezés. O(n²) időbonyolultságú, ami miatt nagy listákon nem hatékony."
+      },
+      "shell-sort": {
+        "name": "Shell-rendezés",
+        "description": "A Donald Shell által 1959-ben javasolt algoritmus a beszúró rendezés egy változata, amely lehetővé teszi, hogy az elemek nagyobbat lépjenek az elején."
+      },
+      "merge-sort": {
+        "name": "Összefuttatásos rendezés",
+        "description": "Az összefuttatásos rendezés egy oszd meg és uralkodj algoritmus, amely a tömböt félbe vágja, külön-külön rendezi őket, majd összefésüli a helyes sorrendben."
+      },
+      "quick-sort": {
+        "name": "Gyorsrendezés",
+        "description": "A gyorsrendezés kiválaszt egy pivot elemet, és köré rendezi a tömböt: a kisebbeket elé, a nagyobbakat utána, majd rekurzívan teszi ugyanezt."
+      },
+      "heap-sort": {
+        "name": "Kupacrendezés",
+        "description": "A kupacrendezés bináris kupac adatszerkezetet használ. Felépít egy max-kupacot, majd folyamatosan kiveszi a legnagyobb elemet a rendezett tömbhöz."
+      },
+      "linear-search": {
+        "name": "Lineáris keresés",
+        "description": "Egy egyszerű keresési algoritmus, amely a tömb elejétől kezdve minden elemet megvizsgál, és összehasonlítja a keresett értékkel."
+      },
+      "binary-search": {
+        "name": "Bináris keresés",
+        "description": "Hatékony keresési algoritmus, amely egy rendezett tömböt folyamatosan felez, amíg meg nem találja a célértéket vagy a tartomány ki nem ürül."
+      },
+      "n-queens": {
+        "name": "N-királynő probléma",
+        "description": "Az N-királynő probléma egy klasszikus visszalépéses feladat, amelyben N sakktábla-királynőt kell elhelyezni egy N×N-es táblán úgy, hogy ne üssék egymást."
+      }
+    }
+  },
+  "courses": {
+    "hero_title": "Kurzusok",
+    "hero_description": "Fedezd fel kurzuskategóriáinkat és tanuld meg az algoritmusokat különböző interaktív módszerekkel",
+    "all_courses": "Minden kurzus",
+    "lessons": "lecke",
+    "table": {
+      "name": "Kurzus neve",
+      "category": "Kategória",
+      "duration": "Időtartam",
+      "level": "Szint"
+    },
+    "levels": {
+      "beginner": "Kezdő",
+      "intermediate": "Középhaladó",
+      "advanced": "Haladó"
+    },
+    "categories_list": {
+      "video": {
+        "title": "Videó",
+        "description": "Nézd meg az algoritmusokat néptáncok formájában, és tanulj vizuális demonstrációkon keresztül lépésről lépésre."
+      },
+      "animation": {
+        "title": "Animáció",
+        "description": "Interaktív animációk, amelyek egyszerű vizuális szekvenciákra bontják le a komplex algoritmusokat."
+      },
+      "control": {
+        "title": "Irányítás",
+        "description": "Vedd át az irányítást és lépkedj végig manuálisan az algoritmusokon az összehasonlítások és cserék megértéséhez."
+      },
+      "create": {
+        "title": "Alkotás",
+        "description": "Építsd meg saját algoritmusaidat, hozz létre egyedi bemeneteket, és nézd meg, hogyan oldják meg a problémát."
+      },
+      "alive": {
+        "title": "Életre keltve",
+        "description": "Tapasztald meg, ahogy az algoritmusok életre kelnek valós idejű zenével és tánckoreográfiával minden műveletnél."
+      }
+    },
+    "list": {
+      "bubble_basics": "Buborékrendezés alapok",
+      "selection_dive": "Kiválasztó rendezés mélyvíz",
+      "insertion_animation": "Beszúró rendezés animáció",
+      "merge_visualized": "Összefuttatásos rendezés vizualizálva",
+      "quick_step": "Gyorsrendezés lépésről lépésre",
+      "heap_interactive": "Interaktív kupacrendezés",
+      "shell_builder": "Shell-rendezés építő",
+      "dance_party": "Algoritmus Tánc Party",
+      "binary_rhythm": "Bináris keresés ritmusa",
+      "n_queens_challenge": "N-királynő kihívás"
+    }
+  },
+  "videos": {
+    "hero_title": "Videók",
+    "hero_description": "Nézd meg az algoritmusrendező táncokat és tanulj vizuális demonstrációkon keresztül",
+    "filters": {
+      "all": "Összes videó",
+      "sorting": "Rendezés",
+      "searching": "Keresés"
+    },
+    "views": "megtekintés",
+    "list": {
+      "bubble-sort-dance": "Buborékrendezés tánc",
+      "insertion-sort-folk": "Beszúró rendezés néptánc",
+      "selection-sort-waltz": "Kiválasztó rendezés keringő",
+      "merge-sort-tango": "Összefuttatásos rendezés tangó",
+      "quick-sort-salsa": "Gyorsrendezés salsa",
+      "heap-sort-ballet": "Kupacrendezés balett",
+      "shell-sort-flamenco": "Shell-rendezés flamenco",
+      "linear-search-hip-hop": "Lineáris keresés hip-hop",
+      "binary-search-swing": "Bináris keresés swing"
+    }
+  }
 }

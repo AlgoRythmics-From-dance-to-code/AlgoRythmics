@@ -2,8 +2,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 export default function ContactPage() {
+  const { t } = useLocale();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
@@ -15,11 +17,11 @@ export default function ContactPage() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!name.trim()) newErrors.name = 'Name is required';
-    if (!email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email is invalid';
-    if (!subject.trim()) newErrors.subject = 'Subject is required';
-    if (!message.trim()) newErrors.message = 'Message is required';
+    if (!name.trim()) newErrors.name = t('contact.errors.name_required');
+    if (!email.trim()) newErrors.email = t('contact.errors.email_required');
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = t('contact.errors.email_invalid');
+    if (!subject.trim()) newErrors.subject = t('contact.errors.subject_required');
+    if (!message.trim()) newErrors.message = t('contact.errors.message_required');
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -47,10 +49,10 @@ export default function ContactPage() {
       {/* Hero */}
       <div className="flex flex-col items-center justify-center px-6 py-14 md:py-20 bg-[#F0FBF9] dark:bg-[#112220]">
         <h1 className="font-montserrat font-bold text-black dark:text-white text-3xl sm:text-4xl lg:text-5xl mb-4 text-center">
-          Contact Us
+          {t('contact.title')}
         </h1>
         <p className="font-montserrat text-center text-base sm:text-lg text-[#666] dark:text-gray-400">
-          We&apos;d love to hear from you
+          {t('contact.subtitle')}
         </p>
       </div>
 
@@ -60,7 +62,7 @@ export default function ContactPage() {
           {/* Left: Contact Info */}
           <div className="flex-1">
             <h2 className="font-montserrat font-bold text-2xl sm:text-3xl text-black dark:text-white mb-8 md:mb-10 text-center lg:text-left">
-              Get in Touch
+              {t('contact.get_in_touch')}
             </h2>
 
             {/* Email */}
@@ -82,7 +84,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-montserrat font-bold text-base sm:text-lg text-black dark:text-white mb-1">
-                  Email
+                  {t('contact.email')}
                 </h3>
                 <p className="font-montserrat text-sm sm:text-base text-[#666] dark:text-gray-400">
                   info@algorythmics.com
@@ -109,7 +111,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-montserrat font-bold text-base sm:text-lg text-black dark:text-white mb-1">
-                  Address
+                  {t('contact.address')}
                 </h3>
                 <p className="font-montserrat text-sm sm:text-base text-[#666] dark:text-gray-400">
                   123 Algorithm Street, Budapest, Hungary
@@ -135,7 +137,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-montserrat font-bold text-base sm:text-lg text-black dark:text-white mb-1">
-                  Phone
+                  {t('contact.phone')}
                 </h3>
                 <p className="font-montserrat text-sm sm:text-base text-[#666] dark:text-gray-400">
                   +36 1 234 5678
@@ -148,57 +150,65 @@ export default function ContactPage() {
           <div className="flex-1">
             <div className="p-6 sm:p-8 lg:p-10 rounded-2xl bg-[#FAFAFA] dark:bg-[#1a1a1a]">
               <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-6 sm:mb-8">
-                Send us a message
+                {t('contact.send_us_message')}
               </h2>
 
               {isSuccess ? (
-                <div className="bg-green-100 dark:bg-green-900/30 border border-green-400 text-green-700 dark:text-green-400 px-4 py-3 rounded relative text-center">
-                  <strong className="font-bold">Message sent!</strong>
-                  <span className="block sm:inline"> We will get back to you shortly.</span>
-                  <button onClick={() => setIsSuccess(false)} className="mt-4 underline text-sm">
-                    Send another
+                <div className="flex flex-col items-center justify-center bg-green-100 dark:bg-green-900/30 border border-green-400 text-green-700 dark:text-green-400 px-6 py-10 rounded-xl relative text-center animate-in fade-in zoom-in duration-300">
+                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                  <strong className="font-montserrat font-bold text-xl block mb-2">{t('contact.success_title')}</strong>
+                  <p className="font-montserrat text-base mb-6">{t('contact.success_desc')}</p>
+                  <button 
+                    onClick={() => setIsSuccess(false)} 
+                    className="font-montserrat font-bold text-[#269984] hover:underline transition-all"
+                  >
+                    {t('contact.send_another')}
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit}>
                   <div className="mb-5">
                     <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                      Your name
+                      {t('contact.name_label')}
                     </label>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className={`w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-12 border-2 ${errors.name ? 'border-red-500' : 'border-[#E0E0E0] dark:border-neutral-700'} rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors`}
-                      placeholder="John Doe"
+                      placeholder={t('contact.name_placeholder')}
                     />
                     {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                   </div>
 
                   <div className="mb-5">
                     <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                      Your email
+                      {t('contact.email_label')}
                     </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className={`w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-12 border-2 ${errors.email ? 'border-red-500' : 'border-[#E0E0E0] dark:border-neutral-700'} rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors`}
-                      placeholder="john@example.com"
+                      placeholder={t('contact.email_placeholder')}
                     />
                     {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                   </div>
 
                   <div className="mb-5">
                     <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                      Subject
+                      {t('contact.subject_label')}
                     </label>
                     <input
                       type="text"
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                       className={`w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-12 border-2 ${errors.subject ? 'border-red-500' : 'border-[#E0E0E0] dark:border-neutral-700'} rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors`}
-                      placeholder="How can we help?"
+                      placeholder={t('contact.subject_placeholder')}
                     />
                     {errors.subject && (
                       <p className="text-red-500 text-xs mt-1">{errors.subject}</p>
@@ -207,13 +217,13 @@ export default function ContactPage() {
 
                   <div className="mb-6">
                     <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                      Message
+                      {t('contact.message_label')}
                     </label>
                     <textarea
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       className={`w-full font-montserrat bg-white dark:bg-[#2a2a2a] dark:text-white h-36 border-2 ${errors.message ? 'border-red-500' : 'border-[#E0E0E0] dark:border-neutral-700'} rounded-lg p-4 text-base outline-none resize-none focus:border-[#36D6BA] transition-colors`}
-                      placeholder="Your message..."
+                      placeholder={t('contact.message_placeholder')}
                     />
                     {errors.message && (
                       <p className="text-red-500 text-xs mt-1">{errors.message}</p>
@@ -225,7 +235,7 @@ export default function ContactPage() {
                     style={{ backgroundColor: '#269984', border: 'none' }}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'Sending...' : 'Send Message'}
+                    {isSubmitting ? t('contact.sending') : t('contact.send_btn')}
                   </button>
                 </form>
               )}

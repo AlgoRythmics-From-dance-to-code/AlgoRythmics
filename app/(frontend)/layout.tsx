@@ -11,6 +11,8 @@ import axios from 'axios';
 
 import { auth } from '../../auth';
 import NextAuthProvider from '../components/NextAuthProvider';
+import logger from '../../lib/logger';
+import { Toaster } from 'sonner';
 
 const montserrat = Montserrat({
   variable: '--font-montserrat',
@@ -20,9 +22,11 @@ const montserrat = Montserrat({
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const token = (await cookies()).get('payload-token')?.value;
-  let userImage: string | null = null;
+  
+  // Use image from session if available, otherwise fallback to Payload ME API
+  let userImage: string | null = (session?.user as any)?.imageUrl || (session?.user as any)?.image || null;
 
-  if (token) {
+  if (!userImage && token) {
     try {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'}/api/users/me`,
@@ -36,7 +40,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
         userImage = data.user.imageUrl || null;
       }
     } catch (e) {
-      console.error('Layout auth check failed:', e instanceof Error ? e.message : e);
+      logger.error({ error: e instanceof Error ? e.message : e }, 'Layout auth check failed');
     }
   }
 
@@ -56,6 +60,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
         </NextAuthProvider>
         <SpeedInsights />
         <Analytics />
+        <Toaster position="bottom-left" richColors />
       </body>
     </html>
   );
