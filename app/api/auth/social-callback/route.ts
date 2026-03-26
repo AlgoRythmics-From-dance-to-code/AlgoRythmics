@@ -5,9 +5,12 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jsonwebtoken from 'jsonwebtoken';
 import { APP_CONFIG, ROUTES } from '../../../../lib/constants';
+import logger from '../../../../lib/logger';
+import { getT } from '../../../../lib/i18n-server';
 
 export async function GET() {
   const baseUrl = APP_CONFIG.BASE_URL;
+  const t = await getT();
 
   try {
     const session = await auth();
@@ -55,10 +58,11 @@ export async function GET() {
       maxAge: APP_CONFIG.TOKEN_EXPIRATION,
     });
 
+    logger.info({ email: user.email }, t('toasts.login_success'));
     return NextResponse.redirect(new URL(ROUTES.HOME, baseUrl));
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown social error';
-    console.error('Social callback error details:', message);
+    const message = error instanceof Error ? error.message : t('toasts.unexpected_error_desc');
+    logger.error({ error: message }, t('toasts.unexpected_error'));
     return NextResponse.redirect(new URL(`${ROUTES.LOGIN}?error=social-login-failed&detail=${encodeURIComponent(message)}`, baseUrl));
   }
 }

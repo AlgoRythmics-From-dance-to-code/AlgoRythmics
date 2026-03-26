@@ -3,8 +3,11 @@ import configPromise from '../../../../payload.config';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { APP_CONFIG } from '../../../../lib/constants';
+import logger from '../../../../lib/logger';
+import { getT } from '../../../../lib/i18n-server';
 
 export async function POST(req: Request) {
+  const t = await getT();
   try {
     const { email, password } = await req.json();
     const payload = await getPayload({ config: configPromise });
@@ -25,10 +28,11 @@ export async function POST(req: Request) {
       });
     }
 
+    logger.info({ email }, t('toasts.login_success'));
     return NextResponse.json(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Login failed';
-    console.error('Login Route Error:', message);
+    const message = error instanceof Error ? error.message : t('toasts.login_error');
+    logger.error({ error: message }, t('toasts.login_error'));
     return NextResponse.json({ error: message }, { status: 401 });
   }
 }

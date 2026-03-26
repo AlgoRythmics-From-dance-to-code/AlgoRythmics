@@ -1,4 +1,3 @@
-// Client Component
 'use client';
 
 import { useState } from 'react';
@@ -6,8 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { toast } from 'sonner';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 export default function RegisterPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -22,18 +24,18 @@ export default function RegisterPage() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email is invalid';
+    if (!firstName.trim()) newErrors.firstName = t('register.errors.first_name_required');
+    if (!lastName.trim()) newErrors.lastName = t('register.errors.last_name_required');
+    if (!email.trim()) newErrors.email = t('register.errors.email_required');
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = t('register.errors.email_invalid');
 
-    if (!password) newErrors.password = 'Password is required';
-    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (!password) newErrors.password = t('register.errors.password_required');
+    else if (password.length < 6) newErrors.password = t('register.errors.password_min');
 
     if (password && confirmPassword && password !== confirmPassword)
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = t('register.errors.password_mismatch');
 
-    if (!acceptTerms) newErrors.terms = 'You must accept the terms';
+    if (!acceptTerms) newErrors.terms = t('register.errors.terms_required');
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -49,9 +51,16 @@ export default function RegisterPage() {
     try {
       await axios.post('/api/auth/register', { email, password, firstName, lastName });
       setIsSuccess(true);
+      toast.success(t('toasts.register_success'), {
+        description: t('toasts.register_success_desc'),
+      });
     } catch (error: any) {
+      const errMsg = error.response?.data?.error || t('toasts.register_error_desc');
       setErrors({
-        email: error.response?.data?.error || 'Registration failed. User might already exist.',
+        email: errMsg,
+      });
+      toast.error(t('toasts.register_error'), {
+        description: errMsg,
       });
     } finally {
       setIsLoading(false);
@@ -100,33 +109,33 @@ export default function RegisterPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10">
           <div className="w-full max-w-[500px]">
             {isSuccess ? (
-              <div className="text-center">
+              <div className="text-center animate-in fade-in zoom-in duration-500">
                 <div className="w-20 h-20 bg-[#36D6BA] bg-opacity-20 rounded-full flex items-center justify-center mb-6 mx-auto">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#36D6BA" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                 </div>
                 <h1 className="font-montserrat font-bold text-3xl sm:text-4xl text-black dark:text-white mb-4">
-                  Confirm your email
+                  {t('register.success_title')}
                 </h1>
                 <p className="font-montserrat text-lg mb-8 text-[#666] dark:text-gray-400">
-                  We have sent a verification link to <span className="font-bold text-black dark:text-white">{email}</span>. Please check your inbox and click the link to activate your account.
+                  {t('register.success_desc', { email: <span className="font-bold text-black dark:text-white">{email}</span> as any })}
                 </p>
                 <Link
                   href="/login"
                   className="w-full font-montserrat font-bold text-white h-12 sm:h-14 rounded-lg text-lg sm:text-xl flex items-center justify-center hover:opacity-90 transition-all cursor-pointer"
                   style={{ backgroundColor: '#269984' }}
                 >
-                  Go to Login
+                  {t('register.success_btn')}
                 </Link>
               </div>
             ) : (
               <>
                 <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3">
-                  Register
+                  {t('register.title')}
                 </h1>
                 <p className="font-montserrat text-base sm:text-lg mb-8 text-[#666] dark:text-gray-400">
-                  Create your account to get started.
+                  {t('register.subtitle')}
                 </p>
 
                 <form onSubmit={handleSubmit}>
@@ -134,14 +143,14 @@ export default function RegisterPage() {
                   <div className="flex flex-col sm:flex-row gap-4 mb-5">
                     <div className="flex-1">
                       <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                        First name
+                        {t('register.first_name_label')}
                       </label>
                       <input
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.firstName ? 'border-red-500' : ''}`}
-                        placeholder="First name"
+                        placeholder={t('register.first_name_placeholder')}
                       />
                       {errors.firstName && (
                         <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
@@ -149,14 +158,14 @@ export default function RegisterPage() {
                     </div>
                     <div className="flex-1">
                       <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                        Last name
+                        {t('register.last_name_label')}
                       </label>
                       <input
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.lastName ? 'border-red-500' : ''}`}
-                        placeholder="Last name"
+                        placeholder={t('register.last_name_placeholder')}
                       />
                       {errors.lastName && (
                         <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
@@ -167,14 +176,14 @@ export default function RegisterPage() {
                   {/* Email */}
                   <div className="mb-5">
                     <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                      Email address
+                      {t('register.email_label')}
                     </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
-                      placeholder="Enter your email"
+                      placeholder={t('register.email_placeholder')}
                     />
                     {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                   </div>
@@ -182,14 +191,14 @@ export default function RegisterPage() {
                   {/* Password */}
                   <div className="mb-5">
                     <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                      Password
+                      {t('register.password_label')}
                     </label>
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
-                      placeholder="Create a password"
+                      placeholder={t('register.password_placeholder')}
                     />
                     {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
                   </div>
@@ -197,14 +206,14 @@ export default function RegisterPage() {
                   {/* Confirm Password */}
                   <div className="mb-5">
                     <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
-                      Confirm password
+                      {t('register.confirm_password_label')}
                     </label>
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.confirmPassword ? 'border-red-500' : ''}`}
-                      placeholder="Confirm your password"
+                      placeholder={t('register.confirm_password_placeholder')}
                     />
                     {errors.confirmPassword && (
                       <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
@@ -220,15 +229,19 @@ export default function RegisterPage() {
                         onChange={(e) => setAcceptTerms(e.target.checked)}
                         className="w-5 h-5 accent-[#36D6BA] mt-0.5"
                       />
-                      <span className="text-black dark:text-white">
-                        I accept the{' '}
-                        <Link href="#" className="font-bold" style={{ color: '#36D6BA' }}>
-                          Terms of Service
-                        </Link>{' '}
-                        and{' '}
-                        <Link href="#" className="font-bold" style={{ color: '#36D6BA' }}>
-                          Privacy Policy
-                        </Link>
+                      <span className="text-black dark:text-white leading-relaxed">
+                        {t('register.terms_accept', {
+                          terms: (
+                            <Link href="#" className="font-bold underline md:no-underline md:hover:underline" style={{ color: '#36D6BA' }}>
+                              {t('register.terms_link')}
+                            </Link>
+                          ) as any,
+                          privacy: (
+                            <Link href="#" className="font-bold underline md:no-underline md:hover:underline" style={{ color: '#36D6BA' }}>
+                              {t('register.privacy_link')}
+                            </Link>
+                          ) as any
+                        })}
                       </span>
                     </label>
                     {errors.terms && <p className="text-red-500 text-xs mt-1">{errors.terms}</p>}
@@ -240,19 +253,19 @@ export default function RegisterPage() {
                     style={{ backgroundColor: '#269984', border: 'none' }}
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Registering...' : 'Register'}
+                    {isLoading ? t('register.registering') : t('register.register_btn')}
                   </button>
                 </form>
 
                 {/* Login link */}
                 <p className="text-center font-montserrat mt-6 text-sm sm:text-base text-[#666] dark:text-gray-400">
-                  Already have an account?{' '}
+                  {t('register.already_have_account')}{' '}
                   <Link
                     href="/login"
                     className="font-bold hover:underline"
                     style={{ color: '#36D6BA' }}
                   >
-                    Login
+                    {t('register.login_link')}
                   </Link>
                 </p>
               </>

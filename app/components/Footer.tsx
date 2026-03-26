@@ -1,9 +1,10 @@
 'use client';
-
 import Image from 'next/image';
 import Link from 'next/link';
+import { useLocale } from '../i18n/LocaleProvider';
 
 export default function Footer() {
+  const { t } = useLocale();
   return (
     <footer className="w-full" style={{ backgroundColor: '#269984' }}>
       <div
@@ -66,7 +67,7 @@ export default function Footer() {
         <p className="font-montserrat text-center text-xs sm:text-sm" style={{ color: '#ffffff' }}>
           © {new Date().getFullYear()} | algorythmics.com |{' '}
           <Link href="/about" className="hover:underline">
-            About Us
+            {t('nav.about')}
           </Link>
         </p>
       </div>

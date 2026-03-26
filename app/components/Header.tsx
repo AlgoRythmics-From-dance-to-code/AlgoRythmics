@@ -217,7 +217,7 @@ export default function Header({
                     <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                       <UserIcon className="w-4 h-4 text-[#269984]" />
                     </div>
-                    <span className="font-montserrat text-sm font-semibold">Profil</span>
+                    <span className="font-montserrat text-sm font-semibold">{t('nav.profile')}</span>
                   </Link>
                   <div className="h-px bg-gray-100 my-1 mx-4" />
                   <button
@@ -246,7 +246,7 @@ export default function Header({
                       </svg>
                     </div>
                     <span className="font-montserrat text-sm font-bold uppercase tracking-wider">
-                      Logout
+                      {t('nav.logout')}
                     </span>
                   </button>
                 </div>
@@ -310,7 +310,7 @@ export default function Header({
             </Link>
 
             <div className="border-t border-white/20 pt-4 mt-2">
-              <p className="text-white/60 text-sm font-montserrat mb-2">Language</p>
+              <p className="text-white/60 text-sm font-montserrat mb-2">{t('nav.language')}</p>
               <div className="flex gap-4">
                 {languages.map((lang) => (
                   <button
@@ -376,7 +376,7 @@ export default function Header({
                       <UserIcon className="w-5 h-5 text-white/70" />
                     )}
                   </div>
-                  Profile
+                  {t('nav.profile')}
                 </Link>
                 <button
                   onClick={async () => {
@@ -387,14 +387,14 @@ export default function Header({
                   }}
                   className="font-montserrat text-white text-lg text-left font-bold"
                 >
-                  Logout
+                  {t('nav.logout')}
                 </button>
               </>
             )}
 
             <div className="flex items-center gap-2 text-white">
               <ThemeToggle />
-              <span className="font-montserrat">Switch Theme</span>
+              <span className="font-montserrat">{t('nav.switch_theme')}</span>
             </div>
           </nav>
         </div>

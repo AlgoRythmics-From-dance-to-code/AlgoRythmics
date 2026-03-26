@@ -2,18 +2,21 @@ import { getPayload } from 'payload';
 import configPromise from '../../../../payload.config';
 import { NextResponse } from 'next/server';
 import { auth } from '../../../../auth';
+import { getT } from '../../../../lib/i18n-server';
+import logger from '../../../../lib/logger';
 
 export async function POST(req: Request) {
+  const t = await getT();
   try {
     const session = await auth();
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: t('toasts.unexpected_error_desc') }, { status: 401 });
     }
 
     const { currentPassword, newPassword } = await req.json();
 
     if (!newPassword || newPassword.length < 6) {
-      return NextResponse.json({ error: 'A jelszónak legalább 6 karakterből kell állnia.' }, { status: 400 });
+      return NextResponse.json({ error: t('locales.password_min') }, { status: 400 });
     }
 
     const payload = await getPayload({ config: configPromise });
@@ -28,7 +31,7 @@ export async function POST(req: Request) {
         },
       });
     } catch (e) {
-      return NextResponse.json({ error: 'A jelenlegi jelszó hibás.' }, { status: 400 });
+      return NextResponse.json({ error: t('locales.password_current_incorrect') }, { status: 400 });
     }
 
     // Find the user by email
@@ -40,7 +43,7 @@ export async function POST(req: Request) {
     });
 
     if (result.docs.length === 0) {
-      return NextResponse.json({ error: 'Sajnos nem találjuk a felhasználót.' }, { status: 404 });
+      return NextResponse.json({ error: t('toasts.delete_error') }, { status: 404 });
     }
 
     const dbUser = result.docs[0] as any;
@@ -48,7 +51,7 @@ export async function POST(req: Request) {
     // Check if user is a social user
     if (dbUser.authProvider && dbUser.authProvider !== 'email') {
       return NextResponse.json(
-        { error: 'Közösségi bejelentkezéssel nem módosíthatod a jelszavadat itt.' },
+        { error: t('locales.password_social_error') },
         { status: 400 }
       );
     }
@@ -62,9 +65,11 @@ export async function POST(req: Request) {
       } as any,
     });
 
-    return NextResponse.json({ message: 'Password updated successfully' });
+    logger.info({ userId: dbUser.id }, t('toasts.password_updated'));
+    return NextResponse.json({ message: t('toasts.password_updated') });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Update failed';
+    const message = error instanceof Error ? error.message : t('toasts.password_update_error');
+    logger.error({ error: message }, t('toasts.password_update_error'));
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

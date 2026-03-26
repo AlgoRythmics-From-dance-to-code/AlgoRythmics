@@ -1,12 +1,15 @@
 import { getPayload } from 'payload';
 import configPromise from '../../../../payload.config';
 import { NextResponse } from 'next/server';
+import logger from '../../../../lib/logger';
+import { getT } from '../../../../lib/i18n-server';
 
 export async function POST(req: Request) {
+  const t = await getT();
   try {
     const { token } = await req.json();
     if (!token) {
-      return NextResponse.json({ error: 'Token is required' }, { status: 400 });
+      return NextResponse.json({ error: t('verify.no_token') }, { status: 400 });
     }
 
     const payload = await getPayload({ config: configPromise });
@@ -34,14 +37,13 @@ export async function POST(req: Request) {
         },
       });
 
-      return NextResponse.json({ message: 'Email verified successfully' });
+      logger.info({ userId: user.id }, t('toasts.verify_success'));
+      return NextResponse.json({ message: t('toasts.verify_success') });
     } else {
-      // Check if user is already verified
-      // (Optional: but good for UX)
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 });
+      return NextResponse.json({ error: t('verify.error_msg', { error: 'invalid-token' }) }, { status: 400 });
     }
   } catch (error: any) {
-    console.error('Custom verify error:', error.message || error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error({ error: error.message || error }, t('toasts.verify_error'));
+    return NextResponse.json({ error: error.message || t('toasts.verify_error') }, { status: 500 });
   }
 }

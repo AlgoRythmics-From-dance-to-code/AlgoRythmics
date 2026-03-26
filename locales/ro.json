@@ -7,7 +7,12 @@
     "courses": "Cursuri",
     "contact": "Contact",
     "login": "Autentificare",
-    "register": "Înregistrare"
+    "register": "Înregistrare",
+    "logout": "Deconectare",
+    "profile": "Profil",
+    "language": "Limbă",
+    "switch_theme": "Schimbă tema",
+    "about": "Despre noi"
   },
   "aria": {
     "go_home": "Mergi la pagina principală",
@@ -46,5 +51,212 @@
       "hard": "Greu"
     }
   },
-  "footer": "© {year} AlgoRythmics. Toate drepturile rezervate."
+  "footer": "© {year} AlgoRythmics. Toate drepturile rezervate.",
+  "toasts": {
+    "login_success": "Autentificare reușită!",
+    "login_error": "Autentificare eșuată",
+    "login_error_desc": "Date invalide sau cont neverificat.",
+    "unexpected_error": "Eroare neașteptată",
+    "unexpected_error_desc": "Vă rugăm să încercați mai târziu.",
+    "register_success": "Înregistrare reușită!",
+    "register_success_desc": "Vă rugăm să vă verificați e-mailul pentru a confirma contul.",
+    "register_error": "Eroare de înregistrare",
+    "profile_updated": "Profil actualizat",
+    "profile_updated_desc": "Modificările au fost salvate.",
+    "profile_update_error": "Eroare la salvare",
+    "password_updated": "Parolă actualizată",
+    "password_updated_desc": "Parola ta a fost schimbată.",
+    "password_update_error": "Actualizarea parolei a eșuat.",
+    "password_min": "Parola trebuie să aibă cel puțin 6 caractere.",
+    "password_current_incorrect": "Parola curentă este incorectă.",
+    "password_social_error": "Nu puteți schimba parola cu autentificarea socială.",
+    "account_deleted": "Cont șters",
+    "account_deleted_desc": "Contul dvs. a fost șters definitiv. Ne pare rău că plecați!",
+    "delete_error": "Ștergere eșuată",
+    "verify_success": "Verificare reușită!",
+    "verify_success_desc": "Acum vă puteți autentifica în contul dvs.",
+    "verify_error": "Verificare eșuată",
+    "verify_error_desc": "Link-ul este invalid sau a expirat."
+  },
+  "errors": {
+    "unauthorized": "Neautorizat",
+    "user_not_found": "Utilizator negăsit",
+    "save_failed": "Salvare eșuată",
+    "update_failed": "Actualizare eșuată"
+  },
+  "profile": {
+    "title": "Profilul tău",
+    "hero": {
+      "subtitle": "Gestionează setările contului, confidențialitatea și informațiile personale."
+    },
+    "tabs": {
+      "public": "Profil public",
+      "edit": "Editează profilul",
+      "security": "Securitate cont",
+      "delete": "Șterge contul"
+    },
+    "public": {
+      "bio_title": "Despre mine",
+      "no_bio": "Niciun bio încă.",
+      "member_since": "Membru din",
+      "account_details": "Detalii cont",
+      "progress_title": "Progresul tău",
+      "progress_subtitle": "Ești gata pentru următoarea lecție?",
+      "verified_status": "Cont verificat"
+    },
+    "edit": {
+      "title": "Editează profilul",
+      "first_name": "Prenume",
+      "last_name": "Nume",
+      "email": "Adresa de e-mail",
+      "bio": "Bio",
+      "save": "Salvează modificările",
+      "saving": "Se salvează..."
+    },
+    "security": {
+      "title": "Schimbă parola",
+      "current_password": "Parola actuală",
+      "new_password": "Parolă nouă",
+      "confirm_password": "Confirmă parola nouă",
+      "update_btn": "Actualizează parola"
+    },
+    "delete": {
+      "warning": "Această acțiune este permanentă și nu poate fi anulată.",
+      "confirm_text": "Pentru a confirma, introduceți „DELETE” mai jos:",
+      "delete_btn": "Șterge definitiv contul meu"
+    }
+  },
+  "login": {
+    "title": "Autentificare",
+    "subtitle": "Bine ai revenit! Te rugăm să te autentifici în contul tău.",
+    "email_label": "Adresă de e-mail",
+    "email_placeholder": "Introdu adresa de e-mail",
+    "password_label": "Parolă",
+    "password_placeholder": "Introdu parola",
+    "remember_me": "Ține-mă minte",
+    "forgot_password": "Ai uitat parola?",
+    "login_btn": "Autentificare",
+    "logging_in": "Se autentifică...",
+    "or": "sau",
+    "no_account": "Nu ai un cont?",
+    "register_link": "Înregistrare",
+    "errors": {
+      "email_required": "E-mailul este obligatoriu",
+      "email_invalid": "E-mailul este invalid",
+      "password_required": "Parola este obligatorie",
+      "auth_failed": "E-mail sau parolă invalidă, sau cont neverificat!"
+    }
+  },
+  "register": {
+    "title": "Înregistrare",
+    "subtitle": "Creează-ți contul pentru a începe.",
+    "first_name_label": "Prenume",
+    "first_name_placeholder": "Prenume",
+    "last_name_label": "Nume",
+    "last_name_placeholder": "Nume",
+    "email_label": "Adresă de e-mail",
+    "email_placeholder": "Introdu adresa de e-mail",
+    "password_label": "Parolă",
+    "password_placeholder": "Creează o parolă",
+    "confirm_password_label": "Confirmă parola",
+    "confirm_password_placeholder": "Confirmă parola",
+    "terms_accept": "Accept {terms} și {privacy}",
+    "terms_link": "Termenii și condițiile",
+    "privacy_link": "Politica de confidențialitate",
+    "register_btn": "Înregistrare",
+    "registering": "Se înregistrează...",
+    "already_have_account": "Ai deja un cont?",
+    "login_link": "Autentificare",
+    "success_title": "Confirmă adresa de e-mail",
+    "success_desc": "Am trimis un link de verificare la {email}. Te rugăm să îți verifici căsuța poștală și să dai clic pe link pentru a-ți activa contul.",
+    "success_btn": "Mergi la Autentificare",
+    "errors": {
+      "first_name_required": "Prenumele este obligatoriu",
+      "last_name_required": "Numele este obligatoriu",
+      "email_required": "E-mailul este obligatoriu",
+      "email_invalid": "E-mailul este invalid",
+      "password_required": "Parola este obligatorie",
+      "password_min": "Parola trebuie să aibă cel puțin 6 caractere",
+      "password_mismatch": "Parolele nu se potrivesc",
+      "terms_required": "Trebuie să accepți termenii"
+    }
+  },
+  "verify": {
+    "loading": "Se verifică adresa de e-mail...",
+    "no_token": "Nu a fost găsit niciun token de verificare.",
+    "success_msg": "Adresa de e-mail a fost verificată cu succes! Acum te poți autentifica.",
+    "error_msg": "Verificarea a eșuat: {error}. Link-ul poate fi expirat sau invalid.",
+    "title_verifying": "Se verifică...",
+    "title_success": "Succes!",
+    "title_failed": "Verificarea a eșuat",
+    "login_btn": "Mergi la Autentificare",
+    "register_btn": "Înapoi la Înregistrare"
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Ne-ar plăcea să auzim de la tine",
+    "get_in_touch": "Contactează-ne",
+    "email": "Email",
+    "address": "Adresă",
+    "phone": "Telefon",
+    "send_us_message": "Trimite-ne un mesaj",
+    "success_title": "Mesaj trimis!",
+    "success_desc": "Te vom contacta în curând.",
+    "send_another": "Trimite alt mesaj",
+    "name_label": "Numele tău",
+    "email_label": "Email-ul tău",
+    "subject_label": "Subiect",
+    "message_label": "Mesaj",
+    "name_placeholder": "Ion Popescu",
+    "email_placeholder": "ion@exemplu.ro",
+    "subject_placeholder": "Cum te putem ajuta?",
+    "message_placeholder": "Mesajul tău...",
+    "sending": "Se trimite...",
+    "send_btn": "Trimite mesajul",
+    "errors": {
+      "name_required": "Numele este obligatoriu",
+      "email_required": "Email-ul este obligatoriu",
+      "email_invalid": "Email-ul este invalid",
+      "subject_required": "Subiectul este obligatoriu",
+      "message_required": "Mesajul este obligatoriu"
+    }
+  },
+  "about": {
+    "title": "Despre noi",
+    "subtitle": "AlgoRythmics transformă învățarea algoritmilor într-o experiență muzicală captivantă. Combinăm dansul, muzica și tehnologia interactivă pentru a face conceptele complexe intuitive și distractive.",
+    "mission_title": "Misiunea noastră",
+    "mission_text1": "Credem că algoritmii nu trebuie să fie intimidanți. Prin limbajul universal al muzicii și mișcării, facem algoritmii de sortare și căutare accesibili tuturor – de la studenții CS din primul an la cursanții curioși de toate vârstele.",
+    "mission_text2": "Platforma noastră combină tradițiile dansului popular din întreaga lume cu vizualizările de algoritmi, creând o experiență de învățare unică și memorabilă care face legătura între cultură și tehnologie.",
+    "mission_alt": "Misiunea noastră",
+    "team_title": "Echipa noastră",
+    "team_subtitle": "Faceți cunoștință cu oamenii pasionați din spatele AlgoRythmics",
+    "team": {
+      "sarah": { "name": "Dr. Sarah Chen", "role": "Fondator și cercetător principal" },
+      "mark": { "name": "Mark Williams", "role": "Director creativ" },
+      "anna": { "name": "Anna Kovács", "role": "Dezvoltator Frontend" },
+      "david": { "name": "David Park", "role": "Specialist în algoritmi" }
+    },
+    "how_it_works": "Cum funcționează",
+    "steps": {
+      "01": {
+        "title": "Alege un algoritm",
+        "desc": "Selectați din biblioteca noastră cuprinzătoare de algoritmi de sortare, căutare și backtracking pentru a explora."
+      },
+      "02": {
+        "title": "Selectează modul de învățare",
+        "desc": "Alegeți modul preferat de a învăța — vizionați videoclipuri, interacționați cu animații sau preluați controlul manual."
+      },
+      "03": {
+        "title": "Învață și practică",
+        "desc": "Înțelegeți algoritmul pas cu pas cu ajutorul vizual, muzicii și coregrafiei de dans."
+      },
+      "04": {
+        "title": "Creează și distribuie",
+        "desc": "Construiți-vă propriile input-uri, testați cazurile limită și partajați progresul învățării cu comunitatea."
+      }
+    },
+    "cta_title": "Ești gata să începi să înveți?",
+    "cta_subtitle": "Alătură-te miilor de studenți care au descoperit bucuria de a învăța algoritmi prin muzică și dans.",
+    "cta_btn": "Începe acum"
+  }
 }
