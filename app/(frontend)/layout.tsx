@@ -7,7 +7,6 @@ import { Montserrat } from 'next/font/google';
 import '../globals.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import axios from 'axios';
 
 import { auth } from '../../auth';
 import NextAuthProvider from '../components/NextAuthProvider';
@@ -21,32 +20,12 @@ const montserrat = Montserrat({
 
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  const token = (await cookies()).get('payload-token')?.value;
 
-  // Use image from session if available, otherwise fallback to Payload ME API
-  let userImage: string | null =
+  // Use image from session if available
+  const userImage: string | null =
     (session?.user as any)?.imageUrl || (session?.user as any)?.image || null;
 
-  if (!userImage && token) {
-    try {
-      const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'}/api/users/me`,
-        {
-          proxy: false,
-          headers: {
-            Authorization: `JWT ${token}`,
-          },
-        },
-      );
-      if (data?.user) {
-        userImage = data.user.imageUrl || null;
-      }
-    } catch (e) {
-      logger.error({ error: e instanceof Error ? e.message : e }, 'Layout auth check failed');
-    }
-  }
-
-  const isAuthenticated = !!token || !!session;
+  const isAuthenticated = !!session;
 
   return (
     <html lang="en" suppressHydrationWarning>

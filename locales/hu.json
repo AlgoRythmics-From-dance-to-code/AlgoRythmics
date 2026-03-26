@@ -93,6 +93,7 @@
     "tabs": {
       "public": "Nyilvános profil",
       "edit": "Profil szerkesztése",
+      "password": "Jelszó",
       "security": "Fiók biztonság",
       "delete": "Fiók törlése"
     },

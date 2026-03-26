@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
     request.cookies.get('authjs.session-token')?.value ||
     request.cookies.get('__Secure-authjs.session-token')?.value;
 
-  const token = payloadToken || nextAuthToken;
+  const token = nextAuthToken;
 
   const { pathname } = request.nextUrl;
   const isAuthPage = pathname.startsWith(ROUTES.LOGIN) || pathname.startsWith(ROUTES.REGISTER);

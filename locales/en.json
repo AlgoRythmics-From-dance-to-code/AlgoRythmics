@@ -93,6 +93,7 @@
     "tabs": {
       "public": "Public Profile",
       "edit": "Edit Profile",
+      "password": "Password",
       "security": "Account Security",
       "delete": "Delete Account"
     },

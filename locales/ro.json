@@ -93,6 +93,7 @@
     "tabs": {
       "public": "Profil public",
       "edit": "Editează profilul",
+      "password": "Parolă",
       "security": "Securitate cont",
       "delete": "Șterge contul"
     },
