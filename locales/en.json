@@ -121,7 +121,8 @@
       "current_password": "Current Password",
       "new_password": "New Password",
       "confirm_password": "Confirm New Password",
-      "update_btn": "Update Password"
+      "update_btn": "Update Password",
+      "info_text": "Keep your account secure. Use a password with at least 8 characters including numbers and symbols."
     },
     "delete": {
       "warning": "This action is permanent and cannot be undone.",

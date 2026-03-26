@@ -259,9 +259,6 @@ export default function ProfilePage() {
                       <span className="text-4xl font-black text-[#269984]">{initials}</span>
                     )}
                   </div>
-                  <button className="absolute bottom-2 right-2 p-2 bg-[#269984] text-white rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border-2 border-white">
-                    <Camera size={16} />
-                  </button>
                 </div>
                 
                 <div className="mb-14 last:hidden md:block">
@@ -272,9 +269,9 @@ export default function ProfilePage() {
                     <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white border border-white/30">
                       {(user as any).role || 'User'}
                     </span>
-                    <span className="flex items-center gap-1.5 text-white/90 text-sm font-medium">
-                      <Mail size={14} />
-                      {user.email}
+                    <span className="flex items-center gap-1.5 text-white/90 text-sm font-medium min-w-0">
+                      <Mail size={14} className="flex-shrink-0" />
+                      <span className="truncate">{user.email}</span>
                     </span>
                   </div>
                 </div>
@@ -323,9 +320,9 @@ export default function ProfilePage() {
                           {t('profile.public.account_details')}
                         </label>
                         <div className="p-6 bg-[#269984]/5 dark:bg-[#269984]/10 rounded-3xl border-2 border-dashed border-[#269984]/20 space-y-4">
-                           <div className="flex justify-between items-center py-2 border-b border-[#269984]/10">
-                              <span className="text-sm font-semibold text-gray-500">{t('profile.edit.email')}</span>
-                              <span className="text-sm font-bold text-gray-800 dark:text-gray-200">{user.email}</span>
+                           <div className="flex flex-col sm:flex-row justify-between sm:items-center py-2 border-b border-[#269984]/10 gap-1 overflow-hidden">
+                              <span className="text-sm font-semibold text-gray-500 whitespace-nowrap">{t('profile.edit.email')}</span>
+                              <span className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">{user.email}</span>
                            </div>
                            <div className="flex justify-between items-center py-2 border-b border-[#269984]/10">
                               <span className="text-sm font-semibold text-gray-500">{t('profile.public.provider')}</span>
@@ -433,7 +430,7 @@ export default function ProfilePage() {
                     <div className="p-6 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-3xl flex gap-4">
                       <ShieldCheck className="text-blue-500 flex-shrink-0" size={24} />
                       <p className="text-sm text-blue-800 dark:text-blue-300 font-medium leading-relaxed">
-                         Keep your account secure. Use a password with at least 8 characters including numbers and symbols.
+                         {t('profile.security.info_text')}
                       </p>
                     </div>
 

@@ -121,7 +121,8 @@
       "current_password": "Parola actuală",
       "new_password": "Parolă nouă",
       "confirm_password": "Confirmă parola nouă",
-      "update_btn": "Actualizează parola"
+      "update_btn": "Actualizează parola",
+      "info_text": "Păstrați-vă contul în siguranță. Utilizați o parolă de cel puțin 8 caractere, inclusiv cifre și simboluri."
     },
     "delete": {
       "warning": "Această acțiune este permanentă și nu poate fi anulată.",

@@ -121,7 +121,8 @@
       "current_password": "Jelenlegi jelszó",
       "new_password": "Új jelszó",
       "confirm_password": "Új jelszó megerősítése",
-      "update_btn": "Jelszó frissítése"
+      "update_btn": "Jelszó frissítése",
+      "info_text": "Tartsa biztonságban fiókját. Használjon legalább 8 karakterből álló jelszót, amely számokat és szimbólumokat is tartalmaz."
     },
     "delete": {
       "warning": "Ez a művelet végleges és nem vonható vissza.",
