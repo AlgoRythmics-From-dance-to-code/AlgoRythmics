@@ -258,5 +258,128 @@
     "cta_title": "Készen állsz a tanulásra?",
     "cta_subtitle": "Csatlakozz több ezer diákhoz, akik már felfedezték az algoritmusok tanulásának örömét zene és tánc segítségével.",
     "cta_btn": "Kezdjük el"
+  },
+  "algorithms": {
+    "title": "Minden algoritmus",
+    "categories": {
+      "sorting": "Rendező algoritmusok",
+      "searching": "Kereső algoritmusok",
+      "backtracking": "Visszalépéses algoritmusok"
+    },
+    "read_more": "Olvass tovább",
+    "list": {
+      "bubble-sort": {
+        "name": "Buborékrendezés",
+        "description": "A buborékrendezés egy egyszerű rendezési algoritmus, amely egymás után összehasonlítja a szomszédos elemeket, és felcseréli őket, ha rossz sorrendben vannak."
+      },
+      "insertion-sort": {
+        "name": "Beszúró rendezés",
+        "description": "A beszúró rendezés egy egyszerű algoritmus, amely a végső rendezett tömböt elemenként építi fel. Kevésbé hatékony nagy listákon, mint a fejlettebb algoritmusok."
+      },
+      "selection-sort": {
+        "name": "Kiválasztó rendezés",
+        "description": "A kiválasztó rendezés egy helyben végzett összehasonlító rendezés. O(n²) időbonyolultságú, ami miatt nagy listákon nem hatékony."
+      },
+      "shell-sort": {
+        "name": "Shell-rendezés",
+        "description": "A Donald Shell által 1959-ben javasolt algoritmus a beszúró rendezés egy változata, amely lehetővé teszi, hogy az elemek nagyobbat lépjenek az elején."
+      },
+      "merge-sort": {
+        "name": "Összefuttatásos rendezés",
+        "description": "Az összefuttatásos rendezés egy oszd meg és uralkodj algoritmus, amely a tömböt félbe vágja, külön-külön rendezi őket, majd összefésüli a helyes sorrendben."
+      },
+      "quick-sort": {
+        "name": "Gyorsrendezés",
+        "description": "A gyorsrendezés kiválaszt egy pivot elemet, és köré rendezi a tömböt: a kisebbeket elé, a nagyobbakat utána, majd rekurzívan teszi ugyanezt."
+      },
+      "heap-sort": {
+        "name": "Kupacrendezés",
+        "description": "A kupacrendezés bináris kupac adatszerkezetet használ. Felépít egy max-kupacot, majd folyamatosan kiveszi a legnagyobb elemet a rendezett tömbhöz."
+      },
+      "linear-search": {
+        "name": "Lineáris keresés",
+        "description": "Egy egyszerű keresési algoritmus, amely a tömb elejétől kezdve minden elemet megvizsgál, és összehasonlítja a keresett értékkel."
+      },
+      "binary-search": {
+        "name": "Bináris keresés",
+        "description": "Hatékony keresési algoritmus, amely egy rendezett tömböt folyamatosan felez, amíg meg nem találja a célértéket vagy a tartomány ki nem ürül."
+      },
+      "n-queens": {
+        "name": "N-királynő probléma",
+        "description": "Az N-királynő probléma egy klasszikus visszalépéses feladat, amelyben N sakktábla-királynőt kell elhelyezni egy N×N-es táblán úgy, hogy ne üssék egymást."
+      }
+    }
+  },
+  "courses": {
+    "hero_title": "Kurzusok",
+    "hero_description": "Fedezd fel kurzuskategóriáinkat és tanuld meg az algoritmusokat különböző interaktív módszerekkel",
+    "all_courses": "Minden kurzus",
+    "lessons": "lecke",
+    "table": {
+      "name": "Kurzus neve",
+      "category": "Kategória",
+      "duration": "Időtartam",
+      "level": "Szint"
+    },
+    "levels": {
+      "beginner": "Kezdő",
+      "intermediate": "Középhaladó",
+      "advanced": "Haladó"
+    },
+    "categories_list": {
+      "video": {
+        "title": "Videó",
+        "description": "Nézd meg az algoritmusokat néptáncok formájában, és tanulj vizuális demonstrációkon keresztül lépésről lépésre."
+      },
+      "animation": {
+        "title": "Animáció",
+        "description": "Interaktív animációk, amelyek egyszerű vizuális szekvenciákra bontják le a komplex algoritmusokat."
+      },
+      "control": {
+        "title": "Irányítás",
+        "description": "Vedd át az irányítást és lépkedj végig manuálisan az algoritmusokon az összehasonlítások és cserék megértéséhez."
+      },
+      "create": {
+        "title": "Alkotás",
+        "description": "Építsd meg saját algoritmusaidat, hozz létre egyedi bemeneteket, és nézd meg, hogyan oldják meg a problémát."
+      },
+      "alive": {
+        "title": "Életre keltve",
+        "description": "Tapasztald meg, ahogy az algoritmusok életre kelnek valós idejű zenével és tánckoreográfiával minden műveletnél."
+      }
+    },
+    "list": {
+      "bubble_basics": "Buborékrendezés alapok",
+      "selection_dive": "Kiválasztó rendezés mélyvíz",
+      "insertion_animation": "Beszúró rendezés animáció",
+      "merge_visualized": "Összefuttatásos rendezés vizualizálva",
+      "quick_step": "Gyorsrendezés lépésről lépésre",
+      "heap_interactive": "Interaktív kupacrendezés",
+      "shell_builder": "Shell-rendezés építő",
+      "dance_party": "Algoritmus Tánc Party",
+      "binary_rhythm": "Bináris keresés ritmusa",
+      "n_queens_challenge": "N-királynő kihívás"
+    }
+  },
+  "videos": {
+    "hero_title": "Videók",
+    "hero_description": "Nézd meg az algoritmusrendező táncokat és tanulj vizuális demonstrációkon keresztül",
+    "filters": {
+      "all": "Összes videó",
+      "sorting": "Rendezés",
+      "searching": "Keresés"
+    },
+    "views": "megtekintés",
+    "list": {
+      "bubble-sort-dance": "Buborékrendezés tánc",
+      "insertion-sort-folk": "Beszúró rendezés néptánc",
+      "selection-sort-waltz": "Kiválasztó rendezés keringő",
+      "merge-sort-tango": "Összefuttatásos rendezés tangó",
+      "quick-sort-salsa": "Gyorsrendezés salsa",
+      "heap-sort-ballet": "Kupacrendezés balett",
+      "shell-sort-flamenco": "Shell-rendezés flamenco",
+      "linear-search-hip-hop": "Lineáris keresés hip-hop",
+      "binary-search-swing": "Bináris keresés swing"
+    }
   }
 }

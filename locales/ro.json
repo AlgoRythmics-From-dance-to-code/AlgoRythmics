@@ -258,5 +258,128 @@
     "cta_title": "Ești gata să începi să înveți?",
     "cta_subtitle": "Alătură-te miilor de studenți care au descoperit bucuria de a învăța algoritmi prin muzică și dans.",
     "cta_btn": "Începe acum"
+  },
+  "algorithms": {
+    "title": "Toți algoritmii",
+    "categories": {
+      "sorting": "Algoritmi de sortare",
+      "searching": "Algoritmi de căutare",
+      "backtracking": "Algoritmi de backtracking"
+    },
+    "read_more": "Citește mai mult",
+    "list": {
+      "bubble-sort": {
+        "name": "Sortarea prin metoda bulelor",
+        "description": "O formă de sortare prin schimbare care pur și simplu interschimbă perechile de elemente care nu sunt în ordine într-o serie de treceri prin fișier, până când lista este sortată."
+      },
+      "insertion-sort": {
+        "name": "Sortarea prin inserție",
+        "description": "Sortarea prin inserție este un algoritm simplu de sortare care construiește matricea sortată finală câte un element pe rând. Este mult mai puțin eficientă pe liste mari decât algoritmii mai avansați."
+      },
+      "selection-sort": {
+        "name": "Sortarea prin selecție",
+        "description": "Sortarea prin selecție este un algoritm de sortare, în special o sortare prin comparație pe loc. Are o complexitate temporală O(n²), ceea ce o face ineficientă pe liste mari."
+      },
+      "shell-sort": {
+        "name": "Sortarea Shell",
+        "description": "Un algoritm de sortare propus de Donald Shell în 1959, este o variantă a sortării prin inserție directă care permite înregistrărilor să facă salturi lungi în loc de pași simpli."
+      },
+      "merge-sort": {
+        "name": "Sortarea prin interclasare",
+        "description": "Sortarea prin interclasare este un algoritm de tip divide et impera care împarte matricea în jumătate, sortează fiecare jumătate și apoi le îmbină la loc în ordinea corectă."
+      },
+      "quick-sort": {
+        "name": "Sortarea rapidă",
+        "description": "Sortarea rapidă selectează un element pivot și partiționează matricea în jurul acestuia, plasând elementele mai mici înainte și cele mai mari după pivot, apoi sortează recursiv ambele părți."
+      },
+      "heap-sort": {
+        "name": "Sortarea prin metoda Heap",
+        "description": "Sortarea Heap folosește o structură de date de tip heap binar. Construiește un max-heap din matrice, apoi extrage repetat elementul maxim pentru a construi matricea sortată."
+      },
+      "linear-search": {
+        "name": "Căutarea liniară",
+        "description": "Un algoritm de căutare secvențială care verifică fiecare element al matricei de la început, comparând fiecare element cu valoarea dorită."
+      },
+      "binary-search": {
+        "name": "Căutarea binară",
+        "description": "Un algoritm de căutare eficient care împarte repetat intervalul de căutare sortat în jumătate până când valoarea țintă este găsită sau intervalul este gol."
+      },
+      "n-queens": {
+        "name": "Problema celor N regine",
+        "description": "Problema celor N regine este o problemă clasică de backtracking care implică plasarea a N regine pe o tablă de șah N×N astfel încât nicio regină să nu se amenințe una pe cealaltă."
+      }
+    }
+  },
+  "courses": {
+    "hero_title": "Cursuri",
+    "hero_description": "Explorează categoriile noastre de cursuri și învață algoritmi prin diferite metode interactive",
+    "all_courses": "Toate cursurile",
+    "lessons": "lecții",
+    "table": {
+      "name": "Nume curs",
+      "category": "Categorie",
+      "duration": "Durată",
+      "level": "Nivel"
+    },
+    "levels": {
+      "beginner": "Începător",
+      "intermediate": "Intermediar",
+      "advanced": "Avansat"
+    },
+    "categories_list": {
+      "video": {
+        "title": "Video",
+        "description": "Urmăriți dansurile de sortare a algoritmilor și învățați prin demonstrații vizuale ale fiecărui algoritm pas cu pas."
+      },
+      "animation": {
+        "title": "Animație",
+        "description": "Animații interactive care descompun algoritmii complecși în secvențe vizuale ușor de înțeles."
+      },
+      "control": {
+        "title": "Control",
+        "description": "Preia controlul și parcurge manual algoritmii pentru a înțelege fiecare operațiune de comparație și schimb."
+      },
+      "create": {
+        "title": "Creează",
+        "description": "Construiește-ți propriii algoritmi, creează seturi de input personalizate și urmărește cum diferite abordări rezolvă aceeași problemă."
+      },
+      "alive": {
+        "title": "Viu",
+        "description": "Experimentați algoritmii prin muzică în timp real și coregrafie de dans care se potrivește fiecărei operațiuni."
+      }
+    },
+    "list": {
+      "bubble_basics": "Bazele sortării prin metoda bulelor",
+      "selection_dive": "Aprofundarea sortării prin selecție",
+      "insertion_animation": "Animație sortare prin inserție",
+      "merge_visualized": "Sortare prin interclasare vizualizată",
+      "quick_step": "Sortarea rapidă pas cu pas",
+      "heap_interactive": "Sortare Heap interactivă",
+      "shell_builder": "Constructor sortare Shell",
+      "dance_party": "Petrecerea dansului algoritmilor",
+      "binary_rhythm": "Ritmul căutării binare",
+      "n_queens_challenge": "Provocarea celor N regine"
+    }
+  },
+  "videos": {
+    "hero_title": "Videoclipuri",
+    "hero_description": "Urmăriți dansurile de sortare a algoritmilor și învățați prin demonstrații vizuale",
+    "filters": {
+      "all": "Toate videoclipurile",
+      "sorting": "Sortare",
+      "searching": "Căutare"
+    },
+    "views": "vizualizări",
+    "list": {
+      "bubble-sort-dance": "Dansul sortării prin metoda bulelor",
+      "insertion-sort-folk": "Dans popular sortare prin inserție",
+      "selection-sort-waltz": "Valsul sortării prin selecție",
+      "merge-sort-tango": "Tangoul sortării prin interclasare",
+      "quick-sort-salsa": "Salsa sortării rapide",
+      "heap-sort-ballet": "Baletul sortării Heap",
+      "shell-sort-flamenco": "Flamenco sortării Shell",
+      "linear-search-hip-hop": "Hip Hop căutare liniară",
+      "binary-search-swing": "Swing căutare binară"
+    }
   }
 }

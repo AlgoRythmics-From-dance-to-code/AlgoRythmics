@@ -258,5 +258,128 @@
     "cta_title": "Ready to Start Learning?",
     "cta_subtitle": "Join thousands of students who have discovered the joy of learning algorithms through music and dance.",
     "cta_btn": "Get Started"
+  },
+  "algorithms": {
+    "title": "All algorithms",
+    "categories": {
+      "sorting": "Sorting algorithms",
+      "searching": "Searching algorithms",
+      "backtracking": "Backtracking algorithms"
+    },
+    "read_more": "Read more",
+    "list": {
+      "bubble-sort": {
+        "name": "Bubble sort",
+        "description": "A form of sorting by exchanging that simply interchanges pairs of elements that are out of order in a sequence of passes through the file, until the list is sorted."
+      },
+      "insertion-sort": {
+        "name": "Insertion sort",
+        "description": "Insertion sort is a simple sorting algorithm that builds the final sorted array one item at a time. It is much less efficient on large lists than more advanced algorithms."
+      },
+      "selection-sort": {
+        "name": "Selection sort",
+        "description": "Selection sort is a sorting algorithm, specifically an in-place comparison sort. It has O(n²) time complexity, making it inefficient on large lists."
+      },
+      "shell-sort": {
+        "name": "Shell sort",
+        "description": "A sorting algorithm proposed by Donald Shell in 1959, it is a variant of straight insertion sort that allows records to take long leaps rather than single steps."
+      },
+      "merge-sort": {
+        "name": "Merge sort",
+        "description": "Merge sort is a divide-and-conquer algorithm that divides the array in half, sorts each half, and then merges them back together in the correct order."
+      },
+      "quick-sort": {
+        "name": "Quick sort",
+        "description": "Quick sort selects a pivot element and partitions the array around it, placing smaller elements before and larger after the pivot, then recursively sorts both sides."
+      },
+      "heap-sort": {
+        "name": "Heap sort",
+        "description": "Heap sort uses a binary heap data structure. It builds a max-heap from the array, then repeatedly extracts the maximum element to build the sorted array."
+      },
+      "linear-search": {
+        "name": "Linear search",
+        "description": "A sequential search algorithm that checks each element of the array from the beginning, comparing each element with the desired value."
+      },
+      "binary-search": {
+        "name": "Binary search",
+        "description": "An efficient search algorithm that repeatedly divides the sorted search interval in half until the target value is found or the interval is empty."
+      },
+      "n-queens": {
+        "name": "N-Queens problem",
+        "description": "The N-Queens problem is a classic backtracking problem that involves placing N chess queens on an N×N chessboard so that no two queens threaten each other."
+      }
+    }
+  },
+  "courses": {
+    "hero_title": "Courses",
+    "hero_description": "Explore our course categories and learn algorithms through different interactive methods",
+    "all_courses": "All Courses",
+    "lessons": "lessons",
+    "table": {
+      "name": "Course Name",
+      "category": "Category",
+      "duration": "Duration",
+      "level": "Level"
+    },
+    "levels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "categories_list": {
+      "video": {
+        "title": "Video",
+        "description": "Watch algorithm sorting dances and learn through visual demonstrations of each algorithm step by step."
+      },
+      "animation": {
+        "title": "Animation",
+        "description": "Interactive animations that break down complex algorithms into easy-to-understand visual sequences."
+      },
+      "control": {
+        "title": "Control",
+        "description": "Take control and manually step through algorithms to understand every comparison and swap operation."
+      },
+      "create": {
+        "title": "Create",
+        "description": "Build your own algorithms, create custom input sets, and watch how different approaches solve the same problem."
+      },
+      "alive": {
+        "title": "Alive",
+        "description": "Experience algorithms come alive with real-time music and dance choreography matching each operation."
+      }
+    },
+    "list": {
+      "bubble_basics": "Bubble Sort Basics",
+      "selection_dive": "Selection Sort Deep Dive",
+      "insertion_animation": "Insertion Sort Animation",
+      "merge_visualized": "Merge Sort Visualized",
+      "quick_step": "Quick Sort Step-by-Step",
+      "heap_interactive": "Heap Sort Interactive",
+      "shell_builder": "Shell Sort Builder",
+      "dance_party": "Algorithm Dance Party",
+      "binary_rhythm": "Binary Search Rhythm",
+      "n_queens_challenge": "N-Queens Challenge"
+    }
+  },
+  "videos": {
+    "hero_title": "Videos",
+    "hero_description": "Watch algorithm sorting dances and learn through visual demonstrations",
+    "filters": {
+      "all": "All Videos",
+      "sorting": "Sorting",
+      "searching": "Searching"
+    },
+    "views": "views",
+    "list": {
+      "bubble-sort-dance": "Bubble Sort Dance",
+      "insertion-sort-folk": "Insertion Sort Folk Dance",
+      "selection-sort-waltz": "Selection Sort Waltz",
+      "merge-sort-tango": "Merge Sort Tango",
+      "quick-sort-salsa": "Quick Sort Salsa",
+      "heap-sort-ballet": "Heap Sort Ballet",
+      "shell-sort-flamenco": "Shell Sort Flamenco",
+      "linear-search-hip-hop": "Linear Search Hip Hop",
+      "binary-search-swing": "Binary Search Swing"
+    }
   }
 }
