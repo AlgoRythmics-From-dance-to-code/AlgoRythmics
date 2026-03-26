@@ -22,15 +22,17 @@ const montserrat = Montserrat({
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const token = (await cookies()).get('payload-token')?.value;
-  
+
   // Use image from session if available, otherwise fallback to Payload ME API
-  let userImage: string | null = (session?.user as any)?.imageUrl || (session?.user as any)?.image || null;
+  let userImage: string | null =
+    (session?.user as any)?.imageUrl || (session?.user as any)?.image || null;
 
   if (!userImage && token) {
     try {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'}/api/users/me`,
         {
+          proxy: false,
           headers: {
             Authorization: `JWT ${token}`,
           },
