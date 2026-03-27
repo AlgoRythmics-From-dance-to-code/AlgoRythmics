@@ -80,7 +80,7 @@ export default function TealSection() {
               >
                 {/* Folder Tab */}
                 <div className="absolute top-0 left-0 -translate-y-[20px] w-1/2 h-7 bg-white dark:bg-[#1a1a1a] rounded-t-[14px] flex items-center px-4">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#269984]/30 group-hover:bg-[#269984] transition-colors" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#269984]/30 group-hover:bg-[#269984] transition-colors" />
                 </div>
 
                 {/* Title Section */}
@@ -98,27 +98,37 @@ export default function TealSection() {
 
                 {/* Illustration Body */}
                 <div className="flex-1 flex items-center justify-center p-5 relative overflow-hidden">
-                    {/* Decorative Background for Illustration */}
-                    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-                        <svg className="w-full h-full" viewBox="0 0 100 100" fill="none" stroke="currentColor">
-                            <pattern id={`pattern-${index}`} width="10" height="10" patternUnits="userSpaceOnUse">
-                                <circle cx="2" cy="2" r="1" />
-                            </pattern>
-                            <rect width="100" height="100" fill={`url(#pattern-${index})`} />
-                        </svg>
-                    </div>
+                  {/* Decorative Background for Illustration */}
+                  <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                    <svg
+                      className="w-full h-full"
+                      viewBox="0 0 100 100"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <pattern
+                        id={`pattern-${index}`}
+                        width="10"
+                        height="10"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <circle cx="2" cy="2" r="1" />
+                      </pattern>
+                      <rect width="100" height="100" fill={`url(#pattern-${index})`} />
+                    </svg>
+                  </div>
 
-                    <Image
-                        src={card.illustration}
-                        alt={card.title}
-                        width={card.width}
-                        height={card.height}
-                        sizes="300px"
-                        className="relative z-10 w-full h-auto pointer-events-none select-none transition-transform duration-500 group-hover:scale-110 group-hover:rotate-2 dark:invert dark:hue-rotate-180"
-                        style={{ maxWidth: '200px', width: '85%', height: 'auto' }}
-                    />
+                  <Image
+                    src={card.illustration}
+                    alt={card.title}
+                    width={card.width}
+                    height={card.height}
+                    sizes="300px"
+                    className="relative z-10 w-full h-auto pointer-events-none select-none transition-transform duration-500 group-hover:scale-110 group-hover:rotate-2 dark:invert dark:hue-rotate-180"
+                    style={{ maxWidth: '200px', width: '85%', height: 'auto' }}
+                  />
                 </div>
-                
+
                 {/* Visual Depth Bar */}
                 <div className="h-4 w-full bg-neutral-100 dark:bg-neutral-800/50 rounded-b-[20px] transition-colors group-hover:bg-[#269984]/5" />
               </Link>

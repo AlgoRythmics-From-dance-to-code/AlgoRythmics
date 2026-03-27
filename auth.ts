@@ -8,6 +8,23 @@ import Credentials from 'next-auth/providers/credentials';
 import { ROLES, ROUTES, API_ROUTES, APP_CONFIG } from './lib/constants';
 import logger from './lib/logger';
 
+type BaseUser = {
+  id?: string;
+  email?: string | null;
+  role?: string;
+  firstName?: string;
+  lastName?: string;
+  authProvider?: string;
+  authProviderId?: string;
+  imageUrl?: string | null;
+  _verified?: boolean;
+  remember?: boolean;
+  name?: string | null;
+  image?: string | null;
+  bio?: string;
+  createdAt?: string;
+};
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Google({
@@ -71,12 +88,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        
+
         try {
           const { getPayload } = await import('payload');
           const configPromise = (await import('./payload.config')).default;
           const payload = await getPayload({ config: configPromise });
-          
+
           const result = await payload.login({
             collection: 'users',
             data: {
@@ -84,20 +101,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               password: credentials.password as string,
             },
           });
-          
+
           if (result && result.user) {
+            const user = result.user as {
+              id?: string | number;
+              firstName?: string;
+              lastName?: string;
+              email: string;
+              role?: string;
+            };
             return {
-              id: result.user.id.toString(),
-              name: (result.user as any).firstName ? `${(result.user as any).firstName} ${(result.user as any).lastName}` : result.user.email,
-              email: result.user.email,
-              role: (result.user as any).role,
+              id: user.id?.toString() || '',
+              name: user.firstName ? `${user.firstName} ${user.lastName}` : user.email,
+              email: user.email,
+              role: user.role,
               remember: credentials.remember === 'true',
             };
           }
           logger.warn({ result: !!result }, 'Authorize: Failed (credentials)');
           return null;
-        } catch (error: any) {
-          logger.error({ error: error.message || error }, 'Authorize: Error (credentials)');
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          logger.error({ error: message }, 'Authorize: Error (credentials)');
           return null;
         }
       },
@@ -115,10 +140,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (!account || !user.email) {
-        logger.error({ 
-          provider: account?.provider, 
-          hasEmail: !!user.email 
-        }, 'NextAuth signIn error: Missing account or email');
+        logger.error(
+          {
+            provider: account?.provider,
+            hasEmail: !!user.email,
+          },
+          'NextAuth signIn error: Missing account or email',
+        );
         return false;
       }
 
@@ -143,37 +171,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           limit: 1,
         });
 
-        const nameParts = user.name ? user.name.split(' ') : [];
-        const firstName = (user as any).firstName || nameParts[0] || '';
-        const lastName = (user as any).lastName || nameParts.slice(1).join(' ') || '';
+        const docUser = user as BaseUser;
+        const nameParts = docUser.name ? docUser.name.split(' ') : [];
+        const firstName = docUser.firstName || nameParts[0] || '';
+        const lastName = docUser.lastName || nameParts.slice(1).join(' ') || '';
 
         if (existing.docs.length === 0) {
           // Create new user — auto-verified, no password needed for social login
-          await payload.create({
+          await (payload.create as (o: unknown) => Promise<unknown>)({
             collection: 'users',
             data: {
               email: user.email,
               password: `social_${randomUUID()}`,
-              role: ROLES.USER,
+              role: ROLES.USER as 'user',
               _verified: true,
               authProvider: account.provider,
               authProviderId: account.providerAccountId,
               imageUrl: user.image || null,
               firstName,
               lastName,
-            } as any,
+            },
             disableVerificationEmail: true,
-          } as any);
+          });
           logger.info({ provider: account.provider }, 'New user created');
         } else {
           // Update existing user with latest provider info
-          const existingUser = existing.docs[0] as any;
+          const existingUser = existing.docs[0] as unknown as BaseUser;
           const updateData: Record<string, unknown> = {};
-          
+
           // Always update provider info to the latest one used
           updateData.authProvider = account.provider;
           updateData.authProviderId = account.providerAccountId;
-          
+
           if (user.image && user.image !== existingUser.imageUrl) {
             updateData.imageUrl = user.image;
           }
@@ -189,12 +218,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           if (Object.keys(updateData).length > 0) {
-            await payload.update({
+            await (payload.update as (o: unknown) => Promise<unknown>)({
               collection: 'users',
-              id: existingUser.id,
+              id: existingUser.id as string | number,
               data: updateData,
               disableVerificationEmail: true,
-            } as any);
+            });
             logger.info({ provider: account.provider }, 'Updated user with latest provider info');
           }
         }
@@ -210,7 +239,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.provider = account?.provider;
         token.email = user.email;
-        token.remember = (user as any).remember;
+        token.remember = (user as BaseUser).remember;
         token.iat = Math.floor(Date.now() / 1000);
       }
 
@@ -221,7 +250,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null; // Invalidates the session
         }
       }
-      
+
       // If manually updated via update() in the frontend
       if (trigger === 'update' && session) {
         // Merge provided session data into token
@@ -237,17 +266,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const { getPayload } = await import('payload');
           const configPromise = (await import('./payload.config')).default;
           const payload = await getPayload({ config: configPromise });
-          
+
           const result = await payload.find({
             collection: 'users',
             where: { email: { equals: token.email } },
             limit: 1,
             depth: 0,
           });
-          
+
           if (result.docs.length > 0) {
-            const dbUser = result.docs[0] as any;
-            token.id = dbUser.id;
+            const dbUser = result.docs[0] as {
+              id?: string | number;
+              role?: string;
+              firstName?: string;
+              lastName?: string;
+              imageUrl?: string | null;
+              bio?: string;
+              authProvider?: string;
+              createdAt?: string;
+            };
+            token.id = dbUser.id?.toString();
             token.role = dbUser.role;
             token.firstName = dbUser.firstName;
             token.lastName = dbUser.lastName;
@@ -263,16 +301,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
 
-    async session({ session, token }: any) {
+    async session({
+      session,
+      token,
+    }: {
+      session: { user: BaseUser; expires: string };
+      token: Record<string, unknown>;
+    }) {
       if (token && session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.firstName = token.firstName;
-        session.user.lastName = token.lastName;
-        session.user.imageUrl = token.imageUrl;
-        session.user.bio = token.bio;
-        session.user.authProvider = token.authProvider;
-        session.user.createdAt = token.createdAt;
+        session.user.id = String(token.id || '');
+        session.user.role = String(token.role || '');
+        session.user.firstName = String(token.firstName || '');
+        session.user.lastName = String(token.lastName || '');
+        session.user.imageUrl = token.imageUrl as string | null;
+        session.user.bio = String(token.bio || '');
+        session.user.authProvider = String(token.authProvider || '');
+        session.user.createdAt = String(token.createdAt || '');
       }
       return session;
     },
@@ -283,13 +327,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (url.includes('/api/auth/callback') || url.includes('callback')) {
         return `${baseUrl}${API_ROUTES.AUTH.SOCIAL_CALLBACK}`;
       }
- 
+
       // If it's a relative URL, resolve it to our domain
       if (url.startsWith('/')) return `${baseUrl}${url}`;
-      
+
       // Allow only same-origin redirects
       if (new URL(url).origin === baseUrl) return url;
- 
+
       return baseUrl;
     },
   },

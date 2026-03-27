@@ -23,9 +23,12 @@ export default function Header({
   const { data: session } = useSession();
 
   const isAuthenticated = !!session || propIsAuthenticated;
-  const firstName = (session?.user as any)?.firstName || '';
-  const lastName = (session?.user as any)?.lastName || '';
-  const avatarUrl = (session?.user as any)?.imageUrl || (session?.user as any)?.image || propUserImage;
+  const user = session?.user as
+    | { firstName?: string; lastName?: string; imageUrl?: string; image?: string | null }
+    | undefined;
+  const firstName = user?.firstName || '';
+  const lastName = user?.lastName || '';
+  const avatarUrl = user?.imageUrl || user?.image || propUserImage;
 
   const getInitials = () => {
     if (firstName && lastName) return (firstName[0] + lastName[0]).toUpperCase();
@@ -48,7 +51,10 @@ export default function Header({
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setLangDropdownOpen(false);
       }
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target as Node)
+      ) {
         setProfileDropdownOpen(false);
       }
     }
@@ -94,7 +100,11 @@ export default function Header({
                 label={t('nav.algorithms')}
                 active={pathname?.startsWith(ROUTES.ALGORITHMS) ?? false}
               />
-              <NavLink href={ROUTES.COURSES} label={t('nav.courses')} active={pathname === ROUTES.COURSES} />
+              <NavLink
+                href={ROUTES.COURSES}
+                label={t('nav.courses')}
+                active={pathname === ROUTES.COURSES}
+              />
             </>
           )}
         </nav>
@@ -190,7 +200,7 @@ export default function Header({
                 className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white/20 hover:border-white/50 transition-colors overflow-hidden bg-white/10"
               >
                 {avatarUrl ? (
-                  <img
+                  <Image
                     src={avatarUrl}
                     alt="Profile"
                     width={40}
@@ -204,7 +214,6 @@ export default function Header({
                 )}
               </button>
 
-
               {profileDropdownOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl overflow-hidden py-2 border border-blue-50/50 transform origin-top-right transition-all animate-in fade-in zoom-in duration-200">
                   <Link
@@ -215,7 +224,9 @@ export default function Header({
                     <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                       <UserIcon className="w-4 h-4 text-[#269984]" />
                     </div>
-                    <span className="font-montserrat text-sm font-semibold">{t('nav.profile')}</span>
+                    <span className="font-montserrat text-sm font-semibold">
+                      {t('nav.profile')}
+                    </span>
                   </Link>
                   <div className="h-px bg-gray-100 my-1 mx-4" />
                   <button
@@ -361,7 +372,7 @@ export default function Header({
                 >
                   <div className="w-8 h-8 rounded-full border border-white/30 overflow-hidden bg-white/10 flex items-center justify-center">
                     {avatarUrl ? (
-                      <img
+                      <Image
                         src={avatarUrl}
                         alt="Profile"
                         width={32}

@@ -40,10 +40,14 @@ export async function POST(req: Request) {
       logger.info({ userId: user.id }, t('toasts.verify_success'));
       return NextResponse.json({ message: t('toasts.verify_success') });
     } else {
-      return NextResponse.json({ error: t('verify.error_msg', { error: 'invalid-token' }) }, { status: 400 });
+      return NextResponse.json(
+        { error: t('verify.error_msg', { error: 'invalid-token' }) },
+        { status: 400 },
+      );
     }
-  } catch (error: any) {
-    logger.error({ error: error.message || error }, t('toasts.verify_error'));
-    return NextResponse.json({ error: error.message || t('toasts.verify_error') }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error({ error: message }, t('toasts.verify_error'));
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

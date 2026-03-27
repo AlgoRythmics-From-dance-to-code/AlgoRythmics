@@ -21,10 +21,10 @@ const createLogger = (): Logger => {
   } else {
     // Fallback for browser-side usage (though we should avoid it)
     return {
-      info: (...args: any[]) => console.log(...args),
-      warn: (...args: any[]) => console.warn(...args),
-      error: (...args: any[]) => console.error(...args),
-      debug: (...args: any[]) => console.debug(...args),
+      info: (...args: unknown[]) => console.log(...args),
+      warn: (...args: unknown[]) => console.warn(...args),
+      error: (...args: unknown[]) => console.error(...args),
+      debug: (...args: unknown[]) => console.debug(...args),
       level: 'info',
     } as unknown as Logger;
   }
@@ -34,7 +34,7 @@ const createLogger = (): Logger => {
 // to avoid "MaxListenersExceededWarning" caused by HMR
 const globalForLogger = global as unknown as { logger: Logger | undefined };
 
-const logger = (isServer ? (globalForLogger.logger || createLogger()) : createLogger());
+const logger = isServer ? globalForLogger.logger || createLogger() : createLogger();
 
 if (isDevelopment && isServer) {
   globalForLogger.logger = logger;

@@ -37,7 +37,7 @@ export async function POST(req: Request) {
         firstName,
         lastName,
         bio,
-      } as any,
+      } as { firstName?: string; lastName?: string; bio?: string },
     });
 
     logger.info({ userId: dbUser.id }, t('toasts.profile_updated'));

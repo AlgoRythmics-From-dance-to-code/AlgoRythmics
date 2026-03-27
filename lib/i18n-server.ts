@@ -5,7 +5,12 @@ import { cookies, headers } from 'next/headers';
 
 export type Locale = 'en' | 'hu' | 'ro';
 
-const translations: Record<Locale, any> = { en, hu, ro };
+type TranslationDict = { [key: string]: string | TranslationDict };
+const translations: Record<Locale, TranslationDict> = {
+  en: en as unknown as TranslationDict,
+  hu: hu as unknown as TranslationDict,
+  ro: ro as unknown as TranslationDict,
+};
 
 export async function getServerLocale(): Promise<Locale> {
   try {
@@ -21,7 +26,7 @@ export async function getServerLocale(): Promise<Locale> {
       if (acceptLanguage.includes('hu')) return 'hu';
       if (acceptLanguage.includes('ro')) return 'ro';
     }
-  } catch (e) {
+  } catch {
     // next/headers might throw if called outside of request scope
   }
 
@@ -34,11 +39,11 @@ export async function getT() {
 
   return (path: string, vars?: Record<string, string | number>) => {
     const parts = path.split('.');
-    let current = dict;
-    
+    let current: unknown = dict;
+
     for (const p of parts) {
-      if (current && typeof current === 'object' && p in current) {
-        current = current[p];
+      if (current && typeof current === 'object' && p in (current as Record<string, unknown>)) {
+        current = (current as Record<string, unknown>)[p];
       } else {
         current = undefined;
         break;
@@ -46,7 +51,7 @@ export async function getT() {
     }
 
     if (current === undefined) return path;
-    
+
     let s = String(current);
     if (vars) {
       for (const k of Object.keys(vars)) {
@@ -65,10 +70,10 @@ export function getStaticT(locale: Locale = 'en') {
   const dict = translations[locale];
   return (path: string, vars?: Record<string, string | number>) => {
     const parts = path.split('.');
-    let current = dict;
+    let current: unknown = dict;
     for (const p of parts) {
-      if (current && typeof current === 'object' && p in current) {
-        current = current[p];
+      if (current && typeof current === 'object' && p in (current as Record<string, unknown>)) {
+        current = (current as Record<string, unknown>)[p];
       } else {
         current = undefined;
         break;

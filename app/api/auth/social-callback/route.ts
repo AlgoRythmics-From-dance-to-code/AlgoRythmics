@@ -38,7 +38,9 @@ export async function GET() {
 
     const cookieStore = await cookies();
     const rememberMe = cookieStore.get('auth_remember_me')?.value === 'true';
-    const expiration = rememberMe ? APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME : APP_CONFIG.TOKEN_EXPIRATION_DEFAULT;
+    const expiration = rememberMe
+      ? APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME
+      : APP_CONFIG.TOKEN_EXPIRATION_DEFAULT;
 
     // Generate a Payload-compatible JWT token directly
     // Payload uses the PAYLOAD_SECRET env var to sign tokens
@@ -50,7 +52,7 @@ export async function GET() {
         collection: 'users',
       },
       payloadSecret,
-      { expiresIn: expiration }
+      { expiresIn: expiration },
     );
 
     cookieStore.set(APP_CONFIG.COOKIE_TOKEN_NAME, token, {
@@ -66,6 +68,11 @@ export async function GET() {
   } catch (error) {
     const message = error instanceof Error ? error.message : t('toasts.unexpected_error_desc');
     logger.error({ error: message }, t('toasts.unexpected_error'));
-    return NextResponse.redirect(new URL(`${ROUTES.LOGIN}?error=social-login-failed&detail=${encodeURIComponent(message)}`, baseUrl));
+    return NextResponse.redirect(
+      new URL(
+        `${ROUTES.LOGIN}?error=social-login-failed&detail=${encodeURIComponent(message)}`,
+        baseUrl,
+      ),
+    );
   }
 }

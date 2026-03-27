@@ -115,7 +115,7 @@ function FeatureCard({
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div 
+    <div
       className="flex items-center justify-center relative cursor-pointer group h-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -132,24 +132,14 @@ function FeatureCard({
           style={{ maxWidth: '280px', width: '100%', height: 'auto' }}
         />
 
-        <div 
-          className="absolute inset-0 flex flex-col items-center justify-center transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] opacity-0 invisible group-hover:opacity-100 group-hover:visible"
-        >
+        <div className="absolute inset-0 flex flex-col items-center justify-center transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] opacity-0 invisible group-hover:opacity-100 group-hover:visible">
           {/* Label above GIF */}
           <span className="font-montserrat font-bold text-[#269984] text-sm md:text-base mb-3 uppercase tracking-widest drop-shadow-sm transform transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
             {label}
           </span>
-          
+
           <div className="relative w-4/5 aspect-square transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] scale-75 group-hover:scale-100 drop-shadow-[0_0_20px_rgba(38,153,132,0.2)]">
-            {isHovered && (
-              <Image
-                src={gifSrc}
-                alt=""
-                fill
-                unoptimized
-                className="object-contain"
-              />
-            )}
+            {isHovered && <Image src={gifSrc} alt="" fill unoptimized className="object-contain" />}
           </div>
         </div>
       </div>

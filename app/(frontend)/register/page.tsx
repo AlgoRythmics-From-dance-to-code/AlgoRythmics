@@ -3,14 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useLocale } from '../../i18n/LocaleProvider';
 
 export default function RegisterPage() {
   const { t } = useLocale();
-  const router = useRouter();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -54,8 +52,16 @@ export default function RegisterPage() {
       toast.success(t('toasts.register_success'), {
         description: t('toasts.register_success_desc'),
       });
-    } catch (error: any) {
-      const errMsg = error.response?.data?.error || t('toasts.register_error');
+    } catch (error: unknown) {
+      interface AxiosErrorResponse {
+        response?: {
+          data?: {
+            error?: string;
+          };
+        };
+      }
+      const errMsg =
+        (error as AxiosErrorResponse).response?.data?.error || t('toasts.register_error');
       setErrors({
         email: errMsg,
       });
@@ -111,7 +117,16 @@ export default function RegisterPage() {
             {isSuccess ? (
               <div className="text-center animate-in fade-in zoom-in duration-500">
                 <div className="w-20 h-20 bg-[#36D6BA] bg-opacity-20 rounded-full flex items-center justify-center mb-6 mx-auto">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#36D6BA" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#36D6BA"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                 </div>
@@ -200,7 +215,9 @@ export default function RegisterPage() {
                       className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
                       placeholder={t('register.password_placeholder')}
                     />
-                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                    {errors.password && (
+                      <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                    )}
                   </div>
 
                   {/* Confirm Password */}
@@ -232,15 +249,23 @@ export default function RegisterPage() {
                       <span className="text-black dark:text-white leading-relaxed">
                         {t('register.terms_accept', {
                           terms: (
-                            <Link href="#" className="font-bold underline md:no-underline md:hover:underline" style={{ color: '#36D6BA' }}>
+                            <Link
+                              href="#"
+                              className="font-bold underline md:no-underline md:hover:underline"
+                              style={{ color: '#36D6BA' }}
+                            >
                               {t('register.terms_link')}
                             </Link>
-                          ) as any,
+                          ) as unknown as string,
                           privacy: (
-                            <Link href="#" className="font-bold underline md:no-underline md:hover:underline" style={{ color: '#36D6BA' }}>
+                            <Link
+                              href="#"
+                              className="font-bold underline md:no-underline md:hover:underline"
+                              style={{ color: '#36D6BA' }}
+                            >
                               {t('register.privacy_link')}
                             </Link>
-                          ) as any
+                          ) as unknown as string,
                         })}
                       </span>
                     </label>

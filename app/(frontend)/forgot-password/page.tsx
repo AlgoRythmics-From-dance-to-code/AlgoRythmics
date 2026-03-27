@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
 
       setIsSubmitted(true);
       toast.success(data.title, { description: data.message });
-    } catch (err) {
+    } catch {
       setError(t('toasts.unexpected_error_desc'));
       toast.error(t('toasts.unexpected_error'));
     } finally {
@@ -64,8 +64,28 @@ export default function ForgotPasswordPage() {
             />
           </div>
           {/* Decorative circles */}
-          <div className="absolute rounded-full" style={{ left: '8%', top: '12%', width: '120px', height: '120px', backgroundColor: '#36D6BA', opacity: 0.15 }} />
-          <div className="absolute rounded-full" style={{ right: '5%', bottom: '10%', width: '180px', height: '180px', backgroundColor: '#269984', opacity: 0.1 }} />
+          <div
+            className="absolute rounded-full"
+            style={{
+              left: '8%',
+              top: '12%',
+              width: '120px',
+              height: '120px',
+              backgroundColor: '#36D6BA',
+              opacity: 0.15,
+            }}
+          />
+          <div
+            className="absolute rounded-full"
+            style={{
+              right: '5%',
+              bottom: '10%',
+              width: '180px',
+              height: '180px',
+              backgroundColor: '#269984',
+              opacity: 0.1,
+            }}
+          />
         </div>
 
         {/* Right Side: Form */}
@@ -106,7 +126,9 @@ export default function ForgotPasswordPage() {
                     style={{ backgroundColor: '#269984', border: 'none' }}
                     disabled={isLoading}
                   >
-                    {isLoading ? t('login.forgot_password_submit_btn') + '...' : t('login.forgot_password_submit_btn')}
+                    {isLoading
+                      ? t('login.forgot_password_submit_btn') + '...'
+                      : t('login.forgot_password_submit_btn')}
                   </button>
 
                   <Link
@@ -121,9 +143,19 @@ export default function ForgotPasswordPage() {
             ) : (
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-20 h-20 bg-[#F0FBF9] dark:bg-[#112220] rounded-full mb-6">
-                    <svg className="w-10 h-10 text-[#269984]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                  <svg
+                    className="w-10 h-10 text-[#269984]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
                 </div>
                 <h1 className="font-montserrat font-bold text-3xl sm:text-4xl text-black dark:text-white mb-3">
                   {t('login.forgot_password_success_title')}

@@ -5,7 +5,7 @@ import { auth } from '../../../../auth';
 import { getT } from '../../../../lib/i18n-server';
 import logger from '../../../../lib/logger';
 
-export async function DELETE(req: Request) {
+export async function DELETE(_req: Request) {
   const t = await getT();
   try {
     const session = await auth();

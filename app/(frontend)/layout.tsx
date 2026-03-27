@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers';
 import ThemeProviderClient from '../components/ThemeProviderClient';
 import LocaleProvider from '../i18n/LocaleProvider';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -21,8 +20,8 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   const session = await auth();
 
   // Use image from session if available
-  const userImage: string | null =
-    (session?.user as any)?.imageUrl || (session?.user as any)?.image || null;
+  const user = session?.user as { imageUrl?: string; image?: string | null } | undefined;
+  const userImage = user?.imageUrl || user?.image || null;
 
   const isAuthenticated = !!session;
 

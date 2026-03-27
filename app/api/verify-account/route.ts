@@ -41,8 +41,9 @@ export async function POST(req: Request) {
     } else {
       return NextResponse.json({ error: t('verify.invalid_token') }, { status: 400 });
     }
-  } catch (error: any) {
-    logger.error({ error: error.message || error }, t('toasts.verify_error'));
-    return NextResponse.json({ error: error.message || t('toasts.verify_error') }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error({ error: message }, t('toasts.verify_error'));
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

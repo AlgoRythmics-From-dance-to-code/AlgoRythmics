@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const t = await getT();
   try {
     const { email } = await req.json();
-    
+
     if (!email) {
       return NextResponse.json({ error: t('login.errors.email_required') }, { status: 400 });
     }
@@ -28,33 +28,35 @@ export async function POST(req: Request) {
 
     if (users.docs.length === 0) {
       // Return success even if not found to prevent user enumeration
-      return NextResponse.json({ 
+      return NextResponse.json({
         title: t('login.forgot_password_success_title'),
-        message: t('login.forgot_password_success_desc') 
+        message: t('login.forgot_password_success_desc'),
       });
     }
 
-    const user = users.docs[0] as any;
+    interface LocalUser {
+      id: string | number;
+      authProvider?: string;
+      lastResetRequest?: string;
+    }
+    const user = users.docs[0] as unknown as LocalUser;
 
     // Check if the user is using an email provider
     // Social login accounts (Google, Facebook, etc.) cannot reset passwords this way
     if (user.authProvider && user.authProvider !== 'email') {
       // Return success but don't perform the reset to prevent revealing account provider
-      return NextResponse.json({ 
+      return NextResponse.json({
         title: t('login.forgot_password_success_title'),
-        message: t('login.forgot_password_success_desc') 
+        message: t('login.forgot_password_success_desc'),
       });
     }
 
     const lastRequest = user.lastResetRequest ? new Date(user.lastResetRequest).getTime() : 0;
     const now = Date.now();
-    
+
     // 15 minutes limit (15 * 60 * 1000 ms)
     if (now - lastRequest < 15 * 60 * 1000) {
-      return NextResponse.json(
-        { error: t('login.errors.rate_limit_error') }, 
-        { status: 429 }
-      );
+      return NextResponse.json({ error: t('login.errors.rate_limit_error') }, { status: 429 });
     }
 
     // Trigger Payload's forgotPassword operation
@@ -76,9 +78,9 @@ export async function POST(req: Request) {
       overrideAccess: true,
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       title: t('login.forgot_password_success_title'),
-      message: t('login.forgot_password_success_desc') 
+      message: t('login.forgot_password_success_desc'),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : t('toasts.unexpected_error');
