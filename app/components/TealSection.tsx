@@ -59,7 +59,7 @@ export default function TealSection() {
       <section className="w-full bg-[#269984] pt-20">
         <div className="mx-auto px-6" style={{ maxWidth: '1300px' }}>
           {/* Stacked Folder Container */}
-          <div className="relative flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-0 lg:-space-x-12">
+          <div className="relative flex flex-row flex-wrap lg:flex-nowrap items-center justify-center gap-10 lg:gap-0 lg:-space-x-12">
             {cards.map((card, index) => (
               <Link
                 key={card.href}
