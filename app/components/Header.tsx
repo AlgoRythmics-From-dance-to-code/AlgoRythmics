@@ -206,6 +206,7 @@ export default function Header({
                     width={40}
                     height={40}
                     className="w-full h-full object-cover"
+                    style={{ width: '100%', height: '100%' }}
                   />
                 ) : initials ? (
                   <span className="text-white text-sm font-bold uppercase">{initials}</span>
@@ -378,6 +379,7 @@ export default function Header({
                         width={32}
                         height={32}
                         className="w-full h-full object-cover"
+                        style={{ width: '100%', height: '100%' }}
                       />
                     ) : initials ? (
                       <span className="text-white text-[10px] font-bold uppercase">{initials}</span>

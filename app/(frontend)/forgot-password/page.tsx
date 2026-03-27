@@ -61,6 +61,7 @@ export default function ForgotPasswordPage() {
               width={420}
               height={420}
               className="opacity-90 lg:opacity-100 translate-x-[22px]"
+              style={{ width: '100%', height: 'auto' }}
             />
           </div>
           {/* Decorative circles */}

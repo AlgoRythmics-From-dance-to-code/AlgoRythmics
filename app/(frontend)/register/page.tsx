@@ -84,7 +84,8 @@ export default function RegisterPage() {
               alt="Register illustration"
               width={600}
               height={600}
-              className="w-full h-auto opacity-90"
+              className="opacity-90"
+              style={{ width: '100%', height: 'auto' }}
             />
           </div>
           <div
