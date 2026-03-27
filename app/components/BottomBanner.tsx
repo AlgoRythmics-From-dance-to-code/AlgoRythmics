@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export default function BottomBanner() {
   return (
-    <section className="w-full overflow-hidden bg-[#269984] pb-2 md:pb-5">
+    <section className="w-full overflow-hidden bg-[#269984]">
       <div
         className="mx-auto px-2 py-2 md:py-2 flex items-center justify-center opacity-90"
         style={{ maxWidth: '1400px' }}

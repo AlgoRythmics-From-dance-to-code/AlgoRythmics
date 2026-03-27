@@ -8,7 +8,7 @@ export default function Footer() {
   return (
     <footer className="w-full" style={{ backgroundColor: '#269984' }}>
       <div
-        className="mx-auto px-6 py-4 flex flex-col items-center gap-5"
+        className="mx-auto px-6 pb-4 flex flex-col items-center gap-5"
         style={{ maxWidth: '1400px' }}
       >
         {/* Social icons */}

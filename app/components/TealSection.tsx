@@ -56,13 +56,7 @@ export default function TealSection() {
         </svg>
       </div>
 
-      <section className="w-full bg-[#269984] pb-24 pt-10">
-        <div className="mx-auto px-6 text-center mb-16">
-            <h2 className="font-montserrat font-extrabold text-white text-3xl md:text-4xl opacity-90">
-                {t('about.how_it_works')}
-            </h2>
-        </div>
-
+      <section className="w-full bg-[#269984] pt-20">
         <div className="mx-auto px-6" style={{ maxWidth: '1300px' }}>
           {/* Stacked Folder Container */}
           <div className="relative flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-0 lg:-space-x-12">
@@ -71,7 +65,7 @@ export default function TealSection() {
                 key={card.href}
                 href={card.href}
                 className={`
-                  relative w-full max-w-[340px] aspect-[4/5] 
+                  relative w-full max-w-[310px] aspect-[4/5] 
                   bg-white dark:bg-[#1a1a1a] 
                   rounded-br-[24px] rounded-bl-[20px] rounded-tr-[24px]
                   transition-all duration-500 ease-in-out
@@ -85,15 +79,15 @@ export default function TealSection() {
                 }}
               >
                 {/* Folder Tab */}
-                <div className="absolute top-0 left-0 -translate-y-[24px] w-1/2 h-8 bg-white dark:bg-[#1a1a1a] rounded-t-[16px] flex items-center px-4">
-                    <div className="w-3 h-3 rounded-full bg-[#269984]/30 group-hover:bg-[#269984] transition-colors" />
+                <div className="absolute top-0 left-0 -translate-y-[20px] w-1/2 h-7 bg-white dark:bg-[#1a1a1a] rounded-t-[14px] flex items-center px-4">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#269984]/30 group-hover:bg-[#269984] transition-colors" />
                 </div>
 
                 {/* Title Section */}
-                <div className="p-8 pb-4">
+                <div className="p-7 pb-3">
                   <h3
                     className="font-montserrat font-black text-[#269984] dark:text-white uppercase tracking-tighter"
-                    style={{ fontSize: 'clamp(20px, 2vw, 24px)' }}
+                    style={{ fontSize: 'clamp(18px, 1.8vw, 22px)' }}
                   >
                     {card.title}
                   </h3>
@@ -103,7 +97,7 @@ export default function TealSection() {
                 </div>
 
                 {/* Illustration Body */}
-                <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
+                <div className="flex-1 flex items-center justify-center p-5 relative overflow-hidden">
                     {/* Decorative Background for Illustration */}
                     <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
                         <svg className="w-full h-full" viewBox="0 0 100 100" fill="none" stroke="currentColor">
@@ -121,7 +115,7 @@ export default function TealSection() {
                         height={card.height}
                         sizes="300px"
                         className="relative z-10 w-full h-auto pointer-events-none select-none transition-transform duration-500 group-hover:scale-110 group-hover:rotate-2 dark:invert dark:hue-rotate-180"
-                        style={{ maxWidth: '220px', width: '90%', height: 'auto' }}
+                        style={{ maxWidth: '200px', width: '85%', height: 'auto' }}
                     />
                 </div>
                 
