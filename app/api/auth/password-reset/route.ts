@@ -9,7 +9,8 @@ export async function POST(req: Request) {
   try {
     const { token, password } = await req.json();
 
-    if (!token || !password) {
+    const MIN_PASSWORD_LENGTH = 8;
+    if (!token || typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
       return NextResponse.json({ error: t('toasts.unexpected_error_desc') }, { status: 400 });
     }
 

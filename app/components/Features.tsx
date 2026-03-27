@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
 import { useLocale } from '../i18n/LocaleProvider';
 
 export default function Features() {
@@ -111,9 +112,13 @@ function FeatureCard({
   width: number;
   height: number;
 }) {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
     <div 
       className="flex items-center justify-center relative cursor-pointer group h-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative w-full aspect-square max-w-[280px] flex items-center justify-center overflow-hidden">
         {/* Base Static Illustration */}
@@ -136,13 +141,15 @@ function FeatureCard({
           </span>
           
           <div className="relative w-4/5 aspect-square transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] scale-75 group-hover:scale-100 drop-shadow-[0_0_20px_rgba(38,153,132,0.2)]">
-            <Image
-              src={gifSrc}
-              alt=""
-              fill
-              unoptimized
-              className="object-contain"
-            />
+            {isHovered && (
+              <Image
+                src={gifSrc}
+                alt=""
+                fill
+                unoptimized
+                className="object-contain"
+              />
+            )}
           </div>
         </div>
       </div>

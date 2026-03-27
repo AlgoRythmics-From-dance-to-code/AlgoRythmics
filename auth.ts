@@ -5,7 +5,7 @@ import Facebook from 'next-auth/providers/facebook';
 import Discord from 'next-auth/providers/discord';
 import GitHub from 'next-auth/providers/github';
 import Credentials from 'next-auth/providers/credentials';
-import { ROLES, ROUTES, API_ROUTES } from './lib/constants';
+import { ROLES, ROUTES, API_ROUTES, APP_CONFIG } from './lib/constants';
 import logger from './lib/logger';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -107,7 +107,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   session: {
     strategy: 'jwt',
-    maxAge: 90 * 24 * 60 * 60, // 90 days
+    maxAge: APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME,
   },
   pages: {
     signIn: ROUTES.LOGIN,
@@ -211,6 +211,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.provider = account?.provider;
         token.email = user.email;
         token.remember = (user as any).remember;
+        token.iat = Math.floor(Date.now() / 1000);
+      }
+
+      // Dynamic expiry enforcement
+      if (token.iat && !token.remember) {
+        const now = Math.floor(Date.now() / 1000);
+        if (now - (token.iat as number) > APP_CONFIG.TOKEN_EXPIRATION_DEFAULT) {
+          return null; // Invalidates the session
+        }
       }
       
       // If manually updated via update() in the frontend

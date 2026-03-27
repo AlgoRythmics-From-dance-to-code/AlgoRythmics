@@ -9,7 +9,7 @@ import { getT } from '../../../../lib/i18n-server';
 export async function POST(req: Request) {
   const t = await getT();
   try {
-    const { email, password } = await req.json();
+    const { email, password, remember } = await req.json();
     const payload = await getPayload({ config: configPromise });
 
     const result = await payload.login({
@@ -18,13 +18,14 @@ export async function POST(req: Request) {
     });
 
     if (result.token) {
+      const expiration = remember === true ? APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME : APP_CONFIG.TOKEN_EXPIRATION_DEFAULT;
       const cookieStore = await cookies();
       cookieStore.set(APP_CONFIG.COOKIE_TOKEN_NAME, result.token, {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: APP_CONFIG.TOKEN_EXPIRATION,
+        maxAge: expiration,
       });
     }
 

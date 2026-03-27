@@ -38,7 +38,7 @@ export async function GET() {
 
     const cookieStore = await cookies();
     const rememberMe = cookieStore.get('auth_remember_me')?.value === 'true';
-    const expiration = rememberMe ? APP_CONFIG.TOKEN_EXPIRATION : APP_CONFIG.SESSION_EXPIRATION;
+    const expiration = rememberMe ? APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME : APP_CONFIG.TOKEN_EXPIRATION_DEFAULT;
 
     // Generate a Payload-compatible JWT token directly
     // Payload uses the PAYLOAD_SECRET env var to sign tokens
