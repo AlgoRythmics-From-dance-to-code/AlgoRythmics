@@ -15,7 +15,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
+  const [remember, setRemember] = useState(true);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +31,8 @@ export default function LoginPage() {
   }, [searchParams, t]);
 
   const socialLogin = (provider: string) => {
+    // Store remember preference in a cookie for the callback route
+    document.cookie = `auth_remember_me=${remember}; path=/; max-age=3600; sameSite=lax`; // 1 hour is enough for the flow
     signIn(provider, { callbackUrl: API_ROUTES.AUTH.SOCIAL_CALLBACK });
   };
 
@@ -53,10 +55,14 @@ export default function LoginPage() {
     setSystemError(null);
 
     try {
+      // Also store for consistency or in case some middleware needs it
+      document.cookie = `auth_remember_me=${remember}; path=/; max-age=3600; sameSite=lax`;
+
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
+        remember: remember.toString(), // Pass to authorize callback
       });
 
       if (result?.error) {
@@ -91,7 +97,7 @@ export default function LoginPage() {
               alt="Login illustration"
               width={420}
               height={420}
-              className="opacity-90 lg:opacity-100 translate-x-22"
+              className="opacity-90 lg:opacity-100 translate-x-[22px]"
             />
           </div>
           {/* Decorative circles */}
@@ -131,7 +137,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right Side: Login Form */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10 select-none cursor-default caret-transparent">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10">
           <div className="w-full max-w-[500px]">
             <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3">
               {t('login.title')}

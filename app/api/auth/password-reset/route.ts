@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     // Call Payload's resetPassword operation
     // This will handle the token verification and hashing the new password
-    await (payload.resetPassword as any)({
+    await payload.resetPassword({
       collection: 'users',
       data: {
         token,
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const message = error instanceof Error ? error.message : t('toasts.unexpected_error');
 
     // Check if it's a "Token is invalid" error from Payload
-    if (message.includes('token') || message.includes('invalid') || message.includes('expired')) {
+    if (message.includes('Token is invalid') || message.includes('expired')) {
         return NextResponse.json({ error: t('login.errors.reset_token_invalid') }, { status: 400 });
     }
 

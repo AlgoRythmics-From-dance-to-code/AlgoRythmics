@@ -15,7 +15,6 @@ export async function POST(req: Request) {
 
     const payload = await getPayload({ config: configPromise });
 
-    // Find the user to check rate limiting
     const users = await payload.find({
       collection: 'users',
       where: {
@@ -23,10 +22,16 @@ export async function POST(req: Request) {
           equals: email,
         },
       },
+      limit: 1,
+      depth: 0,
     });
 
     if (users.docs.length === 0) {
-      return NextResponse.json({ error: t('errors.user_not_found') }, { status: 404 });
+      // Return success even if not found to prevent user enumeration
+      return NextResponse.json({ 
+        title: t('login.forgot_password_success_title'),
+        message: t('login.forgot_password_success_desc') 
+      });
     }
 
     const user = users.docs[0] as any;
@@ -34,7 +39,11 @@ export async function POST(req: Request) {
     // Check if the user is using an email provider
     // Social login accounts (Google, Facebook, etc.) cannot reset passwords this way
     if (user.authProvider && user.authProvider !== 'email') {
-      return NextResponse.json({ error: t('login.errors.social_account_error') }, { status: 400 });
+      // Return success but don't perform the reset to prevent revealing account provider
+      return NextResponse.json({ 
+        title: t('login.forgot_password_success_title'),
+        message: t('login.forgot_password_success_desc') 
+      });
     }
 
     const lastRequest = user.lastResetRequest ? new Date(user.lastResetRequest).getTime() : 0;
@@ -58,7 +67,7 @@ export async function POST(req: Request) {
     });
 
     // Update the last request time
-    await (payload as any).update({
+    await payload.update({
       collection: 'users',
       id: user.id,
       data: {

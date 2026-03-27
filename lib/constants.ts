@@ -6,7 +6,8 @@ export const APP_CONFIG = {
   NAME: 'AlgoRythmics',
   BASE_URL: process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
   COOKIE_TOKEN_NAME: 'payload-token',
-  TOKEN_EXPIRATION: 60 * 60 * 24 * 7, // 7 days in seconds
+  TOKEN_EXPIRATION: 60 * 60 * 24 * 90, // 90 days in seconds (default for "Remember Me")
+  SESSION_EXPIRATION: 60 * 60 * 24 * 1, // 1 day if NOT remembered
 } as const;
 
 export const ROUTES = {

@@ -158,6 +158,7 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
+  const { t } = useLocale();
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a] min-h-[calc(100vh-85px)]">
       <div className="flex flex-col lg:flex-row min-h-[calc(100vh-85px)]">
@@ -169,16 +170,15 @@ export default function ResetPasswordPage() {
               alt="Reset password illustration"
               width={420}
               height={420}
-              className="opacity-90 lg:opacity-100 translate-x-22"
+              className="opacity-90 lg:opacity-100 translate-x-[22px]"
             />
           </div>
           <div className="absolute rounded-full" style={{ left: '8%', top: '12%', width: '120px', height: '120px', backgroundColor: '#36D6BA', opacity: 0.15 }} />
           <div className="absolute rounded-full" style={{ right: '5%', bottom: '10%', width: '180px', height: '180px', backgroundColor: '#269984', opacity: 0.1 }} />
         </div>
 
-        {/* Right Side: Form */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10">
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<div className="font-montserrat text-[#666]">{t('verify.loading')}</div>}>
             <ResetPasswordForm />
           </Suspense>
         </div>

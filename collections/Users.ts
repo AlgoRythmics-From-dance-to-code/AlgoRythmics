@@ -10,7 +10,7 @@ export const Users: CollectionConfig = {
   auth: {
     verify: {
       generateEmailHTML: ({ token }) => {
-        const url = `${APP_CONFIG.BASE_URL}${ROUTES.VERIFY}?token=${token}`;
+        const url = `${APP_CONFIG.BASE_URL}${ROUTES.VERIFY}?token=${encodeURIComponent(token)}`;
         return `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
             <h2 style="color: #269984;">Welcome to AlgoRythmics!</h2>
@@ -29,7 +29,7 @@ export const Users: CollectionConfig = {
     forgotPassword: {
       generateEmailHTML: (args) => {
         const token = args?.token;
-        const url = `${APP_CONFIG.BASE_URL}${ROUTES.RESET_PASSWORD}?token=${token}`;
+        const url = `${APP_CONFIG.BASE_URL}${ROUTES.RESET_PASSWORD}?token=${encodeURIComponent(token!)}`;
         return `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
             <h2 style="color: #269984;">Password Reset Request</h2>

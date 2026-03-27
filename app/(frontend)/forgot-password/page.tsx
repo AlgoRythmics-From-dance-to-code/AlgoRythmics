@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
               alt="Forgot password illustration"
               width={420}
               height={420}
-              className="opacity-90 lg:opacity-100 translate-x-22"
+              className="opacity-90 lg:opacity-100 translate-x-[22px]"
             />
           </div>
           {/* Decorative circles */}
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Right Side: Form */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10 caret-transparent">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10">
           <div className="w-full max-w-[500px]">
             {!isSubmitted ? (
               <>
