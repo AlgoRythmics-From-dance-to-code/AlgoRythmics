@@ -5,7 +5,7 @@ import Facebook from 'next-auth/providers/facebook';
 import Discord from 'next-auth/providers/discord';
 import GitHub from 'next-auth/providers/github';
 import Credentials from 'next-auth/providers/credentials';
-import { ROLES, ROUTES, API_ROUTES } from './lib/constants';
+import { ROLES, ROUTES, API_ROUTES, APP_CONFIG } from './lib/constants';
 import logger from './lib/logger';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -67,6 +67,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        remember: { label: 'Remember', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -90,6 +91,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               name: (result.user as any).firstName ? `${(result.user as any).firstName} ${(result.user as any).lastName}` : result.user.email,
               email: result.user.email,
               role: (result.user as any).role,
+              remember: credentials.remember === 'true',
             };
           }
           logger.warn({ result: !!result }, 'Authorize: Failed (credentials)');
@@ -103,6 +105,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   trustHost: true,
+  session: {
+    strategy: 'jwt',
+    maxAge: APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME,
+  },
   pages: {
     signIn: ROUTES.LOGIN,
   },
@@ -201,9 +207,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     async jwt({ token, account, user, trigger, session }) {
-      if (account && user?.email) {
-        token.provider = account.provider;
+      if (user) {
+        token.provider = account?.provider;
         token.email = user.email;
+        token.remember = (user as any).remember;
+        token.iat = Math.floor(Date.now() / 1000);
+      }
+
+      // Dynamic expiry enforcement
+      if (token.iat && !token.remember) {
+        const now = Math.floor(Date.now() / 1000);
+        if (now - (token.iat as number) > APP_CONFIG.TOKEN_EXPIRATION_DEFAULT) {
+          return null; // Invalidates the session
+        }
       }
       
       // If manually updated via update() in the frontend

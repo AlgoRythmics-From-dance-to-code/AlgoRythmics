@@ -10,7 +10,6 @@ import Footer from '../components/Footer';
 
 import { auth } from '../../auth';
 import NextAuthProvider from '../components/NextAuthProvider';
-import logger from '../../lib/logger';
 import { Toaster } from 'sonner';
 
 const montserrat = Montserrat({

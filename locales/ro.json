@@ -149,8 +149,25 @@
       "email_required": "E-mailul este obligatoriu",
       "email_invalid": "E-mailul este invalid",
       "password_required": "Parola este obligatorie",
-      "auth_failed": "E-mail sau parolă invalidă, sau cont neverificat!"
-    }
+      "auth_failed": "E-mail sau parolă invalidă, sau cont neverificat!",
+      "rate_limit_error": "Prea multe cereri. Vă rugăm să așteptați 15 minute înainte de a încerca din nou.",
+      "reset_token_invalid": "Token-ul de resetare este invalid sau a expirat.",
+      "social_account_error": "Acest cont folosește autentificarea socială (Google/Facebook/etc.). Te rugăm să te autentifici cu furnizorul tău social."
+    },
+    "forgot_password_title": "Am uitat parola",
+    "forgot_password_subtitle": "Introdu adresa de e-mail și îți vom trimite un link pentru a-ți reseta parola.",
+    "forgot_password_email_label": "Adresă de e-mail",
+    "forgot_password_submit_btn": "Trimite link-ul de resetare",
+    "forgot_password_success_title": "Verifică-ți e-mailul",
+    "forgot_password_success_desc": "Dacă există un cont cu această adresă de e-mail, am trimis instrucțiuni pentru resetarea parolei.",
+    "forgot_password_back_to_login": "Înapoi la autentificare",
+    "reset_password_title": "Resetează parola",
+    "reset_password_subtitle": "Introdu noua parolă mai jos.",
+    "reset_password_new_password_label": "Parolă nouă",
+    "reset_password_confirm_password_label": "Confirmă parola nouă",
+    "reset_password_submit_btn": "Actualizează parola",
+    "reset_password_success_title": "Parolă resetată",
+    "reset_password_success_desc": "Parola ta a fost actualizată cu succes. Acum te poți autentifica."
   },
   "register": {
     "title": "Înregistrare",

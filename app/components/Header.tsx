@@ -72,14 +72,12 @@ export default function Header({
         {/* Logo */}
         <Link href={ROUTES.HOME} className="flex-shrink-0">
           <Image
-            src="/assets/group_20.svg"
+            src="/assets/logowhite.svg"
             alt="AlgoRythmics Logo"
             width={294}
             height={57}
             sizes="(max-width: 768px) 150px, 200px"
-            className="pointer-events-none select-none"
             style={{
-              filter: 'brightness(0) invert(1)',
               height: 'clamp(40px, 4vw, 48px)',
               width: 'auto',
             }}

@@ -36,6 +36,10 @@ export async function GET() {
 
     const user = result.docs[0];
 
+    const cookieStore = await cookies();
+    const rememberMe = cookieStore.get('auth_remember_me')?.value === 'true';
+    const expiration = rememberMe ? APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME : APP_CONFIG.TOKEN_EXPIRATION_DEFAULT;
+
     // Generate a Payload-compatible JWT token directly
     // Payload uses the PAYLOAD_SECRET env var to sign tokens
     const payloadSecret = process.env.PAYLOAD_SECRET || 'fallback-secret';
@@ -46,16 +50,15 @@ export async function GET() {
         collection: 'users',
       },
       payloadSecret,
-      { expiresIn: '7d' }
+      { expiresIn: expiration }
     );
 
-    const cookieStore = await cookies();
     cookieStore.set(APP_CONFIG.COOKIE_TOKEN_NAME, token, {
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: APP_CONFIG.TOKEN_EXPIRATION,
+      maxAge: expiration,
     });
 
     logger.info({ email: user.email }, t('toasts.login_success'));

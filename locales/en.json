@@ -149,8 +149,25 @@
       "email_required": "Email is required",
       "email_invalid": "Email is invalid",
       "password_required": "Password is required",
-      "auth_failed": "Invalid email or password, or account not verified!"
-    }
+      "auth_failed": "Invalid email or password, or account not verified!",
+      "rate_limit_error": "Too many requests. Please wait 15 minutes before trying again.",
+      "reset_token_invalid": "The reset token is invalid or has expired.",
+      "social_account_error": "This account uses social login (Google/Facebook/etc.). Please sign in with your social provider."
+    },
+    "forgot_password_title": "Forgot Password",
+    "forgot_password_subtitle": "Enter your email address and we'll send you a link to reset your password.",
+    "forgot_password_email_label": "Email Address",
+    "forgot_password_submit_btn": "Send Reset Link",
+    "forgot_password_success_title": "Check your email",
+    "forgot_password_success_desc": "If an account exists with that email, we've sent instructions to reset your password.",
+    "forgot_password_back_to_login": "Back to login",
+    "reset_password_title": "Reset Password",
+    "reset_password_subtitle": "Enter your new password below.",
+    "reset_password_new_password_label": "New Password",
+    "reset_password_confirm_password_label": "Confirm New Password",
+    "reset_password_submit_btn": "Update Password",
+    "reset_password_success_title": "Password Reset",
+    "reset_password_success_desc": "Your password has been successfully updated. You can now log in."
   },
   "register": {
     "title": "Register",

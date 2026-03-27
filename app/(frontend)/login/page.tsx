@@ -15,7 +15,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
+  const [remember, setRemember] = useState(true);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +31,8 @@ export default function LoginPage() {
   }, [searchParams, t]);
 
   const socialLogin = (provider: string) => {
+    // Store remember preference in a cookie for the callback route
+    document.cookie = `auth_remember_me=${remember}; path=/; max-age=3600; sameSite=lax`; // 1 hour is enough for the flow
     signIn(provider, { callbackUrl: API_ROUTES.AUTH.SOCIAL_CALLBACK });
   };
 
@@ -53,10 +55,14 @@ export default function LoginPage() {
     setSystemError(null);
 
     try {
+      // Also store for consistency or in case some middleware needs it
+      document.cookie = `auth_remember_me=${remember}; path=/; max-age=3600; sameSite=lax`;
+
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
+        remember: remember.toString(), // Pass to authorize callback
       });
 
       if (result?.error) {
@@ -87,11 +93,11 @@ export default function LoginPage() {
         <div className="hidden lg:flex flex-col items-center justify-center relative overflow-hidden lg:w-[40%] xl:w-[45%] bg-[#F0FBF9] dark:bg-[#112220]">
           <div className="w-3/4 max-w-[500px]">
             <Image
-              src="/assets/algo_group_109.svg"
+              src="/assets/Login_girl_phone_illu.svg"
               alt="Login illustration"
-              width={600}
-              height={600}
-              className="w-full h-auto opacity-90"
+              width={420}
+              height={420}
+              className="opacity-90 lg:opacity-100 translate-x-[22px]"
             />
           </div>
           {/* Decorative circles */}
@@ -149,14 +155,14 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit}>
               {/* Email field */}
               <div className="mb-6">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base">
+                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base select-none">
                   {t('login.email_label')}
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 sm:px-5 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
+                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-3 sm:px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
                   placeholder={t('login.email_placeholder')}
                 />
                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
@@ -164,14 +170,14 @@ export default function LoginPage() {
 
               {/* Password field */}
               <div className="mb-6">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base">
+                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base select-none">
                   {t('login.password_label')}
                 </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 sm:px-5 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
+                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-3 sm:px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
                   placeholder={t('login.password_placeholder')}
                 />
                 {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
@@ -189,7 +195,7 @@ export default function LoginPage() {
                   <span className="text-black dark:text-white">{t('login.remember_me')}</span>
                 </label>
                 <Link
-                  href="#"
+                  href={ROUTES.FORGOT_PASSWORD}
                   className="font-montserrat font-bold text-sm hover:underline"
                   style={{ color: '#36D6BA' }}
                 >
