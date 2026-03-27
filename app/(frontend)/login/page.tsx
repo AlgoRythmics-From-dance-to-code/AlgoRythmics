@@ -87,11 +87,11 @@ export default function LoginPage() {
         <div className="hidden lg:flex flex-col items-center justify-center relative overflow-hidden lg:w-[40%] xl:w-[45%] bg-[#F0FBF9] dark:bg-[#112220]">
           <div className="w-3/4 max-w-[500px]">
             <Image
-              src="/assets/algo_group_109.svg"
+              src="/assets/Login_girl_phone_illu.svg"
               alt="Login illustration"
-              width={600}
-              height={600}
-              className="w-full h-auto opacity-90"
+              width={420}
+              height={420}
+              className="opacity-90 lg:opacity-100 translate-x-22"
             />
           </div>
           {/* Decorative circles */}

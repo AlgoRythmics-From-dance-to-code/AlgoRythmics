@@ -4,9 +4,9 @@ import Image from 'next/image';
 
 export default function BottomBanner() {
   return (
-    <section className="w-full overflow-hidden bg-white dark:bg-[#0a0a0a]">
+    <section className="w-full overflow-hidden bg-[#269984] pb-2 md:pb-5">
       <div
-        className="mx-auto px-6 py-6 md:py-10 flex items-center justify-center"
+        className="mx-auto px-2 py-2 md:py-2 flex items-center justify-center opacity-90"
         style={{ maxWidth: '1400px' }}
       >
         <Image
@@ -15,7 +15,7 @@ export default function BottomBanner() {
           width={2866}
           height={1080}
           sizes="(max-width: 768px) 100vw, 1100px"
-          className="w-full h-auto object-contain pointer-events-none select-none dark:invert dark:hue-rotate-180"
+          className="w-full h-auto object-contain pointer-events-none select-none brightness-0 invert"
           style={{ maxWidth: '1100px', width: '100%', height: 'auto' }}
         />
       </div>

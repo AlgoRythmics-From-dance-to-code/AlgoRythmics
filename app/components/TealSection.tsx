@@ -39,48 +39,99 @@ export default function TealSection() {
   ];
 
   return (
-    <section className="w-full bg-gradient-to-b from-white from-[0px] via-[#269984] via-[30px] to-white to-[calc(100%-30px)] bg-[#269984]">
-      <div className="mx-auto px-6 py-10 md:py-14" style={{ maxWidth: '1200px' }}>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
-          {cards.map((card) => (
-            <Link
-              key={card.href}
-              href={card.href}
-              className="bg-white dark:bg-[#1a1a1a] rounded-[12px] overflow-hidden transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl flex flex-col group border border-transparent dark:border-white/10"
-              style={{
-                boxShadow: '0px 3px 6px rgba(0,0,0,0.16)',
-              }}
-            >
-              {/* Title + accent bar */}
-              <div className="px-4 pt-4 pb-2">
-                <h3
-                  className="font-montserrat font-bold text-black dark:text-white"
-                  style={{ fontSize: 'clamp(14px, 1.2vw, 20px)' }}
-                >
-                  {card.title}
-                </h3>
-                <div
-                  className="mt-2 rounded-sm bg-black dark:bg-white"
-                  style={{ width: '80px', height: '3px' }}
-                />
-              </div>
-
-              {/* Illustration */}
-              <div className="flex-1 flex items-center justify-center p-4 pt-1">
-                <Image
-                  src={card.illustration}
-                  alt={card.title}
-                  width={card.width}
-                  height={card.height}
-                  sizes="200px"
-                  className="w-full h-auto pointer-events-none select-none dark:invert dark:hue-rotate-180"
-                  style={{ maxWidth: '180px', width: '100%', height: 'auto' }}
-                />
-              </div>
-            </Link>
-          ))}
-        </div>
+    <>
+      {/* Wave Transition from White section to Teal section */}
+      <div className="w-full bg-white dark:bg-[#0a0a0a] -mb-1">
+        <svg
+          viewBox="0 0 1440 120"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-auto"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0 120L1440 120L1440 0C1440 0 1080 120 720 120C360 120 0 0 0 0L0 120Z"
+            fill="#269984"
+          />
+        </svg>
       </div>
-    </section>
+
+      <section className="w-full bg-[#269984] pb-24 pt-10">
+        <div className="mx-auto px-6 text-center mb-16">
+            <h2 className="font-montserrat font-extrabold text-white text-3xl md:text-4xl opacity-90">
+                {t('about.how_it_works')}
+            </h2>
+        </div>
+
+        <div className="mx-auto px-6" style={{ maxWidth: '1300px' }}>
+          {/* Stacked Folder Container */}
+          <div className="relative flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-0 lg:-space-x-12">
+            {cards.map((card, index) => (
+              <Link
+                key={card.href}
+                href={card.href}
+                className={`
+                  relative w-full max-w-[340px] aspect-[4/5] 
+                  bg-white dark:bg-[#1a1a1a] 
+                  rounded-br-[24px] rounded-bl-[20px] rounded-tr-[24px]
+                  transition-all duration-500 ease-in-out
+                  hover:z-50 hover:-translate-y-8 hover:-translate-x-4 hover:rotate-0
+                  group shadow-2xl overflow-visible
+                  ${index % 2 === 0 ? 'lg:rotate-[-3deg]' : 'lg:rotate-[3deg]'}
+                  flex flex-col
+                `}
+                style={{
+                  zIndex: index + 1,
+                }}
+              >
+                {/* Folder Tab */}
+                <div className="absolute top-0 left-0 -translate-y-[24px] w-1/2 h-8 bg-white dark:bg-[#1a1a1a] rounded-t-[16px] flex items-center px-4">
+                    <div className="w-3 h-3 rounded-full bg-[#269984]/30 group-hover:bg-[#269984] transition-colors" />
+                </div>
+
+                {/* Title Section */}
+                <div className="p-8 pb-4">
+                  <h3
+                    className="font-montserrat font-black text-[#269984] dark:text-white uppercase tracking-tighter"
+                    style={{ fontSize: 'clamp(20px, 2vw, 24px)' }}
+                  >
+                    {card.title}
+                  </h3>
+                  <p className="mt-2 text-gray-500 dark:text-gray-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {t('algorithm_card.read_more')} &rarr;
+                  </p>
+                </div>
+
+                {/* Illustration Body */}
+                <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
+                    {/* Decorative Background for Illustration */}
+                    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                        <svg className="w-full h-full" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                            <pattern id={`pattern-${index}`} width="10" height="10" patternUnits="userSpaceOnUse">
+                                <circle cx="2" cy="2" r="1" />
+                            </pattern>
+                            <rect width="100" height="100" fill={`url(#pattern-${index})`} />
+                        </svg>
+                    </div>
+
+                    <Image
+                        src={card.illustration}
+                        alt={card.title}
+                        width={card.width}
+                        height={card.height}
+                        sizes="300px"
+                        className="relative z-10 w-full h-auto pointer-events-none select-none transition-transform duration-500 group-hover:scale-110 group-hover:rotate-2 dark:invert dark:hue-rotate-180"
+                        style={{ maxWidth: '220px', width: '90%', height: 'auto' }}
+                    />
+                </div>
+                
+                {/* Visual Depth Bar */}
+                <div className="h-4 w-full bg-neutral-100 dark:bg-neutral-800/50 rounded-b-[20px] transition-colors group-hover:bg-[#269984]/5" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
