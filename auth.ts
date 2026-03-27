@@ -8,22 +8,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { ROLES, ROUTES, API_ROUTES, APP_CONFIG } from './lib/constants';
 import logger from './lib/logger';
 
-type BaseUser = {
-  id?: string;
-  email?: string | null;
-  role?: string;
-  firstName?: string;
-  lastName?: string;
-  authProvider?: string;
-  authProviderId?: string;
-  imageUrl?: string | null;
-  _verified?: boolean;
-  remember?: boolean;
-  name?: string | null;
-  image?: string | null;
-  bio?: string;
-  createdAt?: string;
-};
+import { BaseUser } from './lib/types/auth';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -102,23 +87,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
           });
 
-          if (result && result.user) {
+          if (result && result.user && result.user.id) {
             const user = result.user as {
-              id?: string | number;
+              id: string | number;
               firstName?: string;
               lastName?: string;
               email: string;
               role?: string;
             };
             return {
-              id: user.id?.toString() || '',
-              name: user.firstName ? `${user.firstName} ${user.lastName}` : user.email,
+              id: user.id.toString(),
+              name: user.firstName
+                ? `${user.firstName} ${user.lastName || ''}`.trim()
+                : user.email,
               email: user.email,
               role: user.role,
               remember: credentials.remember === 'true',
             };
           }
-          logger.warn({ result: !!result }, 'Authorize: Failed (credentials)');
+          logger.warn({ result: !!result }, 'Authorize: Failed (credentials or missing ID)');
           return null;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);

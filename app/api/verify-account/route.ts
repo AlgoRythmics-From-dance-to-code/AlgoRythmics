@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    logger.error({ error: message }, t('toasts.verify_error'));
-    return NextResponse.json({ error: message }, { status: 500 });
+    logger.error({ error, message }, t('toasts.verify_error'));
+    return NextResponse.json({ error: t('toasts.verify_error') }, { status: 500 });
   }
 }

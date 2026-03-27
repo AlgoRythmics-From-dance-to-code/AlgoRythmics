@@ -248,26 +248,35 @@ export default function RegisterPage() {
                         className="w-5 h-5 accent-[#36D6BA] mt-0.5"
                       />
                       <span className="text-black dark:text-white leading-relaxed">
-                        {t('register.terms_accept', {
-                          terms: (
-                            <Link
-                              href="#"
-                              className="font-bold underline md:no-underline md:hover:underline"
-                              style={{ color: '#36D6BA' }}
-                            >
-                              {t('register.terms_link')}
-                            </Link>
-                          ) as unknown as string,
-                          privacy: (
-                            <Link
-                              href="#"
-                              className="font-bold underline md:no-underline md:hover:underline"
-                              style={{ color: '#36D6BA' }}
-                            >
-                              {t('register.privacy_link')}
-                            </Link>
-                          ) as unknown as string,
-                        })}
+                        {t('register.terms_accept')
+                          .split(/(\{terms\}|\{privacy\})/)
+                          .map((part, i) => {
+                            if (part === '{terms}') {
+                              return (
+                                <Link
+                                  key={i}
+                                  href="#"
+                                  className="font-bold underline md:no-underline md:hover:underline"
+                                  style={{ color: '#36D6BA' }}
+                                >
+                                  {t('register.terms_link')}
+                                </Link>
+                              );
+                            }
+                            if (part === '{privacy}') {
+                              return (
+                                <Link
+                                  key={i}
+                                  href="#"
+                                  className="font-bold underline md:no-underline md:hover:underline"
+                                  style={{ color: '#36D6BA' }}
+                                >
+                                  {t('register.privacy_link')}
+                                </Link>
+                              );
+                            }
+                            return part;
+                          })}
                       </span>
                     </label>
                     {errors.terms && <p className="text-red-500 text-xs mt-1">{errors.terms}</p>}

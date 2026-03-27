@@ -3,7 +3,6 @@ import type { NextRequest } from 'next/server';
 import { ROUTES } from './lib/constants';
 
 export function proxy(request: NextRequest) {
-  // Check for the payload token cookie
   // Check for NextAuth token
   const nextAuthToken =
     request.cookies.get('next-auth.session-token')?.value ||
