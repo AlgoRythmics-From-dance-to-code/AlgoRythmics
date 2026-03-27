@@ -26,6 +26,25 @@ export const Users: CollectionConfig = {
         `;
       },
     },
+    forgotPassword: {
+      generateEmailHTML: (args) => {
+        const token = args?.token;
+        const url = `${APP_CONFIG.BASE_URL}${ROUTES.RESET_PASSWORD}?token=${token}`;
+        return `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+            <h2 style="color: #269984;">Password Reset Request</h2>
+            <p>You requested to reset your password for your AlgoRythmics account. Please click the button below to proceed.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${url}" style="background-color: #269984; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+            </div>
+            <p>If the button doesn't work, you can also copy and paste the following link into your browser:</p>
+            <p><a href="${url}">${url}</a></p>
+            <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;">
+            <p style="font-size: 12px; color: #888888;">If you did not request a password reset, please ignore this email. This link will expire in 1 hour.</p>
+          </div>
+        `;
+      },
+    },
   },
   hooks: {
     beforeLogin: [
@@ -119,6 +138,14 @@ export const Users: CollectionConfig = {
       name: 'authProviderId',
       type: 'text',
       admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'lastResetRequest',
+      type: 'date',
+      admin: {
+        readOnly: true,
         position: 'sidebar',
       },
     },

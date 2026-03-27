@@ -149,8 +149,25 @@
       "email_required": "E-mail megadása kötelező",
       "email_invalid": "Érvénytelen e-mail cím",
       "password_required": "Jelszó megadása kötelező",
-      "auth_failed": "Hibás e-mail vagy jelszó, vagy a fiók nincs megerősítve!"
-    }
+      "auth_failed": "Hibás e-mail vagy jelszó, vagy a fiók nincs megerősítve!",
+      "rate_limit_error": "Túl sok kérés. Kérjük, várj 15 percet az újabb próbálkozás előtt.",
+      "reset_token_invalid": "A visszaállító token érvénytelen vagy lejárt.",
+      "social_account_error": "Ez a fiók közösségi bejelentkezést használ (Google/Facebook/stb.). Kérjük, jelentkezz be a közösségi szolgáltatóddal."
+    },
+    "forgot_password_title": "Elfelejtett jelszó",
+    "forgot_password_subtitle": "Add meg az e-mail címedet, és küldünk egy linket a jelszavad visszaállításához.",
+    "forgot_password_email_label": "E-mail cím",
+    "forgot_password_submit_btn": "Visszaállító link küldése",
+    "forgot_password_success_title": "Ellenőrizd az e-mailjeidet",
+    "forgot_password_success_desc": "Ha létezik fiók ezzel az e-mail címmel, elküldtük a jelszó visszaállításához szükséges útmutatót.",
+    "forgot_password_back_to_login": "Vissza a bejelentkezéshez",
+    "reset_password_title": "Jelszó visszaállítása",
+    "reset_password_subtitle": "Add meg az új jelszavadat alább.",
+    "reset_password_new_password_label": "Új jelszó",
+    "reset_password_confirm_password_label": "Új jelszó megerősítése",
+    "reset_password_submit_btn": "Jelszó frissítése",
+    "reset_password_success_title": "Jelszó visszaállítva",
+    "reset_password_success_desc": "A jelszavad sikeresen frissítve lett. Most már bejelentkezhetsz."
   },
   "register": {
     "title": "Regisztráció",

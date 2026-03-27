@@ -131,7 +131,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right Side: Login Form */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10 select-none cursor-default caret-transparent">
           <div className="w-full max-w-[500px]">
             <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3">
               {t('login.title')}
@@ -149,14 +149,14 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit}>
               {/* Email field */}
               <div className="mb-6">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base">
+                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base select-none">
                   {t('login.email_label')}
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 sm:px-5 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
+                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-3 sm:px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
                   placeholder={t('login.email_placeholder')}
                 />
                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
@@ -164,14 +164,14 @@ export default function LoginPage() {
 
               {/* Password field */}
               <div className="mb-6">
-                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base">
+                <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm sm:text-base select-none">
                   {t('login.password_label')}
                 </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 sm:px-5 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
+                  className={`w-full font-montserrat h-12 sm:h-14 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-3 sm:px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
                   placeholder={t('login.password_placeholder')}
                 />
                 {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
@@ -189,7 +189,7 @@ export default function LoginPage() {
                   <span className="text-black dark:text-white">{t('login.remember_me')}</span>
                 </label>
                 <Link
-                  href="#"
+                  href={ROUTES.FORGOT_PASSWORD}
                   className="font-montserrat font-bold text-sm hover:underline"
                   style={{ color: '#36D6BA' }}
                 >

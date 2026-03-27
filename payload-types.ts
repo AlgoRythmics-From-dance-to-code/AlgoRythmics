@@ -128,6 +128,7 @@ export interface User {
   imageUrl?: string | null;
   authProvider?: ('email' | 'google' | 'facebook' | 'discord' | 'github') | null;
   authProviderId?: string | null;
+  lastResetRequest?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -230,6 +231,7 @@ export interface UsersSelect<T extends boolean = true> {
   imageUrl?: T;
   authProvider?: T;
   authProviderId?: T;
+  lastResetRequest?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

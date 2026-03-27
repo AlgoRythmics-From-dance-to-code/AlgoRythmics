@@ -17,6 +17,8 @@ export const ROUTES = {
   PROFILE: '/profil',
   ALGORITHMS: '/algorithms',
   COURSES: '/courses',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
 } as const;
 
 export const API_ROUTES = {
@@ -26,6 +28,8 @@ export const API_ROUTES = {
     LOGOUT: '/api/auth/logout',
     SOCIAL_CALLBACK: '/api/auth/social-callback',
     VERIFY_ACCOUNT: '/api/verify-account',
+    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    RESET_PASSWORD: '/api/auth/password-reset',
   },
 } as const;
 
