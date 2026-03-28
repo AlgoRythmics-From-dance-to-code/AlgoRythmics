@@ -13,12 +13,7 @@ export default function AboutPage() {
     { key: 'david', initials: 'DP', color: '#6C63FF' },
   ];
 
-  const steps = [
-    { number: '01' },
-    { number: '02' },
-    { number: '03' },
-    { number: '04' },
-  ];
+  const steps = [{ number: '01' }, { number: '02' }, { number: '03' }, { number: '04' }];
 
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a]">

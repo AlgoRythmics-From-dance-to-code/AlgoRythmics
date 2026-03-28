@@ -30,7 +30,7 @@ export async function POST(req: Request) {
           password: currentPassword,
         },
       });
-    } catch (e) {
+    } catch {
       return NextResponse.json({ error: t('toasts.password_current_incorrect') }, { status: 400 });
     }
 
@@ -46,23 +46,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: t('errors.user_not_found') }, { status: 404 });
     }
 
-    const dbUser = result.docs[0] as any;
+    const dbUser = result.docs[0] as { id: string | number; authProvider?: string };
 
     // Check if user is a social user
     if (dbUser.authProvider && dbUser.authProvider !== 'email') {
-      return NextResponse.json(
-        { error: t('toasts.password_social_error') },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: t('toasts.password_social_error') }, { status: 400 });
     }
 
     // Update the password - Payload handles hashing automatically for the 'password' field
     await payload.update({
       collection: 'users',
-      id: dbUser.id,
+      id: dbUser.id as string | number,
       data: {
         password: newPassword,
-      } as any,
+      } as { password?: string },
     });
 
     logger.info({ userId: dbUser.id }, t('toasts.password_updated'));

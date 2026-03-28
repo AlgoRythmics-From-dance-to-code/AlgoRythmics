@@ -74,9 +74,7 @@ export default function VideosPage() {
   const { t } = useLocale();
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const filtered =
-    activeFilter === 'all'
-      ? videos
-      : videos.filter((v) => v.categoryId === activeFilter);
+    activeFilter === 'all' ? videos : videos.filter((v) => v.categoryId === activeFilter);
 
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a]">

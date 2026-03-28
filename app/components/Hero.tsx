@@ -8,10 +8,32 @@ export default function Hero() {
 
   return (
     <>
-      {/* ━━━ HERO SECTION ━━━ WHITE background matching Figma */}
+      {/* ━━━ HERO SECTION ━━━ */}
       <section className="w-full relative overflow-hidden bg-white dark:bg-[#0a0a0a]">
-        {/* Content wrapper – 1920 based layout */}
+        {/* ── TELJES SZÉLESSÉGŰ RÉTEG A GRAFIKÁNAK ── */}
+        {/* Ezt a réteget kivettük a max-w-[1920px] konténerből, így 100vw alapon működik */}
+        <div className="absolute inset-0 w-full h-full pointer-events-none z-10 hidden md:block">
+          <Image
+            src="/assets/hero_ground_path.svg"
+            alt="Hero illustration"
+            width={818}
+            height={744}
+            priority
+            sizes="30vw"
+            className="absolute dark:invert dark:hue-rotate-180"
+            style={{
+              bottom: '-1px', // Függőlegesen a vonalon tartja
+              right: '8%', // 2560px-nél pontosan a helyén lesz
+              width: '35.2%', // Az arányos zsugorodásért felel
+              height: 'auto',
+            }}
+          />
+        </div>
+
+        {/* Content wrapper – 1920 based layout (Itt marad a szöveg és az apró dekoráció) */}
         <div className="relative mx-auto" style={{ maxWidth: '1920px' }}>
+          <div className="hidden md:block" style={{ height: '655px' }} />
+
           {/* ── Decorative vine/dots (top-left) ── */}
           <Image
             src="/assets/group_23.svg"
@@ -47,26 +69,8 @@ export default function Hero() {
             </p>
           </div>
 
-          {/* ── Hero illustration (right side) ── */}
-          <Image
-            src="/assets/hero_ground_path.svg"
-            alt="Hero illustration"
-            width={818}
-            height={744}
-            priority
-            sizes="(max-width: 768px) 100vw, 720px"
-            className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180 w-[450px] lg:w-[600px] xl:w-[720px]"
-            style={{
-              top: '0px',
-              right: '100px',
-              width: 'clamp(450px, 40vw, 720px)',
-              height: 'auto',
-              zIndex: 2,
-            }}
-          />
-
-          {/* Mobile fallback */}
-          <div className="md:hidden flex flex-col items-center px-6 py-12 gap-8">
+          {/* Mobile fallback marad változatlanul */}
+          <div className="md:hidden flex flex-col items-center px-6 py-12 gap-8 z-20 relative">
             <Image
               src="/assets/group_21.svg"
               alt="Hero illustration"
@@ -93,9 +97,6 @@ export default function Hero() {
             </div>
           </div>
         </div>
-
-        {/* Spacer for absolute content */}
-        <div className="hidden md:block" style={{ height: '655px' }} />
       </section>
 
       {/* ━━━ TRANSITION: group_25.svg ━━━ */}

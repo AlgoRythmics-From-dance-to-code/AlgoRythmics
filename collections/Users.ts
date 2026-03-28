@@ -65,13 +65,18 @@ export const Users: CollectionConfig = {
             });
             user._verified = true;
           } catch (e) {
-            logger.error({ error: e instanceof Error ? e.message : e }, 'Failed to auto-verify admin');
+            logger.error(
+              { error: e instanceof Error ? e.message : e },
+              'Failed to auto-verify admin',
+            );
           }
         }
 
         // Only block verification for 'user' role
         if (user && user.role === ROLES.USER && !user._verified) {
-          throw new Error('Ellenőrizze az e-mail címét a belépéshez! (Kérjük, kattintson a megerősítő linkre az e-mailben.)');
+          throw new Error(
+            'Ellenőrizze az e-mail címét a belépéshez! (Kérjük, kattintson a megerősítő linkre az e-mailben.)',
+          );
         }
         return user;
       },

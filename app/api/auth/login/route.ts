@@ -18,7 +18,10 @@ export async function POST(req: Request) {
     });
 
     if (result.token) {
-      const expiration = remember === true ? APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME : APP_CONFIG.TOKEN_EXPIRATION_DEFAULT;
+      const expiration =
+        remember === true
+          ? APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME
+          : APP_CONFIG.TOKEN_EXPIRATION_DEFAULT;
       const cookieStore = await cookies();
       cookieStore.set(APP_CONFIG.COOKIE_TOKEN_NAME, result.token, {
         path: '/',

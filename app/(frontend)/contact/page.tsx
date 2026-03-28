@@ -156,14 +156,25 @@ export default function ContactPage() {
               {isSuccess ? (
                 <div className="flex flex-col items-center justify-center bg-green-100 dark:bg-green-900/30 border border-green-400 text-green-700 dark:text-green-400 px-6 py-10 rounded-xl relative text-center animate-in fade-in zoom-in duration-300">
                   <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   </div>
-                  <strong className="font-montserrat font-bold text-xl block mb-2">{t('contact.success_title')}</strong>
+                  <strong className="font-montserrat font-bold text-xl block mb-2">
+                    {t('contact.success_title')}
+                  </strong>
                   <p className="font-montserrat text-base mb-6">{t('contact.success_desc')}</p>
-                  <button 
-                    onClick={() => setIsSuccess(false)} 
+                  <button
+                    onClick={() => setIsSuccess(false)}
                     className="font-montserrat font-bold text-[#269984] hover:underline transition-all"
                   >
                     {t('contact.send_another')}

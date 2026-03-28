@@ -11,6 +11,13 @@ export async function POST(req: Request) {
     const { email, password, firstName, lastName } = await req.json();
     const payload = await getPayload({ config: configPromise });
 
+    interface CreateUser {
+      email: string;
+      password?: string;
+      firstName?: string;
+      lastName?: string;
+      role: 'user' | 'admin';
+    }
     await payload.create({
       collection: 'users',
       data: {
@@ -18,8 +25,8 @@ export async function POST(req: Request) {
         password,
         firstName,
         lastName,
-        role: ROLES.USER, // Force user role to prevent unauthorized admin creation
-      } as any,
+        role: ROLES.USER as 'user',
+      } as CreateUser,
     });
 
     logger.info({ email }, t('toasts.register_success'));

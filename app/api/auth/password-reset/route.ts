@@ -28,14 +28,14 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({
       title: t('login.reset_password_success_title'),
-      message: t('login.reset_password_success_desc')
+      message: t('login.reset_password_success_desc'),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : t('toasts.unexpected_error');
 
     // Check if it's a "Token is invalid" error from Payload
     if (message.includes('Token is invalid') || message.includes('expired')) {
-        return NextResponse.json({ error: t('login.errors.reset_token_invalid') }, { status: 400 });
+      return NextResponse.json({ error: t('login.errors.reset_token_invalid') }, { status: 400 });
     }
 
     logger.error({ error: message }, 'Reset password error');
