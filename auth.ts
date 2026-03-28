@@ -279,6 +279,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.bio = dbUser.bio;
             token.authProvider = dbUser.authProvider;
             token.createdAt = dbUser.createdAt;
+            token.completedAlgorithms = (dbUser as any).completedAlgorithms;
+            token.visualizerProgress = (dbUser as any).visualizerProgress;
           }
         } catch (error) {
           logger.error({ error }, 'JWT callback profile sync error');
@@ -291,7 +293,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session,
       token,
     }: {
-      session: { user: BaseUser; expires: string };
+      session: { user: any; expires: string };
       token: Record<string, unknown>;
     }) {
       if (token && session.user) {
@@ -303,6 +305,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.bio = String(token.bio || '');
         session.user.authProvider = String(token.authProvider || '');
         session.user.createdAt = String(token.createdAt || '');
+        session.user.completedAlgorithms = token.completedAlgorithms;
+        session.user.visualizerProgress = token.visualizerProgress;
       }
       return session;
     },

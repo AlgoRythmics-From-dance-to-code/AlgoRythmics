@@ -121,11 +121,44 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
-  role: 'admin' | 'user';
   firstName?: string | null;
   lastName?: string | null;
+  role: 'admin' | 'user';
   bio?: string | null;
+  /**
+   * Profile image URL (synced from social providers).
+   */
   imageUrl?: string | null;
+  /**
+   * Algorithms the user has already mastered.
+   */
+  completedAlgorithms?:
+    | (
+        | 'bubble-sort'
+        | 'insertion-sort'
+        | 'selection-sort'
+        | 'shell-sort'
+        | 'merge-sort'
+        | 'quick-sort'
+        | 'heap-sort'
+        | 'linear-search'
+        | 'binary-search'
+        | 'n-queens'
+        | 'bogosort'
+      )[]
+    | null;
+  /**
+   * Persistent state of the algorithm visualizer for each algorithm.
+   */
+  visualizerProgress?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   authProvider?: ('email' | 'google' | 'facebook' | 'discord' | 'github') | null;
   authProviderId?: string | null;
   lastResetRequest?: string | null;
@@ -224,11 +257,13 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
-  role?: T;
   firstName?: T;
   lastName?: T;
+  role?: T;
   bio?: T;
   imageUrl?: T;
+  completedAlgorithms?: T;
+  visualizerProgress?: T;
   authProvider?: T;
   authProviderId?: T;
   lastResetRequest?: T;

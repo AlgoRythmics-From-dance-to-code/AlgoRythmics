@@ -48,3 +48,175 @@ export const AUTH_PROVIDERS = {
   DISCORD: 'discord',
   GITHUB: 'github',
 } as const;
+
+export interface Video {
+  id: string;
+  duration: string;
+  views: string;
+  categoryId: 'sorting' | 'searching' | 'backtracking' | 'fun';
+  thumbnail: string;
+  youtubeId: string;
+}
+
+export const VIDEOS: Video[] = [
+  {
+    id: 'bubble-sort-dance',
+    duration: '4:32',
+    views: '125K',
+    categoryId: 'sorting',
+    thumbnail: 'algo_group_109.svg',
+    youtubeId: 'lyZQPjUT5B4',
+  },
+  {
+    id: 'insertion-sort-folk',
+    duration: '5:18',
+    views: '98K',
+    categoryId: 'sorting',
+    thumbnail: 'algo_group_142.svg',
+    youtubeId: 'placeholder_insertion',
+  },
+  {
+    id: 'selection-sort-waltz',
+    duration: '3:45',
+    views: '87K',
+    categoryId: 'sorting',
+    thumbnail: 'algo_group_119.svg',
+    youtubeId: 'placeholder_selection',
+  },
+  {
+    id: 'merge-sort-tango',
+    duration: '6:12',
+    views: '156K',
+    categoryId: 'sorting',
+    thumbnail: 'algo_group_166.svg',
+    youtubeId: 'placeholder_merge',
+  },
+  {
+    id: 'quick-sort-salsa',
+    duration: '5:55',
+    views: '134K',
+    categoryId: 'sorting',
+    thumbnail: 'algo_group_167.svg',
+    youtubeId: 'placeholder_quick',
+  },
+  {
+    id: 'heap-sort-ballet',
+    duration: '7:08',
+    views: '92K',
+    categoryId: 'sorting',
+    thumbnail: 'algo_group_168.svg',
+    youtubeId: 'placeholder_heap',
+  },
+  {
+    id: 'shell-sort-flamenco',
+    duration: '4:45',
+    views: '78K',
+    categoryId: 'sorting',
+    thumbnail: 'algo_group_132.svg',
+    youtubeId: 'placeholder_shell',
+  },
+  {
+    id: 'linear-search-hip-hop',
+    duration: '3:22',
+    views: '112K',
+    categoryId: 'searching',
+    thumbnail: 'algo_group_109.svg',
+    youtubeId: 'placeholder_linear',
+  },
+  {
+    id: 'binary-search-swing',
+    duration: '4:15',
+    views: '145K',
+    categoryId: 'searching',
+    thumbnail: 'algo_group_142.svg',
+    youtubeId: 'placeholder_binary',
+  },
+];
+
+export interface Algorithm {
+  id: string;
+  category: 'sorting' | 'searching' | 'backtracking' | 'fun';
+  illAsset: string;
+  complexity: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+}
+
+export const ALGORITHMS: Algorithm[] = [
+  {
+    id: 'bubble-sort',
+    category: 'sorting',
+    illAsset: 'algo_group_109.svg',
+    complexity: 'O(n²)',
+    difficulty: 'Easy',
+  },
+  {
+    id: 'insertion-sort',
+    category: 'sorting',
+    illAsset: 'algo_group_142.svg',
+    complexity: 'O(n²)',
+    difficulty: 'Easy',
+  },
+  {
+    id: 'selection-sort',
+    category: 'sorting',
+    illAsset: 'algo_group_119.svg',
+    complexity: 'O(n²)',
+    difficulty: 'Easy',
+  },
+  {
+    id: 'shell-sort',
+    category: 'sorting',
+    illAsset: 'algo_group_132.svg',
+    complexity: 'O(n log n)',
+    difficulty: 'Medium',
+  },
+  {
+    id: 'merge-sort',
+    category: 'sorting',
+    illAsset: 'algo_group_166.svg',
+    complexity: 'O(n log n)',
+    difficulty: 'Medium',
+  },
+  {
+    id: 'quick-sort',
+    category: 'sorting',
+    illAsset: 'algo_group_167.svg',
+    complexity: 'O(n log n)',
+    difficulty: 'Medium',
+  },
+  {
+    id: 'heap-sort',
+    category: 'sorting',
+    illAsset: 'algo_group_168.svg',
+    complexity: 'O(n log n)',
+    difficulty: 'Hard',
+  },
+  {
+    id: 'linear-search',
+    category: 'searching',
+    illAsset: 'algo_group_109.svg',
+    complexity: 'O(n)',
+    difficulty: 'Easy',
+  },
+  {
+    id: 'binary-search',
+    category: 'searching',
+    illAsset: 'algo_group_142.svg',
+    complexity: 'O(log n)',
+    difficulty: 'Easy',
+  },
+  {
+    id: 'n-queens',
+    category: 'backtracking',
+    illAsset: 'algo_group_109.svg',
+    complexity: 'O(n!)',
+    difficulty: 'Hard',
+  },
+  {
+    id: 'bogosort',
+    category: 'fun',
+    illAsset: 'algo_group_119.svg',
+    complexity: 'O(n! · n)',
+    difficulty: 'Hard',
+  },
+];

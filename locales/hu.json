@@ -283,11 +283,13 @@
     "cta_btn": "Kezdjük el"
   },
   "algorithms": {
+    "inspiring_text": "Az algoritmusok nem csupán száraz kódok – ők a logika és a mozgás tökéletes harmóniája. Fedezd fel a programozás ritmusát, és sajátítsd el az informatika alapjait ott, ahol a zene és a tánc varázslatos ereje segít megérteni a láthatatlant.",
     "title": "Minden algoritmus",
     "categories": {
       "sorting": "Rendező algoritmusok",
       "searching": "Kereső algoritmusok",
-      "backtracking": "Visszalépéses algoritmusok"
+      "backtracking": "Visszalépéses algoritmusok",
+      "fun": "Vicces"
     },
     "read_more": "Olvass tovább",
     "list": {
@@ -330,6 +332,10 @@
       "n-queens": {
         "name": "N-királynő probléma",
         "description": "Az N-királynő probléma egy klasszikus visszalépéses feladat, amelyben N sakktábla-királynőt kell elhelyezni egy N×N-es táblán úgy, hogy ne üssék egymást."
+      },
+      "bogosort": {
+        "name": "Bogosort",
+        "description": "A Bogosort egy szándékosan hatástalan rendezési eljárás, amely véletlenszerűen keveri a tömböt, amíg az véletlenül sorba nem kerül. Vicces látni táncban!"
       }
     }
   },

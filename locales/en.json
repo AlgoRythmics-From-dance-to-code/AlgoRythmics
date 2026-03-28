@@ -283,11 +283,13 @@
     "cta_btn": "Get Started"
   },
   "algorithms": {
+    "inspiring_text": "Algorithms are not just dry lines of code—they are the perfect harmony of logic and movement. Discover the rhythm of programming, and master the fundamentals of computer science where the magical power of music and dance helps you understand the invisible.",
     "title": "All algorithms",
     "categories": {
       "sorting": "Sorting algorithms",
       "searching": "Searching algorithms",
-      "backtracking": "Backtracking algorithms"
+      "backtracking": "Backtracking algorithms",
+      "fun": "Fun"
     },
     "read_more": "Read more",
     "list": {
@@ -330,6 +332,10 @@
       "n-queens": {
         "name": "N-Queens problem",
         "description": "The N-Queens problem is a classic backtracking problem that involves placing N chess queens on an N×N chessboard so that no two queens threaten each other."
+      },
+      "bogosort": {
+        "name": "Bogosort",
+        "description": "Bogosort is an intentionally inefficient sorting algorithm that randomly shuffles the array until it's sorted by pure chance. Hilarious in dance!"
       }
     }
   },

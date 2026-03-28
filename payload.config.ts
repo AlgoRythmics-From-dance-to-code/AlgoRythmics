@@ -15,6 +15,7 @@ export default buildConfig({
   admin: {
     user: Users.slug,
   },
+  cookiePrefix: 'algorythmics-admin',
   collections: [Users],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'fallback-secret',
@@ -25,7 +26,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
-    migrationDir: path.resolve(dirname, 'migrations'), // Use dirname for more robust ESM path resolution
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,
   email: resendAdapter({

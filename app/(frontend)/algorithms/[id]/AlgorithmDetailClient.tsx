@@ -150,6 +150,12 @@ const algorithmData: Record<
   },
 };
 
+import VideoPlayer from '../../../components/Learning/VideoPlayer';
+import BubbleSortVisualizer from '../../../components/Learning/BubbleSortVisualizer';
+import { VIDEOS } from '../../../../lib/constants';
+import { useAlgorithmStore } from '../../../store/useAlgorithmStore';
+import { CheckCircle, Circle } from 'lucide-react';
+
 const views = ['Video', 'Animation', 'Control', 'Create', 'Alive'] as const;
 
 export default function AlgorithmDetailClient({ id }: { id: string }) {
@@ -163,6 +169,12 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
     steps: ['Coming soon'],
   };
 
+  // Find matching video for this algorithm
+  const matchingVideo = VIDEOS.find(v => v.id.startsWith(id));
+
+  const { toggleCompleted, isCompleted } = useAlgorithmStore();
+  const completed = isCompleted(id);
+
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a]">
       {/* Hero Banner */}
@@ -170,23 +182,39 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
           <Link
             href="/algorithms"
-            className="inline-flex items-center gap-2 font-montserrat text-sm mb-6 hover:underline"
+            className="inline-flex items-center gap-2 font-montserrat text-sm mb-6 hover:underline transition-all"
             style={{ color: '#269984' }}
           >
             ← Back to Algorithms
           </Link>
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
             {/* Text */}
-            <div className="flex-1 text-center md:text-left">
+            <div className="flex-1 text-center md:text-left animate-in fade-in slide-in-from-left-10 duration-700">
               <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3">
                 {data.name}
               </h1>
-              <span
-                className="inline-block font-montserrat font-bold text-sm px-4 py-1.5 rounded-full text-white mb-4"
-                style={{ backgroundColor: '#269984' }}
-              >
-                Time: {data.complexity}
-              </span>
+              
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
+                <span
+                  className="inline-block font-montserrat font-bold text-xs px-4 py-1.5 rounded-full text-white shadow-sm"
+                  style={{ backgroundColor: '#269984' }}
+                >
+                  Complexity: {data.complexity}
+                </span>
+
+                <button
+                  onClick={() => toggleCompleted(id)}
+                  className={`flex items-center gap-2 font-montserrat font-bold text-xs px-4 py-1.5 rounded-full transition-all active:scale-95 shadow-lg ${
+                    completed 
+                      ? 'bg-green-600 text-white shadow-green-600/20' 
+                      : 'bg-white dark:bg-[#1a1a1a] text-[#269984] hover:bg-[#269984] hover:text-white border border-[#269984]/20'
+                  }`}
+                >
+                  {completed ? <CheckCircle className="w-4 h-4 fill-white text-green-600" /> : <Circle className="w-4 h-4" />}
+                  {completed ? 'Completed' : 'Mark as done'}
+                </button>
+              </div>
+
               <p
                 className="font-montserrat text-sm sm:text-base lg:text-lg max-w-lg mx-auto md:mx-0 text-[#666] dark:text-gray-400"
                 style={{ lineHeight: '1.8em' }}
@@ -196,13 +224,13 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
             </div>
 
             {/* Illustration */}
-            <div className="flex-shrink-0 w-48 sm:w-56 md:w-64 lg:w-80">
+            <div className="flex-shrink-0 w-48 sm:w-56 md:w-64 lg:w-80 animate-in fade-in zoom-in-95 duration-1000">
               <Image
                 src={`/assets/${data.illAsset}`}
                 alt={data.name}
                 width={330}
                 height={330}
-                className="w-full h-auto dark:invert dark:hue-rotate-180"
+                className="w-full h-auto dark:invert dark:hue-rotate-180 drop-shadow-2xl"
                 style={{ width: 'auto', height: 'auto' }}
               />
             </div>
@@ -212,43 +240,58 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
 
       {/* View Tabs */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-        <div className="flex overflow-x-auto border-b-2 border-[#E0E0E0] dark:border-neutral-800">
+        <div className="flex overflow-x-auto border-b-2 border-[#E0E0E0] dark:border-neutral-800 scrollbar-hide">
           {views.map((v) => (
             <button
               key={v}
               onClick={() => setActiveView(v)}
-              className="flex-shrink-0 font-montserrat font-bold transition-all px-5 sm:px-8 py-4 text-sm sm:text-base cursor-pointer whitespace-nowrap"
+              className="flex-shrink-0 font-montserrat font-bold transition-all px-5 sm:px-8 py-4 text-sm sm:text-base cursor-pointer whitespace-nowrap border-b-3"
               style={{
-                color: activeView === v ? '#269984' : '', // keep custom color for active, handled via className for inactive
-                borderBottom: activeView === v ? '3px solid #269984' : '3px solid transparent',
+                color: activeView === v ? '#269984' : '',
+                borderColor: activeView === v ? '#269984' : 'transparent',
               }}
             >
-              <span className={activeView !== v ? 'text-[#999] dark:text-gray-500' : ''}>{v}</span>
+              <span className={activeView !== v ? 'text-[#999] dark:text-gray-500 hover:text-[#269984] transition-colors' : ''}>{v}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* View Content */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 md:py-14">
-        <div className="flex items-center justify-center rounded-2xl mb-12 aspect-video max-w-3xl mx-auto bg-[#F8F8F8] dark:bg-[#1a1a1a]">
-          <div className="text-center p-6">
-            <div className="flex items-center justify-center rounded-full bg-[#F0FBF9] dark:bg-[#112220] mx-auto mb-4 w-16 h-16">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="#269984">
-                <polygon points="5,3 19,12 5,21" />
-              </svg>
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 md:py-14 min-h-[500px]">
+        <div className="animate-in fade-in slide-in-from-bottom-5 duration-500">
+          {activeView === 'Video' && matchingVideo ? (
+            <div className="max-w-4xl mx-auto">
+              <VideoPlayer 
+                youtubeId={matchingVideo.youtubeId} 
+                title={`${data.name} Video`} 
+              />
             </div>
-            <p className="font-montserrat font-bold text-lg sm:text-xl text-black dark:text-white mb-2">
-              {activeView} View
-            </p>
-            <p className="font-montserrat text-sm" style={{ color: '#999' }}>
-              {activeView} content for {data.name} — coming soon
-            </p>
-          </div>
+          ) : activeView === 'Animation' && id === 'bubble-sort' ? (
+            <div className="max-w-4xl mx-auto">
+              <BubbleSortVisualizer id={id} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center rounded-2xl mb-12 aspect-video max-w-3xl mx-auto bg-[#F8F8F8] dark:bg-[#1a1a1a] border border-dashed border-gray-300 dark:border-gray-700">
+              <div className="text-center p-6">
+                <div className="flex items-center justify-center rounded-full bg-[#F0FBF9] dark:bg-[#112220] mx-auto mb-4 w-16 h-16 shadow-inner">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="#269984">
+                    <polygon points="5,3 19,12 5,21" />
+                  </svg>
+                </div>
+                <p className="font-montserrat font-bold text-lg sm:text-xl text-black dark:text-white mb-2">
+                  {activeView} View
+                </p>
+                <p className="font-montserrat text-sm text-[#999] dark:text-gray-500">
+                  {activeView} content for {data.name} — coming soon
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Steps */}
-        <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-6">
+        <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-6 mt-16 md:mt-24">
           Step-by-Step Guide
         </h2>
         <div className="space-y-4 max-w-2xl">

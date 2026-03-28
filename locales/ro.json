@@ -283,11 +283,13 @@
     "cta_btn": "Începe acum"
   },
   "algorithms": {
-    "title": "Toți algoritmii",
+    "inspiring_text": "Algoritmii nu sunt doar linii sec de cod – ei sunt armonia perfectă dintre logică și mișcare. Descoperă ritmul programării și stăpânește fundamentele informaticii acolo unde puterea magică a muzicii și a dansului te ajută să înțelegi invizibilul.",
+    "title": "Toate algoritmele",
     "categories": {
       "sorting": "Algoritmi de sortare",
       "searching": "Algoritmi de căutare",
-      "backtracking": "Algoritmi de backtracking"
+      "backtracking": "Algoritmi de backtracking",
+      "fun": "Amuzante"
     },
     "read_more": "Citește mai mult",
     "list": {
@@ -330,6 +332,10 @@
       "n-queens": {
         "name": "Problema celor N regine",
         "description": "Problema celor N regine este o problemă clasică de backtracking care implică plasarea a N regine pe o tablă de șah N×N astfel încât nicio regină să nu se amenințe una pe cealaltă."
+      },
+      "bogosort": {
+        "name": "Bogosort",
+        "description": "Bogosort este un algoritm de sortare intenționat ineficient care amestecă aleatoriu elementele până când acestea se așează singure. Super distractiv în dans!"
       }
     }
   },
