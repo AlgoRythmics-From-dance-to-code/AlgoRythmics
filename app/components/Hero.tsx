@@ -10,7 +10,6 @@ export default function Hero() {
     <>
       {/* ━━━ HERO SECTION ━━━ */}
       <section className="w-full relative overflow-hidden bg-white dark:bg-[#0a0a0a]">
-        
         {/* ── TELJES SZÉLESSÉGŰ RÉTEG A GRAFIKÁNAK ── */}
         {/* Ezt a réteget kivettük a max-w-[1920px] konténerből, így 100vw alapon működik */}
         <div className="absolute inset-0 w-full h-full pointer-events-none z-10 hidden md:block">
@@ -33,7 +32,6 @@ export default function Hero() {
 
         {/* Content wrapper – 1920 based layout (Itt marad a szöveg és az apró dekoráció) */}
         <div className="relative mx-auto" style={{ maxWidth: '1920px' }}>
-          
           <div className="hidden md:block" style={{ height: '655px' }} />
 
           {/* ── Decorative vine/dots (top-left) ── */}

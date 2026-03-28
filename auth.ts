@@ -8,6 +8,8 @@ import Credentials from 'next-auth/providers/credentials';
 import { ROLES, ROUTES, API_ROUTES, APP_CONFIG } from './lib/constants';
 import logger from './lib/logger';
 
+import type { Payload } from 'payload';
+import type { User } from './payload-types';
 import { BaseUser } from './lib/types/auth';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -77,7 +79,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           const { getPayload } = await import('payload');
           const configPromise = (await import('./payload.config')).default;
-          const payload = await getPayload({ config: configPromise });
+          const payload = (await getPayload({ config: configPromise })) as unknown as Payload;
 
           const result = await payload.login({
             collection: 'users',
@@ -97,9 +99,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             };
             return {
               id: user.id.toString(),
-              name: user.firstName
-                ? `${user.firstName} ${user.lastName || ''}`.trim()
-                : user.email,
+              name: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email,
               email: user.email,
               role: user.role,
               remember: credentials.remember === 'true',
@@ -144,7 +144,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       try {
         const { getPayload } = await import('payload');
         const configPromise = (await import('./payload.config')).default;
-        const payload = await getPayload({ config: configPromise });
+        const payload = (await getPayload({ config: configPromise })) as unknown as Payload;
 
         if (!payload) {
           throw new Error('Could not initialize Payload');
@@ -165,14 +165,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (existing.docs.length === 0) {
           // Create new user — auto-verified, no password needed for social login
-          await (payload.create as (o: unknown) => Promise<unknown>)({
+          await payload.create({
             collection: 'users',
             data: {
               email: user.email,
               password: `social_${randomUUID()}`,
               role: ROLES.USER as 'user',
               _verified: true,
-              authProvider: account.provider,
+              authProvider: account.provider as User['authProvider'],
               authProviderId: account.providerAccountId,
               imageUrl: user.image || null,
               firstName,
@@ -183,11 +183,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           logger.info({ provider: account.provider }, 'New user created');
         } else {
           // Update existing user with latest provider info
-          const existingUser = existing.docs[0] as unknown as BaseUser;
+          const existingUser = existing.docs[0] as unknown as User;
           const updateData: Record<string, unknown> = {};
 
           // Always update provider info to the latest one used
-          updateData.authProvider = account.provider;
+          updateData.authProvider = account.provider as User['authProvider'];
           updateData.authProviderId = account.providerAccountId;
 
           if (user.image && user.image !== existingUser.imageUrl) {
@@ -205,11 +205,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           if (Object.keys(updateData).length > 0) {
-            await (payload.update as (o: unknown) => Promise<unknown>)({
+            await payload.update({
               collection: 'users',
-              id: existingUser.id as string | number,
+              id: existingUser.id,
               data: updateData,
-              disableVerificationEmail: true,
             });
             logger.info({ provider: account.provider }, 'Updated user with latest provider info');
           }
@@ -252,7 +251,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           const { getPayload } = await import('payload');
           const configPromise = (await import('./payload.config')).default;
-          const payload = await getPayload({ config: configPromise });
+          const payload = (await getPayload({ config: configPromise })) as unknown as Payload;
 
           const result = await payload.find({
             collection: 'users',

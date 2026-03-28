@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { ROUTES } from './lib/constants';
+import { ROUTES, APP_CONFIG } from './lib/constants';
 
 export function proxy(request: NextRequest) {
   // Check for NextAuth token
@@ -10,7 +10,8 @@ export function proxy(request: NextRequest) {
     request.cookies.get('authjs.session-token')?.value ||
     request.cookies.get('__Secure-authjs.session-token')?.value;
 
-  const token = nextAuthToken;
+  const payloadToken = request.cookies.get(APP_CONFIG.COOKIE_TOKEN_NAME)?.value;
+  const token = nextAuthToken || payloadToken;
 
   const { pathname } = request.nextUrl;
   const isAuthPage = pathname.startsWith(ROUTES.LOGIN) || pathname.startsWith(ROUTES.REGISTER);
