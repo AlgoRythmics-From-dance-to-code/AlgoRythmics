@@ -1,5 +1,8 @@
 {
   "brand": "AlgoRythmics",
+  "common": {
+    "completed": "Finalizat"
+  },
   "nav": {
     "home": "Acasă",
     "algorithms": "Algoritmi",
@@ -283,7 +286,7 @@
     "cta_btn": "Începe acum"
   },
   "algorithms": {
-    "inspiring_text": "Algoritmii nu sunt doar linii sec de cod – ei sunt armonia perfectă dintre logică și mișcare. Descoperă ritmul programării și stăpânește fundamentele informaticii acolo unde puterea magică a muzicii și a dansului te ajută să înțelegi invizibilul.",
+    "inspiring_text": "Algoritmii nu sunt doar linii sec de cod, ei sunt armonia perfectă dintre logică și mișcare. Descoperă ritmul programării și stăpânește fundamentele informaticii acolo unde puterea magică a muzicii și a dansului te ajută să înțelegi invizibilul.",
     "title": "Toate algoritmele",
     "categories": {
       "sorting": "Algoritmi de sortare",

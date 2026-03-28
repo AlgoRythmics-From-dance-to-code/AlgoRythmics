@@ -1,5 +1,8 @@
 {
   "brand": "AlgoRythmics",
+  "common": {
+    "completed": "Completed"
+  },
   "nav": {
     "home": "Home",
     "algorithms": "Algorithms",
@@ -283,7 +286,7 @@
     "cta_btn": "Get Started"
   },
   "algorithms": {
-    "inspiring_text": "Algorithms are not just dry lines of code—they are the perfect harmony of logic and movement. Discover the rhythm of programming, and master the fundamentals of computer science where the magical power of music and dance helps you understand the invisible.",
+    "inspiring_text": "Algorithms are not just dry lines of code, they are the perfect harmony of logic and movement. Discover the rhythm of programming, and master the fundamentals of computer science where the magical power of music and dance helps you understand the invisible.",
     "title": "All algorithms",
     "categories": {
       "sorting": "Sorting algorithms",

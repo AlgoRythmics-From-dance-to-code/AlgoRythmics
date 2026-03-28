@@ -1,5 +1,8 @@
 {
   "brand": "AlgoRythmics",
+  "common": {
+    "completed": "Teljesítve"
+  },
   "nav": {
     "home": "Kezdőlap",
     "algorithms": "Algoritmusok",
@@ -283,7 +286,7 @@
     "cta_btn": "Kezdjük el"
   },
   "algorithms": {
-    "inspiring_text": "Az algoritmusok nem csupán száraz kódok – ők a logika és a mozgás tökéletes harmóniája. Fedezd fel a programozás ritmusát, és sajátítsd el az informatika alapjait ott, ahol a zene és a tánc varázslatos ereje segít megérteni a láthatatlant.",
+    "inspiring_text": "Az algoritmusok nem csupán száraz kódok, ők a logika és a mozgás tökéletes harmóniája. Fedezd fel a programozás ritmusát, és sajátítsd el az informatika alapjait ott, ahol a zene és a tánc varázslatos ereje segít megérteni a láthatatlant.",
     "title": "Minden algoritmus",
     "categories": {
       "sorting": "Rendező algoritmusok",
