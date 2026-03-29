@@ -13,6 +13,18 @@ export async function POST(req: Request) {
 
   try {
     const { completedIds, visualizerProgress } = await req.json();
+
+    // Runtime validation
+    if (completedIds !== undefined && !Array.isArray(completedIds)) {
+      return NextResponse.json({ error: 'completedIds must be an array' }, { status: 400 });
+    }
+
+    if (
+      visualizerProgress !== undefined &&
+      (typeof visualizerProgress !== 'object' || visualizerProgress === null)
+    ) {
+      return NextResponse.json({ error: 'visualizerProgress must be an object' }, { status: 400 });
+    }
     const payload = await getPayload({ config: configPromise });
 
     await payload.update({

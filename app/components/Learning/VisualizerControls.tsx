@@ -40,22 +40,27 @@ export default function VisualizerControls({
         {/* Main Controls */}
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={onReset}
             className="p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 transition-all active:scale-90"
             title="Reset"
+            aria-label="Reset visualizer"
           >
             <RotateCcw className="w-5 h-5" />
           </button>
 
           <button
+            type="button"
             onClick={onStepBackward}
             className="p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 transition-all active:scale-90"
             title="Step Backward"
+            aria-label="Step backward"
           >
             <SkipBack className="w-5 h-5" />
           </button>
 
           <button
+            type="button"
             onClick={isFinished ? onReset : onPlayPause}
             className={`p-4 rounded-2xl transition-all active:scale-95 shadow-lg ${
               isFinished
@@ -65,6 +70,7 @@ export default function VisualizerControls({
                   : 'bg-[#269984] text-white shadow-[#269984]/20'
             }`}
             title={isFinished ? 'Restart' : isPlaying ? 'Pause' : 'Play'}
+            aria-label={isFinished ? 'Restart' : isPlaying ? 'Pause' : 'Play'}
           >
             {isFinished ? (
               <RotateCcw className="w-6 h-6" />
@@ -76,12 +82,14 @@ export default function VisualizerControls({
           </button>
 
           <button
+            type="button"
             onClick={onStepForward}
             disabled={isFinished}
             className={`p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400 dark:text-gray-500 transition-all active:scale-90 ${
               isFinished ? 'opacity-30 cursor-not-allowed' : ''
             }`}
             title="Step Forward"
+            aria-label="Step forward"
           >
             <SkipForward className="w-5 h-5" />
           </button>
@@ -92,12 +100,14 @@ export default function VisualizerControls({
           {[0.5, 1, 2].map((s) => (
             <button
               key={s}
+              type="button"
               onClick={() => setSpeed(s)}
               className={`px-3 py-1.5 rounded-lg font-montserrat font-bold text-xs transition-all ${
                 speed === s
                   ? 'bg-white dark:bg-white/10 text-[#269984] shadow-sm'
                   : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
+              aria-label={`Playback speed ${s}x`}
             >
               {s}x
             </button>

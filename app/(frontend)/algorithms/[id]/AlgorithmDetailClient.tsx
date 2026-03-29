@@ -3,6 +3,13 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useLocale } from '../../../i18n/LocaleProvider';
+
+import VideoPlayer from '../../../components/Learning/VideoPlayer';
+import BubbleSortVisualizer from '../../../components/Learning/BubbleSortVisualizer';
+import { VIDEOS } from '../../../../lib/constants';
+import { useAlgorithmStore } from '../../../store/useAlgorithmStore';
+import { CheckCircle, Circle } from 'lucide-react';
 
 // ─── Algorithm Detail Page Template ────────
 const algorithmData: Record<
@@ -150,23 +157,18 @@ const algorithmData: Record<
   },
 };
 
-import VideoPlayer from '../../../components/Learning/VideoPlayer';
-import BubbleSortVisualizer from '../../../components/Learning/BubbleSortVisualizer';
-import { VIDEOS } from '../../../../lib/constants';
-import { useAlgorithmStore } from '../../../store/useAlgorithmStore';
-import { CheckCircle, Circle } from 'lucide-react';
-
 const views = ['Video', 'Animation', 'Control', 'Create', 'Alive'] as const;
 
 export default function AlgorithmDetailClient({ id }: { id: string }) {
+  const { t } = useLocale();
   const [activeView, setActiveView] = useState<string>('Video');
 
   const data = algorithmData[id] || {
     name: id.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
     complexity: 'O(?)',
-    description: 'Algorithm details coming soon.',
+    description: t('algorithms.detail.coming_soon'),
     illAsset: 'algo_group_109.svg',
-    steps: ['Coming soon'],
+    steps: [t('about.steps.01.desc')],
   };
 
   // Find matching video for this algorithm
@@ -185,7 +187,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
             className="inline-flex items-center gap-2 font-montserrat text-sm mb-6 hover:underline transition-all"
             style={{ color: '#269984' }}
           >
-            ← Back to Algorithms
+            ← {t('algorithms.detail.back')}
           </Link>
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
             {/* Text */}
@@ -199,7 +201,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
                   className="inline-block font-montserrat font-bold text-xs px-4 py-1.5 rounded-full text-white shadow-sm"
                   style={{ backgroundColor: '#269984' }}
                 >
-                  Complexity: {data.complexity}
+                  {t('algorithms.detail.complexity')}: {data.complexity}
                 </span>
 
                 <button
@@ -215,7 +217,9 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
                   ) : (
                     <Circle className="w-4 h-4" />
                   )}
-                  {completed ? 'Completed' : 'Mark as done'}
+                  {completed
+                    ? t('algorithms.detail.completed')
+                    : t('algorithms.detail.mark_as_done')}
                 </button>
               </div>
 
@@ -262,7 +266,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
                     : ''
                 }
               >
-                {v}
+                {t(`features.${v.toLowerCase()}`)}
               </span>
             </button>
           ))}
@@ -289,10 +293,12 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
                   </svg>
                 </div>
                 <p className="font-montserrat font-bold text-lg sm:text-xl text-black dark:text-white mb-2">
-                  {activeView} View
+                  {t(`features.${activeView.toLowerCase()}`)} {t('features.video')}
                 </p>
                 <p className="font-montserrat text-sm text-[#999] dark:text-gray-500">
-                  {activeView} content for {data.name} — coming soon
+                  {t('algorithms.detail.view_coming_soon')
+                    .replace('{view}', t(`features.${activeView.toLowerCase()}`))
+                    .replace('{name}', data.name)}
                 </p>
               </div>
             </div>
@@ -301,7 +307,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
 
         {/* Steps */}
         <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-6 mt-16 md:mt-24">
-          Step-by-Step Guide
+          {t('algorithms.detail.step_by_step')}
         </h2>
         <div className="space-y-4 max-w-2xl">
           {data.steps.map((step, i) => (

@@ -17,7 +17,7 @@ export default function AlgorithmsPage() {
 
   // Categories helper
   const categories = [
-    { id: 'all', label: t('videos.filters.all'), icon: <Grid2X2 className="w-4 h-4" /> },
+    { id: 'all', label: t('algorithms.filters.all'), icon: <Grid2X2 className="w-4 h-4" /> },
     {
       id: 'sorting',
       label: t('algorithms.categories.sorting'),
@@ -221,16 +221,16 @@ export default function AlgorithmsPage() {
               <Search className="w-10 h-10 text-gray-300 dark:text-gray-600" />
             </div>
             <h3 className="font-montserrat font-bold text-2xl text-black dark:text-white mb-2">
-              No algorithms found
+              {t('algorithms.empty.noAlgorithms')}
             </h3>
             <p className="font-montserrat text-[#666] dark:text-gray-500">
-              Try adjusting your search or category filters.
+              {t('algorithms.empty.adjustSearchOrFilters')}
             </p>
             <button
               onClick={() => setCategory('all')}
               className="bg-[#269984] hover:bg-[#1f7a6a] text-white px-6 py-2.5 rounded-xl font-montserrat font-bold text-sm transition-all active:scale-95 shadow-lg shadow-[#269984]/20"
             >
-              Clear Filters
+              {t('algorithms.empty.clearFilters')}
             </button>
           </div>
         )}
@@ -246,13 +246,12 @@ export default function AlgorithmsPage() {
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
             <div className="max-w-xl text-center md:text-left">
               <h2 className="font-montserrat font-bold text-3xl sm:text-4xl text-white mb-6 leading-tight">
-                Already mastered the basics?
+                {t('algorithms.cta.title')}
                 <br />
-                <span className="opacity-80">Take the full journey.</span>
+                <span className="opacity-80">{t('algorithms.cta.subtitle')}</span>
               </h2>
               <p className="font-montserrat text-white/80 mb-8 text-lg">
-                Check out our structured courses and interactive workshops to master algorithmic
-                thinking.
+                {t('algorithms.cta.description')}
               </p>
             </div>
 
@@ -260,7 +259,7 @@ export default function AlgorithmsPage() {
               href="/courses"
               className="flex-shrink-0 group/btn relative inline-flex items-center justify-center font-montserrat font-bold bg-white text-[#269984] px-10 py-5 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-white/20"
             >
-              Go to Courses
+              {t('algorithms.cta.button')}
               <ArrowRight className="ml-2 w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
             </Link>
           </div>

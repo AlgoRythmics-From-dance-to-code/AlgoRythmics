@@ -1,7 +1,8 @@
 {
   "brand": "AlgoRythmics",
   "common": {
-    "completed": "Finalizat"
+    "completed": "Finalizat",
+    "all": "Toate"
   },
   "nav": {
     "home": "Acasă",
@@ -39,7 +40,9 @@
     "animation": "Animație",
     "control": "Control",
     "create_code": "Scrie cod",
+    "create": "Creează",
     "live_code": "Cod live",
+    "alive": "Viu",
     "quiz": "Quiz"
   },
   "sidebar": {
@@ -287,6 +290,29 @@
   },
   "algorithms": {
     "inspiring_text": "Algoritmii nu sunt doar linii sec de cod, ei sunt armonia perfectă dintre logică și mișcare. Descoperă ritmul programării și stăpânește fundamentele informaticii acolo unde puterea magică a muzicii și a dansului te ajută să înțelegi invizibilul.",
+    "filters": {
+      "all": "Toți algoritmii"
+    },
+    "empty": {
+      "noAlgorithms": "Niciun algoritm găsit",
+      "adjustSearchOrFilters": "Încercați să ajustați căutarea sau filtrele de categorii.",
+      "clearFilters": "Șterge filtrele"
+    },
+    "cta": {
+      "title": "Ai stăpânit deja noțiunile de bază?",
+      "subtitle": "Parcurge întreaga călătorie.",
+      "description": "Consultă cursurile noastre structurate și atelierele interactive pentru a stăpâni gândirea algoritmică.",
+      "button": "Mergi la cursuri"
+    },
+    "detail": {
+      "back": "Înapoi la algoritmi",
+      "complexity": "Complexitate",
+      "mark_as_done": "Marchează ca terminat",
+      "completed": "Finalizat",
+      "step_by_step": "Ghid pas cu pas",
+      "coming_soon": "Detaliile algoritmului vor fi disponibile în curând.",
+      "view_coming_soon": "Conținutul {view} pentru {name} — în curând"
+    },
     "title": "Toate algoritmele",
     "categories": {
       "sorting": "Algoritmi de sortare",

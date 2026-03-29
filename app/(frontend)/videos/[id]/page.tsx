@@ -1,14 +1,14 @@
 'use client';
 
-import React, { use, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useLocale } from '../../../i18n/LocaleProvider';
 import { VIDEOS } from '../../../../lib/constants';
 import LearningLayout from '../../../components/Learning/LearningLayout';
 import VideoPlayer from '../../../components/Learning/VideoPlayer';
 import { useRouter } from 'next/navigation';
 
-export default function VideoDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function VideoDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const { t } = useLocale();
   const router = useRouter();
 
