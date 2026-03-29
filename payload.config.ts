@@ -16,7 +16,11 @@ export default buildConfig({
     user: Users.slug,
   },
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
-  csrf: [process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'],
+  csrf: [
+    process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+    'https://nextjs-frontend-three-eta.vercel.app',
+  ].filter(Boolean),
   cookiePrefix: 'algorythmics-admin',
   collections: [Users],
   editor: lexicalEditor(),
