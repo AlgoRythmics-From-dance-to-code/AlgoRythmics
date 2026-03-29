@@ -8,20 +8,18 @@ import Credentials from 'next-auth/providers/credentials';
 import { ROLES, ROUTES, API_ROUTES, APP_CONFIG } from './lib/constants';
 import logger from './lib/logger';
 
-import type { Payload } from 'payload';
-import type { User } from './payload-types';
+import type { User as PayloadUser } from './payload-types';
 import { BaseUser } from './lib/types/auth';
+import { getPayloadInstance } from './lib/payload';
 
 declare module 'next-auth' {
   interface Session {
     user: BaseUser & {
-      completedAlgorithms?: string[];
-      visualizerProgress?: unknown;
+      completedAlgorithms?: PayloadUser['completedAlgorithms'];
     };
   }
   interface User extends BaseUser {
-    completedAlgorithms?: string[];
-    visualizerProgress?: unknown;
+    completedAlgorithms?: PayloadUser['completedAlgorithms'];
   }
 }
 
@@ -35,8 +33,7 @@ declare module 'next-auth/jwt' {
     bio?: string;
     authProvider?: string;
     createdAt?: string;
-    completedAlgorithms?: string[];
-    visualizerProgress?: unknown;
+    completedAlgorithms?: PayloadUser['completedAlgorithms'];
     provider?: string;
     remember?: boolean;
     iat?: number;
@@ -112,9 +109,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const { getPayload } = await import('payload');
-          const configPromise = (await import('./payload.config')).default;
-          const payload = (await getPayload({ config: configPromise })) as unknown as Payload;
+          const payload = await getPayloadInstance();
 
           const result = await payload.login({
             collection: 'users',
@@ -125,19 +120,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
 
           if (result && result.user && result.user.id) {
-            const user = result.user as {
-              id: string | number;
-              firstName?: string;
-              lastName?: string;
-              email: string;
-              role?: string;
-            };
+            const u = result.user as unknown as PayloadUser;
             return {
-              id: user.id.toString(),
-              name: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email,
-              email: user.email,
-              role: user.role,
+              id: u.id.toString(),
+              name: u.firstName ? `${u.firstName} ${u.lastName || ''}`.trim() : u.email,
+              email: u.email,
+              role: u.role,
               remember: credentials.remember === 'true',
+              // Optimized: Include profile fields now to avoid another DB hit in jwt()
+              firstName: u.firstName || undefined,
+              lastName: u.lastName || undefined,
+              bio: u.bio || undefined,
+              imageUrl: u.imageUrl,
+              completedAlgorithms: u.completedAlgorithms || [],
             };
           }
           logger.warn({ result: !!result }, 'Authorize: Failed (credentials or missing ID)');
@@ -177,9 +172,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       try {
-        const { getPayload } = await import('payload');
-        const configPromise = (await import('./payload.config')).default;
-        const payload = (await getPayload({ config: configPromise })) as unknown as Payload;
+        const payload = await getPayloadInstance();
 
         if (!payload) {
           throw new Error('Could not initialize Payload');
@@ -207,7 +200,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               password: `social_${randomUUID()}`,
               role: ROLES.USER as 'user',
               _verified: true,
-              authProvider: account.provider as User['authProvider'],
+              authProvider: account.provider as PayloadUser['authProvider'],
               authProviderId: account.providerAccountId,
               imageUrl: user.image || null,
               firstName,
@@ -218,11 +211,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           logger.info({ provider: account.provider }, 'New user created');
         } else {
           // Update existing user with latest provider info
-          const existingUser = existing.docs[0] as unknown as User;
+          const existingUser = existing.docs[0] as unknown as PayloadUser;
           const updateData: Record<string, unknown> = {};
 
           // Always update provider info to the latest one used
-          updateData.authProvider = account.provider as User['authProvider'];
+          updateData.authProvider = account.provider as PayloadUser['authProvider'];
           updateData.authProviderId = account.providerAccountId;
 
           if (user.image && user.image !== existingUser.imageUrl) {
@@ -262,6 +255,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.email = user.email;
         token.remember = (user as BaseUser).remember;
         token.iat = Math.floor(Date.now() / 1000);
+
+        // Optimization: If we already have the full user (from Credentials), store it now
+        if (typeof user === 'object' && user && 'role' in user) {
+          const u = user as BaseUser;
+          token.id = u.id?.toString();
+          token.role = u.role as string;
+          token.firstName = u.firstName || undefined;
+          token.lastName = u.lastName || undefined;
+          token.imageUrl = u.imageUrl;
+          token.bio = u.bio || undefined;
+          token.authProvider = u.authProvider || undefined;
+          token.createdAt = u.createdAt;
+          token.completedAlgorithms = u.completedAlgorithms || [];
+        }
       }
 
       // Dynamic expiry enforcement
@@ -281,12 +288,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.updatedAt = Date.now(); // Force update
       }
 
-      // Sync from DB on sign-in or session update
-      if (token.email && (account || trigger === 'update')) {
+      // Sync from DB on session update OR social sign-in (where token.role is missing)
+      if (token.email && (trigger === 'update' || (account && !token.role))) {
         try {
-          const { getPayload } = await import('payload');
-          const configPromise = (await import('./payload.config')).default;
-          const payload = (await getPayload({ config: configPromise })) as unknown as Payload;
+          const payload = await getPayloadInstance();
 
           const result = await payload.find({
             collection: 'users',
@@ -296,7 +301,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
 
           if (result.docs.length > 0) {
-            const dbUser = result.docs[0] as unknown as User;
+            const dbUser = result.docs[0] as unknown as PayloadUser;
             token.id = dbUser.id?.toString();
             token.role = dbUser.role as string;
             token.firstName = dbUser.firstName || undefined;
@@ -306,12 +311,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.authProvider = dbUser.authProvider || undefined;
             token.createdAt = dbUser.createdAt;
             token.completedAlgorithms = dbUser.completedAlgorithms || [];
-            token.visualizerProgress = dbUser.visualizerProgress;
           }
         } catch (error) {
           logger.error({ error }, 'JWT callback profile sync error');
         }
       }
+
       return token;
     },
 
@@ -326,7 +331,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.authProvider = String(token.authProvider || '');
         session.user.createdAt = String(token.createdAt || '');
         session.user.completedAlgorithms = token.completedAlgorithms;
-        session.user.visualizerProgress = token.visualizerProgress;
       }
       return session;
     },

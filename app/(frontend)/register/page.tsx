@@ -201,7 +201,9 @@ export default function RegisterPage() {
                       className={`w-full font-montserrat h-11 sm:h-12 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
                       placeholder={t('register.email_placeholder')}
                     />
-                    {errors.email && <p className="text-red-500 text-[10px] mt-0.5">{errors.email}</p>}
+                    {errors.email && (
+                      <p className="text-red-500 text-[10px] mt-0.5">{errors.email}</p>
+                    )}
                   </div>
 
                   {/* Password */}
@@ -279,7 +281,9 @@ export default function RegisterPage() {
                           })}
                       </span>
                     </label>
-                    {errors.terms && <p className="text-red-500 text-[10px] mt-0.5">{errors.terms}</p>}
+                    {errors.terms && (
+                      <p className="text-red-500 text-[10px] mt-0.5">{errors.terms}</p>
+                    )}
                   </div>
 
                   {/* Register button */}

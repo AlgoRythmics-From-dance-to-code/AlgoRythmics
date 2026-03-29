@@ -1,3 +1,5 @@
+import type { User as PayloadUser } from '../../payload-types';
+
 export type BaseUser = {
   id?: string;
   email?: string | null;
@@ -13,4 +15,6 @@ export type BaseUser = {
   image?: string | null;
   bio?: string;
   createdAt?: string;
+  completedAlgorithms?: PayloadUser['completedAlgorithms'];
+  visualizerProgress?: PayloadUser['visualizerProgress'];
 };

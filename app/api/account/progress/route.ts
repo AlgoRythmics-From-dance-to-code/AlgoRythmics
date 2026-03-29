@@ -1,8 +1,32 @@
 import { auth } from '../../../../auth';
-import { getPayload } from 'payload';
-import configPromise from '../../../../payload.config';
+import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
 import type { User } from '../../../../payload-types';
+
+export async function GET() {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const payload = await getPayloadInstance();
+    const user = await payload.findByID({
+      collection: 'users',
+      id: session.user.id,
+      depth: 0,
+    });
+
+    return NextResponse.json({
+      completedIds: user.completedAlgorithms || [],
+      visualizerProgress: user.visualizerProgress || {},
+    });
+  } catch (error) {
+    console.error('Error fetching progress:', error);
+    return NextResponse.json({ error: 'Failed to fetch progress' }, { status: 500 });
+  }
+}
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -25,7 +49,8 @@ export async function POST(req: Request) {
     ) {
       return NextResponse.json({ error: 'visualizerProgress must be an object' }, { status: 400 });
     }
-    const payload = await getPayload({ config: configPromise });
+
+    const payload = await getPayloadInstance();
 
     await payload.update({
       collection: 'users',
