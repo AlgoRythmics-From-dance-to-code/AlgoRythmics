@@ -13,6 +13,7 @@ export default function UserProgressSync() {
   const { completedIds, visualizerProgress, hydrate, clearStore } = useAlgorithmStore();
 
   const isInitialMount = useRef(true);
+  const isHydrating = useRef(false);
   const lastSynced = useRef({ ids: '', progress: '' });
 
   // 0. Cleanup on Logout: Clear the store when the user logs out
@@ -20,44 +21,60 @@ export default function UserProgressSync() {
     if (status === 'unauthenticated') {
       clearStore();
       lastSynced.current = { ids: '', progress: '' };
+      isInitialMount.current = true;
     }
   }, [status, clearStore]);
 
   // 1. Initial Hydration: Fill the store with server data on login
   useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
-      const serverUser = session.user;
+    if (status !== 'authenticated' || !session?.user || isHydrating.current) return;
 
-      // Only hydrate if we have valid server data
-      if (serverUser.completedAlgorithms || serverUser.visualizerProgress) {
-        // Create stable JSON strings for checking if we NEED to hydrate
-        const serverIdsStr = JSON.stringify(serverUser.completedAlgorithms || []);
-        const localIdsStr = JSON.stringify(completedIds);
+    const serverUser = session.user;
 
-        // If local is empty but server has data, and the data differs from local, hydrate
-        if (
-          completedIds.length === 0 &&
-          (serverUser.completedAlgorithms?.length ?? 0) > 0 &&
-          serverIdsStr !== localIdsStr
-        ) {
-          hydrate({
-            completedIds: serverUser.completedAlgorithms,
-            visualizerProgress: serverUser.visualizerProgress as Record<
-              string,
-              { step: number; speed: number }
-            >,
-          });
-        }
-      }
+    // Phase 1: Immediate hydration from session (for completedAlgorithms which are small)
+    if (serverUser.completedAlgorithms && completedIds.length === 0) {
+      hydrate({
+        completedIds: serverUser.completedAlgorithms as string[],
+        visualizerProgress: {}, // Will be filled by Phase 2
+      });
     }
+
+    // Phase 2: Background hydration of full progress (including large JSON objects)
+    const fetchFullProgress = async () => {
+      isHydrating.current = true;
+      try {
+        const response = await fetch('/api/account/progress');
+        if (response.ok) {
+          const data = await response.json();
+          hydrate({
+            completedIds: data.completedIds,
+            visualizerProgress: data.visualizerProgress,
+          });
+          lastSynced.current = {
+            ids: JSON.stringify(data.completedIds),
+            progress: JSON.stringify(data.visualizerProgress),
+          };
+        }
+      } catch (err) {
+        console.error('[AlgoRythmics] Failed to hydrate progress from cloud:', err);
+      } finally {
+        isHydrating.current = false;
+      }
+    };
+
+    fetchFullProgress();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session]);
 
   // 2. Continuous Sync: Save local changes to the cloud
   useEffect(() => {
-    if (status !== 'authenticated') return;
+    if (status !== 'authenticated' || isHydrating.current) return;
 
-    // Prevent sync attempt on first mount
+    // Prevent sync attempt on first mount or before first hydration completes
+    if (isInitialMount.current && completedIds.length === 0) {
+      return;
+    }
+
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;

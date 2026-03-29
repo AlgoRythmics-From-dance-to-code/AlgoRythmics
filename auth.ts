@@ -15,13 +15,11 @@ import { getPayloadInstance } from './lib/payload';
 declare module 'next-auth' {
   interface Session {
     user: BaseUser & {
-      completedAlgorithms?: string[];
-      visualizerProgress?: unknown;
+      completedAlgorithms?: PayloadUser['completedAlgorithms'];
     };
   }
   interface User extends BaseUser {
-    completedAlgorithms?: string[];
-    visualizerProgress?: unknown;
+    completedAlgorithms?: PayloadUser['completedAlgorithms'];
   }
 }
 
@@ -35,8 +33,7 @@ declare module 'next-auth/jwt' {
     bio?: string;
     authProvider?: string;
     createdAt?: string;
-    completedAlgorithms?: string[];
-    visualizerProgress?: unknown;
+    completedAlgorithms?: PayloadUser['completedAlgorithms'];
     provider?: string;
     remember?: boolean;
     iat?: number;
@@ -136,7 +133,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               bio: u.bio || undefined,
               imageUrl: u.imageUrl,
               completedAlgorithms: u.completedAlgorithms || [],
-              visualizerProgress: u.visualizerProgress,
             };
           }
           logger.warn({ result: !!result }, 'Authorize: Failed (credentials or missing ID)');
@@ -272,7 +268,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.authProvider = u.authProvider || undefined;
           token.createdAt = u.createdAt;
           token.completedAlgorithms = u.completedAlgorithms || [];
-          token.visualizerProgress = u.visualizerProgress;
         }
       }
 
@@ -316,7 +311,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.authProvider = dbUser.authProvider || undefined;
             token.createdAt = dbUser.createdAt;
             token.completedAlgorithms = dbUser.completedAlgorithms || [];
-            token.visualizerProgress = dbUser.visualizerProgress;
           }
         } catch (error) {
           logger.error({ error }, 'JWT callback profile sync error');
@@ -337,7 +331,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.authProvider = String(token.authProvider || '');
         session.user.createdAt = String(token.createdAt || '');
         session.user.completedAlgorithms = token.completedAlgorithms;
-        session.user.visualizerProgress = token.visualizerProgress;
       }
       return session;
     },
