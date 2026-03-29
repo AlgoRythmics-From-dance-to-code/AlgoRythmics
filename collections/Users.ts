@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers';
 import type { CollectionConfig } from 'payload';
 import { ROLES, ROUTES, AUTH_PROVIDERS, APP_CONFIG, ALGORITHMS } from '../lib/constants';
 import logger from '../lib/logger';
@@ -84,27 +83,6 @@ export const Users: CollectionConfig = {
           throw new Error('Ellenőrizze az e-mail címét a belépéshez!');
         }
         return user;
-      },
-    ],
-    afterLogout: [
-      async () => {
-        // When logging out from the Admin panel, we also want to clear any NextAuth sessions
-        // to prevent the "sticky session" or "automatic re-login" phenomenon.
-        try {
-          const cookieStore = await cookies();
-          const authCookies = [
-            'next-auth.session-token',
-            '__Secure-next-auth.session-token',
-            'authjs.session-token',
-            '__Secure-authjs.session-token',
-          ];
-
-          authCookies.forEach((cookieName) => {
-            cookieStore.delete(cookieName);
-          });
-        } catch (error) {
-          logger.error({ error }, 'Error clearing NextAuth cookies in afterLogout hook');
-        }
       },
     ],
   },
