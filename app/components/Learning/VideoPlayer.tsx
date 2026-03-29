@@ -24,8 +24,9 @@ export default function VideoPlayer({ youtubeId, title }: VideoPlayerProps) {
           </div>
           <h3 className="font-montserrat font-bold text-xl mb-2">Video Placeholder</h3>
           <p className="font-montserrat text-gray-400 text-sm max-w-md">
-            The YouTube video for <span className="text-[#269984] font-bold">{title || 'this algorithm'}</span> is not yet linked. 
-            Once the URL is added to the constants, it will appear here.
+            The YouTube video for{' '}
+            <span className="text-[#269984] font-bold">{title || 'this algorithm'}</span> is not yet
+            linked. Once the URL is added to the constants, it will appear here.
           </p>
           <div className="mt-4 text-xs text-[#269984] font-mono p-2 bg-black/30 rounded">
             ID: {youtubeId}

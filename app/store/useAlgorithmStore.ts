@@ -11,19 +11,22 @@ interface AlgorithmState {
   searchQuery: string;
   setCategory: (category: Category) => void;
   setSearchQuery: (query: string) => void;
-  
+
   // Progress state
   completedIds: string[];
   toggleCompleted: (id: string) => void;
   isCompleted: (id: string) => boolean;
-  
+
   // Visualizer Persistence
   visualizerProgress: Record<string, { step: number; speed: number }>;
   updateVisualizerProgress: (id: string, step: number, speed?: number) => void;
-  
+
   // Hydration
-  hydrate: (data: { completedIds?: string[]; visualizerProgress?: any }) => void;
-  
+  hydrate: (data: {
+    completedIds?: string[];
+    visualizerProgress?: Record<string, { step: number; speed: number }>;
+  }) => void;
+
   // Reset
   resetFilters: () => void;
 }
@@ -40,7 +43,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       // Actions
       setCategory: (category) => set({ activeCategory: category }),
       setSearchQuery: (query) => set({ searchQuery: query }),
-      
+
       toggleCompleted: (id) => {
         const { completedIds } = get();
         if (completedIds.includes(id)) {
@@ -60,9 +63,9 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             ...visualizerProgress,
             [id]: {
               step,
-              speed: speed !== undefined ? speed : current.speed
-            }
-          }
+              speed: speed !== undefined ? speed : current.speed,
+            },
+          },
         });
       },
 
@@ -78,6 +81,6 @@ export const useAlgorithmStore = create<AlgorithmState>()(
     }),
     {
       name: 'algorythmics-learning-storage', // Persistence key
-    }
-  )
+    },
+  ),
 );

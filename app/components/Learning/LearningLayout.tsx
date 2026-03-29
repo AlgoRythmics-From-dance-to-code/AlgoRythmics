@@ -36,7 +36,7 @@ export default function LearningLayout({
           >
             ← {backLabel}
           </Link>
-          
+
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
               {categoryName && (
@@ -56,11 +56,9 @@ export default function LearningLayout({
                 </p>
               )}
             </div>
-            
+
             {/* Action buttons could go here */}
-            <div className="flex gap-4">
-              {/* Future "Mark as completed" etc. */}
-            </div>
+            <div className="flex gap-4">{/* Future "Mark as completed" etc. */}</div>
           </div>
         </div>
       </div>
@@ -69,9 +67,7 @@ export default function LearningLayout({
       <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-10 md:py-16">
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Content */}
-          <div className="flex-1 min-w-0">
-            {children}
-          </div>
+          <div className="flex-1 min-w-0">{children}</div>
 
           {/* Sidebar (Optional - e.g. for Related Videos or Course Progress) */}
           <aside className="lg:w-80 flex-shrink-0 animate-in fade-in slide-in-from-right-10 duration-700">
@@ -85,12 +81,12 @@ export default function LearningLayout({
                   {t('about.subtitle')}
                 </p>
                 <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
-                   <Link 
-                     href="/algorithms"
-                     className="block w-full text-center py-3 rounded-xl bg-[#269984] text-white font-montserrat font-bold text-sm hover:bg-[#1f7a6a] transition-all"
-                   >
-                     {t('nav.algorithms')}
-                   </Link>
+                  <Link
+                    href="/algorithms"
+                    className="block w-full text-center py-3 rounded-xl bg-[#269984] text-white font-montserrat font-bold text-sm hover:bg-[#1f7a6a] transition-all"
+                  >
+                    {t('nav.algorithms')}
+                  </Link>
                 </div>
               </div>
             </div>

@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Search, Filter, Grid2X2, List as ListIcon, X, BarChart3, Activity, ArrowRight, Smile } from 'lucide-react';
+import { Search, Grid2X2, X, BarChart3, Activity, ArrowRight, Smile } from 'lucide-react';
 import { useLocale } from '../../i18n/LocaleProvider';
-import { ALGORITHMS, ROUTES } from '../../../lib/constants';
+import { ALGORITHMS } from '../../../lib/constants';
 import AlgorithmCard from '../../components/AlgorithmCard';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 
@@ -13,20 +12,27 @@ type Category = 'all' | 'sorting' | 'searching' | 'backtracking' | 'fun';
 
 export default function AlgorithmsPage() {
   const { t } = useLocale();
-  const { 
-    activeCategory, 
-    setCategory, 
-    searchQuery, 
-    setSearchQuery,
-    completedIds
-  } = useAlgorithmStore();
+  const { activeCategory, setCategory, searchQuery, setSearchQuery, completedIds } =
+    useAlgorithmStore();
 
   // Categories helper
   const categories = [
     { id: 'all', label: t('videos.filters.all'), icon: <Grid2X2 className="w-4 h-4" /> },
-    { id: 'sorting', label: t('algorithms.categories.sorting'), icon: <BarChart3 className="w-4 h-4" /> },
-    { id: 'searching', label: t('algorithms.categories.searching'), icon: <Search className="w-4 h-4" /> },
-    { id: 'backtracking', label: t('algorithms.categories.backtracking'), icon: <Activity className="w-4 h-4" /> },
+    {
+      id: 'sorting',
+      label: t('algorithms.categories.sorting'),
+      icon: <BarChart3 className="w-4 h-4" />,
+    },
+    {
+      id: 'searching',
+      label: t('algorithms.categories.searching'),
+      icon: <Search className="w-4 h-4" />,
+    },
+    {
+      id: 'backtracking',
+      label: t('algorithms.categories.backtracking'),
+      icon: <Activity className="w-4 h-4" />,
+    },
     { id: 'fun', label: t('algorithms.categories.fun'), icon: <Smile className="w-4 h-4" /> },
   ];
 
@@ -35,13 +41,15 @@ export default function AlgorithmsPage() {
     const query = searchQuery.toLowerCase();
     return ALGORITHMS.filter((algo) => {
       const matchesCategory = activeCategory === 'all' || algo.category === activeCategory;
-      
+
       const localizedName = t(`algorithms.list.${algo.id}.name`).toLowerCase();
       const localizedDesc = t(`algorithms.list.${algo.id}.description`).toLowerCase();
       const localizedCategory = t(`algorithms.categories.${algo.category}`).toLowerCase();
-      const localizedDifficulty = t(`algorithm_card.difficulty.${algo.difficulty.toLowerCase()}`).toLowerCase();
-      
-      const matchesSearch = 
+      const localizedDifficulty = t(
+        `algorithm_card.difficulty.${algo.difficulty.toLowerCase()}`,
+      ).toLowerCase();
+
+      const matchesSearch =
         localizedName.includes(query) ||
         localizedDesc.includes(query) ||
         localizedCategory.includes(query) ||
@@ -62,14 +70,13 @@ export default function AlgorithmsPage() {
   useEffect(() => {
     const handleScroll = () => {
       if (heroRef.current) {
-        // Trigger right when the bottom of the hero (which is the top of the filter bar) 
+        // Trigger right when the bottom of the hero (which is the top of the filter bar)
         // hits the bottom of the fixed site header.
-        const headerPadding = 0; // The pt-[var(--header-height)] handle this
         setIsScrolled(window.scrollY >= heroRef.current.offsetHeight - 2);
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); 
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -81,7 +88,7 @@ export default function AlgorithmsPage() {
         setPillStyle({
           left: activeBtn.offsetLeft,
           width: activeBtn.offsetWidth,
-          opacity: 1
+          opacity: 1,
         });
       }
     };
@@ -91,10 +98,10 @@ export default function AlgorithmsPage() {
 
     // Small delay to handle potential layout shifts/font loading
     const timer = setTimeout(updatePill, 100);
-    
+
     // Add window resize listener to keep pill aligned
     window.addEventListener('resize', updatePill);
-    
+
     return () => {
       clearTimeout(timer);
       window.removeEventListener('resize', updatePill);
@@ -104,49 +111,48 @@ export default function AlgorithmsPage() {
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a] min-h-screen pt-5">
       {/* Ultra-Minimal Localized Hero (No Title) */}
-      <div 
-        ref={heroRef}
-        className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-5 pb-3"
-      >
-         <p className="font-montserrat font-bold text-xs sm:text-sm text-[#999] dark:text-gray-500 max-w-4xl leading-relaxed animate-in fade-in slide-in-from-left-4 duration-1000">
-           {t('algorithms.inspiring_text')}
-         </p>
-         
-         {/* Learning Progress Indicator */}
-         <div className="flex items-center gap-2 mt-5 animate-in fade-in slide-in-from-left-6 duration-1000">
-           <div className="h-1.5 w-32 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
-             <div 
-               className="h-full bg-[#269984] transition-all duration-700"
-               style={{ width: `${(completedIds.length / ALGORITHMS.length) * 100}%` }}
-             />
-           </div>
-           <span className="text-[10px] sm:text-xs font-montserrat font-bold text-[#269984] uppercase tracking-wider">
-             {completedIds.length} / {ALGORITHMS.length} {t('common.completed') || 'Completed'}
-           </span>
-         </div>
+      <div ref={heroRef} className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-5 pb-3">
+        <p className="font-montserrat font-bold text-xs sm:text-sm text-[#999] dark:text-gray-500 max-w-4xl leading-relaxed animate-in fade-in slide-in-from-left-4 duration-1000">
+          {t('algorithms.inspiring_text')}
+        </p>
+
+        {/* Learning Progress Indicator */}
+        <div className="flex items-center gap-2 mt-5 animate-in fade-in slide-in-from-left-6 duration-1000">
+          <div className="h-1.5 w-32 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#269984] transition-all duration-700"
+              style={{ width: `${(completedIds.length / ALGORITHMS.length) * 100}%` }}
+            />
+          </div>
+          <span className="text-[10px] sm:text-xs font-montserrat font-bold text-[#269984] uppercase tracking-wider">
+            {completedIds.length} / {ALGORITHMS.length} {t('common.completed') || 'Completed'}
+          </span>
+        </div>
       </div>
 
       {/* Premium Sticky Filter Bar — Morphs on scroll */}
-      <div 
+      <div
         className={`w-full sticky top-[var(--header-height)] z-30 transition-all duration-500 ease-in-out ${
-          isScrolled 
-            ? 'border-b border-gray-100 dark:border-white/5 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-3xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] py-3' 
+          isScrolled
+            ? 'border-b border-gray-100 dark:border-white/5 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-3xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] py-3'
             : 'bg-transparent border-transparent shadow-none py-4'
         }`}
       >
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             {/* Elegant Sliding Pilled Category Tabs */}
-            <div className={`relative flex items-center p-1 rounded-2xl overflow-x-auto no-scrollbar scroll-smooth transition-colors duration-500 ${
-              isScrolled ? 'bg-gray-100/30 dark:bg-white/5' : 'bg-transparent'
-            }`}>
+            <div
+              className={`relative flex items-center p-1 rounded-2xl overflow-x-auto no-scrollbar scroll-smooth transition-colors duration-500 ${
+                isScrolled ? 'bg-gray-100/30 dark:bg-white/5' : 'bg-transparent'
+              }`}
+            >
               {/* The Sliding Pill */}
-              <div 
+              <div
                 className="absolute h-[calc(100%-8px)] bg-[#269984] rounded-xl transition-all duration-300 ease-out -z-10 shadow-sm"
-                style={{ 
-                  left: pillStyle.left, 
-                  width: pillStyle.width, 
-                  opacity: pillStyle.opacity 
+                style={{
+                  left: pillStyle.left,
+                  width: pillStyle.width,
+                  opacity: pillStyle.opacity,
                 }}
               />
 
@@ -155,8 +161,10 @@ export default function AlgorithmsPage() {
                 return (
                   <button
                     key={cat.id}
-                    ref={el => { buttonRefs.current[cat.id] = el }}
-                    onClick={() => setCategory(cat.id as any)}
+                    ref={(el) => {
+                      buttonRefs.current[cat.id] = el;
+                    }}
+                    onClick={() => setCategory(cat.id as Category)}
                     className={`relative px-5 py-2 rounded-xl font-montserrat font-bold text-xs sm:text-sm transition-colors duration-300 whitespace-nowrap cursor-pointer z-10 ${
                       isActive
                         ? 'text-white'
@@ -174,7 +182,7 @@ export default function AlgorithmsPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999] dark:text-gray-600 group-focus-within:text-[#269984] transition-colors" />
               <input
                 type="text"
-                placeholder={t('sidebar.search_placeholder') || "Find an algorithm..."}
+                placeholder={t('sidebar.search_placeholder') || 'Find an algorithm...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`w-full border transition-all duration-500 outline-none font-montserrat text-sm text-black dark:text-white shadow-sm focus:ring-4 focus:ring-[#269984]/5 rounded-xl py-2.5 pl-11 pr-10 ${
@@ -184,7 +192,7 @@ export default function AlgorithmsPage() {
                 }`}
               />
               {searchQuery && (
-                <button 
+                <button
                   onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 hover:text-white hover:bg-[#269984] transition-all scale-75 cursor-pointer"
                 >
@@ -197,68 +205,66 @@ export default function AlgorithmsPage() {
       </div>
 
       {/* Main Grid Content */}
-      <div 
+      <div
         key={`${activeCategory}-${searchQuery}`}
         className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 md:py-20"
       >
         {filteredAlgorithms.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
             {filteredAlgorithms.map((algo, index) => (
-              <AlgorithmCard 
-                key={algo.id} 
-                algorithm={algo} 
-                index={index} 
-              />
+              <AlgorithmCard key={algo.id} algorithm={algo} index={index} />
             ))}
           </div>
         ) : (
           <div className="w-full py-20 text-center animate-in fade-in zoom-in-95 duration-700">
-             <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-50 dark:bg-white/5 mb-6">
-                <Search className="w-10 h-10 text-gray-300 dark:text-gray-600" />
-             </div>
-             <h3 className="font-montserrat font-bold text-2xl text-black dark:text-white mb-2">
-                No algorithms found
-             </h3>
-             <p className="font-montserrat text-[#666] dark:text-gray-500">
-                Try adjusting your search or category filters.
-             </p>
-                <button 
-                  onClick={() => setCategory('all')}
-                  className="bg-[#269984] hover:bg-[#1f7a6a] text-white px-6 py-2.5 rounded-xl font-montserrat font-bold text-sm transition-all active:scale-95 shadow-lg shadow-[#269984]/20"
-                >
-                  Clear Filters
-                </button>
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-50 dark:bg-white/5 mb-6">
+              <Search className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+            </div>
+            <h3 className="font-montserrat font-bold text-2xl text-black dark:text-white mb-2">
+              No algorithms found
+            </h3>
+            <p className="font-montserrat text-[#666] dark:text-gray-500">
+              Try adjusting your search or category filters.
+            </p>
+            <button
+              onClick={() => setCategory('all')}
+              className="bg-[#269984] hover:bg-[#1f7a6a] text-white px-6 py-2.5 rounded-xl font-montserrat font-bold text-sm transition-all active:scale-95 shadow-lg shadow-[#269984]/20"
+            >
+              Clear Filters
+            </button>
           </div>
         )}
       </div>
 
       {/* Bottom CTA Section */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pb-20">
-         <div className="relative w-full p-10 md:p-16 rounded-[40px] bg-[#269984] overflow-hidden group shadow-2xl shadow-[#269984]/20">
-            {/* Background Texture */}
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_white_1px,_transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
-            
-            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
-               <div className="max-w-xl text-center md:text-left">
-                  <h2 className="font-montserrat font-bold text-3xl sm:text-4xl text-white mb-6 leading-tight">
-                    Already mastered the basics?<br/>
-                    <span className="opacity-80">Take the full journey.</span>
-                  </h2>
-                  <p className="font-montserrat text-white/80 mb-8 text-lg">
-                    Check out our structured courses and interactive workshops to master algorithmic thinking.
-                  </p>
-               </div>
-               
-               <a 
-                 href="/courses" 
-                 className="flex-shrink-0 group/btn relative inline-flex items-center justify-center font-montserrat font-bold bg-white text-[#269984] px-10 py-5 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-white/20"
-               >
-                 Go to Courses
-                 <ArrowRight className="ml-2 w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
-               </a>
+        <div className="relative w-full p-10 md:p-16 rounded-[40px] bg-[#269984] overflow-hidden group shadow-2xl shadow-[#269984]/20">
+          {/* Background Texture */}
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_white_1px,_transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
+
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
+            <div className="max-w-xl text-center md:text-left">
+              <h2 className="font-montserrat font-bold text-3xl sm:text-4xl text-white mb-6 leading-tight">
+                Already mastered the basics?
+                <br />
+                <span className="opacity-80">Take the full journey.</span>
+              </h2>
+              <p className="font-montserrat text-white/80 mb-8 text-lg">
+                Check out our structured courses and interactive workshops to master algorithmic
+                thinking.
+              </p>
             </div>
-         </div>
+
+            <Link
+              href="/courses"
+              className="flex-shrink-0 group/btn relative inline-flex items-center justify-center font-montserrat font-bold bg-white text-[#269984] px-10 py-5 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-white/20"
+            >
+              Go to Courses
+              <ArrowRight className="ml-2 w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

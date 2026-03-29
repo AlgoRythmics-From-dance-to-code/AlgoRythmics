@@ -2,10 +2,11 @@ import { auth } from '../../../../auth';
 import { getPayload } from 'payload';
 import configPromise from '../../../../payload.config';
 import { NextResponse } from 'next/server';
+import type { User } from '../../../../payload-types';
 
 export async function POST(req: Request) {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -18,9 +19,9 @@ export async function POST(req: Request) {
       collection: 'users',
       id: session.user.id,
       data: {
-        completedAlgorithms: completedIds,
-        visualizerProgress: visualizerProgress || {},
-      } as any,
+        completedAlgorithms: completedIds as User['completedAlgorithms'],
+        visualizerProgress: (visualizerProgress || {}) as User['visualizerProgress'],
+      } as Partial<User>,
     });
 
     return NextResponse.json({ success: true });

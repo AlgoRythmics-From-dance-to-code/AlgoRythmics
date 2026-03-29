@@ -66,35 +66,16 @@ export const Users: CollectionConfig = {
     delete: ({ req: { user } }) => user?.role === ROLES.ADMIN,
   },
   hooks: {
-    beforeOperation: [
-      async ({ args, operation }) => {
-        if (operation === 'create' || operation === 'update') {
-          const req = args.req;
-          // Ha be van jelentkezve (Admin felületen vagyunk) VAGY ez az első regisztráció
-          const { totalDocs } = await req.payload.count({ collection: 'users' });
-          if (req.user || (operation === 'create' && totalDocs === 0)) {
-            (req as any).disableVerificationEmail = true;
-          }
-        }
-        return args;
-      }
-    ],
     beforeChange: [
       async ({ data, req, operation }) => {
         if (operation === 'create') {
           const { totalDocs } = await req.payload.count({ collection: 'users' });
-          const isFirstUser = totalDocs === 0;
-
-          if (isFirstUser || req?.user || data.role === ROLES.ADMIN) {
-            data._verified = true;
-            data._verificationToken = null;
-            if (req) (req as any).disableVerificationEmail = true;
-            
-            if (isFirstUser) data.role = ROLES.ADMIN;
+          if (totalDocs === 0) {
+            data.role = ROLES.ADMIN;
           }
         }
         return data;
-      }
+      },
     ],
     beforeLogin: [
       async ({ user }) => {
@@ -130,6 +111,9 @@ export const Users: CollectionConfig = {
       ],
       defaultValue: ROLES.USER,
       required: true,
+      access: {
+        update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+      },
       admin: {
         position: 'sidebar',
       },
@@ -150,7 +134,10 @@ export const Users: CollectionConfig = {
       type: 'select',
       hasMany: true,
       options: ALGORITHMS.map((algo: { id: string }) => ({
-        label: algo.id.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        label: algo.id
+          .split('-')
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' '),
         value: algo.id,
       })),
       admin: {

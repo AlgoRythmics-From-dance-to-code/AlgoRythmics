@@ -15,6 +15,8 @@ export default buildConfig({
   admin: {
     user: Users.slug,
   },
+  serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
+  csrf: [process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'],
   cookiePrefix: 'algorythmics-admin',
   collections: [Users],
   editor: lexicalEditor(),

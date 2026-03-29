@@ -170,7 +170,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
   };
 
   // Find matching video for this algorithm
-  const matchingVideo = VIDEOS.find(v => v.id.startsWith(id));
+  const matchingVideo = VIDEOS.find((v) => v.id.startsWith(id));
 
   const { toggleCompleted, isCompleted } = useAlgorithmStore();
   const completed = isCompleted(id);
@@ -193,7 +193,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
               <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3">
                 {data.name}
               </h1>
-              
+
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
                 <span
                   className="inline-block font-montserrat font-bold text-xs px-4 py-1.5 rounded-full text-white shadow-sm"
@@ -205,12 +205,16 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
                 <button
                   onClick={() => toggleCompleted(id)}
                   className={`flex items-center gap-2 font-montserrat font-bold text-xs px-4 py-1.5 rounded-full transition-all active:scale-95 shadow-lg ${
-                    completed 
-                      ? 'bg-green-600 text-white shadow-green-600/20' 
+                    completed
+                      ? 'bg-green-600 text-white shadow-green-600/20'
                       : 'bg-white dark:bg-[#1a1a1a] text-[#269984] hover:bg-[#269984] hover:text-white border border-[#269984]/20'
                   }`}
                 >
-                  {completed ? <CheckCircle className="w-4 h-4 fill-white text-green-600" /> : <Circle className="w-4 h-4" />}
+                  {completed ? (
+                    <CheckCircle className="w-4 h-4 fill-white text-green-600" />
+                  ) : (
+                    <Circle className="w-4 h-4" />
+                  )}
                   {completed ? 'Completed' : 'Mark as done'}
                 </button>
               </div>
@@ -251,7 +255,15 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
                 borderColor: activeView === v ? '#269984' : 'transparent',
               }}
             >
-              <span className={activeView !== v ? 'text-[#999] dark:text-gray-500 hover:text-[#269984] transition-colors' : ''}>{v}</span>
+              <span
+                className={
+                  activeView !== v
+                    ? 'text-[#999] dark:text-gray-500 hover:text-[#269984] transition-colors'
+                    : ''
+                }
+              >
+                {v}
+              </span>
             </button>
           ))}
         </div>
@@ -262,10 +274,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
         <div className="animate-in fade-in slide-in-from-bottom-5 duration-500">
           {activeView === 'Video' && matchingVideo ? (
             <div className="max-w-4xl mx-auto">
-              <VideoPlayer 
-                youtubeId={matchingVideo.youtubeId} 
-                title={`${data.name} Video`} 
-              />
+              <VideoPlayer youtubeId={matchingVideo.youtubeId} title={`${data.name} Video`} />
             </div>
           ) : activeView === 'Animation' && id === 'bubble-sort' ? (
             <div className="max-w-4xl mx-auto">
