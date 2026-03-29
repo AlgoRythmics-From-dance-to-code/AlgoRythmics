@@ -9,6 +9,7 @@ interface VisualizerControlsProps {
   onStepBackward: () => void;
   onReset: () => void;
   isPlaying: boolean;
+  isFinished: boolean;
   speed: number;
   setSpeed: (speed: number) => void;
   progress: number;
@@ -20,6 +21,7 @@ export default function VisualizerControls({
   onStepBackward,
   onReset,
   isPlaying,
+  isFinished,
   speed,
   setSpeed,
   progress,
@@ -54,14 +56,19 @@ export default function VisualizerControls({
           </button>
 
           <button
-            onClick={onPlayPause}
+            onClick={isFinished ? onReset : onPlayPause}
             className={`p-4 rounded-2xl transition-all active:scale-95 shadow-lg ${
-              isPlaying
-                ? 'bg-orange-500 text-white shadow-orange-500/20'
-                : 'bg-[#269984] text-white shadow-[#269984]/20'
+              isFinished
+                ? 'bg-[#269984] text-white shadow-[#269984]/20'
+                : isPlaying
+                  ? 'bg-orange-500 text-white shadow-orange-500/20'
+                  : 'bg-[#269984] text-white shadow-[#269984]/20'
             }`}
+            title={isFinished ? 'Restart' : isPlaying ? 'Pause' : 'Play'}
           >
-            {isPlaying ? (
+            {isFinished ? (
+              <RotateCcw className="w-6 h-6" />
+            ) : isPlaying ? (
               <Pause className="w-6 h-6 fill-current" />
             ) : (
               <Play className="w-6 h-6 fill-current ml-0.5" />
@@ -70,7 +77,10 @@ export default function VisualizerControls({
 
           <button
             onClick={onStepForward}
-            className="p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 transition-all active:scale-90"
+            disabled={isFinished}
+            className={`p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400 dark:text-gray-500 transition-all active:scale-90 ${
+              isFinished ? 'opacity-30 cursor-not-allowed' : ''
+            }`}
             title="Step Forward"
           >
             <SkipForward className="w-5 h-5" />
