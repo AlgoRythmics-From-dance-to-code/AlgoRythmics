@@ -8,8 +8,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { ROLES, ROUTES, API_ROUTES, APP_CONFIG } from './lib/constants';
 import logger from './lib/logger';
 
-import type { Payload } from 'payload';
-import type { User } from './payload-types';
+import type { User as PayloadUser } from './payload-types';
 import { BaseUser } from './lib/types/auth';
 import { getPayloadInstance } from './lib/payload';
 
@@ -124,27 +123,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
 
           if (result && result.user && result.user.id) {
-            const user = result.user as {
-              id: string | number;
-              firstName?: string;
-              lastName?: string;
-              email: string;
-              role?: string;
-            };
+            const u = result.user as unknown as PayloadUser;
             return {
-              id: user.id.toString(),
-              name: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email,
-              email: user.email,
-              role: user.role,
+              id: u.id.toString(),
+              name: u.firstName ? `${u.firstName} ${u.lastName || ''}`.trim() : u.email,
+              email: u.email,
+              role: u.role,
               remember: credentials.remember === 'true',
               // Optimized: Include profile fields now to avoid another DB hit in jwt()
-              firstName: user.firstName,
-              lastName: user.lastName,
-              bio: (user as any).bio,
-              imageUrl: (user as any).imageUrl,
-              completedAlgorithms: (user as any).completedAlgorithms,
-              visualizerProgress: (user as any).visualizerProgress,
-            } as any;
+              firstName: u.firstName || undefined,
+              lastName: u.lastName || undefined,
+              bio: u.bio || undefined,
+              imageUrl: u.imageUrl,
+              completedAlgorithms: u.completedAlgorithms || [],
+              visualizerProgress: u.visualizerProgress,
+            };
           }
           logger.warn({ result: !!result }, 'Authorize: Failed (credentials or missing ID)');
           return null;
@@ -211,7 +204,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               password: `social_${randomUUID()}`,
               role: ROLES.USER as 'user',
               _verified: true,
-              authProvider: account.provider as User['authProvider'],
+              authProvider: account.provider as PayloadUser['authProvider'],
               authProviderId: account.providerAccountId,
               imageUrl: user.image || null,
               firstName,
@@ -222,11 +215,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           logger.info({ provider: account.provider }, 'New user created');
         } else {
           // Update existing user with latest provider info
-          const existingUser = existing.docs[0] as unknown as User;
+          const existingUser = existing.docs[0] as unknown as PayloadUser;
           const updateData: Record<string, unknown> = {};
 
           // Always update provider info to the latest one used
-          updateData.authProvider = account.provider as User['authProvider'];
+          updateData.authProvider = account.provider as PayloadUser['authProvider'];
           updateData.authProviderId = account.providerAccountId;
 
           if (user.image && user.image !== existingUser.imageUrl) {
@@ -268,8 +261,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.iat = Math.floor(Date.now() / 1000);
 
         // Optimization: If we already have the full user (from Credentials), store it now
-        if (typeof user === 'object' && 'role' in user) {
-          const u = user as any;
+        if (typeof user === 'object' && user && 'role' in user) {
+          const u = user as BaseUser;
           token.id = u.id?.toString();
           token.role = u.role as string;
           token.firstName = u.firstName || undefined;
@@ -313,7 +306,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
 
           if (result.docs.length > 0) {
-            const dbUser = result.docs[0] as unknown as User;
+            const dbUser = result.docs[0] as unknown as PayloadUser;
             token.id = dbUser.id?.toString();
             token.role = dbUser.role as string;
             token.firstName = dbUser.firstName || undefined;

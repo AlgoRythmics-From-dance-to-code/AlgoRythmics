@@ -11,7 +11,7 @@ import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 export default function UserProgressSync() {
   const { data: session, status } = useSession();
   const { completedIds, visualizerProgress, hydrate, clearStore } = useAlgorithmStore();
-  
+
   const isInitialMount = useRef(true);
   const lastSynced = useRef({ ids: '', progress: '' });
 

@@ -13,4 +13,6 @@ export type BaseUser = {
   image?: string | null;
   bio?: string;
   createdAt?: string;
+  completedAlgorithms?: string[];
+  visualizerProgress?: unknown;
 };
