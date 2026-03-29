@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { ROUTES, APP_CONFIG, API_ROUTES } from './lib/constants';
+import { ROUTES, APP_CONFIG } from './lib/constants';
 
 /**
  * Shared Middleware (named 'proxy' for this project's configuration)
@@ -29,37 +29,37 @@ export default function middleware(request: NextRequest) {
     pathname.startsWith(ROUTES.COURSES) ||
     pathname.startsWith(ROUTES.PROFILE);
 
+  // 3. Bypass static files and API immediately
   if (isApiOrStatic) {
     return NextResponse.next();
   }
 
-  // 3. Admin Panel Session Loop-Breaker:
-  // If we just logged out of Admin (/admin/logout -> /admin/login), 
-  // but we still have an active NextAuth session, we MUST force a full logout. 
-  // Otherwise, a re-login loop happens.
+  // 4. Admin Panel Bypass:
+  // Payload CMS handles its own internal authentication logic. 
+  // We bypass middleware for all /admin routes to prevent interfering with its internal redirects.
   if (isAdmin) {
-    if (pathname.includes('/login') && nextAuthToken && !payloadToken) {
-      // Force user to our unified logout to clear everything
-      return NextResponse.redirect(new URL(API_ROUTES.AUTH.LOGOUT, request.url));
-    }
     return NextResponse.next();
   }
 
-  // 4. Frontend Protected Routes
+  // 5. Frontend Protected Routes Guard
   if (!token && isProtectedRoute) {
     const url = new URL(ROUTES.LOGIN, request.url);
     url.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(url);
   }
 
-  // 5. Auth Guest Guard (e.g. redirect away from /login if logged in)
+  // 6. Guest Guard (redirect away from /login if already authenticated)
   if (token && isAuthPage) {
+    // If we have any form of token, we shouldn't be on the login page
     return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
   }
 
   return NextResponse.next();
 }
 
+/**
+ * Middleware Matcher Configuration
+ */
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
