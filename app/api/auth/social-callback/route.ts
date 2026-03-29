@@ -1,6 +1,5 @@
 import { auth } from '../../../../auth';
-import { getPayload } from 'payload';
-import configPromise from '../../../../payload.config';
+import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jsonwebtoken from 'jsonwebtoken';
@@ -19,7 +18,7 @@ export async function GET() {
       return NextResponse.redirect(new URL(`${ROUTES.LOGIN}?error=no-session`, baseUrl));
     }
 
-    const payload = await getPayload({ config: configPromise });
+    const payload = await getPayloadInstance();
 
     // Find the user in Payload
     const result = await payload.find({
@@ -28,6 +27,7 @@ export async function GET() {
         email: { equals: session.user.email },
       },
       limit: 1,
+      depth: 0, // Minimize data fetched
     });
 
     if (result.docs.length === 0) {

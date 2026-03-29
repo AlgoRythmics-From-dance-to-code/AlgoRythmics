@@ -29,7 +29,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${montserrat.variable} antialiased min-h-screen flex flex-col`}>
-        <NextAuthProvider>
+        <NextAuthProvider session={session}>
           <ThemeProviderClient>
             <LocaleProvider>
               <UserProgressSync />
