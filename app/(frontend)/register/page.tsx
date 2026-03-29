@@ -113,7 +113,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Right Side: Register Form */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-6 sm:px-10">
           <div className="w-full max-w-[500px]">
             {isSuccess ? (
               <div className="text-center animate-in fade-in zoom-in duration-500">
@@ -139,7 +139,7 @@ export default function RegisterPage() {
                 </p>
                 <Link
                   href="/login"
-                  className="w-full font-montserrat font-bold text-white h-12 sm:h-14 rounded-lg text-lg sm:text-xl flex items-center justify-center hover:opacity-90 transition-all cursor-pointer"
+                  className="w-full font-montserrat font-bold text-white h-11 sm:h-12 rounded-lg text-lg flex items-center justify-center hover:opacity-90 transition-all cursor-pointer"
                   style={{ backgroundColor: '#269984' }}
                 >
                   {t('register.success_btn')}
@@ -147,105 +147,105 @@ export default function RegisterPage() {
               </div>
             ) : (
               <>
-                <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3">
+                <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-4xl text-black dark:text-white mb-2">
                   {t('register.title')}
                 </h1>
-                <p className="font-montserrat text-base sm:text-lg mb-8 text-[#666] dark:text-gray-400">
+                <p className="font-montserrat text-sm sm:text-base mb-6 text-[#666] dark:text-gray-400">
                   {t('register.subtitle')}
                 </p>
 
                 <form onSubmit={handleSubmit}>
                   {/* Name fields */}
-                  <div className="flex flex-col sm:flex-row gap-4 mb-5">
+                  <div className="flex flex-col sm:flex-row gap-4 mb-4">
                     <div className="flex-1">
-                      <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                      <label className="font-montserrat font-bold text-black dark:text-white block mb-1 text-xs sm:text-sm">
                         {t('register.first_name_label')}
                       </label>
                       <input
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.firstName ? 'border-red-500' : ''}`}
+                        className={`w-full font-montserrat h-11 sm:h-12 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.firstName ? 'border-red-500' : ''}`}
                         placeholder={t('register.first_name_placeholder')}
                       />
                       {errors.firstName && (
-                        <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                        <p className="text-red-500 text-[10px] mt-0.5">{errors.firstName}</p>
                       )}
                     </div>
                     <div className="flex-1">
-                      <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                      <label className="font-montserrat font-bold text-black dark:text-white block mb-1 text-xs sm:text-sm">
                         {t('register.last_name_label')}
                       </label>
                       <input
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.lastName ? 'border-red-500' : ''}`}
+                        className={`w-full font-montserrat h-11 sm:h-12 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.lastName ? 'border-red-500' : ''}`}
                         placeholder={t('register.last_name_placeholder')}
                       />
                       {errors.lastName && (
-                        <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                        <p className="text-red-500 text-[10px] mt-0.5">{errors.lastName}</p>
                       )}
                     </div>
                   </div>
 
                   {/* Email */}
-                  <div className="mb-5">
-                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                  <div className="mb-4">
+                    <label className="font-montserrat font-bold text-black dark:text-white block mb-1 text-xs sm:text-sm">
                       {t('register.email_label')}
                     </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
+                      className={`w-full font-montserrat h-11 sm:h-12 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.email ? 'border-red-500' : ''}`}
                       placeholder={t('register.email_placeholder')}
                     />
-                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                    {errors.email && <p className="text-red-500 text-[10px] mt-0.5">{errors.email}</p>}
                   </div>
 
                   {/* Password */}
-                  <div className="mb-5">
-                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                  <div className="mb-4">
+                    <label className="font-montserrat font-bold text-black dark:text-white block mb-1 text-xs sm:text-sm">
                       {t('register.password_label')}
                     </label>
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
+                      className={`w-full font-montserrat h-11 sm:h-12 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.password ? 'border-red-500' : ''}`}
                       placeholder={t('register.password_placeholder')}
                     />
                     {errors.password && (
-                      <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                      <p className="text-red-500 text-[10px] mt-0.5">{errors.password}</p>
                     )}
                   </div>
 
                   {/* Confirm Password */}
-                  <div className="mb-5">
-                    <label className="font-montserrat font-bold text-black dark:text-white block mb-2 text-sm">
+                  <div className="mb-4">
+                    <label className="font-montserrat font-bold text-black dark:text-white block mb-1 text-xs sm:text-sm">
                       {t('register.confirm_password_label')}
                     </label>
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={`w-full font-montserrat h-12 sm:h-13 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                      className={`w-full font-montserrat h-11 sm:h-12 border-2 border-[#E0E0E0] dark:border-neutral-700 bg-white dark:bg-[#2a2a2a] dark:text-white rounded-lg px-4 text-base outline-none focus:border-[#36D6BA] transition-colors ${errors.confirmPassword ? 'border-red-500' : ''}`}
                       placeholder={t('register.confirm_password_placeholder')}
                     />
                     {errors.confirmPassword && (
-                      <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                      <p className="text-red-500 text-[10px] mt-0.5">{errors.confirmPassword}</p>
                     )}
                   </div>
 
                   {/* Terms */}
-                  <div className="mb-8">
-                    <label className="flex items-start gap-3 cursor-pointer font-montserrat text-sm">
+                  <div className="mb-6">
+                    <label className="flex items-start gap-3 cursor-pointer font-montserrat text-xs sm:text-sm">
                       <input
                         type="checkbox"
                         checked={acceptTerms}
                         onChange={(e) => setAcceptTerms(e.target.checked)}
-                        className="w-5 h-5 accent-[#36D6BA] mt-0.5"
+                        className="w-4 h-4 accent-[#36D6BA] mt-0.5"
                       />
                       <span className="text-black dark:text-white leading-relaxed">
                         {t('register.terms_accept')
@@ -279,12 +279,12 @@ export default function RegisterPage() {
                           })}
                       </span>
                     </label>
-                    {errors.terms && <p className="text-red-500 text-xs mt-1">{errors.terms}</p>}
+                    {errors.terms && <p className="text-red-500 text-[10px] mt-0.5">{errors.terms}</p>}
                   </div>
 
                   {/* Register button */}
                   <button
-                    className="w-full font-montserrat font-bold text-white h-12 sm:h-14 rounded-lg text-lg sm:text-xl hover:opacity-90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full font-montserrat font-bold text-white h-11 sm:h-12 rounded-lg text-base sm:text-lg hover:opacity-90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ backgroundColor: '#269984', border: 'none' }}
                     disabled={isLoading}
                   >

@@ -1,11 +1,12 @@
 import type { CollectionConfig } from 'payload';
-import { ROLES, ROUTES, AUTH_PROVIDERS, APP_CONFIG } from '../lib/constants';
+import { ROLES, ROUTES, AUTH_PROVIDERS, APP_CONFIG, ALGORITHMS } from '../lib/constants';
 import logger from '../lib/logger';
 
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
     useAsTitle: 'email',
+    defaultColumns: ['email', 'role', 'authProvider', 'createdAt'],
   },
   auth: {
     verify: {
@@ -50,49 +51,57 @@ export const Users: CollectionConfig = {
       },
     },
   },
+  access: {
+    read: ({ req: { user } }) => {
+      if (!user) return false;
+      if (user.role === ROLES.ADMIN) return true;
+      return { id: { equals: user.id } };
+    },
+    create: () => true,
+    update: ({ req: { user } }) => {
+      if (!user) return false;
+      if (user.role === ROLES.ADMIN) return true;
+      return { id: { equals: user.id } };
+    },
+    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+  },
   hooks: {
-    beforeLogin: [
-      async ({ user, req }) => {
-        // Automatically verify admins on login if they aren't verified yet
-        if (user && user.role === ROLES.ADMIN && !user._verified) {
-          try {
-            await req.payload.update({
-              collection: 'users',
-              id: user.id,
-              data: {
-                _verified: true,
-              },
-            });
-            user._verified = true;
-          } catch (e) {
-            logger.error(
-              { error: e instanceof Error ? e.message : e },
-              'Failed to auto-verify admin',
-            );
-          }
-        }
-
-        // Only block verification for 'user' role
-        if (user && user.role === ROLES.USER && !user._verified) {
-          throw new Error(
-            'Ellenőrizze az e-mail címét a belépéshez! (Kérjük, kattintson a megerősítő linkre az e-mailben.)',
-          );
-        }
-        return user;
-      },
-    ],
     beforeChange: [
-      async ({ data }) => {
-        // Automatically verify admins to prevent verification emails and admin banners
-        if (data.role === ROLES.ADMIN) {
-          data._verified = true;
-          data._verificationToken = null;
+      async ({ data, req, operation }) => {
+        if (operation === 'create') {
+          const { totalDocs } = await req.payload.count({ collection: 'users' });
+          if (totalDocs === 0) {
+            data.role = ROLES.ADMIN;
+          }
         }
         return data;
       },
     ],
+    beforeLogin: [
+      async ({ user }) => {
+        if (user && user.role === ROLES.USER && !user._verified) {
+          throw new Error('Ellenőrizze az e-mail címét a belépéshez!');
+        }
+        return user;
+      },
+    ],
   },
   fields: [
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'firstName',
+          type: 'text',
+          admin: { width: '50%' },
+        },
+        {
+          name: 'lastName',
+          type: 'text',
+          admin: { width: '50%' },
+        },
+      ],
+    },
     {
       name: 'role',
       type: 'select',
@@ -102,17 +111,9 @@ export const Users: CollectionConfig = {
       ],
       defaultValue: ROLES.USER,
       required: true,
-    },
-    {
-      name: 'firstName',
-      type: 'text',
-      admin: {
-        position: 'sidebar',
+      access: {
+        update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
       },
-    },
-    {
-      name: 'lastName',
-      type: 'text',
       admin: {
         position: 'sidebar',
       },
@@ -125,7 +126,30 @@ export const Users: CollectionConfig = {
       name: 'imageUrl',
       type: 'text',
       admin: {
+        description: 'Profile image URL (synced from social providers).',
+      },
+    },
+    {
+      name: 'completedAlgorithms',
+      type: 'select',
+      hasMany: true,
+      options: ALGORITHMS.map((algo: { id: string }) => ({
+        label: algo.id
+          .split('-')
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' '),
+        value: algo.id,
+      })),
+      admin: {
         position: 'sidebar',
+        description: 'Algorithms the user has already mastered.',
+      },
+    },
+    {
+      name: 'visualizerProgress',
+      type: 'json',
+      admin: {
+        description: 'Persistent state of the algorithm visualizer for each algorithm.',
       },
     },
     {
@@ -141,6 +165,7 @@ export const Users: CollectionConfig = {
       defaultValue: AUTH_PROVIDERS.EMAIL,
       admin: {
         position: 'sidebar',
+        readOnly: true,
       },
     },
     {
@@ -148,6 +173,7 @@ export const Users: CollectionConfig = {
       type: 'text',
       admin: {
         position: 'sidebar',
+        readOnly: true,
       },
     },
     {

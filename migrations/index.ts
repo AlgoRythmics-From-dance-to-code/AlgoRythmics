@@ -3,6 +3,7 @@ import * as migration_20260325_120004_add_auth_fields from './20260325_120004_ad
 import * as migration_20260326_120527_initial_test from './20260326_120527_initial_test';
 import * as migration_20260326_120645_mig4 from './20260326_120645_mig4';
 import * as migration_20260328_185141_mig5 from './20260328_185141_mig5';
+import * as migration_20260328_232154_mig6 from './20260328_232154_mig6';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20260328_185141_mig5.up,
     down: migration_20260328_185141_mig5.down,
-    name: '20260328_185141_mig5'
+    name: '20260328_185141_mig5',
+  },
+  {
+    up: migration_20260328_232154_mig6.up,
+    down: migration_20260328_232154_mig6.down,
+    name: '20260328_232154_mig6',
   },
 ];

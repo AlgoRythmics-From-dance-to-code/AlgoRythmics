@@ -1,5 +1,9 @@
 {
   "brand": "AlgoRythmics",
+  "common": {
+    "completed": "Teljesítve",
+    "all": "Összes"
+  },
   "nav": {
     "home": "Kezdőlap",
     "algorithms": "Algoritmusok",
@@ -36,7 +40,9 @@
     "animation": "Animáció",
     "control": "Irányítás",
     "create_code": "Kód írása",
+    "create": "Alkotás",
     "live_code": "Élő kód",
+    "alive": "Életre keltve",
     "quiz": "Kvíz"
   },
   "sidebar": {
@@ -283,11 +289,36 @@
     "cta_btn": "Kezdjük el"
   },
   "algorithms": {
+    "inspiring_text": "Az algoritmusok nem csupán száraz kódok, ők a logika és a mozgás tökéletes harmóniája. Fedezd fel a programozás ritmusát, és sajátítsd el az informatika alapjait ott, ahol a zene és a tánc varázslatos ereje segít megérteni a láthatatlant.",
+    "filters": {
+      "all": "Összes algoritmus"
+    },
+    "empty": {
+      "noAlgorithms": "Nincs találat",
+      "adjustSearchOrFilters": "Próbáld meg módosítani a keresést vagy a kategóriát.",
+      "clearFilters": "Szűrők törlése"
+    },
+    "cta": {
+      "title": "Már ismered az alapokat?",
+      "subtitle": "Folytasd a teljes utat.",
+      "description": "Nézd meg strukturált tanfolyamainkat és interaktív műhelyeinket algoritmikus gondolkodásod fejlesztéséhez.",
+      "button": "Tovább a kurzusokhoz"
+    },
+    "detail": {
+      "back": "Vissza az algoritmusokhoz",
+      "complexity": "Bonyolultság",
+      "mark_as_done": "Késznek jelölöm",
+      "completed": "Teljesítve",
+      "step_by_step": "Lépésről lépésre útmutató",
+      "coming_soon": "Algoritmus részletei hamarosan.",
+      "view_coming_soon": "{view} tartalom {name} algoritmushoz — hamarosan"
+    },
     "title": "Minden algoritmus",
     "categories": {
       "sorting": "Rendező algoritmusok",
       "searching": "Kereső algoritmusok",
-      "backtracking": "Visszalépéses algoritmusok"
+      "backtracking": "Visszalépéses algoritmusok",
+      "fun": "Vicces"
     },
     "read_more": "Olvass tovább",
     "list": {
@@ -330,6 +361,10 @@
       "n-queens": {
         "name": "N-királynő probléma",
         "description": "Az N-királynő probléma egy klasszikus visszalépéses feladat, amelyben N sakktábla-királynőt kell elhelyezni egy N×N-es táblán úgy, hogy ne üssék egymást."
+      },
+      "bogosort": {
+        "name": "Bogosort",
+        "description": "A Bogosort egy szándékosan hatástalan rendezési eljárás, amely véletlenszerűen keveri a tömböt, amíg az véletlenül sorba nem kerül. Vicces látni táncban!"
       }
     }
   },

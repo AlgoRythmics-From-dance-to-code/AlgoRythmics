@@ -2,79 +2,15 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useLocale } from '../../i18n/LocaleProvider';
-
-const videos = [
-  {
-    id: 'bubble-sort-dance',
-    duration: '4:32',
-    views: '125K',
-    categoryId: 'sorting',
-    thumbnail: 'algo_group_109.svg',
-  },
-  {
-    id: 'insertion-sort-folk',
-    duration: '5:18',
-    views: '98K',
-    categoryId: 'sorting',
-    thumbnail: 'algo_group_142.svg',
-  },
-  {
-    id: 'selection-sort-waltz',
-    duration: '3:45',
-    views: '87K',
-    categoryId: 'sorting',
-    thumbnail: 'algo_group_119.svg',
-  },
-  {
-    id: 'merge-sort-tango',
-    duration: '6:12',
-    views: '156K',
-    categoryId: 'sorting',
-    thumbnail: 'algo_group_166.svg',
-  },
-  {
-    id: 'quick-sort-salsa',
-    duration: '5:55',
-    views: '134K',
-    categoryId: 'sorting',
-    thumbnail: 'algo_group_167.svg',
-  },
-  {
-    id: 'heap-sort-ballet',
-    duration: '7:08',
-    views: '92K',
-    categoryId: 'sorting',
-    thumbnail: 'algo_group_168.svg',
-  },
-  {
-    id: 'shell-sort-flamenco',
-    duration: '4:45',
-    views: '78K',
-    categoryId: 'sorting',
-    thumbnail: 'algo_group_132.svg',
-  },
-  {
-    id: 'linear-search-hip-hop',
-    duration: '3:22',
-    views: '112K',
-    categoryId: 'searching',
-    thumbnail: 'algo_group_109.svg',
-  },
-  {
-    id: 'binary-search-swing',
-    duration: '4:15',
-    views: '145K',
-    categoryId: 'searching',
-    thumbnail: 'algo_group_142.svg',
-  },
-];
+import { VIDEOS } from '../../../lib/constants';
 
 export default function VideosPage() {
   const { t } = useLocale();
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const filtered =
-    activeFilter === 'all' ? videos : videos.filter((v) => v.categoryId === activeFilter);
+    activeFilter === 'all' ? VIDEOS : VIDEOS.filter((v) => v.categoryId === activeFilter);
 
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a]">
@@ -113,7 +49,7 @@ export default function VideosPage() {
             const categoryLabel = t(`videos.filters.${video.categoryId}`);
 
             return (
-              <a
+              <Link
                 key={video.id}
                 href={`/videos/${video.id}`}
                 className="group rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border border-[#F0F0F0] dark:border-gray-800 bg-white dark:bg-[#1a1a1a]"
@@ -158,7 +94,7 @@ export default function VideosPage() {
                     </span>
                   </div>
                 </div>
-              </a>
+              </Link>
             );
           })}
         </div>

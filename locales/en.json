@@ -1,5 +1,9 @@
 {
   "brand": "AlgoRythmics",
+  "common": {
+    "completed": "Completed",
+    "all": "All"
+  },
   "nav": {
     "home": "Home",
     "algorithms": "Algorithms",
@@ -36,7 +40,9 @@
     "animation": "Animation",
     "control": "Control",
     "create_code": "Create code",
+    "create": "Create",
     "live_code": "Live code",
+    "alive": "Alive",
     "quiz": "Quiz"
   },
   "sidebar": {
@@ -283,11 +289,36 @@
     "cta_btn": "Get Started"
   },
   "algorithms": {
+    "inspiring_text": "Algorithms are not just dry lines of code, they are the perfect harmony of logic and movement. Discover the rhythm of programming, and master the fundamentals of computer science where the magical power of music and dance helps you understand the invisible.",
+    "filters": {
+      "all": "All Algorithms"
+    },
+    "empty": {
+      "noAlgorithms": "No algorithms found",
+      "adjustSearchOrFilters": "Try adjusting your search or category filters.",
+      "clearFilters": "Clear Filters"
+    },
+    "cta": {
+      "title": "Already mastered the basics?",
+      "subtitle": "Take the full journey.",
+      "description": "Check out our structured courses and interactive workshops to master algorithmic thinking.",
+      "button": "Go to Courses"
+    },
+    "detail": {
+      "back": "Back to Algorithms",
+      "complexity": "Complexity",
+      "mark_as_done": "Mark as done",
+      "completed": "Completed",
+      "step_by_step": "Step-by-Step Guide",
+      "coming_soon": "Algorithm details coming soon.",
+      "view_coming_soon": "{view} content for {name} — coming soon"
+    },
     "title": "All algorithms",
     "categories": {
       "sorting": "Sorting algorithms",
       "searching": "Searching algorithms",
-      "backtracking": "Backtracking algorithms"
+      "backtracking": "Backtracking algorithms",
+      "fun": "Fun"
     },
     "read_more": "Read more",
     "list": {
@@ -330,6 +361,10 @@
       "n-queens": {
         "name": "N-Queens problem",
         "description": "The N-Queens problem is a classic backtracking problem that involves placing N chess queens on an N×N chessboard so that no two queens threaten each other."
+      },
+      "bogosort": {
+        "name": "Bogosort",
+        "description": "Bogosort is an intentionally inefficient sorting algorithm that randomly shuffles the array until it's sorted by pure chance. Hilarious in dance!"
       }
     }
   },

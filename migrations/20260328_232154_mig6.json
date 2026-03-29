@@ -2,6 +2,85 @@
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.users_completed_algorithms": {
+      "name": "users_completed_algorithms",
+      "schema": "",
+      "columns": {
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "enum_users_completed_algorithms",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "users_completed_algorithms_order_idx": {
+          "name": "users_completed_algorithms_order_idx",
+          "columns": [
+            {
+              "expression": "order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_completed_algorithms_parent_idx": {
+          "name": "users_completed_algorithms_parent_idx",
+          "columns": [
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "users_completed_algorithms_parent_fk": {
+          "name": "users_completed_algorithms_parent_fk",
+          "tableFrom": "users_completed_algorithms",
+          "tableTo": "users",
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.users_sessions": {
       "name": "users_sessions",
       "schema": "",
@@ -96,14 +175,6 @@
           "primaryKey": true,
           "notNull": true
         },
-        "role": {
-          "name": "role",
-          "type": "enum_users_role",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'user'"
-        },
         "first_name": {
           "name": "first_name",
           "type": "varchar",
@@ -116,6 +187,14 @@
           "primaryKey": false,
           "notNull": false
         },
+        "role": {
+          "name": "role",
+          "type": "enum_users_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
+        },
         "bio": {
           "name": "bio",
           "type": "varchar",
@@ -125,6 +204,12 @@
         "image_url": {
           "name": "image_url",
           "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visualizer_progress": {
+          "name": "visualizer_progress",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
@@ -819,6 +904,23 @@
     }
   },
   "enums": {
+    "public.enum_users_completed_algorithms": {
+      "name": "enum_users_completed_algorithms",
+      "schema": "public",
+      "values": [
+        "bubble-sort",
+        "insertion-sort",
+        "selection-sort",
+        "shell-sort",
+        "merge-sort",
+        "quick-sort",
+        "heap-sort",
+        "linear-search",
+        "binary-search",
+        "n-queens",
+        "bogosort"
+      ]
+    },
     "public.enum_users_role": {
       "name": "enum_users_role",
       "schema": "public",
@@ -840,6 +942,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "3d904fa2-0f02-41a3-abd1-8c0ba5983f84",
+  "id": "a9315d56-9bf8-48e8-b8dc-611805f06887",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

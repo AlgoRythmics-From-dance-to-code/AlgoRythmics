@@ -10,6 +10,7 @@ import Footer from '../components/Footer';
 import { auth } from '../../auth';
 import NextAuthProvider from '../components/NextAuthProvider';
 import { Toaster } from 'sonner';
+import UserProgressSync from '../components/Learning/UserProgressSync';
 
 const montserrat = Montserrat({
   variable: '--font-montserrat',
@@ -31,6 +32,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
         <NextAuthProvider>
           <ThemeProviderClient>
             <LocaleProvider>
+              <UserProgressSync />
               <Header isAuthenticated={isAuthenticated} userImage={userImage} />
               <main className="flex-1 pt-[var(--header-height)]">{children}</main>
               <Footer />

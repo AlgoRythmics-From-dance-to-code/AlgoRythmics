@@ -12,6 +12,41 @@ import type { Payload } from 'payload';
 import type { User } from './payload-types';
 import { BaseUser } from './lib/types/auth';
 
+declare module 'next-auth' {
+  interface Session {
+    user: BaseUser & {
+      completedAlgorithms?: string[];
+      visualizerProgress?: unknown;
+    };
+  }
+  interface User extends BaseUser {
+    completedAlgorithms?: string[];
+    visualizerProgress?: unknown;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id?: string;
+    role?: string;
+    firstName?: string;
+    lastName?: string;
+    imageUrl?: string | null;
+    bio?: string;
+    authProvider?: string;
+    createdAt?: string;
+    completedAlgorithms?: string[];
+    visualizerProgress?: unknown;
+    provider?: string;
+    remember?: boolean;
+    iat?: number;
+    updatedAt?: number;
+  }
+}
+
+import { Session } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Google({
@@ -261,24 +296,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
 
           if (result.docs.length > 0) {
-            const dbUser = result.docs[0] as {
-              id?: string | number;
-              role?: string;
-              firstName?: string;
-              lastName?: string;
-              imageUrl?: string | null;
-              bio?: string;
-              authProvider?: string;
-              createdAt?: string;
-            };
+            const dbUser = result.docs[0] as unknown as User;
             token.id = dbUser.id?.toString();
-            token.role = dbUser.role;
-            token.firstName = dbUser.firstName;
-            token.lastName = dbUser.lastName;
+            token.role = dbUser.role as string;
+            token.firstName = dbUser.firstName || undefined;
+            token.lastName = dbUser.lastName || undefined;
             token.imageUrl = dbUser.imageUrl;
-            token.bio = dbUser.bio;
-            token.authProvider = dbUser.authProvider;
+            token.bio = dbUser.bio || undefined;
+            token.authProvider = dbUser.authProvider || undefined;
             token.createdAt = dbUser.createdAt;
+            token.completedAlgorithms = dbUser.completedAlgorithms || [];
+            token.visualizerProgress = dbUser.visualizerProgress;
           }
         } catch (error) {
           logger.error({ error }, 'JWT callback profile sync error');
@@ -287,13 +315,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
 
-    async session({
-      session,
-      token,
-    }: {
-      session: { user: BaseUser; expires: string };
-      token: Record<string, unknown>;
-    }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (token && session.user) {
         session.user.id = String(token.id || '');
         session.user.role = String(token.role || '');
@@ -303,6 +325,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.bio = String(token.bio || '');
         session.user.authProvider = String(token.authProvider || '');
         session.user.createdAt = String(token.createdAt || '');
+        session.user.completedAlgorithms = token.completedAlgorithms;
+        session.user.visualizerProgress = token.visualizerProgress;
       }
       return session;
     },
