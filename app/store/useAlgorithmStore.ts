@@ -29,6 +29,7 @@ interface AlgorithmState {
 
   // Reset
   resetFilters: () => void;
+  clearStore: () => void;
 }
 
 export const useAlgorithmStore = create<AlgorithmState>()(
@@ -78,6 +79,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       },
 
       resetFilters: () => set({ activeCategory: 'all', searchQuery: '' }),
+      clearStore: () => set({ completedIds: [], visualizerProgress: {}, activeCategory: 'all', searchQuery: '' }),
     }),
     {
       name: 'algorythmics-learning-storage', // Persistence key

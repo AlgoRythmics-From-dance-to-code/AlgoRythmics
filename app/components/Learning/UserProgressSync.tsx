@@ -10,10 +10,18 @@ import { useAlgorithmStore } from '../../store/useAlgorithmStore';
  */
 export default function UserProgressSync() {
   const { data: session, status } = useSession();
-  const { completedIds, visualizerProgress, hydrate } = useAlgorithmStore();
-
+  const { completedIds, visualizerProgress, hydrate, clearStore } = useAlgorithmStore();
+  
   const isInitialMount = useRef(true);
   const lastSynced = useRef({ ids: '', progress: '' });
+
+  // 0. Cleanup on Logout: Clear the store when the user logs out
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      clearStore();
+      lastSynced.current = { ids: '', progress: '' };
+    }
+  }, [status, clearStore]);
 
   // 1. Initial Hydration: Fill the store with server data on login
   useEffect(() => {

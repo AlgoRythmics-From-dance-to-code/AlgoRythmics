@@ -10,6 +10,7 @@ import ThemeToggle from './ThemeToggle';
 import { User as UserIcon } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import { ROUTES, API_ROUTES } from '../../lib/constants';
+import { useAlgorithmStore } from '../store/useAlgorithmStore';
 
 export default function Header({
   isAuthenticated: propIsAuthenticated,
@@ -43,6 +44,7 @@ export default function Header({
   const { locale, setLocale, t } = useLocale();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const { clearStore } = useAlgorithmStore();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   // Close dropdown when clicking outside
@@ -233,6 +235,7 @@ export default function Header({
                   <button
                     onClick={async () => {
                       setProfileDropdownOpen(false);
+                      clearStore(); // Clear storage on logout
                       await axios.post(API_ROUTES.AUTH.LOGOUT).catch(() => {});
                       await signOut({ redirect: false });
                       window.location.href = ROUTES.LOGIN;
@@ -392,6 +395,7 @@ export default function Header({
                 <button
                   onClick={async () => {
                     setMenuOpen(false);
+                    clearStore(); // Clear storage on logout
                     await axios.post(API_ROUTES.AUTH.LOGOUT).catch(() => {});
                     await signOut({ redirect: false });
                     window.location.href = ROUTES.LOGIN;

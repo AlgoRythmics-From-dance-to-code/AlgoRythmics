@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocale, Locale } from '../../i18n/LocaleProvider';
+import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 
 const formatDate = (dateString: string, locale: Locale) => {
   if (!dateString) return 'N/A';
@@ -200,9 +201,11 @@ export default function ProfilePage() {
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== 'DELETE') return;
     setIsSaving(true);
+    const { clearStore } = useAlgorithmStore.getState();
     try {
       await axios.delete('/api/profile/delete');
       toast.success(t('toasts.account_deleted'), { description: t('toasts.account_deleted_desc') });
+      clearStore();
       await signOut({ callbackUrl: '/' });
     } catch {
       const errMsg = t('toasts.delete_error');
