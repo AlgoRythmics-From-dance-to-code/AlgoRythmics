@@ -439,5 +439,55 @@
       "linear-search-hip-hop": "Lineáris keresés hip-hop",
       "binary-search-swing": "Bináris keresés swing"
     }
+  },
+  "visualizer": {
+    "comparing": "{a} és {b} összehasonlítása...",
+    "swapping": "{a} ↔ {b} cseréje",
+    "sorted_element": "{value} most már rendezett!",
+    "step_counter": "Lépés: {current} / {total}",
+    "comparisons": "Összehasonlítások",
+    "swaps": "Cserék",
+    "pass": "Menet",
+    "legend_compare": "Összehasonlítás",
+    "legend_swap": "Csere",
+    "legend_sorted": "Rendezett"
+  },
+  "control": {
+    "select_pair": "Válassz ki két szomszédos elemet az összehasonlításhoz",
+    "correct": "Helyes!",
+    "incorrect": "Nem egészen — próbáld újra!",
+    "hint": "Tipp",
+    "mistakes": "Hibák",
+    "summary": "{total} lépésből {correct}-et találtál el elsőre!",
+    "well_done": "A tömb rendezve van!",
+    "reset": "Újrakezdés"
+  },
+  "create": {
+    "title": "Egészítsd ki a kódot",
+    "check": "Ellenőrzés",
+    "reset": "Újrakezdés",
+    "help": "Segítség kell",
+    "help_active": "Segítség aktív — húzd a kártyákat az üres helyekre",
+    "correct_answer": "Helyes!",
+    "wrong_answer": "Próbáld újra!",
+    "all_correct": "Minden mező helyesen kitöltve!",
+    "progress": "{filled} / {total} kitöltve",
+    "used_help": "Segítséggel befejezve"
+  },
+  "alive": {
+    "title": "Írd meg az algoritmust",
+    "placeholder": "Írd ide a buborékrendezés megvalósítását...\n\nPéldastruktúra:\nfor (let i = 0; i < arr.length; i++) {\n  for (let j = 0; ...) {\n    if (...) {\n      // csere\n    }\n  }\n}",
+    "run": "Futtatás",
+    "clear": "Törlés",
+    "help": "Váltás blokkokra",
+    "help_active": "Blokk mód — rakd sorrendbe a blokkokat",
+    "success": "Az algoritmusod helyes!",
+    "missing": "Hiányzik: {element}",
+    "error": "Valami nem stimmel — ellenőrizd a sorrendet és távolítsd el a hibás blokkokat",
+    "score": "Pontszám",
+    "used_help": "Blokk segítséggel befejezve",
+    "available_blocks": "Elérhető blokkok",
+    "your_program": "A programod",
+    "reference": "Szükséges elemek"
   }
 }

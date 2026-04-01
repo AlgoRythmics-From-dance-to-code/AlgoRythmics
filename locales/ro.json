@@ -439,5 +439,55 @@
       "linear-search-hip-hop": "Hip Hop căutare liniară",
       "binary-search-swing": "Swing căutare binară"
     }
+  },
+  "visualizer": {
+    "comparing": "Comparare {a} și {b}...",
+    "swapping": "Interschimbare {a} ↔ {b}",
+    "sorted_element": "{value} este acum sortat!",
+    "step_counter": "Pasul {current} din {total}",
+    "comparisons": "Comparații",
+    "swaps": "Interschimbări",
+    "pass": "Trecere",
+    "legend_compare": "Comparare",
+    "legend_swap": "Interschimbare",
+    "legend_sorted": "Sortat"
+  },
+  "control": {
+    "select_pair": "Selectează două elemente adiacente pentru comparare",
+    "correct": "Corect!",
+    "incorrect": "Nu chiar — încearcă din nou!",
+    "hint": "Indiciu",
+    "mistakes": "Greșeli",
+    "summary": "Ai nimerit {correct} din {total} pași din prima încercare!",
+    "well_done": "Vectorul este sortat!",
+    "reset": "Resetare"
+  },
+  "create": {
+    "title": "Completează codul",
+    "check": "Verifică",
+    "reset": "Resetare",
+    "help": "Am nevoie de ajutor",
+    "help_active": "Ajutor activ — trage cardurile în spațiile goale",
+    "correct_answer": "Corect!",
+    "wrong_answer": "Încearcă din nou!",
+    "all_correct": "Toate câmpurile completate corect!",
+    "progress": "{filled} din {total} completate",
+    "used_help": "Completat cu ajutor"
+  },
+  "alive": {
+    "title": "Scrie algoritmul",
+    "placeholder": "Scrie implementarea bubble sort aici...\n\nStructură exemplu:\nfor (let i = 0; i < arr.length; i++) {\n  for (let j = 0; ...) {\n    if (...) {\n      // interschimbare\n    }\n  }\n}",
+    "run": "Rulează",
+    "clear": "Șterge",
+    "help": "Comută la blocuri",
+    "help_active": "Mod blocuri — pune blocurile în ordine",
+    "success": "Algoritmul tău este corect!",
+    "missing": "Lipsă: {element}",
+    "error": "Ceva nu este în regulă — verifică ordinea și elimină blocurile greșite",
+    "score": "Scor",
+    "used_help": "Completat cu ajutorul blocurilor",
+    "available_blocks": "Blocuri disponibile",
+    "your_program": "Programul tău",
+    "reference": "Elemente necesare"
   }
 }

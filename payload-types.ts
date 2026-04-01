@@ -68,6 +68,8 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    'learning-events': LearningEvent;
+    'algorithm-progress': AlgorithmProgress;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -76,6 +78,8 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    'learning-events': LearningEventsSelect<false> | LearningEventsSelect<true>;
+    'algorithm-progress': AlgorithmProgressSelect<false> | AlgorithmProgressSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -159,6 +163,24 @@ export interface User {
     | number
     | boolean
     | null;
+  /**
+   * Aggregated learning statistics across all algorithms.
+   */
+  learningStats?: {
+    totalTimeSpentMs?: number | null;
+    totalAlgorithmsStarted?: number | null;
+    totalAlgorithmsCompleted?: number | null;
+    totalControlAttempts?: number | null;
+    totalCreateAttempts?: number | null;
+    totalAliveAttempts?: number | null;
+    totalMistakes?: number | null;
+    totalHintsUsed?: number | null;
+    averageScore?: number | null;
+    currentStreak?: number | null;
+    longestStreak?: number | null;
+    lastActiveDate?: string | null;
+    preferredSpeed?: number | null;
+  };
   authProvider?: ('email' | 'google' | 'facebook' | 'discord' | 'github') | null;
   authProviderId?: string | null;
   lastResetRequest?: string | null;
@@ -185,6 +207,103 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "learning-events".
+ */
+export interface LearningEvent {
+  id: number;
+  user: number | User;
+  /**
+   * e.g. bubble-sort, insertion-sort
+   */
+  algorithmId: string;
+  tab: 'video' | 'animation' | 'control' | 'create' | 'alive';
+  /**
+   * e.g. tab_enter, animation_play, control_compare, create_blank_attempt, alive_code_submit
+   */
+  eventType: string;
+  /**
+   * Arbitrary event-specific payload (indices, values, scores, etc.)
+   */
+  eventData?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * UUID grouping events within a single learning session.
+   */
+  sessionId: string;
+  /**
+   * Milliseconds since the previous event in this session.
+   */
+  durationMs?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "algorithm-progress".
+ */
+export interface AlgorithmProgress {
+  id: number;
+  user: number | User;
+  algorithmId: string;
+  videoWatched?: boolean | null;
+  videoWatchTimeMs?: number | null;
+  videoCompletedAt?: string | null;
+  animationCompleted?: boolean | null;
+  animationTotalTimeMs?: number | null;
+  animationPlayCount?: number | null;
+  animationCompletedAt?: string | null;
+  controlCompleted?: boolean | null;
+  controlBestScore?: number | null;
+  controlMistakes?: number | null;
+  controlHintsUsed?: number | null;
+  controlAttempts?: number | null;
+  controlBestTimeMs?: number | null;
+  controlCompletedAt?: string | null;
+  createCompleted?: boolean | null;
+  /**
+   * Whether the user activated card-drag help.
+   */
+  createHelpUsed?: boolean | null;
+  createAttempts?: number | null;
+  /**
+   * Number of blanks answered correctly on first attempt.
+   */
+  createBlanksCorrectFirst?: number | null;
+  createBlanksTotal?: number | null;
+  createTotalTimeMs?: number | null;
+  createCompletedAt?: string | null;
+  aliveCompleted?: boolean | null;
+  /**
+   * Whether the user switched to node-block mode.
+   */
+  aliveHelpUsed?: boolean | null;
+  aliveCodeSubmissions?: number | null;
+  /**
+   * The last code the user submitted.
+   */
+  aliveLastCode?: string | null;
+  aliveBestScore?: number | null;
+  aliveTotalTimeMs?: number | null;
+  aliveCompletedAt?: string | null;
+  /**
+   * Weighted % across all 5 tabs (0–100).
+   */
+  overallProgress?: number | null;
+  totalTimeSpentMs?: number | null;
+  lastActivityAt?: string | null;
+  firstStartedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -206,10 +325,19 @@ export interface PayloadKv {
  */
 export interface PayloadLockedDocument {
   id: number;
-  document?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
+  document?:
+    | ({
+        relationTo: 'users';
+        value: number | User;
+      } | null)
+    | ({
+        relationTo: 'learning-events';
+        value: number | LearningEvent;
+      } | null)
+    | ({
+        relationTo: 'algorithm-progress';
+        value: number | AlgorithmProgress;
+      } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
@@ -264,6 +392,23 @@ export interface UsersSelect<T extends boolean = true> {
   imageUrl?: T;
   completedAlgorithms?: T;
   visualizerProgress?: T;
+  learningStats?:
+    | T
+    | {
+        totalTimeSpentMs?: T;
+        totalAlgorithmsStarted?: T;
+        totalAlgorithmsCompleted?: T;
+        totalControlAttempts?: T;
+        totalCreateAttempts?: T;
+        totalAliveAttempts?: T;
+        totalMistakes?: T;
+        totalHintsUsed?: T;
+        averageScore?: T;
+        currentStreak?: T;
+        longestStreak?: T;
+        lastActiveDate?: T;
+        preferredSpeed?: T;
+      };
   authProvider?: T;
   authProviderId?: T;
   lastResetRequest?: T;
@@ -285,6 +430,63 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "learning-events_select".
+ */
+export interface LearningEventsSelect<T extends boolean = true> {
+  user?: T;
+  algorithmId?: T;
+  tab?: T;
+  eventType?: T;
+  eventData?: T;
+  sessionId?: T;
+  durationMs?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "algorithm-progress_select".
+ */
+export interface AlgorithmProgressSelect<T extends boolean = true> {
+  user?: T;
+  algorithmId?: T;
+  videoWatched?: T;
+  videoWatchTimeMs?: T;
+  videoCompletedAt?: T;
+  animationCompleted?: T;
+  animationTotalTimeMs?: T;
+  animationPlayCount?: T;
+  animationCompletedAt?: T;
+  controlCompleted?: T;
+  controlBestScore?: T;
+  controlMistakes?: T;
+  controlHintsUsed?: T;
+  controlAttempts?: T;
+  controlBestTimeMs?: T;
+  controlCompletedAt?: T;
+  createCompleted?: T;
+  createHelpUsed?: T;
+  createAttempts?: T;
+  createBlanksCorrectFirst?: T;
+  createBlanksTotal?: T;
+  createTotalTimeMs?: T;
+  createCompletedAt?: T;
+  aliveCompleted?: T;
+  aliveHelpUsed?: T;
+  aliveCodeSubmissions?: T;
+  aliveLastCode?: T;
+  aliveBestScore?: T;
+  aliveTotalTimeMs?: T;
+  aliveCompletedAt?: T;
+  overallProgress?: T;
+  totalTimeSpentMs?: T;
+  lastActivityAt?: T;
+  firstStartedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

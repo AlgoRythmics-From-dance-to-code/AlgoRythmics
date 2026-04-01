@@ -153,6 +153,26 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name: 'learningStats',
+      type: 'group',
+      admin: { description: 'Aggregated learning statistics across all algorithms.' },
+      fields: [
+        { name: 'totalTimeSpentMs', type: 'number', defaultValue: 0 },
+        { name: 'totalAlgorithmsStarted', type: 'number', defaultValue: 0 },
+        { name: 'totalAlgorithmsCompleted', type: 'number', defaultValue: 0 },
+        { name: 'totalControlAttempts', type: 'number', defaultValue: 0 },
+        { name: 'totalCreateAttempts', type: 'number', defaultValue: 0 },
+        { name: 'totalAliveAttempts', type: 'number', defaultValue: 0 },
+        { name: 'totalMistakes', type: 'number', defaultValue: 0 },
+        { name: 'totalHintsUsed', type: 'number', defaultValue: 0 },
+        { name: 'averageScore', type: 'number', defaultValue: 0 },
+        { name: 'currentStreak', type: 'number', defaultValue: 0 },
+        { name: 'longestStreak', type: 'number', defaultValue: 0 },
+        { name: 'lastActiveDate', type: 'date' },
+        { name: 'preferredSpeed', type: 'number' },
+      ],
+    },
+    {
       name: 'authProvider',
       type: 'select',
       options: [

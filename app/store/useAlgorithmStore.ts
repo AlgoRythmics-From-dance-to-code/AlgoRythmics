@@ -21,10 +21,15 @@ interface AlgorithmState {
   visualizerProgress: Record<string, { step: number; speed: number }>;
   updateVisualizerProgress: (id: string, step: number, speed?: number) => void;
 
+  // Analytics Progress Cache
+  algorithmProgress: Record<string, any>;
+  updateAlgorithmProgress: (id: string, updates: any) => void;
+
   // Hydration
   hydrate: (data: {
     completedIds?: string[];
     visualizerProgress?: Record<string, { step: number; speed: number }>;
+    algorithmProgress?: Record<string, any>;
   }) => void;
 
   // Reset
@@ -40,6 +45,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       searchQuery: '',
       completedIds: [],
       visualizerProgress: {},
+      algorithmProgress: {},
 
       // Actions
       setCategory: (category) => set({ activeCategory: category }),
@@ -70,17 +76,35 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         });
       },
 
+      updateAlgorithmProgress: (id, updates) => {
+        const { algorithmProgress } = get();
+        const current = algorithmProgress[id] || {};
+        set({
+          algorithmProgress: {
+            ...algorithmProgress,
+            [id]: { ...current, ...updates },
+          },
+        });
+      },
+
       hydrate: (data) => {
         if (!data) return;
         set((state) => ({
           completedIds: data.completedIds || state.completedIds,
           visualizerProgress: data.visualizerProgress || state.visualizerProgress,
+          algorithmProgress: data.algorithmProgress || state.algorithmProgress,
         }));
       },
 
       resetFilters: () => set({ activeCategory: 'all', searchQuery: '' }),
       clearStore: () =>
-        set({ completedIds: [], visualizerProgress: {}, activeCategory: 'all', searchQuery: '' }),
+        set({
+          completedIds: [],
+          visualizerProgress: {},
+          algorithmProgress: {},
+          activeCategory: 'all',
+          searchQuery: '',
+        }),
     }),
     {
       name: 'algorythmics-learning-storage', // Persistence key

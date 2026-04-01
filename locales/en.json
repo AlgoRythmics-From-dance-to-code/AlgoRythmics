@@ -439,5 +439,55 @@
       "linear-search-hip-hop": "Linear Search Hip Hop",
       "binary-search-swing": "Binary Search Swing"
     }
+  },
+  "visualizer": {
+    "comparing": "Comparing {a} and {b}...",
+    "swapping": "Swapping {a} ↔ {b}",
+    "sorted_element": "{value} is now sorted!",
+    "step_counter": "Step {current} of {total}",
+    "comparisons": "Comparisons",
+    "swaps": "Swaps",
+    "pass": "Pass",
+    "legend_compare": "Compare",
+    "legend_swap": "Swap",
+    "legend_sorted": "Sorted"
+  },
+  "control": {
+    "select_pair": "Select two adjacent elements to compare",
+    "correct": "Correct!",
+    "incorrect": "Not quite — try again!",
+    "hint": "Hint",
+    "mistakes": "Mistakes",
+    "summary": "You got {correct} out of {total} steps right on the first try!",
+    "well_done": "The array is sorted!",
+    "reset": "Reset"
+  },
+  "create": {
+    "title": "Complete the Code",
+    "check": "Check",
+    "reset": "Reset",
+    "help": "I Need Help",
+    "help_active": "Help active — drag cards into blanks",
+    "correct_answer": "Correct!",
+    "wrong_answer": "Try again!",
+    "all_correct": "All blanks filled correctly!",
+    "progress": "{filled} of {total} filled",
+    "used_help": "Completed with help"
+  },
+  "alive": {
+    "title": "Write the Algorithm",
+    "placeholder": "Write your bubble sort implementation here...\n\nExample structure:\nfor (let i = 0; i < arr.length; i++) {\n  for (let j = 0; ...) {\n    if (...) {\n      // swap\n    }\n  }\n}",
+    "run": "Run",
+    "clear": "Clear",
+    "help": "Switch to Blocks",
+    "help_active": "Block mode — drag blocks in order",
+    "success": "Your algorithm is correct!",
+    "missing": "Missing: {element}",
+    "error": "Something went wrong — check the order and remove wrong blocks",
+    "score": "Score",
+    "used_help": "Completed with block help",
+    "available_blocks": "Available Blocks",
+    "your_program": "Your Program",
+    "reference": "Required elements"
   }
 }

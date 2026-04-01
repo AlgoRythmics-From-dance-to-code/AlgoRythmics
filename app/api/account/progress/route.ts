@@ -12,15 +12,29 @@ export async function GET() {
 
   try {
     const payload = await getPayloadInstance();
+    const userId = Number(session.user.id);
     const user = await payload.findByID({
       collection: 'users',
-      id: session.user.id,
+      id: userId,
       depth: 0,
+    });
+
+    const progressDocs = await payload.find({
+      collection: 'algorithm-progress',
+      where: { user: { equals: userId } },
+      pagination: false,
+      depth: 0,
+    });
+
+    const algorithmProgress: Record<string, any> = {};
+    progressDocs.docs.forEach((doc: any) => {
+      algorithmProgress[doc.algorithmId] = doc;
     });
 
     return NextResponse.json({
       completedIds: user.completedAlgorithms || [],
       visualizerProgress: user.visualizerProgress || {},
+      algorithmProgress,
     });
   } catch (error) {
     console.error('Error fetching progress:', error);

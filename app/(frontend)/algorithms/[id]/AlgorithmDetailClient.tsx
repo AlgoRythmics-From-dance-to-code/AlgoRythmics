@@ -1,15 +1,29 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLocale } from '../../../i18n/LocaleProvider';
 
 import VideoPlayer from '../../../components/Learning/VideoPlayer';
-import BubbleSortVisualizer from '../../../components/Learning/BubbleSortVisualizer';
 import { VIDEOS } from '../../../../lib/constants';
 import { useAlgorithmStore } from '../../../store/useAlgorithmStore';
+import { hasFullContent } from '../../../../lib/algorithms/registry';
 import { CheckCircle, Circle } from 'lucide-react';
+
+// Lazy load heavy components
+const BubbleSortVisualizer = lazy(
+  () => import('../../../components/Learning/BubbleSortVisualizer'),
+);
+const ControlVisualizer = lazy(
+  () => import('../../../components/Learning/ControlVisualizer'),
+);
+const CodeExercise = lazy(
+  () => import('../../../components/Learning/CodeExercise'),
+);
+const AliveVisualizer = lazy(
+  () => import('../../../components/Learning/AliveVisualizer'),
+);
 
 // ─── Algorithm Detail Page Template ────────
 const algorithmData: Record<
@@ -159,6 +173,15 @@ const algorithmData: Record<
 
 const views = ['Video', 'Animation', 'Control', 'Create', 'Alive'] as const;
 
+// Loading spinner for lazy components
+function TabLoader() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-10 h-10 border-4 border-[#269984] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
 export default function AlgorithmDetailClient({ id }: { id: string }) {
   const { t } = useLocale();
   const [activeView, setActiveView] = useState<string>('Video');
@@ -171,11 +194,86 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
     steps: [t('about.steps.01.desc')],
   };
 
-  // Find matching video for this algorithm
   const matchingVideo = VIDEOS.find((v) => v.id.startsWith(id));
+  const algoHasFullContent = hasFullContent(id);
 
   const { toggleCompleted, isCompleted } = useAlgorithmStore();
   const completed = isCompleted(id);
+
+  // Render the active tab content
+  const renderTabContent = () => {
+    switch (activeView) {
+      case 'Video':
+        return matchingVideo ? (
+          <div className="max-w-4xl mx-auto">
+            <VideoPlayer youtubeId={matchingVideo.youtubeId} title={`${data.name} Video`} />
+          </div>
+        ) : null;
+
+      case 'Animation':
+        if (id === 'bubble-sort') {
+          return (
+            <Suspense fallback={<TabLoader />}>
+              <div className="max-w-4xl mx-auto">
+                <BubbleSortVisualizer id={id} />
+              </div>
+            </Suspense>
+          );
+        }
+        break;
+
+      case 'Control':
+        if (algoHasFullContent) {
+          return (
+            <Suspense fallback={<TabLoader />}>
+              <ControlVisualizer algorithmId={id} />
+            </Suspense>
+          );
+        }
+        break;
+
+      case 'Create':
+        if (algoHasFullContent) {
+          return (
+            <Suspense fallback={<TabLoader />}>
+              <CodeExercise algorithmId={id} />
+            </Suspense>
+          );
+        }
+        break;
+
+      case 'Alive':
+        if (algoHasFullContent) {
+          return (
+            <Suspense fallback={<TabLoader />}>
+              <AliveVisualizer algorithmId={id} />
+            </Suspense>
+          );
+        }
+        break;
+    }
+
+    // Fallback: coming soon
+    return (
+      <div className="flex items-center justify-center rounded-2xl mb-12 aspect-video max-w-3xl mx-auto bg-[#F8F8F8] dark:bg-[#1a1a1a] border border-dashed border-gray-300 dark:border-gray-700">
+        <div className="text-center p-6">
+          <div className="flex items-center justify-center rounded-full bg-[#F0FBF9] dark:bg-[#112220] mx-auto mb-4 w-16 h-16 shadow-inner">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="#269984">
+              <polygon points="5,3 19,12 5,21" />
+            </svg>
+          </div>
+          <p className="font-montserrat font-bold text-lg sm:text-xl text-black dark:text-white mb-2">
+            {t(`features.${activeView.toLowerCase()}`)} {t('features.video')}
+          </p>
+          <p className="font-montserrat text-sm text-[#999] dark:text-gray-500">
+            {t('algorithms.detail.view_coming_soon')
+              .replace('{view}', t(`features.${activeView.toLowerCase()}`))
+              .replace('{name}', data.name)}
+          </p>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a]">
@@ -190,7 +288,6 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
             ← {t('algorithms.detail.back')}
           </Link>
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-            {/* Text */}
             <div className="flex-1 text-center md:text-left animate-in fade-in slide-in-from-left-10 duration-700">
               <h1 className="font-montserrat font-bold text-3xl sm:text-4xl lg:text-5xl text-black dark:text-white mb-3">
                 {data.name}
@@ -231,7 +328,6 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
               </p>
             </div>
 
-            {/* Illustration */}
             <div className="flex-shrink-0 w-48 sm:w-56 md:w-64 lg:w-80 animate-in fade-in zoom-in-95 duration-1000">
               <Image
                 src={`/assets/${data.illAsset}`}
@@ -275,34 +371,8 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
 
       {/* View Content */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 md:py-14 min-h-[500px]">
-        <div className="animate-in fade-in slide-in-from-bottom-5 duration-500">
-          {activeView === 'Video' && matchingVideo ? (
-            <div className="max-w-4xl mx-auto">
-              <VideoPlayer youtubeId={matchingVideo.youtubeId} title={`${data.name} Video`} />
-            </div>
-          ) : activeView === 'Animation' && id === 'bubble-sort' ? (
-            <div className="max-w-4xl mx-auto">
-              <BubbleSortVisualizer id={id} />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center rounded-2xl mb-12 aspect-video max-w-3xl mx-auto bg-[#F8F8F8] dark:bg-[#1a1a1a] border border-dashed border-gray-300 dark:border-gray-700">
-              <div className="text-center p-6">
-                <div className="flex items-center justify-center rounded-full bg-[#F0FBF9] dark:bg-[#112220] mx-auto mb-4 w-16 h-16 shadow-inner">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="#269984">
-                    <polygon points="5,3 19,12 5,21" />
-                  </svg>
-                </div>
-                <p className="font-montserrat font-bold text-lg sm:text-xl text-black dark:text-white mb-2">
-                  {t(`features.${activeView.toLowerCase()}`)} {t('features.video')}
-                </p>
-                <p className="font-montserrat text-sm text-[#999] dark:text-gray-500">
-                  {t('algorithms.detail.view_coming_soon')
-                    .replace('{view}', t(`features.${activeView.toLowerCase()}`))
-                    .replace('{name}', data.name)}
-                </p>
-              </div>
-            </div>
-          )}
+        <div className="animate-in fade-in slide-in-from-bottom-5 duration-500" key={activeView}>
+          {renderTabContent()}
         </div>
 
         {/* Steps */}
