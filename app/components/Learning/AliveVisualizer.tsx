@@ -11,6 +11,7 @@ import {
   analyzeCode,
   type CodeAnalysisResult,
 } from '../../../lib/algorithms/codeAnalysis';
+import type { AlgorithmProgress } from '../../store/useAlgorithmStore';
 
 // ─── Constants ─────────────────────────────────────────────────
 const DROP_THRESHOLD = 50; // pixels
@@ -63,7 +64,7 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
 interface CodeModeProps {
   algorithmId: string;
   trackEvent: (type: string, data?: Record<string, unknown>) => void;
-  updateProgress: (updates: Record<string, unknown>) => Promise<void>;
+  updateProgress: (updates: Partial<AlgorithmProgress>) => void;
   startTime: number;
   helpUsed: boolean;
   onSwitchToNodes: () => void;
@@ -316,7 +317,7 @@ function CodeMode({
 interface NodeModeProps {
   algorithmId: string;
   trackEvent: (type: string, data?: Record<string, unknown>) => void;
-  updateProgress: (updates: Record<string, unknown>) => Promise<void>;
+  updateProgress: (updates: Partial<AlgorithmProgress>) => void;
   startTime: number;
   t: (key: string) => string;
 }

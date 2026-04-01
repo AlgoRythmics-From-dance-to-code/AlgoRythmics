@@ -24,6 +24,11 @@ export interface AlgorithmProgress {
   createTotalTimeMs?: number;
   aliveBestScore?: number;
   controlHintsUsed?: number;
+  animationPlayCount?: number;
+  aliveHelpUsed?: boolean;
+  aliveCodeSubmissions?: number;
+  aliveLastCode?: string;
+  aliveTotalTimeMs?: number;
 }
 
 interface AlgorithmState {
