@@ -69,12 +69,8 @@
           "name": "users_completed_algorithms_parent_fk",
           "tableFrom": "users_completed_algorithms",
           "tableTo": "users",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -157,12 +153,8 @@
           "name": "users_sessions_parent_id_fk",
           "tableFrom": "users_sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "_parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["_parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -619,12 +611,8 @@
           "name": "learning_events_user_id_users_id_fk",
           "tableFrom": "learning_events",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -955,12 +943,8 @@
           "name": "algorithm_progress_user_id_users_id_fk",
           "tableFrom": "algorithm_progress",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1247,12 +1231,8 @@
           "name": "payload_locked_documents_rels_parent_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "payload_locked_documents",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1260,12 +1240,8 @@
           "name": "payload_locked_documents_rels_users_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "users",
-          "columnsFrom": [
-            "users_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["users_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1273,12 +1249,8 @@
           "name": "payload_locked_documents_rels_learning_events_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "learning_events",
-          "columnsFrom": [
-            "learning_events_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["learning_events_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1286,12 +1258,8 @@
           "name": "payload_locked_documents_rels_algorithm_progress_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "algorithm_progress",
-          "columnsFrom": [
-            "algorithm_progress_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["algorithm_progress_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1495,12 +1463,8 @@
           "name": "payload_preferences_rels_parent_fk",
           "tableFrom": "payload_preferences_rels",
           "tableTo": "payload_preferences",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1508,12 +1472,8 @@
           "name": "payload_preferences_rels_users_fk",
           "tableFrom": "payload_preferences_rels",
           "tableTo": "users",
-          "columnsFrom": [
-            "users_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["users_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1622,32 +1582,17 @@
     "public.enum_users_role": {
       "name": "enum_users_role",
       "schema": "public",
-      "values": [
-        "admin",
-        "user"
-      ]
+      "values": ["admin", "user"]
     },
     "public.enum_users_auth_provider": {
       "name": "enum_users_auth_provider",
       "schema": "public",
-      "values": [
-        "email",
-        "google",
-        "facebook",
-        "discord",
-        "github"
-      ]
+      "values": ["email", "google", "facebook", "discord", "github"]
     },
     "public.enum_learning_events_tab": {
       "name": "enum_learning_events_tab",
       "schema": "public",
-      "values": [
-        "video",
-        "animation",
-        "control",
-        "create",
-        "alive"
-      ]
+      "values": ["video", "animation", "control", "create", "alive"]
     }
   },
   "schemas": {},

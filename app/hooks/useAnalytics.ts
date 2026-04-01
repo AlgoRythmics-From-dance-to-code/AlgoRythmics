@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { useAlgorithmStore } from '../store/useAlgorithmStore';
+import { useAlgorithmStore, type AlgorithmProgress } from '../store/useAlgorithmStore';
 
 interface LearningEvent {
   algorithmId: string;
@@ -19,8 +19,8 @@ function generateId(): string {
 
 /**
  * Custom hook for tracking learning analytics.
- * Buffers events and flushes them in batches every 3 seconds.
- * Uses navigator.sendBeacon on page unload so no events are lost.
+ * Batches events and progress updates to minimize network requests.
+ * Uses navigator.sendBeacon on visibilitychange/unload to prevent data loss.
  */
 export function useAnalytics(algorithmId: string, tab: string) {
   const { status } = useSession();
@@ -29,11 +29,17 @@ export function useAnalytics(algorithmId: string, tab: string) {
 
   const sessionId = useRef(generateId());
   const lastEventTime = useRef(Date.now());
-  const eventBuffer = useRef<LearningEvent[]>([]);
-  const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Flush buffered events to the backend
-  const flush = useCallback(() => {
+  // Buffers
+  const eventBuffer = useRef<LearningEvent[]>([]);
+  const progressBuffer = useRef<Partial<AlgorithmProgress>>({});
+
+  // Timers
+  const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressFlushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // --- EVENTS FLUSH ---
+  const flushEvents = useCallback(() => {
     if (eventBuffer.current.length === 0 || !isAuth) return;
 
     const events = [...eventBuffer.current];
@@ -43,18 +49,69 @@ export function useAnalytics(algorithmId: string, tab: string) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ events }),
-    }).catch((err) => {
-      console.error('[Analytics] flush failed:', err);
-      // Put events back in the buffer for retry
-      eventBuffer.current.unshift(...events);
+    }).catch((err: unknown) => {
+      console.error('[Analytics] event flush failed:', err);
+      eventBuffer.current.unshift(...events); // retry later
     });
   }, [isAuth]);
 
-  // Debounced flush (3 seconds)
-  const scheduleFlush = useCallback(() => {
+  const scheduleEventFlush = useCallback(() => {
     if (flushTimer.current) clearTimeout(flushTimer.current);
-    flushTimer.current = setTimeout(flush, 3000);
-  }, [flush]);
+    flushTimer.current = setTimeout(flushEvents, 3000);
+  }, [flushEvents]);
+
+  // --- PROGRESS FLUSH ---
+  const flushProgress = useCallback(() => {
+    const updates = progressBuffer.current;
+    if (Object.keys(updates).length === 0 || !isAuth) return;
+
+    progressBuffer.current = {};
+
+    fetch('/api/analytics/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ algorithmId, updates }),
+    }).catch((err: unknown) => {
+      console.error('[Analytics] progress flush failed:', err);
+      progressBuffer.current = { ...updates, ...progressBuffer.current };
+    });
+  }, [isAuth, algorithmId]);
+
+  const scheduleProgressFlush = useCallback(() => {
+    if (progressFlushTimer.current) clearTimeout(progressFlushTimer.current);
+    progressFlushTimer.current = setTimeout(flushProgress, 3000);
+  }, [flushProgress]);
+
+  // --- SYNCHRONOUS FLUSH FOR UNLOAD/VISIBILITY ---
+  const syncFlushAll = useCallback(() => {
+    if (!isAuth) return;
+
+    if (eventBuffer.current.length > 0) {
+      try {
+        navigator.sendBeacon(
+          '/api/analytics/event',
+          new Blob([JSON.stringify({ events: eventBuffer.current })], { type: 'application/json' }),
+        );
+        eventBuffer.current = [];
+      } catch {
+        flushEvents();
+      }
+    }
+
+    if (Object.keys(progressBuffer.current).length > 0) {
+      try {
+        navigator.sendBeacon(
+          '/api/analytics/progress',
+          new Blob([JSON.stringify({ algorithmId, updates: progressBuffer.current })], {
+            type: 'application/json',
+          }),
+        );
+        progressBuffer.current = {};
+      } catch {
+        flushProgress();
+      }
+    }
+  }, [isAuth, algorithmId, flushEvents, flushProgress]);
 
   /**
    * Track a single event. Call this from components.
@@ -75,75 +132,68 @@ export function useAnalytics(algorithmId: string, tab: string) {
       lastEventTime.current = now;
       eventBuffer.current.push(event);
 
-      scheduleFlush();
+      scheduleEventFlush();
     },
-    [algorithmId, tab, isAuth, scheduleFlush],
+    [algorithmId, tab, isAuth, scheduleEventFlush],
   );
 
   /**
-   * Update algorithm progress (calls the upsert endpoint).
+   * Update algorithm progress (optimistic + buffered sync).
    */
   const updateProgress = useCallback(
-    async (updates: Record<string, unknown>) => {
+    (updates: Partial<AlgorithmProgress>) => {
       // Optimistically update frontend state immediately
       updateAlgorithmProgress(algorithmId, updates);
-      
+
       if (!isAuth) return;
-      try {
-        await fetch('/api/analytics/progress', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ algorithmId, updates }),
-        });
-      } catch (err) {
-        console.error('[Analytics] progress update failed:', err);
-      }
+
+      // Buffer the backend update
+      progressBuffer.current = { ...progressBuffer.current, ...updates };
+      scheduleProgressFlush();
     },
-    [algorithmId, isAuth, updateAlgorithmProgress],
+    [algorithmId, isAuth, updateAlgorithmProgress, scheduleProgressFlush],
   );
 
-  // Auto-track tab_enter on mount and tab_exit on unmount
+  // Tab Lifecycle (mount/unmount)
+  const hasTrackedEnter = useRef(false);
   useEffect(() => {
-    trackEvent('tab_enter');
+    if (status === 'loading') return;
+
+    if (!hasTrackedEnter.current) {
+      if (isAuth) trackEvent('tab_enter');
+      hasTrackedEnter.current = true;
+    }
 
     return () => {
-      trackEvent('tab_exit');
-      // Flush remaining events synchronously via sendBeacon
-      if (eventBuffer.current.length > 0 && isAuth) {
-        try {
-          navigator.sendBeacon(
-            '/api/analytics/event',
-            new Blob([JSON.stringify({ events: eventBuffer.current })], {
-              type: 'application/json',
-            }),
-          );
-          eventBuffer.current = [];
-        } catch {
-          // Fallback: try a normal flush
-          flush();
-        }
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      if (!hasTrackedEnter.current) return;
+      hasTrackedEnter.current = false;
+      if (isAuth) trackEvent('tab_exit');
 
-  // Page unload handler — last chance to flush
+      // Flush anything remaining
+      syncFlushAll();
+    };
+  }, [trackEvent, isAuth, status, syncFlushAll]);
+
+  // Page visibility & unload handlers - best practice for mobile & modern browsers
   useEffect(() => {
-    const handleUnload = () => {
-      if (eventBuffer.current.length > 0 && isAuth) {
-        navigator.sendBeacon(
-          '/api/analytics/event',
-          new Blob([JSON.stringify({ events: eventBuffer.current })], {
-            type: 'application/json',
-          }),
-        );
-        eventBuffer.current = [];
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        syncFlushAll();
       }
     };
 
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
-  }, [isAuth]);
+    const handleBeforeUnload = () => {
+      syncFlushAll();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [syncFlushAll]);
 
   return {
     trackEvent,

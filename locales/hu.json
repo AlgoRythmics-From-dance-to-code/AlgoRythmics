@@ -309,9 +309,37 @@
       "complexity": "Bonyolultság",
       "mark_as_done": "Késznek jelölöm",
       "completed": "Teljesítve",
+      "simple_explanation": "Egyszerű elmagyarázás",
       "step_by_step": "Lépésről lépésre útmutató",
       "coming_soon": "Algoritmus részletei hamarosan.",
       "view_coming_soon": "{view} tartalom {name} algoritmushoz — hamarosan"
+    },
+    "guides": {
+      "video": [
+        "Egyszerű elmagyarázás: az elemeket párba állítjuk és felcseréljük, ha rossz sorrendben vannak.",
+        "Figyeld meg, hogyan mozognak a táncosok a zene ütemére, minden mozdulat egy logikai lépést takar.",
+        "A cél, hogy a legnagyobb elemek a tömb végére 'buborékoljanak'."
+      ],
+      "animation": [
+        "Kövesd a vizuális sávok automatikus mozgását a képernyőn.",
+        "A színek segítenek megkülönböztetni az összehasonlítást és a cserét.",
+        "Segítség: Használd az irányító gombokat a sebesség állításához vagy a manuális léptetéshez."
+      ],
+      "control": [
+        "Vegyél részt aktívan a rendezésben! Kattints két szomszédos elemre az összehasonlításhoz.",
+        "Döntsd el minden lépésnél, hogy kell-e cserélni az elemeket vagy maradhatnak.",
+        "Segítség: Ha elakadsz, kattints a tipp ikonra a következő helyes lépés megjelenítéséhez."
+      ],
+      "create": [
+        "Gépeld be a hiányzó részeket a kódban, hogy működő algoritmust kapj.",
+        "Nyomj Enter-t vagy kattints az ellenőrzés ikonra a válaszod beküldéséhez.",
+        "Segítség: Kattints a segítség gombra, ha látni szeretnéd a válaszlehetőségeket a kijelölt mezőhöz."
+      ],
+      "alive": [
+        "Írd meg az algoritmust önállóan! Használd a programozói tudásodat a kódbeli megoldáshoz.",
+        "Ügyelj a szintaxisra, a változók nevére és a ciklusok helyes beállítására.",
+        "Segítség: Válts 'Blokk' módra, ha vizuálisan szeretnéd összerakni a logikai egységeket."
+      ]
     },
     "title": "Minden algoritmus",
     "categories": {
@@ -324,15 +352,15 @@
     "list": {
       "bubble-sort": {
         "name": "Buborékrendezés",
-        "description": "A buborékrendezés egy egyszerű rendezési algoritmus, amely egymás után összehasonlítja a szomszédos elemeket, és felcseréli őket, ha rossz sorrendben vannak."
+        "description": "A buborékrendezés célja, hogy a legnagyobb elemeket egyenként a sor végére juttassa (mint a felszálló buborékok), miközben a szomszédos elemeket párban hasonlítja össze és cseréli fel."
       },
       "insertion-sort": {
         "name": "Beszúró rendezés",
-        "description": "A beszúró rendezés egy egyszerű algoritmus, amely a végső rendezett tömböt elemenként építi fel. Kevésbé hatékony nagy listákon, mint a fejlettebb algoritmusok."
+        "description": "A beszúró rendezés úgy működik, mint amikor a kártyákat rendezzük a kezünkben: minden új elemet a már rendezett rész megfelelő helyére szúrunk be."
       },
       "selection-sort": {
         "name": "Kiválasztó rendezés",
-        "description": "A kiválasztó rendezés egy helyben végzett összehasonlító rendezés. O(n²) időbonyolultságú, ami miatt nagy listákon nem hatékony."
+        "description": "A kiválasztó rendezés minden körben megkeresi a legkisebb elemet a még nem rendezett részből, és a rendezett rész elejére teszi."
       },
       "shell-sort": {
         "name": "Shell-rendezés",
@@ -460,6 +488,9 @@
     "mistakes": "Hibák",
     "summary": "{total} lépésből {correct}-et találtál el elsőre!",
     "well_done": "A tömb rendezve van!",
+    "compare": "Összehasonlítás",
+    "swap": "Csere",
+    "stay": "Következő",
     "reset": "Újrakezdés"
   },
   "create": {

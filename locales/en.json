@@ -309,9 +309,37 @@
       "complexity": "Complexity",
       "mark_as_done": "Mark as done",
       "completed": "Completed",
+      "simple_explanation": "Simple Explanation",
       "step_by_step": "Step-by-Step Guide",
       "coming_soon": "Algorithm details coming soon.",
       "view_coming_soon": "{view} content for {name} — coming soon"
+    },
+    "guides": {
+      "video": [
+        "Simple explanation: elements are compared in pairs and swapped if they are in the wrong order.",
+        "Watch how the dancers move to the rhythm; every move represents a logical step.",
+        "The goal is to let the largest elements 'bubble up' to the end of the array."
+      ],
+      "animation": [
+        "Follow the automatic movement of the visual bars on the screen.",
+        "Colors help distinguish between comparisons and swap operations.",
+        "Help: Use the control buttons to adjust speed or manually step through the process."
+      ],
+      "control": [
+        "Take an active role in sorting! Click two adjacent elements to compare them.",
+        "Decide at each step whether to swap the elements or keep them as they are.",
+        "Help: If you get stuck, click the lightbulb icon to see the next correct move."
+      ],
+      "create": [
+        "Type the missing parts of the code manually to complete the algorithm.",
+        "Press Enter or click the check icon to verify your answer.",
+        "Help: Click the 'I Need Help' button to see multiple-choice options for the selected field."
+      ],
+      "alive": [
+        "Write the algorithm completely on your own! Use your coding logic to solve the task.",
+        "Pay attention to variable names and loop boundaries for correct software execution.",
+        "Help: Switch to block mode if you want to assemble the logic units visually."
+      ]
     },
     "title": "All algorithms",
     "categories": {
@@ -324,15 +352,15 @@
     "list": {
       "bubble-sort": {
         "name": "Bubble sort",
-        "description": "A form of sorting by exchanging that simply interchanges pairs of elements that are out of order in a sequence of passes through the file, until the list is sorted."
+        "description": "Bubble sort's goal is to move the largest elements one by one to the end of the list (like rising bubbles), comparing and swapping adjacent items in pairs."
       },
       "insertion-sort": {
         "name": "Insertion sort",
-        "description": "Insertion sort is a simple sorting algorithm that builds the final sorted array one item at a time. It is much less efficient on large lists than more advanced algorithms."
+        "description": "Insertion sort works like sorting playing cards in your hand: each new element is inserted into its correct position within the already sorted portion."
       },
       "selection-sort": {
         "name": "Selection sort",
-        "description": "Selection sort is a sorting algorithm, specifically an in-place comparison sort. It has O(n²) time complexity, making it inefficient on large lists."
+        "description": "Selection sort finds the smallest element from the unsorted part in each pass and moves it to the end of the sorted part."
       },
       "shell-sort": {
         "name": "Shell sort",
@@ -460,6 +488,9 @@
     "mistakes": "Mistakes",
     "summary": "You got {correct} out of {total} steps right on the first try!",
     "well_done": "The array is sorted!",
+    "compare": "Compare",
+    "swap": "Swap",
+    "stay": "Next",
     "reset": "Reset"
   },
   "create": {

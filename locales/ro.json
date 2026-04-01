@@ -313,6 +313,33 @@
       "coming_soon": "Detaliile algoritmului vor fi disponibile în curând.",
       "view_coming_soon": "Conținutul {view} pentru {name} — în curând"
     },
+    "guides": {
+      "video": [
+        "Urmăriți cu atenție mișcările dansatorilor.",
+        "Înțelegeți interacțiunea dintre personaje.",
+        "Urmăriți cum elementele alunecă la locul lor conform ritmului."
+      ],
+      "animation": [
+        "Urmărește mișcarea barelor vizuale.",
+        "Observă semnificația culorilor (comparare, interschimbare).",
+        "Citește textele explicative la fiecare pas."
+      ],
+      "control": [
+        "Selectează două elemente adiacente dând clic pe ele.",
+        "Decide următorul pas corect (Compară, Interschimbă sau Rămâne).",
+        "Încearcă să sortezi întregul vector cu cât mai puține greșeli."
+      ],
+      "create": [
+        "Găsește părțile care lipsesc în șablonul de cod.",
+        "Dă clic pe spațiile libere și selectează opțiunea corectă de mai jos.",
+        "Verdele indică succesul, roșul indică o greșeală. Completează-le pe toate!"
+      ],
+      "alive": [
+        "Trage blocurile logice în secvența corectă.",
+        "Sau comută la modul cod și scrie algoritmul manual.",
+        "Rulează programul pentru a verifica dacă sortează corect vectorul."
+      ]
+    },
     "title": "Toate algoritmele",
     "categories": {
       "sorting": "Algoritmi de sortare",
@@ -460,6 +487,9 @@
     "mistakes": "Greșeli",
     "summary": "Ai nimerit {correct} din {total} pași din prima încercare!",
     "well_done": "Vectorul este sortat!",
+    "compare": "Compară",
+    "swap": "Ininterschimbă",
+    "stay": "Următorul",
     "reset": "Resetare"
   },
   "create": {

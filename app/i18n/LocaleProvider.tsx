@@ -7,24 +7,22 @@ import ro from '../../locales/ro.json';
 
 export type Locale = 'en' | 'hu' | 'ro';
 
-type Translations = {
-  [key: string]: string | Translations;
-};
-
-const translations: Record<Locale, Translations> = {
-  en: en as Translations,
-  hu: hu as Translations,
-  ro: ro as Translations,
+const translations: Record<Locale, unknown> = {
+  en: en,
+  hu: hu,
+  ro: ro,
 };
 
 const LocaleContext = createContext<{
   locale: Locale;
   setLocale: (l: Locale) => void;
   t: (path: string, vars?: Record<string, string | number>) => string;
+  getRaw: (path: string) => unknown;
 }>({
   locale: 'en',
   setLocale: () => {},
   t: () => '',
+  getRaw: () => undefined,
 });
 
 export function useLocale() {
@@ -48,16 +46,7 @@ export default function LocaleProvider({ children }: { children: React.ReactNode
   }
 
   function t(path: string, vars?: Record<string, string | number>) {
-    const parts = path.split('.');
-    let current: unknown = translations[locale] as unknown;
-    for (const p of parts) {
-      if (current && typeof current === 'object' && p in (current as Record<string, unknown>)) {
-        current = (current as Record<string, unknown>)[p];
-      } else {
-        current = undefined;
-        break;
-      }
-    }
+    const current = getRaw(path);
     if (current === undefined) return path;
     let s = String(current);
     if (vars) {
@@ -68,7 +57,23 @@ export default function LocaleProvider({ children }: { children: React.ReactNode
     return s;
   }
 
+  function getRaw(path: string): unknown {
+    const parts = path.split('.');
+    let current: unknown = translations[locale] as unknown;
+    for (const p of parts) {
+      if (current && typeof current === 'object' && p in (current as Record<string, unknown>)) {
+        current = (current as Record<string, unknown>)[p];
+      } else {
+        current = undefined;
+        break;
+      }
+    }
+    return current;
+  }
+
   return (
-    <LocaleContext.Provider value={{ locale, setLocale, t }}>{children}</LocaleContext.Provider>
+    <LocaleContext.Provider value={{ locale, setLocale, t, getRaw }}>
+      {children}
+    </LocaleContext.Provider>
   );
 }

@@ -5,6 +5,27 @@ import { persist } from 'zustand/middleware';
 
 type Category = 'all' | 'sorting' | 'searching' | 'backtracking' | 'fun';
 
+export interface AlgorithmProgress {
+  videoWatched?: boolean;
+  animationCompleted?: boolean;
+  controlCompleted?: boolean;
+  createCompleted?: boolean;
+  aliveCompleted?: boolean;
+  videoCompletedAt?: string | null;
+  animationCompletedAt?: string | null;
+  controlCompletedAt?: string | null;
+  createCompletedAt?: string | null;
+  aliveCompletedAt?: string | null;
+  controlBestScore?: number;
+  controlMistakes?: number;
+  createHelpUsed?: boolean;
+  createBlanksCorrectFirst?: number;
+  createBlanksTotal?: number;
+  createTotalTimeMs?: number;
+  aliveBestScore?: number;
+  controlHintsUsed?: number;
+}
+
 interface AlgorithmState {
   // Filter state
   activeCategory: Category;
@@ -22,14 +43,14 @@ interface AlgorithmState {
   updateVisualizerProgress: (id: string, step: number, speed?: number) => void;
 
   // Analytics Progress Cache
-  algorithmProgress: Record<string, any>;
-  updateAlgorithmProgress: (id: string, updates: any) => void;
+  algorithmProgress: Record<string, AlgorithmProgress>;
+  updateAlgorithmProgress: (id: string, updates: Partial<AlgorithmProgress>) => void;
 
   // Hydration
   hydrate: (data: {
     completedIds?: string[];
     visualizerProgress?: Record<string, { step: number; speed: number }>;
-    algorithmProgress?: Record<string, any>;
+    algorithmProgress?: Record<string, AlgorithmProgress>;
   }) => void;
 
   // Reset

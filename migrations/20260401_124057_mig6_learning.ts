@@ -1,6 +1,6 @@
-import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
+import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres';
 
-export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
+export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
    CREATE TYPE "public"."enum_learning_events_tab" AS ENUM('video', 'animation', 'control', 'create', 'alive');
   CREATE TABLE "learning_events" (
@@ -71,8 +71,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "users" ADD COLUMN "learning_stats_preferred_speed" numeric;
   ALTER TABLE "payload_locked_documents_rels" ADD COLUMN "learning_events_id" integer;
   ALTER TABLE "payload_locked_documents_rels" ADD COLUMN "algorithm_progress_id" integer;
-  ALTER TABLE "learning_events" ADD CONSTRAINT "learning_events_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-  ALTER TABLE "algorithm_progress" ADD CONSTRAINT "algorithm_progress_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "learning_events" ADD CONSTRAINT "learning_events_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "algorithm_progress" ADD CONSTRAINT "algorithm_progress_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
   CREATE INDEX "learning_events_user_idx" ON "learning_events" USING btree ("user_id");
   CREATE INDEX "learning_events_algorithm_id_idx" ON "learning_events" USING btree ("algorithm_id");
   CREATE INDEX "learning_events_event_type_idx" ON "learning_events" USING btree ("event_type");
@@ -86,18 +86,19 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_learning_events_fk" FOREIGN KEY ("learning_events_id") REFERENCES "public"."learning_events"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_algorithm_progress_fk" FOREIGN KEY ("algorithm_progress_id") REFERENCES "public"."algorithm_progress"("id") ON DELETE cascade ON UPDATE no action;
   CREATE INDEX "payload_locked_documents_rels_learning_events_id_idx" ON "payload_locked_documents_rels" USING btree ("learning_events_id");
-  CREATE INDEX "payload_locked_documents_rels_algorithm_progress_id_idx" ON "payload_locked_documents_rels" USING btree ("algorithm_progress_id");`)
+  CREATE INDEX "payload_locked_documents_rels_algorithm_progress_id_idx" ON "payload_locked_documents_rels" USING btree ("algorithm_progress_id");`);
 }
 
-export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
+export async function down({ db }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
    ALTER TABLE "learning_events" DISABLE ROW LEVEL SECURITY;
   ALTER TABLE "algorithm_progress" DISABLE ROW LEVEL SECURITY;
-  DROP TABLE "learning_events" CASCADE;
-  DROP TABLE "algorithm_progress" CASCADE;
   ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_learning_events_fk";
   
   ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_algorithm_progress_fk";
+  
+  DROP TABLE "learning_events" CASCADE;
+  DROP TABLE "algorithm_progress" CASCADE;
   
   DROP INDEX "payload_locked_documents_rels_learning_events_id_idx";
   DROP INDEX "payload_locked_documents_rels_algorithm_progress_id_idx";
@@ -116,5 +117,5 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   ALTER TABLE "users" DROP COLUMN "learning_stats_preferred_speed";
   ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "learning_events_id";
   ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "algorithm_progress_id";
-  DROP TYPE "public"."enum_learning_events_tab";`)
+  DROP TYPE "public"."enum_learning_events_tab";`);
 }

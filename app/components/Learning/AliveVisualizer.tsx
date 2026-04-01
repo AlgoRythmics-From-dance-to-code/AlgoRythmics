@@ -1,19 +1,19 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import {
-  Play,
-  Trash2,
-  HelpCircle,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-} from 'lucide-react';
+import { motion, AnimatePresence, Reorder, PanInfo } from 'framer-motion';
+import { Play, Trash2, HelpCircle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { getAlgorithmNodes, type AlgorithmNode } from '../../../lib/algorithms/nodeDefinitions';
-import { getCodePatterns, analyzeCode, type CodeAnalysisResult } from '../../../lib/algorithms/codeAnalysis';
+import {
+  getCodePatterns,
+  analyzeCode,
+  type CodeAnalysisResult,
+} from '../../../lib/algorithms/codeAnalysis';
+
+// ─── Constants ─────────────────────────────────────────────────
+const DROP_THRESHOLD = 50; // pixels
 
 interface AliveVisualizerProps {
   algorithmId: string;
@@ -51,7 +51,6 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
           trackEvent={trackEvent}
           updateProgress={updateProgress}
           startTime={startTime}
-          helpUsed={helpUsed}
           t={t}
         />
       )}
@@ -89,7 +88,7 @@ function CodeMode({
   const handleRun = useCallback(() => {
     if (!patterns) return;
 
-    const analysis = analyzeCode(code, patterns);
+    const analysis = analyzeCode(code, patterns, algorithmId);
     setResult(analysis);
     setSubmissions((s) => s + 1);
 
@@ -123,12 +122,19 @@ function CodeMode({
         score: analysis.score,
       });
     }
-  }, [code, patterns, submissions, startTime, helpUsed, trackEvent, updateProgress]);
+  }, [code, patterns, algorithmId, submissions, startTime, helpUsed, trackEvent, updateProgress]);
 
   const handleClear = () => {
     setCode('');
     setResult(null);
     trackEvent('alive_clear');
+
+    // Explicitly reset completion in progress store
+    updateProgress({
+      aliveCompleted: false,
+      aliveBestScore: 0,
+      aliveCompletedAt: null,
+    });
   };
 
   return (
@@ -191,9 +197,7 @@ function CodeMode({
                 {i + 1}
               </span>
             ))}
-            {code === '' && (
-              <span className="text-xs font-mono text-gray-600 leading-6">1</span>
-            )}
+            {code === '' && <span className="text-xs font-mono text-gray-600 leading-6">1</span>}
           </div>
           <textarea
             value={code}
@@ -277,6 +281,27 @@ function CodeMode({
                     ))}
                   </div>
                 )}
+                {/* Real Code Execution Feedback */}
+                {result.executionPassed !== undefined && (
+                  <div className="mt-2 pt-3 border-t border-red-500/10 dark:border-red-500/20">
+                    <h5 className="font-montserrat font-bold text-xs text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                      Test Execution
+                    </h5>
+                    {result.executionPassed ? (
+                      <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="text-xs font-bold">
+                          Passed (Array was sorted correctly)
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-2 text-red-600 dark:text-red-400 bg-red-500/5 p-2 rounded-lg border border-red-500/10">
+                        <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <span className="text-xs font-bold font-mono">{result.executionError}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </motion.div>
@@ -293,30 +318,119 @@ interface NodeModeProps {
   trackEvent: (type: string, data?: Record<string, unknown>) => void;
   updateProgress: (updates: Record<string, unknown>) => Promise<void>;
   startTime: number;
-  helpUsed: boolean;
   t: (key: string) => string;
 }
 
-function NodeMode({ algorithmId, trackEvent, updateProgress, startTime, helpUsed, t }: NodeModeProps) {
+function NodeMode({ algorithmId, trackEvent, updateProgress, startTime, t }: NodeModeProps) {
   const allNodes = useMemo(() => getAlgorithmNodes(algorithmId) || [], [algorithmId]);
 
   // Palette: shuffled nodes
-  const shuffledPalette = useMemo(
-    () => [...allNodes].sort(() => Math.random() - 0.5),
-    [allNodes],
-  );
+  const shuffledPalette = useMemo(() => [...allNodes].sort(() => Math.random() - 0.5), [allNodes]);
 
   const [palette, setPalette] = useState<AlgorithmNode[]>(shuffledPalette);
   const [program, setProgram] = useState<AlgorithmNode[]>([]);
   const [result, setResult] = useState<'correct' | 'incorrect' | null>(null);
   const [attempts, setAttempts] = useState(0);
+  const programRef = React.useRef<HTMLDivElement>(null);
+
+  // Drag interaction states
+  const [draggingNode, setDraggingNode] = useState<AlgorithmNode | null>(null);
+  const [dragHoverIndex, setDragHoverIndex] = useState<number | null>(null);
 
   // Add node to program
-  const addNode = (node: AlgorithmNode) => {
-    setPalette((p) => p.filter((n) => n.id !== node.id));
-    setProgram((p) => [...p, node]);
-    setResult(null);
-    trackEvent('alive_node_place', { nodeId: node.id, position: program.length });
+  const addNode = useCallback(
+    (node: AlgorithmNode, atIndex?: number) => {
+      setPalette((p) => p.filter((n) => n.id !== node.id));
+      setProgram((p) => {
+        if (p.some((n) => n.id === node.id)) return p; // Prevent duplicates!
+        const next = [...p];
+        if (typeof atIndex === 'number' && atIndex >= 0 && atIndex <= p.length) {
+          next.splice(atIndex, 0, node);
+        } else {
+          next.push(node);
+        }
+        return next;
+      });
+      setResult(null);
+      trackEvent('alive_node_place', { nodeId: node.id, position: atIndex ?? program.length });
+    },
+    [program.length, trackEvent],
+  );
+
+  // Handle Drag Move (to show preview)
+  const onPaletteDrag = (_event: unknown, info: PanInfo) => {
+    if (!programRef.current) return;
+
+    const rect = programRef.current.getBoundingClientRect();
+    const scrollY = window.scrollY || window.pageYOffset;
+    const scrollX = window.scrollX || window.pageXOffset;
+
+    // Page-relative coordinates for the container
+    const pageRectTop = rect.top + scrollY;
+    const pageRectBottom = rect.bottom + scrollY;
+    const pageRectLeft = rect.left + scrollX;
+    const pageRectRight = rect.right + scrollX;
+
+    const x = info.point.x;
+    const y = info.point.y;
+
+    // Use a larger hit box for easier dropping (add DROP_THRESHOLD padding conceptually)
+    const padding = DROP_THRESHOLD;
+    const isOver =
+      x >= pageRectLeft - padding &&
+      x <= pageRectRight + padding &&
+      y >= pageRectTop - padding &&
+      y <= pageRectBottom + padding;
+
+    if (isOver) {
+      // Use pure mathematical index calculation to be completely immune to
+      // DOM node layout animations and visual shifting during Framer Motion updates.
+      // Container has p-6 (24px padding). Items are 56px height + space-y-2 (8px gap) = 64px stride.
+      const offsetY = y - pageRectTop - 24;
+
+      // Calculate which "slot" the pointer is hovering over.
+      // Center of slot 0 is 28px. Threshold between slot 0 and 1 is 28px + 36px offset.
+      let insertIndex = Math.max(0, Math.floor((offsetY + 36) / 64));
+
+      if (insertIndex > program.length) {
+        insertIndex = program.length;
+      }
+
+      setDragHoverIndex(insertIndex);
+    } else {
+      setDragHoverIndex(null);
+    }
+  };
+
+  // Handle Drag End from Palette
+  const onPaletteDragEnd = (_event: unknown, _info: unknown, node: AlgorithmNode) => {
+    if (dragHoverIndex !== null) {
+      addNode(node, dragHoverIndex);
+    }
+    setDraggingNode(null);
+    setDragHoverIndex(null);
+  };
+
+  // Handle Drag End from Program (to remove/move back)
+  const onProgramDragEnd = (_event: unknown, info: PanInfo, node: AlgorithmNode) => {
+    if (!programRef.current) return;
+
+    const rect = programRef.current.getBoundingClientRect();
+    const scrollY = window.scrollY || window.pageYOffset;
+    const scrollX = window.scrollX || window.pageXOffset;
+
+    const pageRectTop = rect.top + scrollY;
+    const pageRectBottom = rect.bottom + scrollY;
+    const pageRectLeft = rect.left + scrollX;
+    const pageRectRight = rect.right + scrollX;
+
+    const x = info.point.x;
+    const y = info.point.y;
+
+    // If dragged outside the program area, remove it
+    if (x < pageRectLeft || x > pageRectRight || y < pageRectTop || y > pageRectBottom) {
+      removeNode(node);
+    }
   };
 
   // Remove node from program
@@ -370,6 +484,13 @@ function NodeMode({ algorithmId, trackEvent, updateProgress, startTime, helpUsed
     setPalette([...allNodes].sort(() => Math.random() - 0.5));
     setResult(null);
     trackEvent('alive_clear');
+
+    // Explicitly reset completion in progress store
+    updateProgress({
+      aliveCompleted: false,
+      aliveBestScore: 0,
+      aliveCompletedAt: null,
+    });
   };
 
   return (
@@ -397,18 +518,26 @@ function NodeMode({ algorithmId, trackEvent, updateProgress, startTime, helpUsed
               </p>
             )}
             {palette.map((node) => (
-              <motion.button
+              <motion.div
                 key={node.id}
+                drag
+                dragSnapToOrigin
+                onDragStart={() => setDraggingNode(node)}
+                onDrag={(e, info) => onPaletteDrag(e, info)}
+                onDragEnd={(e, info) => onPaletteDragEnd(e, info, node)}
+                whileDrag={{ scale: 1.05, zIndex: 50, cursor: 'grabbing' }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => addNode(node)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl border-l-4 bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md transition-all cursor-pointer ${node.colorClass}`}
+                onTap={() => addNode(node)}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl border-l-4 bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow cursor-grab border-l-gray-300 dark:border-l-gray-700 ${
+                  draggingNode?.id === node.id ? 'opacity-50' : ''
+                }`}
               >
-                <span className="text-xl">{node.icon}</span>
-                <span className="font-mono text-sm text-black dark:text-white font-bold">
+                <span className="text-xl pointer-events-none">{node.icon}</span>
+                <span className="font-mono text-sm text-black dark:text-white font-bold pointer-events-none">
                   {node.label}
                 </span>
-              </motion.button>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -418,7 +547,10 @@ function NodeMode({ algorithmId, trackEvent, updateProgress, startTime, helpUsed
           <h4 className="font-montserrat font-bold text-sm text-gray-500 uppercase tracking-widest">
             {t('alive.your_program')}
           </h4>
-          <div className="space-y-2 min-h-[200px] p-4 rounded-2xl bg-white dark:bg-[#1a1a1a] border-2 border-[#269984]/20 shadow-inner">
+          <div
+            ref={programRef}
+            className="space-y-2 min-h-[300px] p-6 rounded-3xl bg-white dark:bg-[#0a0a0a] border-2 border-dashed border-[#269984]/20 shadow-[inner_0_2px_12px_rgba(0,0,0,0.05)] transition-colors hover:border-[#269984]/40"
+          >
             {program.length === 0 && (
               <p className="text-center text-gray-400 font-montserrat text-sm py-8">
                 {t('alive.help_active')}
@@ -436,31 +568,74 @@ function NodeMode({ algorithmId, trackEvent, updateProgress, startTime, helpUsed
               }}
               className="space-y-2"
             >
-              {program.map((node, idx) => (
-                <Reorder.Item key={node.id} value={node}>
-                  <motion.div
-                    layout
-                    className={`flex items-center gap-3 p-3 rounded-xl border-l-4 bg-gray-50 dark:bg-[#151515] border border-gray-100 dark:border-white/5 shadow-sm cursor-grab active:cursor-grabbing ${node.colorClass}`}
-                  >
-                    <span className="text-gray-400 font-mono text-xs w-5 text-right flex-shrink-0">
-                      {idx + 1}
-                    </span>
-                    <span className="text-xl">{node.icon}</span>
-                    <span className="font-mono text-sm text-black dark:text-white font-bold flex-1">
-                      {node.label}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeNode(node);
-                      }}
-                      className="p-1 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-all"
+              {program.map((node, idx) => {
+                const correctNodes = allNodes
+                  .filter((n) => !n.isDistractor)
+                  .sort((a, b) => a.order - b.order);
+                const isCorrectAtPos =
+                  result && correctNodes[idx] && node.id === correctNodes[idx].id;
+
+                let statusColor = 'border-l-gray-300 dark:border-l-gray-700';
+                if (result) {
+                  statusColor = isCorrectAtPos ? 'border-l-green-500' : 'border-l-red-500';
+                }
+
+                return (
+                  <React.Fragment key={`frag-${node.id}`}>
+                    {dragHoverIndex === idx && (
+                      <motion.div
+                        key={`placeholder-${idx}`}
+                        layout
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 56 }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="rounded-xl border-2 border-dashed border-[#269984]/50 bg-[#269984]/10"
+                      />
+                    )}
+                    <Reorder.Item
+                      value={node}
+                      data-node-wrapper
+                      drag
+                      dragSnapToOrigin
+                      onDragEnd={(e, info) => onProgramDragEnd(e, info, node)}
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </motion.div>
-                </Reorder.Item>
-              ))}
+                      <motion.div
+                        layout
+                        data-node-id={node.id}
+                        className={`flex items-center gap-3 p-3 rounded-xl border-l-4 bg-gray-50 dark:bg-[#151515] border border-gray-100 dark:border-white/5 shadow-sm cursor-grab active:cursor-grabbing ${statusColor}`}
+                        whileDrag={{ scale: 1.05, zIndex: 60 }}
+                      >
+                        <span className="text-gray-400 font-mono text-xs w-5 text-right flex-shrink-0">
+                          {idx + 1}
+                        </span>
+                        <span className="text-xl">{node.icon}</span>
+                        <span className="font-mono text-sm text-black dark:text-white font-bold flex-1">
+                          {node.label}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeNode(node);
+                          }}
+                          className="p-1 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-all"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </motion.div>
+                    </Reorder.Item>
+                  </React.Fragment>
+                );
+              })}
+              {dragHoverIndex === program.length && (
+                <motion.div
+                  key="placeholder-end"
+                  layout
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 56 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="rounded-xl border-2 border-dashed border-[#269984]/50 bg-[#269984]/10"
+                />
+              )}
             </Reorder.Group>
           </div>
         </div>
@@ -514,7 +689,8 @@ function NodeMode({ algorithmId, trackEvent, updateProgress, startTime, helpUsed
               <div className="flex items-center gap-3">
                 <XCircle className="w-8 h-8 text-red-500" />
                 <p className="font-montserrat font-bold text-sm text-red-600 dark:text-red-400">
-                  {t('alive.error') || 'Something went wrong — check the order and remove wrong blocks'}
+                  {t('alive.error') ||
+                    'Something went wrong — check the order and remove wrong blocks'}
                 </p>
               </div>
             )}

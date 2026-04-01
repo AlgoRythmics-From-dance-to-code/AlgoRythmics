@@ -13,7 +13,7 @@ interface LearningEventInput {
 
 /**
  * POST /api/analytics/event
- * Batch-insert learning events and update algorithm-progress + user stats.
+ * Batch-insert learning events and update user learning stats.
  */
 export async function POST(req: Request) {
   const session = await auth();
@@ -57,6 +57,9 @@ export async function POST(req: Request) {
     // Update user learning stats (best-effort)
     if (totalDurationMs > 0) {
       try {
+        // Ideally use an atomic DB increment here, e.g. sql`UPDATE users SET ...`
+        // For now using read-modify-write since it's Next Auth/Payload abstraction.
+        // We aggregate per-batch to minimize writes.
         const user = await payload.findByID({ collection: 'users', id: userId, depth: 0 });
         const stats = (user.learningStats as Record<string, number | string | null>) || {};
 

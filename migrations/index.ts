@@ -46,6 +46,6 @@ export const migrations = [
   {
     up: migration_20260401_125513_learningsteps.up,
     down: migration_20260401_125513_learningsteps.down,
-    name: '20260401_125513_learningsteps'
+    name: '20260401_125513_learningsteps',
   },
 ];

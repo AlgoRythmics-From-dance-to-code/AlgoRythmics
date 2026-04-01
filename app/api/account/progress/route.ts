@@ -1,7 +1,7 @@
 import { auth } from '../../../../auth';
 import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
-import type { User } from '../../../../payload-types';
+import type { User, AlgorithmProgress } from '../../../../payload-types';
 
 export async function GET() {
   const session = await auth();
@@ -26,9 +26,10 @@ export async function GET() {
       depth: 0,
     });
 
-    const algorithmProgress: Record<string, any> = {};
-    progressDocs.docs.forEach((doc: any) => {
-      algorithmProgress[doc.algorithmId] = doc;
+    const algorithmProgress: Record<string, unknown> = {};
+    progressDocs.docs.forEach((doc) => {
+      const progressDoc = doc as unknown as AlgorithmProgress;
+      algorithmProgress[progressDoc.algorithmId] = progressDoc;
     });
 
     return NextResponse.json({

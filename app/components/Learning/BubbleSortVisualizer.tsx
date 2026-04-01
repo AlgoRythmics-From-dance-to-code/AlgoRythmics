@@ -52,6 +52,7 @@ export default function BubbleSortVisualizer({ id = 'bubble-sort' }: { id?: stri
     setCurrentStep(0);
     setIsPlaying(false);
     trackEvent('animation_reset');
+    updateProgress({ animationCompleted: false, animationCompletedAt: null });
   };
 
   const handlePlayPause = () => {
@@ -76,7 +77,13 @@ export default function BubbleSortVisualizer({ id = 'bubble-sort' }: { id?: stri
       updateProgress({
         animationCompleted: true,
         animationCompletedAt: new Date().toISOString(),
-        animationPlayCount: 1, // Will be incremented server-side ideally
+        animationPlayCount:
+          typeof initialProgress === 'object' &&
+          initialProgress !== null &&
+          'animationPlayCount' in initialProgress &&
+          typeof (initialProgress as { animationPlayCount: number }).animationPlayCount === 'number'
+            ? (initialProgress as { animationPlayCount: number }).animationPlayCount + 1
+            : 1,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,11 +100,7 @@ export default function BubbleSortVisualizer({ id = 'bubble-sort' }: { id?: stri
 
   return (
     <div className="w-full flex flex-col items-center">
-      <SortingVisualizer
-        steps={steps}
-        currentStep={currentStep}
-        speed={speed}
-      />
+      <SortingVisualizer steps={steps} currentStep={currentStep} speed={speed} />
 
       <VisualizerControls
         onPlayPause={handlePlayPause}

@@ -12,8 +12,10 @@ export const LearningEvents: CollectionConfig = {
     group: 'Analytics',
   },
   access: {
-    // Events are created only via the backend API route
-    create: () => true,
+    create: ({ req: { user } }) => {
+      // Must be authenticated to create learning events
+      return Boolean(user);
+    },
     read: ({ req: { user } }) => {
       if (!user) return false;
       if (user.role === 'admin') return true;

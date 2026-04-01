@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { CheckCircle, XCircle, HelpCircle, RotateCcw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle, HelpCircle, RotateCcw, Check } from 'lucide-react';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { getCodeTemplate, type BlankSlot } from '../../../lib/algorithms/codeTemplates';
@@ -31,7 +31,7 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
   });
 
   const [helpActive, setHelpActive] = useState(false);
-  const [dragCards, setDragCards] = useState<Record<string, string[]>>(() => {
+  const [dragCards] = useState<Record<string, string[]>>(() => {
     if (!template) return {};
     const cards: Record<string, string[]> = {};
     for (const blank of template.blanks) {
@@ -41,40 +41,36 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
     return cards;
   });
   const [activeBlank, setActiveBlank] = useState<string | null>(null);
+  const [activeWrongOptions, setActiveWrongOptions] = useState<Record<string, Set<string>>>({});
   const [isComplete, setIsComplete] = useState(false);
   const startTime = useMemo(() => Date.now(), []);
 
-  if (!template) {
-    return (
-      <div className="text-center py-20 text-gray-500">
-        {t('algorithms.detail.coming_soon')}
-      </div>
-    );
-  }
-
   const blanksMap = useMemo(() => {
     const map: Record<string, BlankSlot> = {};
-    for (const b of template.blanks) map[b.id] = b;
+    if (template) {
+      for (const b of template.blanks) map[b.id] = b;
+    }
     return map;
   }, [template]);
 
-  const filledCount = Object.values(blankStates).filter((b) => b.isCorrect === true).length;
-  const totalBlanks = template.blanks.length;
+  const totalBlanks = template?.blanks.length || 0;
 
   // Check a single blank
   const checkBlank = useCallback(
-    (blankId: string) => {
+    (blankId: string, customValue?: string) => {
       const blank = blanksMap[blankId];
       if (!blank) return;
 
       const state = blankStates[blankId];
-      const trimmed = state.value.trim();
+      const valToCheck = customValue !== undefined ? customValue : state.value;
+      const trimmed = valToCheck.trim();
       const isCorrect = trimmed.toLowerCase() === blank.answer.toLowerCase();
 
       setBlankStates((prev) => ({
         ...prev,
         [blankId]: {
           ...prev[blankId],
+          value: customValue !== undefined ? customValue : prev[blankId].value,
           isCorrect,
           attempts: prev[blankId].attempts + 1,
         },
@@ -98,9 +94,11 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
         setIsComplete(true);
         setActiveBlank(null);
         const elapsed = Date.now() - startTime;
-        const firstTryCorrect = Object.values(blankStates).filter(
-          (s) => s.isCorrect === true && s.attempts === 0,
-        ).length + (blankStates[blankId].attempts === 0 ? 1 : 0);
+        const firstTryCorrect = Object.entries(blankStates).reduce((count, [id, s]) => {
+          const attemptsAfter = id === blankId ? s.attempts + 1 : s.attempts;
+          const isCorrectAfter = id === blankId ? isCorrect : s.isCorrect;
+          return count + (isCorrectAfter && attemptsAfter === 1 ? 1 : 0);
+        }, 0);
 
         trackEvent('create_complete', {
           helpUsed: helpActive,
@@ -119,17 +117,35 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
       } else if (isCorrect) {
         // Auto-advance to next empty blank if this one is correct
         const nextEmpty = template?.blanks.find(
-          (b) => b.id !== blankId && blankStates[b.id]?.isCorrect !== true
+          (b) => b.id !== blankId && blankStates[b.id]?.isCorrect !== true,
         );
         if (nextEmpty) {
-          setActiveBlank(nextEmpty.id);
+          // Small delay to let the user see the green feedback before jumping
+          setTimeout(() => setActiveBlank(nextEmpty.id), 400);
         } else {
           setActiveBlank(null);
         }
       }
     },
-    [blanksMap, blankStates, helpActive, startTime, totalBlanks, trackEvent, updateProgress, template],
+    [
+      blanksMap,
+      blankStates,
+      helpActive,
+      startTime,
+      totalBlanks,
+      trackEvent,
+      updateProgress,
+      template,
+    ],
   );
+
+  if (!template) {
+    return (
+      <div className="text-center py-20 text-gray-500">{t('algorithms.detail.coming_soon')}</div>
+    );
+  }
+
+  const filledCount = Object.values(blankStates).filter((b) => b.isCorrect === true).length;
 
   // Handle typing in a blank
   const handleBlankChange = (blankId: string, value: string) => {
@@ -151,24 +167,58 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
   const handleHelp = () => {
     setHelpActive(true);
     trackEvent('create_help_activated');
-    
+
     if (!activeBlank) {
-      const firstEmpty = template?.blanks.find(b => blankStates[b.id]?.isCorrect !== true);
+      const firstEmpty = template?.blanks.find((b) => blankStates[b.id]?.isCorrect !== true);
       if (firstEmpty) {
         setActiveBlank(firstEmpty.id);
       }
     }
   };
 
-  // Drag a card into a blank
-  const handleCardClick = (blankId: string, cardValue: string) => {
-    setBlankStates((prev) => ({
-      ...prev,
-      [blankId]: { ...prev[blankId], value: cardValue, isCorrect: null },
-    }));
-    trackEvent('create_card_drag', { blankId, card: cardValue });
-    // Auto-check after dragging
-    setTimeout(() => checkBlank(blankId), 300);
+  // Handle clicking a help option
+  const handleOptionClick = (blankId: string, optionValue: string) => {
+    const blank = blanksMap[blankId];
+    if (!blank) return;
+
+    const isCorrect = optionValue.trim().toLowerCase() === blank.answer.trim().toLowerCase();
+
+    if (!isCorrect) {
+      // Mark as wrong for this specific session
+      setActiveWrongOptions((prev) => ({
+        ...prev,
+        [blankId]: new Set([...(prev[blankId] || []), optionValue]),
+      }));
+
+      // Update state to show red feedback
+      setBlankStates((prev) => ({
+        ...prev,
+        [blankId]: {
+          ...prev[blankId],
+          value: optionValue,
+          isCorrect: false,
+          attempts: prev[blankId].attempts + 1,
+        },
+      }));
+
+      trackEvent('create_option_select', { blankId, option: optionValue, correct: false });
+    } else {
+      // Correct!
+      setBlankStates((prev) => ({
+        ...prev,
+        [blankId]: {
+          ...prev[blankId],
+          value: optionValue,
+          isCorrect: true,
+          attempts: prev[blankId].attempts + 1,
+        },
+      }));
+
+      trackEvent('create_option_select', { blankId, option: optionValue, correct: true });
+
+      // Proceed with the logic (auto-advance, etc)
+      checkBlank(blankId, optionValue);
+    }
   };
 
   // Reset
@@ -181,7 +231,18 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
     setBlankStates(initial);
     setIsComplete(false);
     setHelpActive(false);
+    setActiveWrongOptions({});
     trackEvent('create_reset');
+
+    // Reset progress in the store/backend
+    updateProgress({
+      createCompleted: false,
+      createTotalTimeMs: 0,
+      createCompletedAt: null,
+      createHelpUsed: false,
+      createBlanksCorrectFirst: 0,
+      createBlanksTotal: totalBlanks,
+    });
   };
 
   // Render code line with blanks
@@ -211,7 +272,7 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
               if (!blank || !state) return null;
 
               return (
-                <span key={partIdx} className="inline-flex flex-col items-start mx-1">
+                <span key={partIdx} className="inline-flex items-center mx-1 group/blank relative">
                   <input
                     type="text"
                     value={state.value}
@@ -229,13 +290,24 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
                     }`}
                     style={{ width: `${blank.widthCh + 2}ch` }}
                   />
-                  {/* Inline feedback icon */}
-                  {state.isCorrect === true && (
-                    <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 ml-1" />
-                  )}
-                  {state.isCorrect === false && (
-                    <XCircle className="w-3 h-3 text-red-500 mt-0.5 ml-1" />
-                  )}
+                  {/* Floating Action/Feedback Icon */}
+                  <div className="absolute left-full ml-1 flex items-center">
+                    {state.isCorrect === true ? (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <button
+                        onClick={() => checkBlank(blankId)}
+                        title={t('create.check')}
+                        className={`p-1 rounded-md transition-all ${
+                          state.value.trim()
+                            ? 'text-[#269984] hover:bg-[#269984]/10 opacity-100'
+                            : 'text-gray-300 opacity-0 group-hover/blank:opacity-100'
+                        }`}
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </span>
               );
             }
@@ -321,27 +393,38 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="flex flex-wrap gap-2 p-4 rounded-2xl bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-white/5 shadow-sm"
+            className="flex flex-wrap gap-2 p-4 rounded-2xl bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-white/5 shadow-lg"
           >
-            <span className="w-full font-montserrat text-xs text-gray-500 mb-1">
-              {t('create.help_active')}:
-            </span>
-            {dragCards[activeBlank].map((card) => {
-              const isUsed = blankStates[activeBlank]?.value === card && blankStates[activeBlank]?.isCorrect === true;
+            <div className="w-full flex items-center justify-between mb-2">
+              <span className="font-montserrat text-xs font-bold text-gray-500 uppercase tracking-widest">
+                {t('create.choose_correct')}
+              </span>
+              <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded">
+                Help Mode
+              </span>
+            </div>
+            {dragCards[activeBlank].map((option) => {
+              const isCorrect =
+                blankStates[activeBlank]?.value === option &&
+                blankStates[activeBlank]?.isCorrect === true;
+              const isWrong = activeWrongOptions[activeBlank]?.has(option);
+
               return (
                 <motion.button
-                  key={card}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleCardClick(activeBlank, card)}
-                  disabled={isUsed}
-                  className={`px-4 py-2 rounded-xl font-mono text-sm border-2 transition-all cursor-pointer ${
-                    isUsed
-                      ? 'border-green-500/30 bg-green-500/10 text-green-500 opacity-50 cursor-not-allowed'
-                      : 'border-[#269984]/20 bg-[#269984]/5 text-[#269984] hover:border-[#269984] hover:bg-[#269984]/10'
+                  key={option}
+                  whileHover={!isCorrect ? { scale: 1.02 } : {}}
+                  whileTap={!isCorrect ? { scale: 0.98 } : {}}
+                  onClick={() => handleOptionClick(activeBlank, option)}
+                  disabled={isCorrect}
+                  className={`px-4 py-2 rounded-xl font-mono text-sm border-2 transition-all flex-1 min-w-[120px] text-center ${
+                    isCorrect
+                      ? 'border-green-500 bg-green-500/10 text-green-600 dark:text-green-400 cursor-default'
+                      : isWrong
+                        ? 'border-red-500 bg-red-500/10 text-red-600 dark:text-red-400'
+                        : 'border-[#269984]/20 bg-[#269984]/5 text-[#269984] hover:border-[#269984] hover:bg-[#269984]/10'
                   }`}
                 >
-                  {card}
+                  {option}
                 </motion.button>
               );
             })}
@@ -357,13 +440,9 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
           className="p-6 rounded-2xl bg-gradient-to-br from-[#269984] to-[#1f7a6a] text-white text-center shadow-2xl shadow-[#269984]/20"
         >
           <div className="text-4xl mb-3">🎉</div>
-          <h3 className="font-montserrat font-bold text-xl mb-2">
-            {t('create.all_correct')}
-          </h3>
+          <h3 className="font-montserrat font-bold text-xl mb-2">{t('create.all_correct')}</h3>
           {helpActive && (
-            <p className="font-montserrat text-sm opacity-70 mt-1">
-              {t('create.used_help')}
-            </p>
+            <p className="font-montserrat text-sm opacity-70 mt-1">{t('create.used_help')}</p>
           )}
         </motion.div>
       )}

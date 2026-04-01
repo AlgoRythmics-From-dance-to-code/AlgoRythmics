@@ -12,7 +12,17 @@ export const AlgorithmProgress: CollectionConfig = {
     group: 'Analytics',
   },
   access: {
-    create: () => true,
+    create: ({ req: { user }, data }) => {
+      // User must be authenticated
+      if (!user) return false;
+      // Admin can create anything
+      if (user.role === 'admin') return true;
+      // Normal users can only create progress records for themselves
+      if (data && data.user) {
+        return data.user === user.id;
+      }
+      return true; // We also validate in hooks as best practice but this allows backend creation on behalf of req user
+    },
     read: ({ req: { user } }) => {
       if (!user) return false;
       if (user.role === 'admin') return true;

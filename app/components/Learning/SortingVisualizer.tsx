@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SortStep } from '../../../lib/algorithms/bubbleSortSteps';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 interface SortingVisualizerProps {
   steps: SortStep[];
@@ -28,6 +29,7 @@ export default function SortingVisualizer({
   selectedIndices = [],
   className = '',
 }: SortingVisualizerProps) {
+  const { t } = useLocale();
   const visualState = steps[currentStep];
   if (!visualState) return null;
 
@@ -41,10 +43,7 @@ export default function SortingVisualizer({
         {visualState.activeIndices.length === 2 && (
           <div className="absolute top-3 left-0 right-0 flex items-end justify-center gap-1.5 sm:gap-3 px-6 sm:px-8 pointer-events-none">
             {visualState.array.map((_, idx) => (
-              <div
-                key={idx}
-                className="w-8 sm:w-14 flex items-center justify-center"
-              >
+              <div key={idx} className="w-8 sm:w-14 flex items-center justify-center">
                 {visualState.activeIndices.includes(idx) && (
                   <motion.span
                     initial={{ opacity: 0, y: -5 }}
@@ -93,7 +92,7 @@ export default function SortingVisualizer({
                 className={`w-8 sm:w-14 min-h-[20px] rounded-t-xl relative group shadow-sm ${
                   onBarClick ? 'cursor-pointer hover:brightness-110' : ''
                 } ${!isActive && !isSorted && !isSelected ? 'dark:bg-white/10' : ''}`}
-                style={{ height: `${(item.val / maxVal) * 100}%` }}
+                style={{ height: `${(item.val / maxVal) * 80}%` }}
               >
                 {/* Value Badge */}
                 <motion.span
@@ -143,7 +142,7 @@ export default function SortingVisualizer({
                 {visualState.comparisons}
               </div>
               <div className="font-montserrat text-[10px] uppercase tracking-widest text-gray-400">
-                Comparisons
+                {t('visualizer.comparisons')}
               </div>
             </div>
             <div className="w-px h-8 bg-gray-200 dark:bg-white/10" />
@@ -152,7 +151,7 @@ export default function SortingVisualizer({
                 {visualState.swapCount}
               </div>
               <div className="font-montserrat text-[10px] uppercase tracking-widest text-gray-400">
-                Swaps
+                {t('visualizer.swaps')}
               </div>
             </div>
             {visualState.pass !== undefined && (
@@ -163,7 +162,7 @@ export default function SortingVisualizer({
                     {visualState.pass + 1}
                   </div>
                   <div className="font-montserrat text-[10px] uppercase tracking-widest text-gray-400">
-                    Pass
+                    {t('visualizer.pass')}
                   </div>
                 </div>
               </>
@@ -176,19 +175,19 @@ export default function SortingVisualizer({
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-[#269984]" />
             <span className="text-xs font-montserrat font-bold text-gray-500 uppercase tracking-widest">
-              Compare
+              {t('visualizer.legend_compare')}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-orange-500" />
             <span className="text-xs font-montserrat font-bold text-gray-500 uppercase tracking-widest">
-              Swap
+              {t('visualizer.legend_swap')}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-green-500" />
             <span className="text-xs font-montserrat font-bold text-gray-500 uppercase tracking-widest">
-              Sorted
+              {t('visualizer.legend_sorted')}
             </span>
           </div>
         </div>

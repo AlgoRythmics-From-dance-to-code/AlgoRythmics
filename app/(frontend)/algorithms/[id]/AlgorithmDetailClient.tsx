@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLocale } from '../../../i18n/LocaleProvider';
@@ -9,21 +9,15 @@ import VideoPlayer from '../../../components/Learning/VideoPlayer';
 import { VIDEOS } from '../../../../lib/constants';
 import { useAlgorithmStore } from '../../../store/useAlgorithmStore';
 import { hasFullContent } from '../../../../lib/algorithms/registry';
-import { CheckCircle, Circle } from 'lucide-react';
+import { CheckCircle, Circle, Lightbulb } from 'lucide-react';
 
 // Lazy load heavy components
 const BubbleSortVisualizer = lazy(
   () => import('../../../components/Learning/BubbleSortVisualizer'),
 );
-const ControlVisualizer = lazy(
-  () => import('../../../components/Learning/ControlVisualizer'),
-);
-const CodeExercise = lazy(
-  () => import('../../../components/Learning/CodeExercise'),
-);
-const AliveVisualizer = lazy(
-  () => import('../../../components/Learning/AliveVisualizer'),
-);
+const ControlVisualizer = lazy(() => import('../../../components/Learning/ControlVisualizer'));
+const CodeExercise = lazy(() => import('../../../components/Learning/CodeExercise'));
+const AliveVisualizer = lazy(() => import('../../../components/Learning/AliveVisualizer'));
 
 // ─── Algorithm Detail Page Template ────────
 const algorithmData: Record<
@@ -183,11 +177,11 @@ function TabLoader() {
 }
 
 export default function AlgorithmDetailClient({ id }: { id: string }) {
-  const { t } = useLocale();
+  const { t, getRaw } = useLocale();
   const [activeView, setActiveView] = useState<string>('Video');
 
   const data = algorithmData[id] || {
-    name: id.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    name: id.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
     complexity: 'O(?)',
     description: t('algorithms.detail.coming_soon'),
     illAsset: 'algo_group_109.svg',
@@ -197,16 +191,52 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
   const matchingVideo = VIDEOS.find((v) => v.id.startsWith(id));
   const algoHasFullContent = hasFullContent(id);
 
-  const { toggleCompleted, isCompleted } = useAlgorithmStore();
+  const { toggleCompleted, isCompleted, algorithmProgress } = useAlgorithmStore();
   const completed = isCompleted(id);
+
+  // Auto-mark as done if all 5 steps are completed
+  useEffect(() => {
+    const progress = algorithmProgress[id];
+    if (progress && !completed) {
+      const allTabsFinished =
+        progress.videoWatched &&
+        progress.animationCompleted &&
+        progress.controlCompleted &&
+        progress.createCompleted &&
+        progress.aliveCompleted;
+
+      if (allTabsFinished) {
+        toggleCompleted(id);
+      }
+    }
+  }, [id, algorithmProgress, completed, toggleCompleted]);
 
   // Render the active tab content
   const renderTabContent = () => {
     switch (activeView) {
       case 'Video':
         return matchingVideo ? (
-          <div className="max-w-4xl mx-auto">
-            <VideoPlayer youtubeId={matchingVideo.youtubeId} title={`${data.name} Video`} />
+          <div className="max-w-4xl mx-auto space-y-8">
+            <VideoPlayer
+              youtubeId={matchingVideo.youtubeId}
+              algorithmId={id}
+              title={`${data.name} Video`}
+            />
+
+            {/* Simple Explanation */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-[#F0FBF9] dark:bg-[#112220] border border-[#269984]/20 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="flex items-center gap-3 mb-4 text-[#269984]">
+                <div className="p-2 rounded-xl bg-white dark:bg-black/20 shadow-sm">
+                  <Lightbulb className="w-5 h-5" />
+                </div>
+                <h3 className="font-montserrat font-bold text-lg sm:text-xl">
+                  {t('algorithms.detail.simple_explanation')}
+                </h3>
+              </div>
+              <p className="font-montserrat text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed max-w-3xl">
+                {t(`algorithms.list.${id}.description`)}
+              </p>
+            </div>
           </div>
         ) : null;
 
@@ -375,28 +405,36 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
           {renderTabContent()}
         </div>
 
-        {/* Steps */}
-        <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-6 mt-16 md:mt-24">
-          {t('algorithms.detail.step_by_step')}
-        </h2>
-        <div className="space-y-4 max-w-2xl">
-          {data.steps.map((step, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-4 p-4 sm:p-5 rounded-xl bg-[#F8F8F8] dark:bg-[#1a1a1a]"
-            >
-              <div
-                className="flex items-center justify-center rounded-full font-montserrat font-bold text-white flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 text-sm"
-                style={{ backgroundColor: '#269984' }}
-              >
-                {i + 1}
+        {(() => {
+          const currentGuides = getRaw(`algorithms.guides.${activeView.toLowerCase()}`);
+          const displaySteps = Array.isArray(currentGuides) ? currentGuides : data.steps;
+
+          return (
+            <>
+              <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-6 mt-16 md:mt-24">
+                {t('algorithms.detail.step_by_step')}
+              </h2>
+              <div className="space-y-4 max-w-2xl">
+                {displaySteps.map((step: string, i: number) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-4 p-4 sm:p-5 rounded-xl bg-[#F8F8F8] dark:bg-[#1a1a1a]"
+                  >
+                    <div
+                      className="flex items-center justify-center rounded-full font-montserrat font-bold text-white flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 text-sm"
+                      style={{ backgroundColor: '#269984' }}
+                    >
+                      {i + 1}
+                    </div>
+                    <p className="font-montserrat text-sm sm:text-base text-black dark:text-white pt-1.5">
+                      {step}
+                    </p>
+                  </div>
+                ))}
               </div>
-              <p className="font-montserrat text-sm sm:text-base text-black dark:text-white pt-1.5">
-                {step}
-              </p>
-            </div>
-          ))}
-        </div>
+            </>
+          );
+        })()}
       </div>
     </div>
   );
