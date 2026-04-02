@@ -35,7 +35,7 @@ export default function middleware(request: NextRequest) {
   }
 
   // 4. Admin Panel Bypass:
-  // Payload CMS handles its own internal authentication logic. 
+  // Payload CMS handles its own internal authentication logic.
   // We bypass middleware for all /admin routes to prevent interfering with its internal redirects.
   if (isAdmin) {
     return NextResponse.next();

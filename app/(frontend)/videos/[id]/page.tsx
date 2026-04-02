@@ -52,7 +52,7 @@ export default function VideoDetailPage({ params }: { params: { id: string } }) 
       categoryIcon={video.categoryId === 'sorting' ? '📊' : '🔍'}
     >
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-700">
-        <VideoPlayer youtubeId={video.youtubeId} title={title} />
+        <VideoPlayer youtubeId={video.youtubeId} algorithmId={algoBaseId} title={title} />
 
         {/* Additional Info Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-5">

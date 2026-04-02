@@ -1,14 +1,35 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAnalytics } from '../../hooks/useAnalytics';
+import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 
 interface VideoPlayerProps {
   youtubeId: string;
+  algorithmId: string;
   title?: string;
 }
 
-export default function VideoPlayer({ youtubeId, title }: VideoPlayerProps) {
+export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const { updateProgress } = useAnalytics(algorithmId, 'video');
+  const { algorithmProgress } = useAlgorithmStore();
+
+  const isWatched = algorithmProgress[algorithmId]?.videoWatched;
+
+  // Mark as watched 10 seconds after opening the video or when already watched in store
+  useEffect(() => {
+    if (isWatched) return;
+
+    const timer = setTimeout(() => {
+      updateProgress({
+        videoWatched: true,
+        videoCompletedAt: new Date().toISOString(),
+      });
+    }, 10000); // 10 seconds of "watching" is enough to count
+
+    return () => clearTimeout(timer);
+  }, [algorithmId, updateProgress, isWatched]);
 
   // If youtubeId is a placeholder, show a message instead of a broken iframe
   const isPlaceholder = youtubeId.startsWith('placeholder_');

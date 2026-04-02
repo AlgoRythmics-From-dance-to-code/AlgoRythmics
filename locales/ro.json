@@ -2,7 +2,10 @@
   "brand": "AlgoRythmics",
   "common": {
     "completed": "Finalizat",
-    "all": "Toate"
+    "all": "Toate",
+    "cancel": "Anulează",
+    "restart": "Repornește",
+    "confirm": "Confirmă"
   },
   "nav": {
     "home": "Acasă",
@@ -309,9 +312,38 @@
       "complexity": "Complexitate",
       "mark_as_done": "Marchează ca terminat",
       "completed": "Finalizat",
+      "simple_explanation": "Explicație simplă",
       "step_by_step": "Ghid pas cu pas",
       "coming_soon": "Detaliile algoritmului vor fi disponibile în curând.",
-      "view_coming_soon": "Conținutul {view} pentru {name} — în curând"
+      "view_coming_soon": "Conținutul {view} pentru {name} — în curând",
+      "redo_confirm": "Acest pas este deja finalizat. Reluarea acestuia va suprascrie rezultatele anterioare. Doriți să reporniți?"
+    },
+    "guides": {
+      "video": [
+        "Urmăriți cu atenție mișcările dansatorilor.",
+        "Înțelegeți interacțiunea dintre personaje.",
+        "Urmăriți cum elementele alunecă la locul lor conform ritmului."
+      ],
+      "animation": [
+        "Urmărește mișcarea barelor vizuale.",
+        "Observă semnificația culorilor (comparare, interschimbare).",
+        "Citește textele explicative la fiecare pas."
+      ],
+      "control": [
+        "Selectează două elemente adiacente dând clic pe ele.",
+        "Decide următorul pas corect (Compară, Interschimbă sau Rămâne).",
+        "Încearcă să sortezi întregul vector cu cât mai puține greșeli."
+      ],
+      "create": [
+        "Găsește părțile care lipsesc în șablonul de cod.",
+        "Dă clic pe spațiile libere și selectează opțiunea corectă de mai jos.",
+        "Verdele indică succesul, roșul indică o greșeală. Completează-le pe toate!"
+      ],
+      "alive": [
+        "Trage blocurile logice în secvența corectă.",
+        "Sau comută la modul cod și scrie algoritmul manual.",
+        "Rulează programul pentru a verifica dacă sortează corect vectorul."
+      ]
     },
     "title": "Toate algoritmele",
     "categories": {
@@ -439,5 +471,59 @@
       "linear-search-hip-hop": "Hip Hop căutare liniară",
       "binary-search-swing": "Swing căutare binară"
     }
+  },
+  "visualizer": {
+    "comparing": "Comparare {a} și {b}...",
+    "swapping": "Interschimbare {a} ↔ {b}",
+    "sorted_element": "{value} este acum sortat!",
+    "step_counter": "Pasul {current} din {total}",
+    "comparisons": "Comparații",
+    "swaps": "Interschimbări",
+    "pass": "Trecere",
+    "legend_compare": "Comparare",
+    "legend_swap": "Interschimbare",
+    "legend_sorted": "Sortat"
+  },
+  "control": {
+    "select_pair": "Selectează două elemente adiacente pentru comparare",
+    "correct": "Corect!",
+    "incorrect": "Nu chiar — încearcă din nou!",
+    "hint": "Indiciu",
+    "mistakes": "Greșeli",
+    "summary": "Ai nimerit {correct} din {total} pași din prima încercare!",
+    "well_done": "Vectorul este sortat!",
+    "compare": "Compară",
+    "swap": "Interschimbă",
+    "stay": "Următorul",
+    "reset": "Resetare"
+  },
+  "create": {
+    "title": "Completează codul",
+    "choose_correct": "Alege varianta corectă",
+    "check": "Verifică",
+    "reset": "Resetare",
+    "help": "Am nevoie de ajutor",
+    "help_active": "Ajutor activ — trage cardurile în spațiile goale",
+    "correct_answer": "Corect!",
+    "wrong_answer": "Încearcă din nou!",
+    "all_correct": "Toate câmpurile completate corect!",
+    "progress": "{filled} din {total} completate",
+    "used_help": "Completat cu ajutor"
+  },
+  "alive": {
+    "title": "Scrie algoritmul",
+    "placeholder": "Scrie implementarea bubble sort aici...\n\nStructură exemplu:\nfor (let i = 0; i < arr.length; i++) {\n  for (let j = 0; ...) {\n    if (...) {\n      // interschimbare\n    }\n  }\n}",
+    "run": "Rulează",
+    "clear": "Șterge",
+    "help": "Comută la blocuri",
+    "help_active": "Mod blocuri — pune blocurile în ordine",
+    "success": "Algoritmul tău este corect!",
+    "missing": "Lipsă: {element}",
+    "error": "Ceva nu este în regulă — verifică ordinea și elimină blocurile greșite",
+    "score": "Scor",
+    "used_help": "Completat cu ajutorul blocurilor",
+    "available_blocks": "Blocuri disponibile",
+    "your_program": "Programul tău",
+    "reference": "Elemente necesare"
   }
 }

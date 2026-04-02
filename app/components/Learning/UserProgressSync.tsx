@@ -49,6 +49,7 @@ export default function UserProgressSync() {
           hydrate({
             completedIds: data.completedIds,
             visualizerProgress: data.visualizerProgress,
+            algorithmProgress: data.algorithmProgress,
           });
           lastSynced.current = {
             ids: JSON.stringify(data.completedIds),

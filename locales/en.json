@@ -2,7 +2,10 @@
   "brand": "AlgoRythmics",
   "common": {
     "completed": "Completed",
-    "all": "All"
+    "all": "All",
+    "cancel": "Cancel",
+    "restart": "Restart",
+    "confirm": "Confirm"
   },
   "nav": {
     "home": "Home",
@@ -309,9 +312,38 @@
       "complexity": "Complexity",
       "mark_as_done": "Mark as done",
       "completed": "Completed",
+      "simple_explanation": "Simple Explanation",
       "step_by_step": "Step-by-Step Guide",
       "coming_soon": "Algorithm details coming soon.",
-      "view_coming_soon": "{view} content for {name} — coming soon"
+      "view_coming_soon": "{view} content for {name} — coming soon",
+      "redo_confirm": "This step is already completed. Redoing it will overwrite your previous results. Do you want to restart?"
+    },
+    "guides": {
+      "video": [
+        "Simple explanation: elements are compared in pairs and swapped if they are in the wrong order.",
+        "Watch how the dancers move to the rhythm; every move represents a logical step.",
+        "The goal is to let the largest elements 'bubble up' to the end of the array."
+      ],
+      "animation": [
+        "Follow the automatic movement of the visual bars on the screen.",
+        "Colors help distinguish between comparisons and swap operations.",
+        "Help: Use the control buttons to adjust speed or manually step through the process."
+      ],
+      "control": [
+        "Take an active role in sorting! Click two adjacent elements to compare them.",
+        "Decide at each step whether to swap the elements or keep them as they are.",
+        "Help: If you get stuck, click the lightbulb icon to see the next correct move."
+      ],
+      "create": [
+        "Type the missing parts of the code manually to complete the algorithm.",
+        "Press Enter or click the check icon to verify your answer.",
+        "Help: Click the 'I Need Help' button to see multiple-choice options for the selected field."
+      ],
+      "alive": [
+        "Write the algorithm completely on your own! Use your coding logic to solve the task.",
+        "Pay attention to variable names and loop boundaries for correct software execution.",
+        "Help: Switch to block mode if you want to assemble the logic units visually."
+      ]
     },
     "title": "All algorithms",
     "categories": {
@@ -324,15 +356,15 @@
     "list": {
       "bubble-sort": {
         "name": "Bubble sort",
-        "description": "A form of sorting by exchanging that simply interchanges pairs of elements that are out of order in a sequence of passes through the file, until the list is sorted."
+        "description": "Bubble sort's goal is to move the largest elements one by one to the end of the list (like rising bubbles), comparing and swapping adjacent items in pairs."
       },
       "insertion-sort": {
         "name": "Insertion sort",
-        "description": "Insertion sort is a simple sorting algorithm that builds the final sorted array one item at a time. It is much less efficient on large lists than more advanced algorithms."
+        "description": "Insertion sort works like sorting playing cards in your hand: each new element is inserted into its correct position within the already sorted portion."
       },
       "selection-sort": {
         "name": "Selection sort",
-        "description": "Selection sort is a sorting algorithm, specifically an in-place comparison sort. It has O(n²) time complexity, making it inefficient on large lists."
+        "description": "Selection sort finds the smallest element from the unsorted part in each pass and moves it to the beginning of the sorted part."
       },
       "shell-sort": {
         "name": "Shell sort",
@@ -439,5 +471,59 @@
       "linear-search-hip-hop": "Linear Search Hip Hop",
       "binary-search-swing": "Binary Search Swing"
     }
+  },
+  "visualizer": {
+    "comparing": "Comparing {a} and {b}...",
+    "swapping": "Swapping {a} ↔ {b}",
+    "sorted_element": "{value} is now sorted!",
+    "step_counter": "Step {current} of {total}",
+    "comparisons": "Comparisons",
+    "swaps": "Swaps",
+    "pass": "Pass",
+    "legend_compare": "Compare",
+    "legend_swap": "Swap",
+    "legend_sorted": "Sorted"
+  },
+  "control": {
+    "select_pair": "Select two adjacent elements to compare",
+    "correct": "Correct!",
+    "incorrect": "Not quite — try again!",
+    "hint": "Hint",
+    "mistakes": "Mistakes",
+    "summary": "You got {correct} out of {total} steps right on the first try!",
+    "well_done": "The array is sorted!",
+    "compare": "Compare",
+    "swap": "Swap",
+    "stay": "Next",
+    "reset": "Reset"
+  },
+  "create": {
+    "title": "Complete the Code",
+    "choose_correct": "Choose the correct option",
+    "check": "Check",
+    "reset": "Reset",
+    "help": "I Need Help",
+    "help_active": "Help active — drag cards into blanks",
+    "correct_answer": "Correct!",
+    "wrong_answer": "Try again!",
+    "all_correct": "All blanks filled correctly!",
+    "progress": "{filled} of {total} filled",
+    "used_help": "Completed with help"
+  },
+  "alive": {
+    "title": "Write the Algorithm",
+    "placeholder": "Write your bubble sort implementation here...\n\nExample structure:\nfor (let i = 0; i < arr.length; i++) {\n  for (let j = 0; ...) {\n    if (...) {\n      // swap\n    }\n  }\n}",
+    "run": "Run",
+    "clear": "Clear",
+    "help": "Switch to Blocks",
+    "help_active": "Block mode — drag blocks in order",
+    "success": "Your algorithm is correct!",
+    "missing": "Missing: {element}",
+    "error": "Something went wrong — check the order and remove wrong blocks",
+    "score": "Score",
+    "used_help": "Completed with block help",
+    "available_blocks": "Available Blocks",
+    "your_program": "Your Program",
+    "reference": "Required elements"
   }
 }

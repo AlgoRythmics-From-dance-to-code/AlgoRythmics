@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url';
 import sharp from 'sharp';
 
 import { Users } from './collections/Users';
+import { LearningEvents } from './collections/LearningEvents';
+import { AlgorithmProgress } from './collections/AlgorithmProgress';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -22,7 +24,7 @@ export default buildConfig({
     'https://nextjs-frontend-three-eta.vercel.app',
   ].filter(Boolean),
   cookiePrefix: 'algorythmics-admin',
-  collections: [Users],
+  collections: [Users, LearningEvents, AlgorithmProgress],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'fallback-secret',
   typescript: {
