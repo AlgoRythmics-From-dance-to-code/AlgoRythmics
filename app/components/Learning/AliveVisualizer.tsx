@@ -14,7 +14,7 @@ import {
 import { useAlgorithmStore, type AlgorithmProgress } from '../../store/useAlgorithmStore';
 
 const DROP_THRESHOLD = 50; // pixels
-const EMPTY_PROGRESS: any = {};
+const EMPTY_PROGRESS: Readonly<Partial<AlgorithmProgress>> = Object.freeze({});
 
 interface AliveVisualizerProps {
   algorithmId: string;

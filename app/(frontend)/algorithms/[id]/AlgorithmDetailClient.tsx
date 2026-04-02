@@ -7,7 +7,7 @@ import { useLocale } from '../../../i18n/LocaleProvider';
 
 import VideoPlayer from '../../../components/Learning/VideoPlayer';
 import { VIDEOS } from '../../../../lib/constants';
-import { useAlgorithmStore } from '../../../store/useAlgorithmStore';
+import { useAlgorithmStore, type AlgorithmProgress } from '../../../store/useAlgorithmStore';
 import { hasFullContent } from '../../../../lib/algorithms/registry';
 import { CheckCircle, Circle, Lightbulb } from 'lucide-react';
 import { ConfirmationModal } from '../../../components/Learning/ConfirmationModal';
@@ -175,7 +175,7 @@ function TabLoader() {
   );
 }
 
-const EMPTY_PROGRESS: any = {};
+const EMPTY_PROGRESS: Readonly<Partial<AlgorithmProgress>> = Object.freeze({});
 
 export default function AlgorithmDetailClient({ id }: { id: string }) {
   const { t, getRaw } = useLocale();
@@ -197,7 +197,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
   // Optimized Selectors to avoid full store re-renders
   const toggleCompleted = useAlgorithmStore((s) => s.toggleCompleted);
   const isCompleted = useAlgorithmStore((s) => s.isCompleted);
-  const algorithmProgress = useAlgorithmStore((s) => s.algorithmProgress);
+  const progress = useAlgorithmStore((s) => s.algorithmProgress[id] || EMPTY_PROGRESS);
   const resetAlgorithmProgressTab = useAlgorithmStore((s) => s.resetAlgorithmProgressTab);
 
   const completed = isCompleted(id);
@@ -209,7 +209,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
     return ['Video', 'Animation'] as const;
   }, [id]);
 
-  const progress = useMemo(() => algorithmProgress[id] || EMPTY_PROGRESS, [algorithmProgress, id]);
+
 
   const getViewStatus = useCallback(
     (view: string) => {
