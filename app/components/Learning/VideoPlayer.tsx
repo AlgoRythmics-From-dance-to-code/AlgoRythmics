@@ -15,9 +15,10 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
   const { updateProgress } = useAnalytics(algorithmId, 'video');
   const { algorithmProgress } = useAlgorithmStore();
 
+  const isWatched = algorithmProgress[algorithmId]?.videoWatched;
+
   // Mark as watched 10 seconds after opening the video or when already watched in store
   useEffect(() => {
-    const isWatched = algorithmProgress[algorithmId]?.videoWatched;
     if (isWatched) return;
 
     const timer = setTimeout(() => {
@@ -28,7 +29,7 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
     }, 10000); // 10 seconds of "watching" is enough to count
 
     return () => clearTimeout(timer);
-  }, [algorithmId, updateProgress, algorithmProgress]);
+  }, [algorithmId, updateProgress, isWatched]);
 
   // If youtubeId is a placeholder, show a message instead of a broken iframe
   const isPlaceholder = youtubeId.startsWith('placeholder_');

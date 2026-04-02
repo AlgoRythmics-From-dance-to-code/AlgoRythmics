@@ -12,9 +12,12 @@ export const LearningEvents: CollectionConfig = {
     group: 'Analytics',
   },
   access: {
-    create: ({ req: { user } }) => {
+    create: ({ req: { user }, data }) => {
       // Must be authenticated to create learning events
-      return Boolean(user);
+      if (!user) return false;
+      // Enforce data.user === req.user.id for non-admins
+      if (user.role !== 'admin' && data?.user !== user.id) return false;
+      return true;
     },
     read: ({ req: { user } }) => {
       if (!user) return false;

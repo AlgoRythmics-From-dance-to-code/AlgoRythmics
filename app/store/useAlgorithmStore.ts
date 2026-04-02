@@ -29,6 +29,7 @@ export interface AlgorithmProgress {
   aliveCodeSubmissions?: number;
   aliveLastCode?: string;
   aliveTotalTimeMs?: number;
+  aliveLastActivityAt?: string;
 }
 
 interface AlgorithmState {
@@ -50,6 +51,7 @@ interface AlgorithmState {
   // Analytics Progress Cache
   algorithmProgress: Record<string, AlgorithmProgress>;
   updateAlgorithmProgress: (id: string, updates: Partial<AlgorithmProgress>) => void;
+  resetAlgorithmProgressTab: (id: string, tab: string) => void;
 
   // Hydration
   hydrate: (data: {
@@ -57,6 +59,9 @@ interface AlgorithmState {
     visualizerProgress?: Record<string, { step: number; speed: number }>;
     algorithmProgress?: Record<string, AlgorithmProgress>;
   }) => void;
+
+  isInteractionLocked: boolean;
+  setInteractionLocked: (locked: boolean) => void;
 
   // Reset
   resetFilters: () => void;
@@ -113,6 +118,47 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         });
       },
 
+      resetAlgorithmProgressTab: (id, tab) => {
+        const { algorithmProgress } = get();
+        const current = algorithmProgress[id] || {};
+        const updates: Partial<AlgorithmProgress> = {};
+
+        switch (tab.toLowerCase()) {
+          case 'video':
+            updates.videoWatched = false;
+            updates.videoCompletedAt = null;
+            break;
+          case 'animation':
+            updates.animationCompleted = false;
+            updates.animationCompletedAt = null;
+            break;
+          case 'control':
+            updates.controlCompleted = false;
+            updates.controlBestScore = 0;
+            updates.controlMistakes = 0;
+            updates.controlCompletedAt = null;
+            break;
+          case 'create':
+            updates.createCompleted = false;
+            updates.createBlanksCorrectFirst = 0;
+            updates.createBlanksTotal = 0;
+            updates.createCompletedAt = null;
+            break;
+          case 'alive':
+            updates.aliveCompleted = false;
+            updates.aliveBestScore = 0;
+            updates.aliveCompletedAt = null;
+            break;
+        }
+
+        set({
+          algorithmProgress: {
+            ...algorithmProgress,
+            [id]: { ...current, ...updates },
+          },
+        });
+      },
+
       hydrate: (data) => {
         if (!data) return;
         set((state) => ({
@@ -122,6 +168,9 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         }));
       },
 
+      isInteractionLocked: false,
+      setInteractionLocked: (locked) => set({ isInteractionLocked: locked }),
+
       resetFilters: () => set({ activeCategory: 'all', searchQuery: '' }),
       clearStore: () =>
         set({
@@ -130,6 +179,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
           algorithmProgress: {},
           activeCategory: 'all',
           searchQuery: '',
+          isInteractionLocked: false,
         }),
     }),
     {

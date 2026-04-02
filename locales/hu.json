@@ -2,7 +2,10 @@
   "brand": "AlgoRythmics",
   "common": {
     "completed": "Teljesítve",
-    "all": "Összes"
+    "all": "Összes",
+    "cancel": "Mégse",
+    "restart": "Újrakezdés",
+    "confirm": "Megerősítés"
   },
   "nav": {
     "home": "Kezdőlap",
@@ -312,7 +315,8 @@
       "simple_explanation": "Egyszerű elmagyarázás",
       "step_by_step": "Lépésről lépésre útmutató",
       "coming_soon": "Algoritmus részletei hamarosan.",
-      "view_coming_soon": "{view} tartalom {name} algoritmushoz — hamarosan"
+      "view_coming_soon": "{view} tartalom {name} algoritmushoz — hamarosan",
+      "redo_confirm": "Ez a lépés már teljesítve van. Az újrakezdés felülírja a korábbi eredményeidet. Szeretnéd újraindítani?"
     },
     "guides": {
       "video": [
@@ -495,6 +499,7 @@
   },
   "create": {
     "title": "Egészítsd ki a kódot",
+    "choose_correct": "Válaszd ki a helyes opciót",
     "check": "Ellenőrzés",
     "reset": "Újrakezdés",
     "help": "Segítség kell",

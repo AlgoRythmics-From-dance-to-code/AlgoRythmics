@@ -13,6 +13,8 @@ interface SortingVisualizerProps {
   onBarClick?: (index: number) => void;
   /** Indices the user has selected (Control mode) */
   selectedIndices?: number[];
+  /** Whether interaction is disabled (e.g. frozen for decision) */
+  disabled?: boolean;
   /** Extra classes for the container */
   className?: string;
 }
@@ -27,6 +29,7 @@ export default function SortingVisualizer({
   speed,
   onBarClick,
   selectedIndices = [],
+  disabled = false,
   className = '',
 }: SortingVisualizerProps) {
   const { t } = useLocale();
@@ -84,13 +87,13 @@ export default function SortingVisualizer({
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{
                   type: 'spring',
-                  stiffness: 200,
-                  damping: 25,
-                  layout: { duration: 0.5 / speed },
+                  stiffness: 400,
+                  damping: 30,
+                  layout: { duration: 0.3 / speed },
                 }}
-                onClick={onBarClick ? () => onBarClick(idx) : undefined}
+                onClick={onBarClick && !disabled ? () => onBarClick(idx) : undefined}
                 className={`w-8 sm:w-14 min-h-[20px] rounded-t-xl relative group shadow-sm ${
-                  onBarClick ? 'cursor-pointer hover:brightness-110' : ''
+                  onBarClick && !disabled ? 'cursor-pointer hover:brightness-110' : ''
                 } ${!isActive && !isSorted && !isSelected ? 'dark:bg-white/10' : ''}`}
                 style={{ height: `${(item.val / maxVal) * 80}%` }}
               >
@@ -111,7 +114,9 @@ export default function SortingVisualizer({
                 </motion.span>
 
                 {/* Hover glow */}
-                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-t-xl pointer-events-none" />
+                {!disabled && (
+                  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-t-xl pointer-events-none" />
+                )}
               </motion.div>
             );
           })}

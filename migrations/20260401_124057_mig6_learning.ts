@@ -100,8 +100,8 @@ export async function down({ db }: MigrateDownArgs): Promise<void> {
   DROP TABLE "learning_events" CASCADE;
   DROP TABLE "algorithm_progress" CASCADE;
   
-  DROP INDEX "payload_locked_documents_rels_learning_events_id_idx";
-  DROP INDEX "payload_locked_documents_rels_algorithm_progress_id_idx";
+  DROP INDEX IF EXISTS "payload_locked_documents_rels_learning_events_id_idx";
+  DROP INDEX IF EXISTS "payload_locked_documents_rels_algorithm_progress_id_idx";
   ALTER TABLE "users" DROP COLUMN "learning_stats_total_time_spent_ms";
   ALTER TABLE "users" DROP COLUMN "learning_stats_total_algorithms_started";
   ALTER TABLE "users" DROP COLUMN "learning_stats_total_algorithms_completed";

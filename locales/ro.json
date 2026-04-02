@@ -2,7 +2,10 @@
   "brand": "AlgoRythmics",
   "common": {
     "completed": "Finalizat",
-    "all": "Toate"
+    "all": "Toate",
+    "cancel": "Anulează",
+    "restart": "Repornește",
+    "confirm": "Confirmă"
   },
   "nav": {
     "home": "Acasă",
@@ -309,9 +312,11 @@
       "complexity": "Complexitate",
       "mark_as_done": "Marchează ca terminat",
       "completed": "Finalizat",
+      "simple_explanation": "Explicație simplă",
       "step_by_step": "Ghid pas cu pas",
       "coming_soon": "Detaliile algoritmului vor fi disponibile în curând.",
-      "view_coming_soon": "Conținutul {view} pentru {name} — în curând"
+      "view_coming_soon": "Conținutul {view} pentru {name} — în curând",
+      "redo_confirm": "Acest pas este deja finalizat. Reluarea acestuia va suprascrie rezultatele anterioare. Doriți să reporniți?"
     },
     "guides": {
       "video": [
@@ -488,12 +493,13 @@
     "summary": "Ai nimerit {correct} din {total} pași din prima încercare!",
     "well_done": "Vectorul este sortat!",
     "compare": "Compară",
-    "swap": "Ininterschimbă",
+    "swap": "Interschimbă",
     "stay": "Următorul",
     "reset": "Resetare"
   },
   "create": {
     "title": "Completează codul",
+    "choose_correct": "Alege varianta corectă",
     "check": "Verifică",
     "reset": "Resetare",
     "help": "Am nevoie de ajutor",

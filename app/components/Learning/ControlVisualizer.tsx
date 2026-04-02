@@ -33,6 +33,18 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
   const [isComplete, setIsComplete] = useState(false);
   const [attemptedWrong, setAttemptedWrong] = useState(false);
   const [interactionMode, setInteractionMode] = useState<'select' | 'decide'>('select');
+  const { setInteractionLocked } = useAlgorithmStore();
+
+  // Sync lock with interaction mode
+  React.useEffect(() => {
+    setInteractionLocked(interactionMode === 'decide');
+  }, [interactionMode, setInteractionLocked]);
+
+  // Unlock on unmount
+  React.useEffect(() => {
+    return () => setInteractionLocked(false);
+  }, [setInteractionLocked]);
+
   const startTime = useMemo(() => Date.now(), []);
   const currentExpected = steps[expectedStepIndex];
   const isFinished = expectedStepIndex >= steps.length - 1;
@@ -40,7 +52,7 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
   // Handle bar click — select elements
   const handleBarClick = useCallback(
     (index: number) => {
-      if (isComplete || isFinished) return;
+      if (isComplete || isFinished || interactionMode === 'decide') return;
 
       trackEvent('control_select', { index });
 
@@ -55,7 +67,7 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
       });
       setFeedback(null);
     },
-    [isComplete, isFinished, trackEvent],
+    [isComplete, isFinished, trackEvent, interactionMode],
   );
 
   // Check the user's selection against the expected step
@@ -88,7 +100,7 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
 
       setTimeout(() => {
         setFeedback(null);
-      }, 1200);
+      }, 600);
     }
   }, [selectedIndices, currentExpected, trackEvent, expectedStepIndex]);
 
@@ -123,14 +135,16 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
           if (advanceIdx >= steps.length) {
             setIsComplete(true);
             const elapsed = Date.now() - startTime;
+            const nextCorrectFirstTry = correctFirstTry + (!attemptedWrong ? 1 : 0);
+            const nextTotalCorrect = totalCorrect + 1;
             trackEvent('control_complete', {
-              score: Math.round((correctFirstTry / totalCorrect) * 100) || 100,
+              score: Math.round((nextCorrectFirstTry / nextTotalCorrect) * 100) || 100,
               mistakes,
               timeMs: elapsed,
             });
             updateProgress({
               controlCompleted: true,
-              controlBestScore: Math.round(((correctFirstTry + 1) / (totalCorrect + 1)) * 100),
+              controlBestScore: Math.round((nextCorrectFirstTry / nextTotalCorrect) * 100),
               controlMistakes: mistakes,
               controlCompletedAt: new Date().toISOString(),
             });
@@ -141,13 +155,13 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
           setFeedback(null);
           setAttemptedWrong(false);
           setInteractionMode('select');
-        }, 600);
+        }, 150);
       } else {
         setFeedback('incorrect');
         setMistakes((m) => m + 1);
         setAttemptedWrong(true);
         trackEvent('control_decision', { action, isCorrect: false, step: expectedStepIndex });
-        setTimeout(() => setFeedback(null), 1200);
+        setTimeout(() => setFeedback(null), 600);
       }
     },
     [
@@ -210,11 +224,12 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
       {
         ...step,
         activeIndices: interactionMode === 'decide' ? selectedIndices : [],
+        sortedIndices: isComplete ? step.array.map((_, i) => i) : step.sortedIndices,
         swapping: false,
-        description: undefined,
+        description: isComplete ? t('visualizer.sorted_complete') : step.description,
       },
     ];
-  }, [steps, expectedStepIndex, interactionMode, selectedIndices]);
+  }, [steps, expectedStepIndex, interactionMode, selectedIndices, isComplete, t]);
 
   if (!algo || steps.length === 0) {
     return (
@@ -236,9 +251,10 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         <SortingVisualizer
           steps={displaySteps}
           currentStep={0}
-          speed={1}
+          speed={2.5}
           onBarClick={handleBarClick}
           selectedIndices={selectedIndices}
+          disabled={interactionMode === 'decide'}
         />
       )}
 
@@ -299,7 +315,7 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
             {t('control.compare') || 'Compare'}
           </button>
         ) : (
-          <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-300">
+          <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-150">
             <button
               onClick={() => handleDecision('swap')}
               className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-orange-500 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95"
@@ -324,7 +340,8 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         </button>
         <button
           onClick={handleReset}
-          className="p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400 transition-all active:scale-90"
+          disabled={interactionMode === 'decide'}
+          className="p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400 transition-all active:scale-90 disabled:opacity-20 disabled:cursor-not-allowed"
           title="Reset"
         >
           <RotateCcw className="w-5 h-5" />

@@ -63,6 +63,10 @@ export async function POST(req: Request) {
       );
     }
 
+    // Ignore identity fields from updates to prevent overriding
+    delete updates.user;
+    delete updates.algorithmId;
+
     const payload = await getPayloadInstance();
     const userId = Number(session.user.id);
 

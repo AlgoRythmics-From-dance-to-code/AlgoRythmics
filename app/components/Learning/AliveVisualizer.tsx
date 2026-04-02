@@ -11,7 +11,7 @@ import {
   analyzeCode,
   type CodeAnalysisResult,
 } from '../../../lib/algorithms/codeAnalysis';
-import type { AlgorithmProgress } from '../../store/useAlgorithmStore';
+import { useAlgorithmStore, type AlgorithmProgress } from '../../store/useAlgorithmStore';
 
 // ─── Constants ─────────────────────────────────────────────────
 const DROP_THRESHOLD = 50; // pixels
@@ -25,6 +25,7 @@ type Mode = 'code' | 'nodes';
 export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
   const { t } = useLocale();
   const { trackEvent, updateProgress } = useAnalytics(algorithmId, 'alive');
+  const progress = useAlgorithmStore((state) => state.algorithmProgress[algorithmId] || {});
 
   const [mode, setMode] = useState<Mode>('code');
   const [helpUsed, setHelpUsed] = useState(false);
@@ -37,6 +38,7 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
           algorithmId={algorithmId}
           trackEvent={trackEvent}
           updateProgress={updateProgress}
+          progress={progress}
           startTime={startTime}
           helpUsed={helpUsed}
           onSwitchToNodes={() => {
@@ -65,6 +67,7 @@ interface CodeModeProps {
   algorithmId: string;
   trackEvent: (type: string, data?: Record<string, unknown>) => void;
   updateProgress: (updates: Partial<AlgorithmProgress>) => void;
+  progress: Partial<AlgorithmProgress>;
   startTime: number;
   helpUsed: boolean;
   onSwitchToNodes: () => void;
@@ -75,6 +78,7 @@ function CodeMode({
   algorithmId,
   trackEvent,
   updateProgress,
+  progress,
   startTime,
   helpUsed,
   onSwitchToNodes,
@@ -102,6 +106,8 @@ function CodeMode({
       attempt: submissions + 1,
     });
 
+    const bestScore = Math.max(Number(result?.score || 0), analysis.score);
+
     if (analysis.isCorrect) {
       trackEvent('alive_code_success', {
         code,
@@ -113,7 +119,7 @@ function CodeMode({
         aliveHelpUsed: helpUsed,
         aliveCodeSubmissions: submissions + 1,
         aliveLastCode: code,
-        aliveBestScore: 100,
+        aliveBestScore: bestScore,
         aliveTotalTimeMs: Date.now() - startTime,
         aliveCompletedAt: new Date().toISOString(),
       });
@@ -122,8 +128,31 @@ function CodeMode({
         missing: analysis.missing,
         score: analysis.score,
       });
+
+      const isPartiallyCorrect = analysis.score > 0;
+      const isNewlyCompleted = isPartiallyCorrect && !progress?.aliveCompleted;
+
+      updateProgress({
+        aliveCompleted: isPartiallyCorrect || (progress?.aliveCompleted ?? false),
+        aliveLastCode: code,
+        aliveBestScore: bestScore,
+        aliveCodeSubmissions: submissions + 1,
+        aliveLastActivityAt: new Date().toISOString(),
+        ...(isNewlyCompleted ? { aliveCompletedAt: new Date().toISOString() } : {}),
+      });
     }
-  }, [code, patterns, algorithmId, submissions, startTime, helpUsed, trackEvent, updateProgress]);
+  }, [
+    code,
+    patterns,
+    algorithmId,
+    submissions,
+    startTime,
+    helpUsed,
+    trackEvent,
+    updateProgress,
+    result?.score,
+    progress?.aliveCompleted,
+  ]);
 
   const handleClear = () => {
     setCode('');
@@ -470,12 +499,16 @@ function NodeMode({ algorithmId, trackEvent, updateProgress, startTime, t }: Nod
       updateProgress({
         aliveCompleted: true,
         aliveHelpUsed: true,
+        aliveCodeSubmissions: attempts + 1,
         aliveBestScore: 100,
         aliveTotalTimeMs: Date.now() - startTime,
         aliveCompletedAt: new Date().toISOString(),
       });
     } else {
       setResult('incorrect');
+      updateProgress({
+        aliveLastActivityAt: new Date().toISOString(),
+      });
     }
   };
 

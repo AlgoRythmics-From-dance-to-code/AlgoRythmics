@@ -203,17 +203,6 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
 
       trackEvent('create_option_select', { blankId, option: optionValue, correct: false });
     } else {
-      // Correct!
-      setBlankStates((prev) => ({
-        ...prev,
-        [blankId]: {
-          ...prev[blankId],
-          value: optionValue,
-          isCorrect: true,
-          attempts: prev[blankId].attempts + 1,
-        },
-      }));
-
       trackEvent('create_option_select', { blankId, option: optionValue, correct: true });
 
       // Proceed with the logic (auto-advance, etc)

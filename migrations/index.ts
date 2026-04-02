@@ -5,8 +5,7 @@ import * as migration_20260326_120645_mig4 from './20260326_120645_mig4';
 import * as migration_20260328_185141_mig5 from './20260328_185141_mig5';
 import * as migration_20260328_232154_mig6 from './20260328_232154_mig6';
 import * as migration_20260401_124057_mig6_learning from './20260401_124057_mig6_learning';
-import * as migration_20260401_125513_learningsteps from './20260401_125513_learningsteps';
-import * as migration_20260401_220014_mig7 from './20260401_220014_mig7';
+import * as migration_20260402_102906_mig8 from './20260402_102906_mig8';
 
 export const migrations = [
   {
@@ -45,13 +44,8 @@ export const migrations = [
     name: '20260401_124057_mig6_learning',
   },
   {
-    up: migration_20260401_125513_learningsteps.up,
-    down: migration_20260401_125513_learningsteps.down,
-    name: '20260401_125513_learningsteps',
-  },
-  {
-    up: migration_20260401_220014_mig7.up,
-    down: migration_20260401_220014_mig7.down,
-    name: '20260401_220014_mig7'
+    up: migration_20260402_102906_mig8.up,
+    down: migration_20260402_102906_mig8.down,
+    name: '20260402_102906_mig8'
   },
 ];

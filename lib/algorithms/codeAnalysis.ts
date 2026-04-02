@@ -36,25 +36,29 @@ export const bubbleSortPatterns: CodePattern[] = [
   {
     id: 'outer-loop',
     label: 'Outer loop',
-    pattern: /for\s*\(/i,
+    pattern: /for\s*\(\s*(?:let|var|const)?\s*[a-zA-Z_]\w*\s*=\s*\d+\s*;[^;]+;[^)]+\)/i,
     weight: 25,
   },
   {
     id: 'inner-loop',
-    label: 'Inner loop (nested)',
-    pattern: /for[\s\S]*?for\s*\(/i,
+    label: 'Inner loop',
+    pattern:
+      /for\s*\([^)]+\)[\s\S]*for\s*\(\s*(?:let|var|const)?\s*[a-zA-Z_]\w*\s*=\s*\d+\s*;[^;]+;[^)]+\)/i,
     weight: 25,
   },
   {
     id: 'comparison',
-    label: 'Element comparison (>)',
-    pattern: /(\[.*\]|arr.*)\s*>\s*(\[.*\]|arr.*|.*\[)/i,
+    label: 'Element comparison',
+    // Matches arr[j] > arr[j+1] or arr[j] > arr[j + 1], ensuring array and index variable names match
+    pattern: /([a-zA-Z_]\w*)\[\s*([a-zA-Z_]\w*)\s*\]\s*>\s*\1\[\s*\2\s*\+\s*1\s*\]/i,
     weight: 25,
   },
   {
     id: 'swap',
     label: 'Swap operation',
-    pattern: /(?:temp|swap|=\s*.*\[.*\][\s\S]{0,50}=\s*.*\[.*\])/i,
+    // Matches `temp = arr[j]; arr[j] = ...` OR `[arr[j], arr[j+1]] = [arr[j+1], arr[j]]`
+    pattern:
+      /(?:(?:let|var|const)?\s*[a-zA-Z_]\w*\s*=\s*[a-zA-Z_]\w*\[[^\]]+\])|(?:\[\s*[a-zA-Z_]\w*\[[^\]]+\]\s*,\s*[a-zA-Z_]\w*\[[^\]]+\]\s*\]\s*=\s*\[)/i,
     weight: 25,
   },
 ];
@@ -93,13 +97,13 @@ export function analyzeCode(
 
   if (algorithmId === 'bubble-sort') {
     const testRes = runSortAndCheck(code);
-    executionPassed = testRes.passed;
     if (!testRes.passed) {
+      executionPassed = false;
       executionError = testRes.error;
-      // Penalty for failing the execution test
-      if (score === 100) {
-        score = 80;
-      }
+
+      // If code didn't execute correctly (syntax error or sorting mistake),
+      // cap the score to 80% maximum regardless of static analysis.
+      score = Math.min(score, 80);
     }
   }
 
@@ -116,61 +120,83 @@ export function analyzeCode(
 
 function runSortAndCheck(userCode: string): { passed: boolean; error?: string } {
   try {
-    // If user provided a full function, we need to extract the call or invoke it.
-    // However, a simpler way is to just define it and then call it if it's a named function,
-    // or just execute the body if it's plain code.
+    const testArray = [5, 2, 9, 1, 5, 6, -3, 8];
+    const expected = [...testArray].sort((a, b) => a - b);
 
-    let executableCode = userCode;
+    // Safety: Inject loop limiter to prevent browser freeze
+    let safeCode = userCode;
+    const loopLimiter = `if (!globalThis.__loopCount) globalThis.__loopCount = 0; if (globalThis.__loopCount++ > 10000) throw new Error("Végtelen ciklus észlelve! Kérlek ellenőrizd a feltételeket.");`;
 
-    // Check if code contains a function named 'bubbleSort' or similar
-    const funcMatch = userCode.match(/function\s+(\w+)\s*\(/);
-    if (funcMatch) {
-      const funcName = funcMatch[1];
-      executableCode = `${userCode}; return ${funcName}(arr);`;
-    }
+    // Insert limiter inside opening braces of for/while loops
+    safeCode = safeCode.replace(
+      /(for\s*\([^)]*\)\s*\{|while\s*\([^)]*\)\s*\{)/g,
+      `$1 ${loopLimiter}`,
+    );
 
-    // Inject simple infinite loop protection
-    const safeCode = `
-      let __loopCount = 0;
-      ${executableCode.replace(
-        /(?:for|while)\s*\([^)]+\)\s*\{/g,
-        '$& if (++__loopCount > 5000) throw new Error("Infinite loop or too many iterations."); ',
-      )}
-      return arr;
+    const runnable = `
+      globalThis.__loopCount = 0;
+      ${safeCode}
+      
+      if (typeof bubbleSort === 'function') {
+        let result = bubbleSort([...arr]);
+        if (result !== undefined) return result;
+        return arr; // return the modified array if it sorts in place
+      } else {
+        throw new Error("Kérlek hozz létre egy 'bubbleSort' nevű függvényt, ahogy a Create - Code Exercise is kérte!");
+      }
     `;
-    const fn = new Function('arr', safeCode);
 
-    const tests = [
-      { input: [5, 3, 8, 1, 2], expected: [1, 2, 3, 5, 8] },
-      { input: [9, 7, 5, 3, 1], expected: [1, 3, 5, 7, 9] },
-      { input: [1, 2, 3], expected: [1, 2, 3] },
-    ];
+    const sortFn = new Function('arr', runnable);
 
-    for (const test of tests) {
-      const arrCtx = [...test.input];
-      const returned = fn(arrCtx);
-      // Fallback to arrCtx if user didn't explicitly return an array
-      const finalized =
-        Array.isArray(returned) && returned.length === test.expected.length ? returned : arrCtx;
-
-      for (let i = 0; i < test.expected.length; i++) {
-        if (finalized[i] !== test.expected[i]) {
-          return {
-            passed: false,
-            error:
-              'Incorrect sorting. Tested [' +
-              test.input.join(', ') +
-              '] -> Result [' +
-              finalized.join(', ') +
-              ']',
-          };
-        }
+    let result;
+    try {
+      result = sortFn([...testArray]);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes('Kérlek hozz létre')) {
+        // Fallback: If they didn't name it bubbleSort, let's try evaluating it as a flat script modifying 'arr'
+        const alternateRunnable = `
+          globalThis.__loopCount = 0;
+          ${safeCode}
+          return arr;
+        `;
+        const altFn = new Function('arr', alternateRunnable);
+        result = altFn([...testArray]);
+      } else {
+        throw err;
       }
     }
+
+    if (!Array.isArray(result)) {
+      return {
+        passed: false,
+        error: 'Hiba: A kód nem tömböt adott vissza, vagy nem módosította a kapott tömböt!',
+      };
+    }
+
+    if (result.length !== expected.length) {
+      return { passed: false, error: 'Hiba: A visszaadott tömb mérete nem egyezik az eredetivel!' };
+    }
+
+    for (let i = 0; i < expected.length; i++) {
+      if (result[i] !== expected[i]) {
+        return {
+          passed: false,
+          error:
+            'Hiba: A tömb nem lett megfelelően rendezve. Eredményed: [' +
+            result.join(', ') +
+            '] Várható: [' +
+            expected.join(', ') +
+            ']',
+        };
+      }
+    }
+
     return { passed: true };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Syntax or Runtime Error';
-    return { passed: false, error: message };
+    return {
+      passed: false,
+      error: err instanceof Error ? err.message : 'Szintaktikai vagy futási hiba történt.',
+    };
   }
 }
 

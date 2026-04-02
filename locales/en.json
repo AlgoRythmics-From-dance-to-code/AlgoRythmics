@@ -2,7 +2,10 @@
   "brand": "AlgoRythmics",
   "common": {
     "completed": "Completed",
-    "all": "All"
+    "all": "All",
+    "cancel": "Cancel",
+    "restart": "Restart",
+    "confirm": "Confirm"
   },
   "nav": {
     "home": "Home",
@@ -312,7 +315,8 @@
       "simple_explanation": "Simple Explanation",
       "step_by_step": "Step-by-Step Guide",
       "coming_soon": "Algorithm details coming soon.",
-      "view_coming_soon": "{view} content for {name} — coming soon"
+      "view_coming_soon": "{view} content for {name} — coming soon",
+      "redo_confirm": "This step is already completed. Redoing it will overwrite your previous results. Do you want to restart?"
     },
     "guides": {
       "video": [
@@ -360,7 +364,7 @@
       },
       "selection-sort": {
         "name": "Selection sort",
-        "description": "Selection sort finds the smallest element from the unsorted part in each pass and moves it to the end of the sorted part."
+        "description": "Selection sort finds the smallest element from the unsorted part in each pass and moves it to the beginning of the sorted part."
       },
       "shell-sort": {
         "name": "Shell sort",
@@ -495,6 +499,7 @@
   },
   "create": {
     "title": "Complete the Code",
+    "choose_correct": "Choose the correct option",
     "check": "Check",
     "reset": "Reset",
     "help": "I Need Help",
