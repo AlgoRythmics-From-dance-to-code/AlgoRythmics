@@ -196,11 +196,9 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
 
   // Optimized Selectors to avoid full store re-renders
   const toggleCompleted = useAlgorithmStore((s) => s.toggleCompleted);
-  const isCompleted = useAlgorithmStore((s) => s.isCompleted);
   const progress = useAlgorithmStore((s) => s.algorithmProgress[id] || EMPTY_PROGRESS);
   const resetAlgorithmProgressTab = useAlgorithmStore((s) => s.resetAlgorithmProgressTab);
-
-  const completed = isCompleted(id);
+  const completed = useAlgorithmStore((s) => s.completedIds.includes(id));
 
   // Available views for this algorithm
   const availableViews = useMemo(() => {

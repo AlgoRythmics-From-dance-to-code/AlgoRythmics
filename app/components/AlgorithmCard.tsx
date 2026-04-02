@@ -16,14 +16,7 @@ interface AlgorithmCardProps {
 export default function AlgorithmCard({ algorithm, index }: AlgorithmCardProps) {
   const { t } = useLocale();
 
-  const { isCompleted } = useAlgorithmStore();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const completed = mounted ? isCompleted(algorithm.id) : false;
+  const completed = useAlgorithmStore((s) => s.completedIds.includes(algorithm.id));
 
   const name = t(`algorithms.list.${algorithm.id}.name`);
   const description = t(`algorithms.list.${algorithm.id}.description`);
