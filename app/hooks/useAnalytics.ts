@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useAlgorithmStore, type AlgorithmProgress } from '../store/useAlgorithmStore';
+import { APP_CONFIG } from '../../lib/constants';
 
 interface LearningEvent {
   algorithmId: string;
@@ -57,7 +58,7 @@ export function useAnalytics(algorithmId: string, tab: string) {
 
   const scheduleEventFlush = useCallback(() => {
     if (flushTimer.current) clearTimeout(flushTimer.current);
-    flushTimer.current = setTimeout(flushEvents, 3000);
+    flushTimer.current = setTimeout(flushEvents, APP_CONFIG.SYNC_INTERVAL_MS);
   }, [flushEvents]);
 
   // --- PROGRESS FLUSH ---
@@ -79,7 +80,7 @@ export function useAnalytics(algorithmId: string, tab: string) {
 
   const scheduleProgressFlush = useCallback(() => {
     if (progressFlushTimer.current) clearTimeout(progressFlushTimer.current);
-    progressFlushTimer.current = setTimeout(flushProgress, 3000);
+    progressFlushTimer.current = setTimeout(flushProgress, APP_CONFIG.SYNC_INTERVAL_MS);
   }, [flushProgress]);
 
   // --- SYNCHRONOUS FLUSH FOR UNLOAD/VISIBILITY ---

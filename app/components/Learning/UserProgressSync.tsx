@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import { APP_CONFIG } from '../../../lib/constants';
 
 /**
  * Background component that synchronizes the local Zustand store
@@ -67,7 +68,34 @@ export default function UserProgressSync() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session]);
 
-  // 2. Continuous Sync: Save local changes to the cloud
+  // 2. Persistent Sync Logic
+  const syncProgress = useCallback(async () => {
+    if (status !== 'authenticated' || isHydrating.current) return;
+
+    const currentIds = JSON.stringify(completedIds);
+    const currentProgress = JSON.stringify(visualizerProgress);
+
+    // Only sync if data actually changed from what we last sent
+    if (currentIds === lastSynced.current.ids && currentProgress === lastSynced.current.progress) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/account/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completedIds, visualizerProgress }),
+      });
+
+      if (response.ok) {
+        lastSynced.current = { ids: currentIds, progress: currentProgress };
+      }
+    } catch (err) {
+      console.error('[AlgoRythmics] Failed to sync progress to cloud:', err);
+    }
+  }, [completedIds, visualizerProgress, status]);
+
+  // 3. Continuous Sync: Save local changes to the cloud
   useEffect(() => {
     if (status !== 'authenticated' || isHydrating.current) return;
 
@@ -81,34 +109,42 @@ export default function UserProgressSync() {
       return;
     }
 
-    const currentIds = JSON.stringify(completedIds);
-    const currentProgress = JSON.stringify(visualizerProgress);
+    // Debounce to avoid hitting the API too frequently during fast interactions
+    const timer = setTimeout(syncProgress, APP_CONFIG.SYNC_INTERVAL_MS);
+    return () => clearTimeout(timer);
+  }, [completedIds, visualizerProgress, status, syncProgress]);
 
-    // Only sync if data actually changed from what we last sent
-    if (currentIds === lastSynced.current.ids && currentProgress === lastSynced.current.progress) {
-      return;
-    }
+  // 4. Lifecycle Sync: Immediate persistence on tab closure or visibility change
+  useEffect(() => {
+    const handleExit = () => {
+      // Check if there are unsynced changes
+      const currentIds = JSON.stringify(completedIds);
+      const currentProgress = JSON.stringify(visualizerProgress);
 
-    const syncProgress = async () => {
-      try {
-        const response = await fetch('/api/account/progress', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ completedIds, visualizerProgress }),
-        });
-
-        if (response.ok) {
-          lastSynced.current = { ids: currentIds, progress: currentProgress };
+      if (currentIds !== lastSynced.current.ids || currentProgress !== lastSynced.current.progress) {
+        // Use sendBeacon for best-effort delivery during page unload
+        if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+          const blob = new Blob([JSON.stringify({ completedIds, visualizerProgress })], {
+            type: 'application/json',
+          });
+          navigator.sendBeacon('/api/account/progress', blob);
+        } else {
+          // Fallback
+          syncProgress();
         }
-      } catch (err) {
-        console.error('[AlgoRythmics] Failed to sync progress to cloud:', err);
       }
     };
 
-    // Debounce to avoid hitting the API too frequently during fast interactions
-    const timer = setTimeout(syncProgress, 2000);
-    return () => clearTimeout(timer);
-  }, [completedIds, visualizerProgress, status]);
+    window.addEventListener('beforeunload', handleExit);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') handleExit();
+    });
+
+    return () => {
+      window.removeEventListener('beforeunload', handleExit);
+      document.removeEventListener('visibilitychange', handleExit);
+    };
+  }, [completedIds, visualizerProgress, syncProgress]);
 
   return null;
 }

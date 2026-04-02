@@ -13,8 +13,8 @@ import {
 } from '../../../lib/algorithms/codeAnalysis';
 import { useAlgorithmStore, type AlgorithmProgress } from '../../store/useAlgorithmStore';
 
-// ─── Constants ─────────────────────────────────────────────────
 const DROP_THRESHOLD = 50; // pixels
+const EMPTY_PROGRESS: Readonly<Partial<AlgorithmProgress>> = Object.freeze({});
 
 interface AliveVisualizerProps {
   algorithmId: string;
@@ -25,7 +25,9 @@ type Mode = 'code' | 'nodes';
 export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
   const { t } = useLocale();
   const { trackEvent, updateProgress } = useAnalytics(algorithmId, 'alive');
-  const progress = useAlgorithmStore((state) => state.algorithmProgress[algorithmId] || {});
+  const progress = useAlgorithmStore(
+    (state) => state.algorithmProgress[algorithmId] || EMPTY_PROGRESS,
+  );
 
   const [mode, setMode] = useState<Mode>('code');
   const [helpUsed, setHelpUsed] = useState(false);

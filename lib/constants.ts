@@ -10,6 +10,7 @@ export const APP_CONFIG = {
   COOKIE_TOKEN_NAME: 'algorythmics-admin-token',
   TOKEN_EXPIRATION_REMEMBER_ME: 60 * 60 * 24 * 90, // 90 days
   TOKEN_EXPIRATION_DEFAULT: 60 * 60 * 24 * 1, // 1 day
+  SYNC_INTERVAL_MS: 10000, // 10 seconds for analytics/progress batching
 } as const;
 
 export const ROUTES = {
