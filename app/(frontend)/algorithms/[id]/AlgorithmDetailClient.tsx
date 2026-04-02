@@ -175,6 +175,8 @@ function TabLoader() {
   );
 }
 
+const EMPTY_PROGRESS: any = {};
+
 export default function AlgorithmDetailClient({ id }: { id: string }) {
   const { t, getRaw } = useLocale();
   const [activeView, setActiveView] = useState<string>('Video');
@@ -192,8 +194,12 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
   const matchingVideo = VIDEOS.find((v) => v.id.startsWith(id));
   const algoHasFullContent = hasFullContent(id);
 
-  const { toggleCompleted, isCompleted, algorithmProgress, resetAlgorithmProgressTab } =
-    useAlgorithmStore();
+  // Optimized Selectors to avoid full store re-renders
+  const toggleCompleted = useAlgorithmStore((s) => s.toggleCompleted);
+  const isCompleted = useAlgorithmStore((s) => s.isCompleted);
+  const algorithmProgress = useAlgorithmStore((s) => s.algorithmProgress);
+  const resetAlgorithmProgressTab = useAlgorithmStore((s) => s.resetAlgorithmProgressTab);
+
   const completed = isCompleted(id);
 
   // Available views for this algorithm
@@ -203,7 +209,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
     return ['Video', 'Animation'] as const;
   }, [id]);
 
-  const progress = useMemo(() => algorithmProgress[id] || {}, [algorithmProgress, id]);
+  const progress = useMemo(() => algorithmProgress[id] || EMPTY_PROGRESS, [algorithmProgress, id]);
 
   const getViewStatus = useCallback(
     (view: string) => {
@@ -310,15 +316,15 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
   };
 
   // Auto-mark as done if all available steps are completed
-  useEffect(() => {
-    if (progress && !completed) {
-      const allTabsFinished = availableViews.every((v: string) => getViewStatus(v).completed);
+  const allTabsFinished = useMemo(() => {
+    return availableViews.every((v: string) => getViewStatus(v).completed);
+  }, [availableViews, getViewStatus]);
 
-      if (allTabsFinished && availableViews.length > 0) {
-        toggleCompleted(id);
-      }
+  useEffect(() => {
+    if (allTabsFinished && availableViews.length > 0 && !completed) {
+      toggleCompleted(id);
     }
-  }, [id, progress, completed, toggleCompleted, availableViews, getViewStatus]);
+  }, [id, allTabsFinished, completed, toggleCompleted, availableViews.length]);
 
   // Render the active tab content
   const renderTabContent = () => {

@@ -57,7 +57,7 @@ export function useAnalytics(algorithmId: string, tab: string) {
 
   const scheduleEventFlush = useCallback(() => {
     if (flushTimer.current) clearTimeout(flushTimer.current);
-    flushTimer.current = setTimeout(flushEvents, 3000);
+    flushTimer.current = setTimeout(flushEvents, 10000);
   }, [flushEvents]);
 
   // --- PROGRESS FLUSH ---
@@ -79,7 +79,7 @@ export function useAnalytics(algorithmId: string, tab: string) {
 
   const scheduleProgressFlush = useCallback(() => {
     if (progressFlushTimer.current) clearTimeout(progressFlushTimer.current);
-    progressFlushTimer.current = setTimeout(flushProgress, 3000);
+    progressFlushTimer.current = setTimeout(flushProgress, 10000);
   }, [flushProgress]);
 
   // --- SYNCHRONOUS FLUSH FOR UNLOAD/VISIBILITY ---

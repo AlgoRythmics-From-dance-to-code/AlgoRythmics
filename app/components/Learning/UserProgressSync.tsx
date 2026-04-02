@@ -106,7 +106,7 @@ export default function UserProgressSync() {
     };
 
     // Debounce to avoid hitting the API too frequently during fast interactions
-    const timer = setTimeout(syncProgress, 2000);
+    const timer = setTimeout(syncProgress, 10000);
     return () => clearTimeout(timer);
   }, [completedIds, visualizerProgress, status]);
 
