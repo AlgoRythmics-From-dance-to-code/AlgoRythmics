@@ -6,11 +6,11 @@ import VisualizerControls from './VisualizerControls';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import {
-  generateBubbleSortSteps,
-  BUBBLE_SORT_DEFAULT_ARRAY,
-} from '../../../lib/algorithms/bubbleSortSteps';
+  generateInsertionSortSteps,
+  INSERTION_SORT_DEFAULT_ARRAY,
+} from '../../../lib/algorithms/insertionSortSteps';
 
-export default function BubbleSortVisualizer({ id = 'bubble-sort' }: { id?: string }) {
+export default function InsertionSortVisualizer({ id = 'insertion-sort' }: { id?: string }) {
   const { visualizerProgress, updateVisualizerProgress, algorithmProgress, resetAlgorithmProgressTab } =
     useAlgorithmStore();
   const { trackEvent, updateProgress } = useAnalytics(id, 'animation');
@@ -40,7 +40,7 @@ export default function BubbleSortVisualizer({ id = 'bubble-sort' }: { id?: stri
   }, [id, updateProgress]);
 
   // Pre-calculate all steps
-  const steps = useMemo(() => generateBubbleSortSteps(BUBBLE_SORT_DEFAULT_ARRAY), []);
+  const steps = useMemo(() => generateInsertionSortSteps(INSERTION_SORT_DEFAULT_ARRAY), []);
 
   const isFinished = currentStep === steps.length - 1;
 

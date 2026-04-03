@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { completedIds, visualizerProgress } = await req.json();
+    const { completedIds, visualizerProgress, algorithmProgress } = await req.json();
 
     // Runtime validation
     if (completedIds !== undefined && !Array.isArray(completedIds)) {
@@ -66,15 +66,76 @@ export async function POST(req: Request) {
     }
 
     const payload = await getPayloadInstance();
+    const userId = Number(session.user.id);
 
+    // 1. Update User level data
     await payload.update({
       collection: 'users',
-      id: session.user.id,
+      id: userId,
       data: {
         completedAlgorithms: completedIds as User['completedAlgorithms'],
         visualizerProgress: (visualizerProgress || {}) as User['visualizerProgress'],
       } as Partial<User>,
     });
+
+    // 2. Sync Algorithm-specific Progress (Analytics)
+    if (algorithmProgress && typeof algorithmProgress === 'object') {
+      const now = new Date().toISOString();
+
+      const progressEntries = Object.entries(algorithmProgress).filter(
+        ([, data]) => data && typeof data === 'object',
+      ) as [string, Record<string, unknown>][];
+
+      if (progressEntries.length > 0) {
+        const algorithmIds = progressEntries.map(([id]) => id);
+
+        // Find all existing records in one batch
+        const { docs: existingDocs } = await payload.find({
+          collection: 'algorithm-progress',
+          where: {
+            and: [{ user: { equals: userId } }, { algorithmId: { in: algorithmIds } }],
+          },
+          limit: algorithmIds.length,
+          depth: 0,
+        });
+
+        const existingByAlgoId = new Map(existingDocs.map((doc) => [String(doc.algorithmId), doc]));
+
+        for (const [id, data] of progressEntries) {
+          const existingDoc = existingByAlgoId.get(id);
+
+          // We don't want to overwrite identity fields if they come from the frontend
+          const updates = { ...(data as any) };
+          delete updates.user;
+          delete updates.algorithmId;
+          delete updates.id;
+          delete updates.createdAt;
+          delete updates.updatedAt;
+
+          if (existingDoc) {
+            await payload.update({
+              collection: 'algorithm-progress',
+              id: existingDoc.id,
+              data: {
+                ...updates,
+                lastActivityAt: now,
+              },
+            });
+          } else {
+            await payload.create({
+              collection: 'algorithm-progress',
+              data: {
+                ...updates,
+                user: userId,
+                algorithmId: id,
+                firstStartedAt: now,
+                lastActivityAt: now,
+              },
+            });
+          }
+        }
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

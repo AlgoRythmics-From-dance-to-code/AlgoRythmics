@@ -140,9 +140,10 @@ export function useAnalytics(algorithmId: string, tab: string) {
 
   /**
    * Update algorithm progress (optimistic + buffered sync).
+   * Set syncNow to true for critical actions (like reset) to bypass debouncing.
    */
   const updateProgress = useCallback(
-    (updates: Partial<AlgorithmProgress>) => {
+    (updates: Partial<AlgorithmProgress>, syncNow: boolean = false) => {
       // Optimistically update frontend state immediately
       updateAlgorithmProgress(algorithmId, updates);
 
@@ -150,9 +151,14 @@ export function useAnalytics(algorithmId: string, tab: string) {
 
       // Buffer the backend update
       progressBuffer.current = { ...progressBuffer.current, ...updates };
-      scheduleProgressFlush();
+
+      if (syncNow) {
+        flushProgress();
+      } else {
+        scheduleProgressFlush();
+      }
     },
-    [algorithmId, isAuth, updateAlgorithmProgress, scheduleProgressFlush],
+    [algorithmId, isAuth, updateAlgorithmProgress, scheduleProgressFlush, flushProgress],
   );
 
   // Tab Lifecycle (mount/unmount)

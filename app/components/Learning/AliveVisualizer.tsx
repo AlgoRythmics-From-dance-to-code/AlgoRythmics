@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence, Reorder, PanInfo } from 'framer-motion';
 import { Play, Trash2, HelpCircle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useAnalytics } from '../../hooks/useAnalytics';
@@ -25,13 +25,62 @@ type Mode = 'code' | 'nodes';
 export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
   const { t } = useLocale();
   const { trackEvent, updateProgress } = useAnalytics(algorithmId, 'alive');
-  const progress = useAlgorithmStore(
-    (state) => state.algorithmProgress[algorithmId] || EMPTY_PROGRESS,
-  );
+  const { algorithmProgress, resetAlgorithmProgressTab } = useAlgorithmStore();
+  const progress = algorithmProgress[algorithmId] || EMPTY_PROGRESS;
 
   const [mode, setMode] = useState<Mode>('code');
   const [helpUsed, setHelpUsed] = useState(false);
-  const startTime = useMemo(() => Date.now(), []);
+  const startTime = useRef(Date.now());
+  const lastTickRef = useRef(Date.now());
+
+  // Unified Reset Function for the component
+  const handleReset = useCallback(() => {
+    // 1. Update local store
+    resetAlgorithmProgressTab(algorithmId, 'alive');
+
+    // 2. Synchronize with analytics and flush any pending updates
+    updateProgress(
+      {
+        aliveCompleted: false,
+        aliveBestScore: 0,
+        aliveCodeSubmissions: 0,
+        aliveLastCode: '',
+        aliveTotalTimeMs: 0,
+        aliveCompletedAt: null,
+      },
+      true, // syncNow
+    );
+
+    // 3. Immediate Sync to Backend (Comprehensive)
+    const store = useAlgorithmStore.getState();
+    fetch('/api/account/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        completedIds: store.completedIds,
+        visualizerProgress: store.visualizerProgress,
+        algorithmProgress: {
+          [algorithmId]: store.algorithmProgress[algorithmId],
+        },
+      }),
+    }).catch((err) => console.error('[Alive] Failed to sync reset:', err));
+
+    trackEvent('alive_reset');
+    startTime.current = Date.now();
+    lastTickRef.current = Date.now();
+  }, [algorithmId, resetAlgorithmProgressTab, trackEvent, updateProgress]);
+
+  // Track spent time on unmount
+  React.useEffect(() => {
+    return () => {
+      const delta = Date.now() - lastTickRef.current;
+      const currentTotal = progress?.aliveTotalTimeMs || 0;
+      updateProgress({
+        aliveTotalTimeMs: currentTotal + delta,
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [algorithmId, updateProgress]);
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -40,8 +89,9 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
           algorithmId={algorithmId}
           trackEvent={trackEvent}
           updateProgress={updateProgress}
+          handleReset={handleReset}
           progress={progress}
-          startTime={startTime}
+          startTime={startTime.current}
           helpUsed={helpUsed}
           onSwitchToNodes={() => {
             setMode('nodes');
@@ -55,7 +105,8 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
           algorithmId={algorithmId}
           trackEvent={trackEvent}
           updateProgress={updateProgress}
-          startTime={startTime}
+          handleReset={handleReset}
+          startTime={startTime.current}
           t={t}
         />
       )}
@@ -68,7 +119,8 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
 interface CodeModeProps {
   algorithmId: string;
   trackEvent: (type: string, data?: Record<string, unknown>) => void;
-  updateProgress: (updates: Partial<AlgorithmProgress>) => void;
+  updateProgress: (updates: Partial<AlgorithmProgress>, syncNow?: boolean) => void;
+  handleReset: () => void;
   progress: Partial<AlgorithmProgress>;
   startTime: number;
   helpUsed: boolean;
@@ -80,6 +132,7 @@ function CodeMode({
   algorithmId,
   trackEvent,
   updateProgress,
+  handleReset,
   progress,
   startTime,
   helpUsed,
@@ -159,14 +212,7 @@ function CodeMode({
   const handleClear = () => {
     setCode('');
     setResult(null);
-    trackEvent('alive_clear');
-
-    // Explicitly reset completion in progress store
-    updateProgress({
-      aliveCompleted: false,
-      aliveBestScore: 0,
-      aliveCompletedAt: null,
-    });
+    handleReset();
   };
 
   return (
@@ -348,12 +394,13 @@ function CodeMode({
 interface NodeModeProps {
   algorithmId: string;
   trackEvent: (type: string, data?: Record<string, unknown>) => void;
-  updateProgress: (updates: Partial<AlgorithmProgress>) => void;
+  updateProgress: (updates: Partial<AlgorithmProgress>, syncNow?: boolean) => void;
+  handleReset: () => void;
   startTime: number;
   t: (key: string) => string;
 }
 
-function NodeMode({ algorithmId, trackEvent, updateProgress, startTime, t }: NodeModeProps) {
+function NodeMode({ algorithmId, trackEvent, updateProgress, handleReset, startTime, t }: NodeModeProps) {
   const allNodes = useMemo(() => getAlgorithmNodes(algorithmId) || [], [algorithmId]);
 
   // Palette: shuffled nodes
@@ -519,14 +566,7 @@ function NodeMode({ algorithmId, trackEvent, updateProgress, startTime, t }: Nod
     setProgram([]);
     setPalette([...allNodes].sort(() => Math.random() - 0.5));
     setResult(null);
-    trackEvent('alive_clear');
-
-    // Explicitly reset completion in progress store
-    updateProgress({
-      aliveCompleted: false,
-      aliveBestScore: 0,
-      aliveCompletedAt: null,
-    });
+    handleReset();
   };
 
   return (

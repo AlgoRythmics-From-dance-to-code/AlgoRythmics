@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Lightbulb, RotateCcw } from 'lucide-react';
 import SortingVisualizer from './SortingVisualizer';
@@ -33,7 +33,7 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
   const [isComplete, setIsComplete] = useState(false);
   const [attemptedWrong, setAttemptedWrong] = useState(false);
   const [interactionMode, setInteractionMode] = useState<'select' | 'decide'>('select');
-  const { setInteractionLocked } = useAlgorithmStore();
+  const { setInteractionLocked, resetAlgorithmProgressTab } = useAlgorithmStore();
 
   // Sync lock with interaction mode
   React.useEffect(() => {
@@ -45,9 +45,23 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
     return () => setInteractionLocked(false);
   }, [setInteractionLocked]);
 
-  const startTime = useMemo(() => Date.now(), []);
+  const startTime = useRef(Date.now());
+  const lastTickRef = useRef(Date.now());
   const currentExpected = steps[expectedStepIndex];
   const isFinished = expectedStepIndex >= steps.length - 1;
+
+  // Track spent time and attempts on unmount
+  React.useEffect(() => {
+    return () => {
+      const delta = Date.now() - lastTickRef.current;
+      const currentTotal = progress?.controlTotalTimeMs || 0;
+      updateProgress({
+        controlAttempts: (progress?.controlAttempts || 0) + 1,
+        controlTotalTimeMs: currentTotal + delta,
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [algorithmId, updateProgress]);
 
   // Handle bar click — select elements
   const handleBarClick = useCallback(
@@ -134,7 +148,7 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
 
           if (advanceIdx >= steps.length) {
             setIsComplete(true);
-            const elapsed = Date.now() - startTime;
+            const elapsed = Date.now() - startTime.current;
             const nextCorrectFirstTry = correctFirstTry + (!attemptedWrong ? 1 : 0);
             const nextTotalCorrect = totalCorrect + 1;
             trackEvent('control_complete', {
@@ -189,7 +203,6 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
 
     setTimeout(() => setIsHinting(false), 3000);
   }, [currentExpected, expectedStepIndex, trackEvent, updateProgress, progress]);
-
   // Reset
   const handleReset = useCallback(() => {
     setExpectedStepIndex(1);
@@ -203,14 +216,38 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
     setInteractionMode('select');
     trackEvent('control_reset');
 
-    // Reset progress in store
-    updateProgress({
-      controlCompleted: false,
-      controlBestScore: 0,
-      controlMistakes: 0,
-      controlCompletedAt: null,
-    });
-  }, [trackEvent, updateProgress]);
+    // 1. Reset progress in store
+    resetAlgorithmProgressTab(algorithmId, 'control');
+
+    // 2. Synchronize with analytics and flush any pending updates
+    updateProgress(
+      {
+        controlCompleted: false,
+        controlBestScore: 0,
+        controlMistakes: 0,
+        controlTotalTimeMs: 0,
+        controlCompletedAt: null,
+      },
+      true, // syncNow
+    );
+
+    // 3. Immediate Sync to Backend (Redundant but ensures state integrity)
+    const store = useAlgorithmStore.getState();
+    fetch('/api/account/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        completedIds: store.completedIds,
+        visualizerProgress: store.visualizerProgress,
+        algorithmProgress: {
+          [algorithmId]: store.algorithmProgress[algorithmId],
+        },
+      }),
+    }).catch((err) => console.error('[Control] Failed to sync reset:', err));
+
+    startTime.current = Date.now();
+    lastTickRef.current = Date.now();
+  }, [algorithmId, resetAlgorithmProgressTab, trackEvent, updateProgress]);
 
   // Build the visual state to show — show the array at the current expected step
   // but without the active highlighting (user needs to figure that out)

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 
@@ -15,20 +15,32 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
   const { updateProgress } = useAnalytics(algorithmId, 'video');
   const { algorithmProgress } = useAlgorithmStore();
 
-  const isWatched = algorithmProgress[algorithmId]?.videoWatched;
+  const lastTickRef = useRef(Date.now());
+  const isWatched = algorithmProgress[algorithmId]?.videoWatched || false;
 
   // Mark as watched 10 seconds after opening the video or when already watched in store
   useEffect(() => {
-    if (isWatched) return;
+    // Reset the last tick at the start of the effect
+    lastTickRef.current = Date.now();
 
     const timer = setTimeout(() => {
-      updateProgress({
-        videoWatched: true,
-        videoCompletedAt: new Date().toISOString(),
-      });
+      if (!isWatched) {
+        updateProgress({
+          videoWatched: true,
+          videoCompletedAt: new Date().toISOString(),
+        });
+      }
     }, 10000); // 10 seconds of "watching" is enough to count
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      const delta = Date.now() - lastTickRef.current;
+      const currentTotal = algorithmProgress[algorithmId]?.videoWatchTimeMs || 0;
+      updateProgress({
+        videoWatchTimeMs: currentTotal + delta,
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [algorithmId, updateProgress, isWatched]);
 
   // If youtubeId is a placeholder, show a message instead of a broken iframe

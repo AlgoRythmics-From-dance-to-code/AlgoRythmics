@@ -16,6 +16,9 @@ import { ConfirmationModal } from '../../../components/Learning/ConfirmationModa
 const BubbleSortVisualizer = lazy(
   () => import('../../../components/Learning/BubbleSortVisualizer'),
 );
+const InsertionSortVisualizer = lazy(
+  () => import('../../../components/Learning/InsertionSortVisualizer'),
+);
 const ControlVisualizer = lazy(() => import('../../../components/Learning/ControlVisualizer'));
 const CodeExercise = lazy(() => import('../../../components/Learning/CodeExercise'));
 const AliveVisualizer = lazy(() => import('../../../components/Learning/AliveVisualizer'));
@@ -277,36 +280,24 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
 
   const confirmRedo = () => {
     if (pendingTab) {
+      // 1. Update the local store (Zustand)
       resetAlgorithmProgressTab(id, pendingTab);
 
-      // Synchronize the reset to the server so it doesn't re-hydrate as completed
-      const tab = pendingTab.toLowerCase();
-      const updates: Record<string, unknown> = {};
-      if (tab === 'video') {
-        updates.videoWatched = false;
-        updates.videoCompletedAt = null;
-      } else if (tab === 'animation') {
-        updates.animationCompleted = false;
-        updates.animationCompletedAt = null;
-      } else if (tab === 'control') {
-        updates.controlCompleted = false;
-        updates.controlBestScore = 0;
-        updates.controlCompletedAt = null;
-      } else if (tab === 'create') {
-        updates.createCompleted = false;
-        updates.createCompletedAt = null;
-        updates.createBlanksCorrectFirst = 0;
-      } else if (tab === 'alive') {
-        updates.aliveCompleted = false;
-        updates.aliveBestScore = 0;
-        updates.aliveCompletedAt = null;
-      }
+      // 2. Immediate Synchronization to Backend
+      // We don't wait for the debounced UserProgressSync to ensure the reset is persistent even on refresh
+      const store = useAlgorithmStore.getState();
 
-      fetch('/api/analytics/progress', {
+      fetch('/api/account/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ algorithmId: id, updates }),
-      }).catch((err) => console.error('Failed to sync tab reset:', err));
+        body: JSON.stringify({
+          completedIds: store.completedIds,
+          visualizerProgress: store.visualizerProgress,
+          algorithmProgress: {
+            [id]: store.algorithmProgress[id],
+          },
+        }),
+      }).catch((err) => console.error('Failed to sync immediate reset:', err));
 
       setActiveView(pendingTab);
       setPendingTab(null);
@@ -359,6 +350,15 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
             <Suspense fallback={<TabLoader />}>
               <div className="max-w-4xl mx-auto">
                 <BubbleSortVisualizer id={id} />
+              </div>
+            </Suspense>
+          );
+        }
+        if (id === 'insertion-sort') {
+          return (
+            <Suspense fallback={<TabLoader />}>
+              <div className="max-w-4xl mx-auto">
+                <InsertionSortVisualizer id={id} />
               </div>
             </Suspense>
           );

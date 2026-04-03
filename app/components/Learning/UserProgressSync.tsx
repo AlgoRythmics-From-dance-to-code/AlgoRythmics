@@ -11,17 +11,18 @@ import { APP_CONFIG } from '../../../lib/constants';
  */
 export default function UserProgressSync() {
   const { data: session, status } = useSession();
-  const { completedIds, visualizerProgress, hydrate, clearStore } = useAlgorithmStore();
+  const { completedIds, visualizerProgress, algorithmProgress, hydrate, clearStore } =
+    useAlgorithmStore();
 
   const isInitialMount = useRef(true);
   const isHydrating = useRef(false);
-  const lastSynced = useRef({ ids: '', progress: '' });
+  const lastSynced = useRef({ ids: '', progress: '', algorithm: '' });
 
   // 0. Cleanup on Logout: Clear the store when the user logs out
   useEffect(() => {
     if (status === 'unauthenticated') {
       clearStore();
-      lastSynced.current = { ids: '', progress: '' };
+      lastSynced.current = { ids: '', progress: '', algorithm: '' };
       isInitialMount.current = true;
     }
   }, [status, clearStore]);
@@ -55,6 +56,7 @@ export default function UserProgressSync() {
           lastSynced.current = {
             ids: JSON.stringify(data.completedIds),
             progress: JSON.stringify(data.visualizerProgress),
+            algorithm: JSON.stringify(data.algorithmProgress),
           };
         }
       } catch (err) {
@@ -74,9 +76,14 @@ export default function UserProgressSync() {
 
     const currentIds = JSON.stringify(completedIds);
     const currentProgress = JSON.stringify(visualizerProgress);
+    const currentAlgorithmProgress = JSON.stringify(algorithmProgress);
 
     // Only sync if data actually changed from what we last sent
-    if (currentIds === lastSynced.current.ids && currentProgress === lastSynced.current.progress) {
+    if (
+      currentIds === lastSynced.current.ids &&
+      currentProgress === lastSynced.current.progress &&
+      currentAlgorithmProgress === lastSynced.current.algorithm
+    ) {
       return;
     }
 
@@ -84,16 +91,20 @@ export default function UserProgressSync() {
       const response = await fetch('/api/account/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completedIds, visualizerProgress }),
+        body: JSON.stringify({ completedIds, visualizerProgress, algorithmProgress }),
       });
 
       if (response.ok) {
-        lastSynced.current = { ids: currentIds, progress: currentProgress };
+        lastSynced.current = {
+          ids: currentIds,
+          progress: currentProgress,
+          algorithm: currentAlgorithmProgress,
+        };
       }
     } catch (err) {
       console.error('[AlgoRythmics] Failed to sync progress to cloud:', err);
     }
-  }, [completedIds, visualizerProgress, status]);
+  }, [completedIds, visualizerProgress, algorithmProgress, status]);
 
   // 3. Continuous Sync: Save local changes to the cloud
   useEffect(() => {
@@ -112,7 +123,7 @@ export default function UserProgressSync() {
     // Debounce to avoid hitting the API too frequently during fast interactions
     const timer = setTimeout(syncProgress, APP_CONFIG.SYNC_INTERVAL_MS);
     return () => clearTimeout(timer);
-  }, [completedIds, visualizerProgress, status, syncProgress]);
+  }, [completedIds, visualizerProgress, algorithmProgress, status, syncProgress]);
 
   // 4. Lifecycle Sync: Immediate persistence on tab closure or visibility change
   useEffect(() => {
@@ -120,13 +131,19 @@ export default function UserProgressSync() {
       // Check if there are unsynced changes
       const currentIds = JSON.stringify(completedIds);
       const currentProgress = JSON.stringify(visualizerProgress);
+      const currentAlgorithmProgress = JSON.stringify(algorithmProgress);
 
-      if (currentIds !== lastSynced.current.ids || currentProgress !== lastSynced.current.progress) {
+      if (
+        currentIds !== lastSynced.current.ids ||
+        currentProgress !== lastSynced.current.progress ||
+        currentAlgorithmProgress !== lastSynced.current.algorithm
+      ) {
         // Use sendBeacon for best-effort delivery during page unload
         if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-          const blob = new Blob([JSON.stringify({ completedIds, visualizerProgress })], {
-            type: 'application/json',
-          });
+          const blob = new Blob(
+            [JSON.stringify({ completedIds, visualizerProgress, algorithmProgress })],
+            { type: 'application/json' },
+          );
           navigator.sendBeacon('/api/account/progress', blob);
         } else {
           // Fallback
@@ -136,15 +153,16 @@ export default function UserProgressSync() {
     };
 
     window.addEventListener('beforeunload', handleExit);
-    document.addEventListener('visibilitychange', () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') handleExit();
-    });
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('beforeunload', handleExit);
-      document.removeEventListener('visibilitychange', handleExit);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [completedIds, visualizerProgress, syncProgress]);
+  }, [completedIds, visualizerProgress, algorithmProgress, syncProgress]);
 
   return null;
 }

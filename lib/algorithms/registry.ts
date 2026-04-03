@@ -9,6 +9,10 @@ import {
   BUBBLE_SORT_DEFAULT_ARRAY,
   type SortStep,
 } from './bubbleSortSteps';
+import {
+  generateInsertionSortSteps,
+  INSERTION_SORT_DEFAULT_ARRAY,
+} from './insertionSortSteps';
 import { getCodeTemplate, type CodeTemplate } from './codeTemplates';
 import { getAlgorithmNodes, type AlgorithmNode } from './nodeDefinitions';
 import { getCodePatterns, type CodePattern } from './codeAnalysis';
@@ -33,6 +37,19 @@ const registry: Record<string, AlgorithmDefinition> = {
     codeTemplate: getCodeTemplate('bubble-sort'),
     nodes: getAlgorithmNodes('bubble-sort'),
     codePatterns: getCodePatterns('bubble-sort'),
+    legend: [
+      { color: '#269984', labelKey: 'visualizer.legend_compare' },
+      { color: '#f97316', labelKey: 'visualizer.legend_swap' },
+      { color: '#4ade80', labelKey: 'visualizer.legend_sorted' },
+    ],
+  },
+  'insertion-sort': {
+    id: 'insertion-sort',
+    generateSteps: generateInsertionSortSteps,
+    defaultArray: INSERTION_SORT_DEFAULT_ARRAY,
+    codeTemplate: getCodeTemplate('insertion-sort'),
+    nodes: getAlgorithmNodes('insertion-sort'),
+    codePatterns: getCodePatterns('insertion-sort'),
     legend: [
       { color: '#269984', labelKey: 'visualizer.legend_compare' },
       { color: '#f97316', labelKey: 'visualizer.legend_swap' },
