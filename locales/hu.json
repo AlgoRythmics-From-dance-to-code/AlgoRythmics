@@ -482,7 +482,10 @@
     "pass": "Menet",
     "legend_compare": "Összehasonlítás",
     "legend_swap": "Csere",
-    "legend_sorted": "Rendezett"
+    "legend_sorted": "Rendezett",
+    "legend_pivot": "Pivot",
+    "searching_for": "Keresett érték",
+    "sorted_complete": "A tömb rendezve!"
   },
   "control": {
     "select_pair": "Válassz ki két szomszédos elemet az összehasonlításhoz",
@@ -495,7 +498,18 @@
     "compare": "Összehasonlítás",
     "swap": "Csere",
     "stay": "Következő",
-    "reset": "Újrakezdés"
+    "reset": "Újrakezdés",
+    "found_it": "Megvan a keresett érték!",
+    "select_next": "Válaszd ki a következő elemet, amit az algoritmus megvizsgál",
+    "check": "Ellenőrzés",
+    "found": "Ez az!",
+    "not_found": "Ez nem az",
+    "queens_placed": "Minden királynő a helyén!",
+    "select_next_queen": "Válaszd ki a következő királynő helyét",
+    "safe": "Nincs ütésben",
+    "conflict": "Ütésben van",
+    "stuck": "Nincsen további érvényes lépés!",
+    "hint_on": "Súgó (be)"
   },
   "create": {
     "title": "Egészítsd ki a kódot",

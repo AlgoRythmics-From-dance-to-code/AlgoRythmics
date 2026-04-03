@@ -26,7 +26,7 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
   for (let i = 1; i < arr.length; i++) {
     // Current element being "inserted"
     let j = i;
-    
+
     // Step: Pick element
     result.push({
       array: [...arr],
@@ -42,13 +42,15 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
     // Move the element left until it's in the correct relative position
     while (j > 0) {
       comparisons++;
-      
+
       // Step: Compare with neighbor
       result.push({
         array: [...arr],
         activeIndices: [j - 1, j],
         swapping: false,
-        sortedIndices: Array.from({ length: i + 1 }, (_, k) => k).filter((k) => k !== j && k !== j - 1),
+        sortedIndices: Array.from({ length: i + 1 }, (_, k) => k).filter(
+          (k) => k !== j && k !== j - 1,
+        ),
         description: `Is ${arr[j - 1].val} > ${arr[j].val}?`,
         comparisons,
         swapCount: moveCount,
@@ -67,13 +69,15 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
           array: [...arr],
           activeIndices: [j - 1, j],
           swapping: true,
-          sortedIndices: Array.from({ length: i + 1 }, (_, k) => k).filter((k) => k !== j && k !== j - 1),
+          sortedIndices: Array.from({ length: i + 1 }, (_, k) => k).filter(
+            (k) => k !== j && k !== j - 1,
+          ),
           description: `Shifting ${arr[j].val} to the right`,
           comparisons,
           swapCount: moveCount,
           pass: i - 1,
         });
-        
+
         j--;
       } else {
         // Correct position found for this element

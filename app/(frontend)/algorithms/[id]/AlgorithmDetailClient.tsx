@@ -13,12 +13,7 @@ import { CheckCircle, Circle, Lightbulb } from 'lucide-react';
 import { ConfirmationModal } from '../../../components/Learning/ConfirmationModal';
 
 // Lazy load heavy components
-const BubbleSortVisualizer = lazy(
-  () => import('../../../components/Learning/BubbleSortVisualizer'),
-);
-const InsertionSortVisualizer = lazy(
-  () => import('../../../components/Learning/InsertionSortVisualizer'),
-);
+const AlgorithmVisualizer = lazy(() => import('../../../components/Learning/AlgorithmVisualizer'));
 const ControlVisualizer = lazy(() => import('../../../components/Learning/ControlVisualizer'));
 const CodeExercise = lazy(() => import('../../../components/Learning/CodeExercise'));
 const AliveVisualizer = lazy(() => import('../../../components/Learning/AliveVisualizer'));
@@ -210,8 +205,6 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
     return ['Video', 'Animation'] as const;
   }, [id]);
 
-
-
   const getViewStatus = useCallback(
     (view: string) => {
       switch (view) {
@@ -345,25 +338,13 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
         ) : null;
 
       case 'Animation':
-        if (id === 'bubble-sort') {
-          return (
-            <Suspense fallback={<TabLoader />}>
-              <div className="max-w-4xl mx-auto">
-                <BubbleSortVisualizer id={id} />
-              </div>
-            </Suspense>
-          );
-        }
-        if (id === 'insertion-sort') {
-          return (
-            <Suspense fallback={<TabLoader />}>
-              <div className="max-w-4xl mx-auto">
-                <InsertionSortVisualizer id={id} />
-              </div>
-            </Suspense>
-          );
-        }
-        break;
+        return (
+          <Suspense fallback={<TabLoader />}>
+            <div className="max-w-4xl mx-auto">
+              <AlgorithmVisualizer id={id} />
+            </div>
+          </Suspense>
+        );
 
       case 'Control':
         if (algoHasFullContent) {

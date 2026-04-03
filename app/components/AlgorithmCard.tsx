@@ -24,10 +24,10 @@ export default function AlgorithmCard({ algorithm, index }: AlgorithmCardProps) 
   // Complexity and difficulty colors
   const difficultyColor =
     algorithm.difficulty === 'Easy'
-      ? 'text-emerald-500 bg-emerald-500/10'
+      ? 'text-emerald-600 dark:text-emerald-400 border-emerald-500/20 dark:border-emerald-500/30'
       : algorithm.difficulty === 'Medium'
-        ? 'text-amber-500 bg-amber-500/10'
-        : 'text-rose-500 bg-rose-500/10';
+        ? 'text-amber-600 dark:text-amber-400 border-amber-500/20 dark:border-amber-500/30'
+        : 'text-rose-600 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/30';
 
   return (
     <Link
@@ -51,13 +51,13 @@ export default function AlgorithmCard({ algorithm, index }: AlgorithmCardProps) 
         />
 
         {/* Floating Badges */}
-        <div className="absolute top-4 left-4 flex flex-col gap-2">
-          <span
-            className={`text-[10px] font-montserrat font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md ${difficultyColor}`}
+        <div className="absolute top-4 left-4 flex flex-col gap-1.5">
+          <div
+            className={`min-w-[95px] text-center text-[10px] font-montserrat font-bold px-2 py-1 rounded-lg uppercase tracking-wider border bg-white/5 dark:bg-black/5 ${difficultyColor}`}
           >
             {t(`algorithm_card.difficulty.${algorithm.difficulty.toLowerCase()}`)}
-          </span>
-          <div className="capitalize font-montserrat font-bold text-[10px] text-[#269984] bg-white/80 dark:bg-black/80 px-2.5 py-1 rounded-lg backdrop-blur-md shadow-sm border border-[#269984]/10 w-fit">
+          </div>
+          <div className="min-w-[95px] text-center capitalize font-montserrat font-bold text-[10px] text-[#269984]/80 dark:text-[#269984]/60 border border-[#269984]/20 bg-white/5 dark:bg-black/5 px-2 py-1 rounded-lg backdrop-blur-sm">
             {t(`algorithms.categories.${algorithm.category}`).split(' ')[0]}
           </div>
         </div>

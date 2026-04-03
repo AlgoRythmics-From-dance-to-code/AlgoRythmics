@@ -482,7 +482,10 @@
     "pass": "Pass",
     "legend_compare": "Compare",
     "legend_swap": "Swap",
-    "legend_sorted": "Sorted"
+    "legend_sorted": "Sorted",
+    "legend_pivot": "Pivot",
+    "searching_for": "Searching for",
+    "sorted_complete": "Array sorted!"
   },
   "control": {
     "select_pair": "Select two adjacent elements to compare",
@@ -495,7 +498,18 @@
     "compare": "Compare",
     "swap": "Swap",
     "stay": "Next",
-    "reset": "Reset"
+    "reset": "Reset",
+    "found_it": "Target value found!",
+    "select_next": "Select the next element the algorithm will check",
+    "check": "Check Element",
+    "found": "Matches Target",
+    "not_found": "Does Not Match",
+    "queens_placed": "All queens placed safely!",
+    "select_next_queen": "Select the cell to place the next queen",
+    "safe": "No Conflicts",
+    "conflict": "Has Conflicts",
+    "stuck": "No more valid moves!",
+    "hint_on": "Hint (on)"
   },
   "create": {
     "title": "Complete the Code",

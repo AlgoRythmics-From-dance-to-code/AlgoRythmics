@@ -2,21 +2,27 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import SortingVisualizer from './SortingVisualizer';
+import QueensVisualizer from './QueensVisualizer';
 import VisualizerControls from './VisualizerControls';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useAnalytics } from '../../hooks/useAnalytics';
-import {
-  generateInsertionSortSteps,
-  INSERTION_SORT_DEFAULT_ARRAY,
-} from '../../../lib/algorithms/insertionSortSteps';
+import { getAlgorithm } from '../../../lib/algorithms/registry';
 
-export default function InsertionSortVisualizer({ id = 'insertion-sort' }: { id?: string }) {
+interface AlgorithmVisualizerProps {
+  id: string;
+}
+
+/**
+ * Generic Animation visualizer that works with any algorithm registered in the system.
+ */
+export default function AlgorithmVisualizer({ id }: AlgorithmVisualizerProps) {
   const {
     visualizerProgress,
     updateVisualizerProgress,
     algorithmProgress,
     resetAlgorithmProgressTab,
   } = useAlgorithmStore();
+
   const { trackEvent, updateProgress } = useAnalytics(id, 'animation');
 
   const initialProgress = visualizerProgress[id] || { step: 0, speed: 1 };
@@ -24,28 +30,35 @@ export default function InsertionSortVisualizer({ id = 'insertion-sort' }: { id?
   const [currentStep, setCurrentStep] = useState(initialProgress.step);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(initialProgress.speed);
+  const progressRef = useRef(algorithmProgress[id]);
+  useEffect(() => {
+    progressRef.current = algorithmProgress[id];
+  }, [algorithmProgress, id]);
   const startTime = useRef(Date.now());
 
-  // Sync state to store
+  const algoDef = useMemo(() => getAlgorithm(id), [id]);
+
+  // Pre-calculate all steps
+  const steps = useMemo(() => {
+    if (!algoDef) return [];
+    return algoDef.generateSteps(algoDef.defaultArray);
+  }, [algoDef]);
+
+  // Sync state to local store
   useEffect(() => {
     updateVisualizerProgress(id, currentStep, speed);
   }, [id, currentStep, speed, updateVisualizerProgress]);
 
   // Track spent time on unmount
   useEffect(() => {
-    const componentStartTime = startTime.current;
     return () => {
-      const spentMs = Date.now() - componentStartTime;
-      const currentTotal =
-        useAlgorithmStore.getState().algorithmProgress[id]?.animationTotalTimeMs || 0;
+      const spentMs = Date.now() - startTime.current;
+      const currentTotal = progressRef.current?.animationTotalTimeMs || 0;
       updateProgress({
         animationTotalTimeMs: currentTotal + spentMs,
       });
     };
   }, [id, updateProgress]);
-
-  // Pre-calculate all steps
-  const steps = useMemo(() => generateInsertionSortSteps(INSERTION_SORT_DEFAULT_ARRAY), []);
 
   const isFinished = currentStep === steps.length - 1;
 
@@ -72,19 +85,22 @@ export default function InsertionSortVisualizer({ id = 'insertion-sort' }: { id?
     setIsPlaying(false);
     trackEvent('animation_reset');
 
-    // 1. Update local store
+    // 1. Accumulate time before reset
+    const spentMs = Date.now() - startTime.current;
+    const currentTotal = algorithmProgress[id]?.animationTotalTimeMs || 0;
+
     resetAlgorithmProgressTab(id, 'animation');
 
-    // 2. Synchronize with analytics and flush any pending updates
     updateProgress(
       {
         animationCompleted: false,
         animationCompletedAt: null,
+        animationTotalTimeMs: currentTotal + spentMs,
       },
       true, // syncNow
     );
 
-    // 3. Immediate Sync to Backend (Redundant but ensures state integrity)
+    // 2. Immediate Sync to Backend
     const store = useAlgorithmStore.getState();
     fetch('/api/account/progress', {
       method: 'POST',
@@ -97,6 +113,8 @@ export default function InsertionSortVisualizer({ id = 'insertion-sort' }: { id?
         },
       }),
     }).catch((err) => console.error('[Animation] Failed to sync reset:', err));
+
+    startTime.current = Date.now();
   };
 
   const handlePlayPause = () => {
@@ -136,9 +154,20 @@ export default function InsertionSortVisualizer({ id = 'insertion-sort' }: { id?
     return () => clearTimeout(timer);
   }, [isPlaying, currentStep, stepForward, speed, steps.length]);
 
+  if (!algoDef || steps.length === 0) return null;
+
   return (
     <div className="w-full flex flex-col items-center">
-      <SortingVisualizer steps={steps} currentStep={currentStep} speed={speed} />
+      {algoDef.category === 'backtracking' ? (
+        <QueensVisualizer steps={steps} currentStep={currentStep} />
+      ) : (
+        <SortingVisualizer
+          steps={steps}
+          currentStep={currentStep}
+          speed={speed}
+          legend={algoDef.legend}
+        />
+      )}
 
       <VisualizerControls
         onPlayPause={handlePlayPause}
@@ -150,6 +179,7 @@ export default function InsertionSortVisualizer({ id = 'insertion-sort' }: { id?
         speed={speed}
         setSpeed={handleSpeedChange}
         progress={(currentStep / (steps.length - 1)) * 100}
+        speedOptions={algoDef.category === 'backtracking' ? [1, 2, 10, 100] : undefined}
       />
     </div>
   );

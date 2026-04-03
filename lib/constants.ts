@@ -132,6 +132,14 @@ export const VIDEOS: Video[] = [
     thumbnail: 'algo_group_142.svg',
     youtubeId: 'placeholder_binary',
   },
+  {
+    id: 'n-queens-backtracking',
+    duration: '6:50',
+    views: '45K',
+    categoryId: 'backtracking',
+    thumbnail: 'algo_group_109.svg',
+    youtubeId: '0DeznFqrgAI',
+  },
 ];
 
 export interface Algorithm {
@@ -218,6 +226,6 @@ export const ALGORITHMS: Algorithm[] = [
     category: 'fun',
     illAsset: 'algo_group_119.svg',
     complexity: 'O(n! · n)',
-    difficulty: 'Hard',
+    difficulty: 'Easy',
   },
 ];

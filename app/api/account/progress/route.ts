@@ -105,7 +105,7 @@ export async function POST(req: Request) {
           const existingDoc = existingByAlgoId.get(id);
 
           // We don't want to overwrite identity fields if they come from the frontend
-          const updates = { ...(data as any) };
+          const updates = { ...(data as Record<string, unknown>) };
           delete updates.user;
           delete updates.algorithmId;
           delete updates.id;
