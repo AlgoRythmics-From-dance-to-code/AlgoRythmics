@@ -15,11 +15,14 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
   const { updateProgress } = useAnalytics(algorithmId, 'video');
   const { algorithmProgress } = useAlgorithmStore();
 
-  const startTime = useRef(Date.now());
+  const lastTickRef = useRef(Date.now());
   const isWatched = algorithmProgress[algorithmId]?.videoWatched || false;
 
   // Mark as watched 10 seconds after opening the video or when already watched in store
   useEffect(() => {
+    // Reset the last tick at the start of the effect
+    lastTickRef.current = Date.now();
+
     const timer = setTimeout(() => {
       if (!isWatched) {
         updateProgress({
@@ -31,10 +34,10 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
 
     return () => {
       clearTimeout(timer);
-      const spentMs = Date.now() - startTime.current;
+      const delta = Date.now() - lastTickRef.current;
       const currentTotal = algorithmProgress[algorithmId]?.videoWatchTimeMs || 0;
       updateProgress({
-        videoWatchTimeMs: currentTotal + spentMs,
+        videoWatchTimeMs: currentTotal + delta,
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -82,48 +82,57 @@ export async function POST(req: Request) {
     if (algorithmProgress && typeof algorithmProgress === 'object') {
       const now = new Date().toISOString();
 
-      // For each algorithm ID provided in the map, upsert a record
-      for (const [id, data] of Object.entries(algorithmProgress)) {
-        if (!data || typeof data !== 'object') continue;
+      const progressEntries = Object.entries(algorithmProgress).filter(
+        ([, data]) => data && typeof data === 'object',
+      ) as [string, Record<string, unknown>][];
 
-        // Find existing record
-        const { docs } = await payload.find({
+      if (progressEntries.length > 0) {
+        const algorithmIds = progressEntries.map(([id]) => id);
+
+        // Find all existing records in one batch
+        const { docs: existingDocs } = await payload.find({
           collection: 'algorithm-progress',
           where: {
-            and: [{ user: { equals: userId } }, { algorithmId: { equals: id } }],
+            and: [{ user: { equals: userId } }, { algorithmId: { in: algorithmIds } }],
           },
-          limit: 1,
+          limit: algorithmIds.length,
           depth: 0,
         });
 
-        // We don't want to overwrite identity fields if they come from the frontend
-        const updates = { ...(data as any) };
-        delete updates.user;
-        delete updates.algorithmId;
-        delete updates.id;
-        delete updates.createdAt;
-        delete updates.updatedAt;
+        const existingByAlgoId = new Map(existingDocs.map((doc) => [String(doc.algorithmId), doc]));
 
-        if (docs.length > 0) {
-          await payload.update({
-            collection: 'algorithm-progress',
-            id: docs[0].id,
-            data: {
-              ...updates,
-              lastActivityAt: now,
-            },
-          });
-        } else {
-          await payload.create({
-            collection: 'algorithm-progress',
-            data: {
-              ...updates,
-              user: userId,
-              algorithmId: id,
-              firstStartedAt: now,
-              lastActivityAt: now,
-            },
-          });
+        for (const [id, data] of progressEntries) {
+          const existingDoc = existingByAlgoId.get(id);
+
+          // We don't want to overwrite identity fields if they come from the frontend
+          const updates = { ...(data as any) };
+          delete updates.user;
+          delete updates.algorithmId;
+          delete updates.id;
+          delete updates.createdAt;
+          delete updates.updatedAt;
+
+          if (existingDoc) {
+            await payload.update({
+              collection: 'algorithm-progress',
+              id: existingDoc.id,
+              data: {
+                ...updates,
+                lastActivityAt: now,
+              },
+            });
+          } else {
+            await payload.create({
+              collection: 'algorithm-progress',
+              data: {
+                ...updates,
+                user: userId,
+                algorithmId: id,
+                firstStartedAt: now,
+                lastActivityAt: now,
+              },
+            });
+          }
         }
       }
     }

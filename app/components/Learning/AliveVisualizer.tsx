@@ -25,20 +25,33 @@ type Mode = 'code' | 'nodes';
 export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
   const { t } = useLocale();
   const { trackEvent, updateProgress } = useAnalytics(algorithmId, 'alive');
-  const { algorithmProgress, resetAlgorithmProgressTab, completedIds, visualizerProgress } =
-    useAlgorithmStore();
+  const { algorithmProgress, resetAlgorithmProgressTab } = useAlgorithmStore();
   const progress = algorithmProgress[algorithmId] || EMPTY_PROGRESS;
 
   const [mode, setMode] = useState<Mode>('code');
   const [helpUsed, setHelpUsed] = useState(false);
   const startTime = useRef(Date.now());
+  const lastTickRef = useRef(Date.now());
 
   // Unified Reset Function for the component
   const handleReset = useCallback(() => {
     // 1. Update local store
     resetAlgorithmProgressTab(algorithmId, 'alive');
 
-    // 2. Immediate Sync to Backend (Comprehensive)
+    // 2. Synchronize with analytics and flush any pending updates
+    updateProgress(
+      {
+        aliveCompleted: false,
+        aliveBestScore: 0,
+        aliveCodeSubmissions: 0,
+        aliveLastCode: '',
+        aliveTotalTimeMs: 0,
+        aliveCompletedAt: null,
+      },
+      true, // syncNow
+    );
+
+    // 3. Immediate Sync to Backend (Comprehensive)
     const store = useAlgorithmStore.getState();
     fetch('/api/account/progress', {
       method: 'POST',
@@ -53,15 +66,17 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
     }).catch((err) => console.error('[Alive] Failed to sync reset:', err));
 
     trackEvent('alive_reset');
-  }, [algorithmId, resetAlgorithmProgressTab, trackEvent]);
+    startTime.current = Date.now();
+    lastTickRef.current = Date.now();
+  }, [algorithmId, resetAlgorithmProgressTab, trackEvent, updateProgress]);
 
   // Track spent time on unmount
   React.useEffect(() => {
     return () => {
-      const spentMs = Date.now() - startTime.current;
+      const delta = Date.now() - lastTickRef.current;
       const currentTotal = progress?.aliveTotalTimeMs || 0;
       updateProgress({
-        aliveTotalTimeMs: currentTotal + spentMs,
+        aliveTotalTimeMs: currentTotal + delta,
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

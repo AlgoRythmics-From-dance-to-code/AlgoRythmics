@@ -46,15 +46,18 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
   }, [setInteractionLocked]);
 
   const startTime = useRef(Date.now());
+  const lastTickRef = useRef(Date.now());
   const currentExpected = steps[expectedStepIndex];
   const isFinished = expectedStepIndex >= steps.length - 1;
 
-  // Track spent time on unmount
+  // Track spent time and attempts on unmount
   React.useEffect(() => {
     return () => {
-      const spentMs = Date.now() - startTime.current;
+      const delta = Date.now() - lastTickRef.current;
+      const currentTotal = progress?.controlTotalTimeMs || 0;
       updateProgress({
         controlAttempts: (progress?.controlAttempts || 0) + 1,
+        controlTotalTimeMs: currentTotal + delta,
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -216,7 +219,19 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
     // 1. Reset progress in store
     resetAlgorithmProgressTab(algorithmId, 'control');
 
-    // 2. Immediate Sync to Backend
+    // 2. Synchronize with analytics and flush any pending updates
+    updateProgress(
+      {
+        controlCompleted: false,
+        controlBestScore: 0,
+        controlMistakes: 0,
+        controlTotalTimeMs: 0,
+        controlCompletedAt: null,
+      },
+      true, // syncNow
+    );
+
+    // 3. Immediate Sync to Backend (Redundant but ensures state integrity)
     const store = useAlgorithmStore.getState();
     fetch('/api/account/progress', {
       method: 'POST',
@@ -229,7 +244,10 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         },
       }),
     }).catch((err) => console.error('[Control] Failed to sync reset:', err));
-  }, [algorithmId, resetAlgorithmProgressTab, trackEvent]);
+
+    startTime.current = Date.now();
+    lastTickRef.current = Date.now();
+  }, [algorithmId, resetAlgorithmProgressTab, trackEvent, updateProgress]);
 
   // Build the visual state to show — show the array at the current expected step
   // but without the active highlighting (user needs to figure that out)

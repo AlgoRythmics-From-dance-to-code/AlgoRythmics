@@ -169,7 +169,6 @@ function runSortAndCheck(
     safeCode = safeCode.replace(/(for\s*\([^)]*\)\s*\{|while\s*\([^)]*\)\s*\{)/g, `$1 ${loopLimiter}`);
 
     const fnName = algorithmId === 'bubble-sort' ? 'bubbleSort' : 'insertionSort';
-    const langKey = algorithmId === 'bubble-sort' ? 'bubbleSort' : 'insertionSort';
 
     const runnable = `
       globalThis.__loopCount = 0;

@@ -70,7 +70,16 @@ export default function InsertionSortVisualizer({ id = 'insertion-sort' }: { id?
     // 1. Update local store
     resetAlgorithmProgressTab(id, 'animation');
 
-    // 2. Immediate Sync to Backend
+    // 2. Synchronize with analytics and flush any pending updates
+    updateProgress(
+      {
+        animationCompleted: false,
+        animationCompletedAt: null,
+      },
+      true, // syncNow
+    );
+
+    // 3. Immediate Sync to Backend (Redundant but ensures state integrity)
     const store = useAlgorithmStore.getState();
     fetch('/api/account/progress', {
       method: 'POST',

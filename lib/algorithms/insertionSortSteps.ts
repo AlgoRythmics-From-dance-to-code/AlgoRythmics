@@ -30,7 +30,7 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
     // Step: Pick element
     result.push({
       array: [...arr],
-      activeIndices: [j],
+      activeIndices: [],
       swapping: false,
       sortedIndices: Array.from({ length: i }, (_, k) => k),
       description: `Picking ${arr[j].val} to insert into the sorted part`,
@@ -48,7 +48,7 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
         array: [...arr],
         activeIndices: [j - 1, j],
         swapping: false,
-        sortedIndices: Array.from({ length: i + 1 }, (_, k) => k).filter(k => k !== j && k !== j - 1),
+        sortedIndices: Array.from({ length: i + 1 }, (_, k) => k).filter((k) => k !== j && k !== j - 1),
         description: `Is ${arr[j - 1].val} > ${arr[j].val}?`,
         comparisons,
         swapCount: moveCount,
@@ -67,8 +67,8 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
           array: [...arr],
           activeIndices: [j - 1, j],
           swapping: true,
-          sortedIndices: Array.from({ length: i + 1 }, (_, k) => k).filter(k => k !== j && k !== j - 1),
-          description: `Moving ${arr[j].val} to the left`,
+          sortedIndices: Array.from({ length: i + 1 }, (_, k) => k).filter((k) => k !== j && k !== j - 1),
+          description: `Shifting ${arr[j].val} to the right`,
           comparisons,
           swapCount: moveCount,
           pass: i - 1,
@@ -84,7 +84,7 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
     // Step: Relative block sorted
     result.push({
       array: [...arr],
-      activeIndices: [j],
+      activeIndices: [],
       swapping: false,
       sortedIndices: Array.from({ length: i + 1 }, (_, k) => k),
       description: `Target element placed — sorted area grows`,

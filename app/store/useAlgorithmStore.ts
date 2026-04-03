@@ -33,6 +33,7 @@ export interface AlgorithmProgress {
   aliveCodeSubmissions?: number;
   aliveLastCode?: string;
   aliveTotalTimeMs?: number;
+  controlTotalTimeMs?: number;
   aliveLastActivityAt?: string;
 }
 
@@ -151,6 +152,8 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             updates.controlBestScore = 0;
             updates.controlMistakes = 0;
             updates.controlAttempts = 0;
+            updates.controlHintsUsed = 0;
+            updates.controlTotalTimeMs = 0;
             updates.controlCompletedAt = null;
             break;
           case 'create':
@@ -158,6 +161,8 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             updates.createBlanksCorrectFirst = 0;
             updates.createBlanksTotal = 0;
             updates.createAttempts = 0;
+            updates.createHelpUsed = false;
+            updates.createTotalTimeMs = 0;
             updates.createCompletedAt = null;
             break;
           case 'alive':
