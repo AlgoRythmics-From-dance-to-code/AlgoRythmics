@@ -81,10 +81,71 @@ export const bubbleSortTemplate: CodeTemplate = {
   ],
 };
 
+// ─── Insertion Sort ───────────────────────────────────────────
+
+export const insertionSortTemplate: CodeTemplate = {
+  algorithmId: 'insertion-sort',
+  language: 'pseudocode',
+  lines: [
+    { text: 'function insertionSort(arr):', indent: 0 },
+    { text: 'for i = 1 to {{blank1}}', indent: 1 },
+    { text: 'key = {{blank2}}', indent: 2 },
+    { text: 'j = i - 1', indent: 2 },
+    { text: 'while j >= 0 and {{blank3}} > key:', indent: 2 },
+    { text: 'arr[j + 1] = {{blank4}}', indent: 3 },
+    { text: 'j = j - 1', indent: 3 },
+    { text: 'arr[j + 1] = {{blank5}}', indent: 2 },
+    { text: 'return arr', indent: 1 },
+  ],
+  blanks: [
+    {
+      id: 'blank1',
+      answer: 'arr.length - 1',
+      placeholder: '____________',
+      widthCh: 14,
+      options: ['arr.length - 1', 'arr.length', 'n', 'arr.length + 1'],
+      hint: 'The loop should go until the end of the array.',
+    },
+    {
+      id: 'blank2',
+      answer: 'arr[i]',
+      placeholder: '______',
+      widthCh: 8,
+      options: ['arr[i]', 'arr[j]', 'i', '0'],
+      hint: 'The current element to be inserted.',
+    },
+    {
+      id: 'blank3',
+      answer: 'arr[j]',
+      placeholder: '______',
+      widthCh: 8,
+      options: ['arr[j]', 'arr[i]', 'arr[j+1]', 'key'],
+      hint: 'Compare with the element to the left.',
+    },
+    {
+      id: 'blank4',
+      answer: 'arr[j]',
+      placeholder: '______',
+      widthCh: 8,
+      options: ['arr[j]', 'key', 'arr[i]', 'arr[j+1]'],
+      hint: 'Shift the larger element to the right.',
+    },
+    {
+      id: 'blank5',
+      answer: 'key',
+      placeholder: '______',
+      widthCh: 8,
+      options: ['key', 'arr[i]', 'arr[j]', 'temp'],
+      hint: 'Insert the element in its correct position.',
+    },
+  ],
+};
+
 // ─── Registry ─────────────────────────────────────────────────
 
 const templates: Record<string, CodeTemplate> = {
   'bubble-sort': bubbleSortTemplate,
+  'insertion-sort': insertionSortTemplate,
 };
 
 export function getCodeTemplate(algorithmId: string): CodeTemplate | undefined {

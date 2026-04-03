@@ -74,7 +74,7 @@ export const VIDEOS: Video[] = [
     views: '98K',
     categoryId: 'sorting',
     thumbnail: 'algo_group_142.svg',
-    youtubeId: 'placeholder_insertion',
+    youtubeId: 'ROalU379l3U',
   },
   {
     id: 'selection-sort-waltz',

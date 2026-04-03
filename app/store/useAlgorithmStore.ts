@@ -18,13 +18,17 @@ export interface AlgorithmProgress {
   aliveCompletedAt?: string | null;
   controlBestScore?: number;
   controlMistakes?: number;
+  controlAttempts?: number;
   createHelpUsed?: boolean;
   createBlanksCorrectFirst?: number;
   createBlanksTotal?: number;
+  createAttempts?: number;
   createTotalTimeMs?: number;
   aliveBestScore?: number;
   controlHintsUsed?: number;
   animationPlayCount?: number;
+  animationTotalTimeMs?: number;
+  videoWatchTimeMs?: number;
   aliveHelpUsed?: boolean;
   aliveCodeSubmissions?: number;
   aliveLastCode?: string;
@@ -119,7 +123,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       },
 
       resetAlgorithmProgressTab: (id, tab) => {
-        const { algorithmProgress } = get();
+        const { algorithmProgress, visualizerProgress, completedIds } = get();
         const current = algorithmProgress[id] || {};
         const updates: Partial<AlgorithmProgress> = {};
 
@@ -127,31 +131,50 @@ export const useAlgorithmStore = create<AlgorithmState>()(
           case 'video':
             updates.videoWatched = false;
             updates.videoCompletedAt = null;
+            updates.videoWatchTimeMs = 0;
             break;
           case 'animation':
             updates.animationCompleted = false;
             updates.animationCompletedAt = null;
+            updates.animationTotalTimeMs = 0;
+            updates.animationPlayCount = 0;
+            // Also reset visualizer step
+            set({
+              visualizerProgress: {
+                ...visualizerProgress,
+                [id]: { step: 0, speed: visualizerProgress[id]?.speed || 1 },
+              },
+            });
             break;
           case 'control':
             updates.controlCompleted = false;
             updates.controlBestScore = 0;
             updates.controlMistakes = 0;
+            updates.controlAttempts = 0;
             updates.controlCompletedAt = null;
             break;
           case 'create':
             updates.createCompleted = false;
             updates.createBlanksCorrectFirst = 0;
             updates.createBlanksTotal = 0;
+            updates.createAttempts = 0;
             updates.createCompletedAt = null;
             break;
           case 'alive':
             updates.aliveCompleted = false;
             updates.aliveBestScore = 0;
+            updates.aliveCodeSubmissions = 0;
+            updates.aliveLastCode = '';
+            updates.aliveTotalTimeMs = 0;
             updates.aliveCompletedAt = null;
             break;
         }
 
+        // If any tab is reset, the whole algorithm is no longer "completed"
+        const nextCompletedIds = completedIds.filter((item) => item !== id);
+
         set({
+          completedIds: nextCompletedIds,
           algorithmProgress: {
             ...algorithmProgress,
             [id]: { ...current, ...updates },

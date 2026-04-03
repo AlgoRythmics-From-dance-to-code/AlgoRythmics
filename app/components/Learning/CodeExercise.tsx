@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, HelpCircle, RotateCcw, Check } from 'lucide-react';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { getCodeTemplate, type BlankSlot } from '../../../lib/algorithms/codeTemplates';
+import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 
 interface CodeExerciseProps {
   algorithmId: string;
@@ -43,7 +44,20 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
   const [activeBlank, setActiveBlank] = useState<string | null>(null);
   const [activeWrongOptions, setActiveWrongOptions] = useState<Record<string, Set<string>>>({});
   const [isComplete, setIsComplete] = useState(false);
-  const startTime = useMemo(() => Date.now(), []);
+  const startTime = useRef(Date.now());
+  const { algorithmProgress, resetAlgorithmProgressTab } = useAlgorithmStore();
+
+  // Track spent time on unmount
+  React.useEffect(() => {
+    return () => {
+      const spentMs = Date.now() - startTime.current;
+      const currentTotal = algorithmProgress[algorithmId]?.createTotalTimeMs || 0;
+      updateProgress({
+        createTotalTimeMs: currentTotal + spentMs,
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [algorithmId, updateProgress]);
 
   const blanksMap = useMemo(() => {
     const map: Record<string, BlankSlot> = {};
@@ -93,7 +107,7 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
       if (allCorrect) {
         setIsComplete(true);
         setActiveBlank(null);
-        const elapsed = Date.now() - startTime;
+        const elapsed = Date.now() - startTime.current;
         const firstTryCorrect = Object.entries(blankStates).reduce((count, [id, s]) => {
           const attemptsAfter = id === blankId ? s.attempts + 1 : s.attempts;
           const isCorrectAfter = id === blankId ? isCorrect : s.isCorrect;
@@ -209,7 +223,6 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
       checkBlank(blankId, optionValue);
     }
   };
-
   // Reset
   const handleReset = () => {
     const initial: Record<string, { value: string; isCorrect: boolean | null; attempts: number }> =
@@ -223,15 +236,22 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
     setActiveWrongOptions({});
     trackEvent('create_reset');
 
-    // Reset progress in the store/backend
-    updateProgress({
-      createCompleted: false,
-      createTotalTimeMs: 0,
-      createCompletedAt: null,
-      createHelpUsed: false,
-      createBlanksCorrectFirst: 0,
-      createBlanksTotal: totalBlanks,
-    });
+    // 1. Reset progress in the store
+    resetAlgorithmProgressTab(algorithmId, 'create');
+
+    // 2. Immediate Sync to Backend
+    const store = useAlgorithmStore.getState();
+    fetch('/api/account/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        completedIds: store.completedIds,
+        visualizerProgress: store.visualizerProgress,
+        algorithmProgress: {
+          [algorithmId]: store.algorithmProgress[algorithmId],
+        },
+      }),
+    }).catch((err) => console.error('[Create] Failed to sync reset:', err));
   };
 
   // Render code line with blanks

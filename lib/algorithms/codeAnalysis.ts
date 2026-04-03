@@ -63,6 +63,41 @@ export const bubbleSortPatterns: CodePattern[] = [
   },
 ];
 
+// ─── Insertion Sort patterns ──────────────────────────────────
+
+export const insertionSortPatterns: CodePattern[] = [
+  {
+    id: 'outer-loop',
+    label: 'Outer loop',
+    pattern: /for\s*\(\s*(?:let|var|const)?\s*[a-zA-Z_]\w*\s*=\s*1\s*;[^;]+;[^)]+\)/i,
+    weight: 20,
+  },
+  {
+    id: 'inner-loop',
+    label: 'While loop',
+    pattern: /while\s*\([^;]+\)/i,
+    weight: 20,
+  },
+  {
+    id: 'key-assignment',
+    label: 'Picking the key',
+    pattern: /(?:let|var|const)?\s*key\s*=\s*[a-zA-Z_]\w*\[[a-zA-Z_]\w*\]/i,
+    weight: 20,
+  },
+  {
+    id: 'shift',
+    label: 'Shift operation',
+    pattern: /[a-zA-Z_]\w*\[\s*[a-zA-Z_]\w*\s*\+\s*1\s*\]\s*=\s*[a-zA-Z_]\w*\[\s*[a-zA-Z_]\w*\s*\]/i,
+    weight: 20,
+  },
+  {
+    id: 'insertion',
+    label: 'Insertion',
+    pattern: /[a-zA-Z_]\w*\[\s*[a-zA-Z_]\w*\s*\+\s*1\s*\]\s*=\s*key/i,
+    weight: 20,
+  },
+];
+
 /**
  * Analyze user code against expected patterns for an algorithm.
  */
@@ -95,8 +130,8 @@ export function analyzeCode(
   let executionPassed = true;
   let executionError: string | undefined;
 
-  if (algorithmId === 'bubble-sort') {
-    const testRes = runSortAndCheck(code);
+  if (algorithmId === 'bubble-sort' || algorithmId === 'insertion-sort') {
+    const testRes = runSortAndCheck(code, algorithmId);
     if (!testRes.passed) {
       executionPassed = false;
       executionError = testRes.error;
@@ -118,7 +153,10 @@ export function analyzeCode(
   };
 }
 
-function runSortAndCheck(userCode: string): { passed: boolean; error?: string } {
+function runSortAndCheck(
+  userCode: string,
+  algorithmId: string,
+): { passed: boolean; error?: string } {
   try {
     const testArray = [5, 2, 9, 1, 5, 6, -3, 8];
     const expected = [...testArray].sort((a, b) => a - b);
@@ -128,21 +166,21 @@ function runSortAndCheck(userCode: string): { passed: boolean; error?: string } 
     const loopLimiter = `if (!globalThis.__loopCount) globalThis.__loopCount = 0; if (globalThis.__loopCount++ > 10000) throw new Error("Végtelen ciklus észlelve! Kérlek ellenőrizd a feltételeket.");`;
 
     // Insert limiter inside opening braces of for/while loops
-    safeCode = safeCode.replace(
-      /(for\s*\([^)]*\)\s*\{|while\s*\([^)]*\)\s*\{)/g,
-      `$1 ${loopLimiter}`,
-    );
+    safeCode = safeCode.replace(/(for\s*\([^)]*\)\s*\{|while\s*\([^)]*\)\s*\{)/g, `$1 ${loopLimiter}`);
+
+    const fnName = algorithmId === 'bubble-sort' ? 'bubbleSort' : 'insertionSort';
+    const langKey = algorithmId === 'bubble-sort' ? 'bubbleSort' : 'insertionSort';
 
     const runnable = `
       globalThis.__loopCount = 0;
       ${safeCode}
       
-      if (typeof bubbleSort === 'function') {
-        let result = bubbleSort([...arr]);
+      if (typeof ${fnName} === 'function') {
+        let result = ${fnName}([...arr]);
         if (result !== undefined) return result;
         return arr; // return the modified array if it sorts in place
       } else {
-        throw new Error("Kérlek hozz létre egy 'bubbleSort' nevű függvényt, ahogy a Create - Code Exercise is kérte!");
+        throw new Error("Kérlek hozz létre egy '${fnName}' nevű függvényt, ahogy a Create - Code Exercise is kérte!");
       }
     `;
 
@@ -153,7 +191,7 @@ function runSortAndCheck(userCode: string): { passed: boolean; error?: string } 
       result = sortFn([...testArray]);
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes('Kérlek hozz létre')) {
-        // Fallback: If they didn't name it bubbleSort, let's try evaluating it as a flat script modifying 'arr'
+        // Fallback: If they didn't name it correctly, let's try evaluating it as a flat script modifying 'arr'
         const alternateRunnable = `
           globalThis.__loopCount = 0;
           ${safeCode}
@@ -204,6 +242,7 @@ function runSortAndCheck(userCode: string): { passed: boolean; error?: string } 
 
 const analysisPatterns: Record<string, CodePattern[]> = {
   'bubble-sort': bubbleSortPatterns,
+  'insertion-sort': insertionSortPatterns,
 };
 
 export function getCodePatterns(algorithmId: string): CodePattern[] | undefined {
