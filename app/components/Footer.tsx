@@ -22,11 +22,16 @@ export default function Footer() {
             <Image
               src="/assets/path_1.svg"
               alt="Facebook"
-              width={28}
-              height={28}
+              width={0}
+              height={0}
+              sizes="100vw"
               unoptimized
               className="h-7 sm:h-8 w-auto"
-              style={{ filter: 'brightness(0) invert(1)' }}
+              style={{
+                filter: 'brightness(0) invert(1)',
+                width: 'auto',
+                height: 'auto',
+              }}
             />
           </a>
           <a
@@ -38,11 +43,16 @@ export default function Footer() {
             <Image
               src="/assets/group_77.svg"
               alt="YouTube"
-              width={32}
-              height={32}
+              width={0}
+              height={0}
+              sizes="100vw"
               unoptimized
               className="h-7 sm:h-8 w-auto"
-              style={{ filter: 'brightness(0) invert(1)' }}
+              style={{
+                filter: 'brightness(0) invert(1)',
+                width: 'auto',
+                height: 'auto',
+              }}
             />
           </a>
           <a
@@ -54,11 +64,16 @@ export default function Footer() {
             <Image
               src="/assets/path_3.svg"
               alt="Instagram"
-              width={28}
-              height={28}
+              width={0}
+              height={0}
+              sizes="100vw"
               unoptimized
               className="h-7 sm:h-8 w-auto"
-              style={{ filter: 'brightness(0) invert(1)' }}
+              style={{
+                filter: 'brightness(0) invert(1)',
+                width: 'auto',
+                height: 'auto',
+              }}
             />
           </a>
         </div>

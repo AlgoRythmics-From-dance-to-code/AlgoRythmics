@@ -216,7 +216,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0a] min-h-[calc(100vh-85px)] py-12 px-4 sm:px-10">
+    <div className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0a] min-h-[calc(100vh-85px)] py-8 md:py-12 px-4 sm:px-10 overflow-x-hidden">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>
@@ -268,9 +268,9 @@ export default function ProfilePage() {
           </aside>
 
           {/* Main Content Area */}
-          <div className="flex-1 bg-white dark:bg-[#111] rounded-[2.5rem] border border-gray-100 dark:border-neutral-800 shadow-2xl shadow-gray-200/50 dark:shadow-none min-h-[600px] flex flex-col">
-            {/* Header / Profile Header - NO overflow-hidden here to allow avatar to peek out */}
-            <div className="bg-gradient-to-br from-[#269984] via-[#36D6BA] to-[#269984] h-48 relative rounded-t-[2.5rem]">
+          <div className="flex-1 bg-white dark:bg-[#111] rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 dark:border-neutral-800 shadow-2xl shadow-gray-200/50 dark:shadow-none min-h-[600px] flex flex-col overflow-hidden">
+            {/* Header / Profile Header */}
+            <div className="bg-gradient-to-br from-[#269984] via-[#36D6BA] to-[#269984] h-32 sm:h-40 relative">
               {/* Pattern Overlay */}
               <div
                 className="absolute inset-0 opacity-10 pointer-events-none"
@@ -281,44 +281,41 @@ export default function ProfilePage() {
               ></div>
               <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
 
-              <div className="absolute -bottom-16 left-8 flex items-end gap-6 z-10">
-                <div className="relative group">
-                  <div className="w-32 h-32 rounded-3xl border-8 border-white dark:border-[#111] bg-white dark:bg-neutral-800 shadow-xl overflow-hidden flex items-center justify-center">
+              <div className="absolute -bottom-10 left-0 right-0 sm:left-8 flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-6 z-10 px-4 sm:px-0">
+                <div className="relative group flex-shrink-0">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl border-4 sm:border-6 border-white dark:border-[#111] bg-white dark:bg-neutral-800 shadow-xl overflow-hidden flex items-center justify-center relative">
                     {avatarUrl ? (
                       <Image
                         src={avatarUrl}
                         alt={fullName}
-                        width={128}
-                        height={128}
+                        width={112}
+                        height={112}
                         className="w-full h-full object-cover"
                         style={{ width: '100%', height: '100%' }}
                       />
                     ) : (
-                      <span className="text-4xl font-black text-[#269984]">{initials}</span>
+                      <span className="text-2xl sm:text-3xl font-black text-[#269984]">{initials}</span>
                     )}
                   </div>
+                  {/* Role Badge on the Avatar - Only for Admins */}
+                  {(user as BaseUser).role === 'admin' && (
+                    <div className="absolute -top-1.5 -left-1.5 bg-[#269984] text-white px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg border-2 border-white dark:border-[#111] z-20">
+                      ADMIN
+                    </div>
+                  )}
                 </div>
 
-                <div className="mb-14 last:hidden md:block">
-                  <h2 className="font-montserrat font-black text-3xl text-white drop-shadow-sm truncate max-w-[250px] sm:max-w-md">
+                <div className="mb-6 sm:mb-16 text-center sm:text-left min-w-0 max-w-full">
+                  <h2 className="font-montserrat font-black text-2xl sm:text-3xl text-white drop-shadow-md">
                     {fullName}
                   </h2>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white border border-white/30">
-                      {(user as BaseUser).role || 'User'}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-white/90 text-sm font-medium min-w-0">
-                      <Mail size={14} className="flex-shrink-0" />
-                      <span className="truncate">{user.email}</span>
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="pt-24 px-8 pb-10 flex-1 overflow-hidden">
+            <div className="pt-20 sm:pt-24 px-4 sm:px-8 pb-10 flex-1 overflow-hidden">
               {/* Tab Content */}
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 h-full">
                 {/* Public Profile Content */}
                 {activeTab === 'public' && (
                   <div className="space-y-10">

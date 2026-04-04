@@ -56,10 +56,10 @@ export default function TealSection() {
         </svg>
       </div>
 
-      <section className="w-full bg-[#269984] pt-20">
+      <section className="w-full bg-[#269984] pt-20 pb-20">
         <div className="mx-auto px-6" style={{ maxWidth: '1300px' }}>
-          {/* Stacked Folder Container */}
-          <div className="relative flex flex-row flex-wrap lg:flex-nowrap items-center justify-center gap-10 lg:gap-0 lg:-space-x-12">
+          {/* Stacked Folder Container — Responsive Grid to Desktop Stack */}
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-nowrap items-center justify-items-center justify-center gap-12 sm:gap-x-8 sm:gap-y-16 lg:gap-0 lg:-space-x-12">
             {cards.map((card, index) => (
               <Link
                 key={card.href}
