@@ -509,7 +509,11 @@
     "safe": "No Conflicts",
     "conflict": "Has Conflicts",
     "stuck": "No more valid moves!",
-    "hint_on": "Hint (on)"
+    "hint_on": "Hint (on)",
+    "row": "Row {row}",
+    "game_won_message": "{n} queens placed with {mistakes} wrong attempts",
+    "game_over_message": "Placed {queensPlaced} of {n} queens. {mistakes} wrong attempts.",
+    "hint_explainer": "Green cells are safe — click one!"
   },
   "create": {
     "title": "Complete the Code",

@@ -319,7 +319,7 @@ export default function QueensControl({ n, algorithmId }: QueensControlProps) {
               className="font-montserrat text-sm text-gray-500 dark:text-gray-400"
             >
               {t('control.select_next_queen')} —{' '}
-              <span className="font-bold text-[#269984]">Row {currentRow}</span>
+              <span className="font-bold text-[#269984]">{t('control.row', { row: currentRow })}</span>
             </motion.p>
           ) : null}
         </AnimatePresence>
@@ -343,8 +343,8 @@ export default function QueensControl({ n, algorithmId }: QueensControlProps) {
             </h3>
             <p className="font-montserrat text-sm opacity-80">
               {gameWon
-                ? `${n} queens placed with ${mistakes} wrong attempts`
-                : `Placed ${queensPlaced} of ${n} queens. ${mistakes} wrong attempts.`}
+                ? t('control.game_won_message', { n, mistakes })
+                : t('control.game_over_message', { queensPlaced, n, mistakes })}
             </p>
           </motion.div>
         )}
@@ -370,7 +370,7 @@ export default function QueensControl({ n, algorithmId }: QueensControlProps) {
           className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-montserrat font-bold text-sm bg-gray-100 dark:bg-white/5 text-gray-500 hover:bg-gray-200 dark:hover:bg-white/10 transition-all active:scale-95"
         >
           <RotateCcw className="w-4 h-4" />
-          Reset
+          {t('control.reset')}
         </button>
       </div>
 
@@ -381,7 +381,7 @@ export default function QueensControl({ n, algorithmId }: QueensControlProps) {
           animate={{ opacity: 1 }}
           className="font-montserrat text-xs text-emerald-600 dark:text-emerald-400 text-center"
         >
-          💡 Green cells are safe — click one!
+          💡 {t('control.hint_explainer')}
         </motion.p>
       )}
     </div>

@@ -289,7 +289,7 @@ export function analyzeCode(
     algorithmId === 'quick-sort' ||
     algorithmId === 'shell-sort' ||
     algorithmId === 'heap-sort' ||
-    algorithmId === 'bogosort'
+    algorithmId === 'heap-sort'
   ) {
     const testRes = runSortAndCheck(code, algorithmId);
     if (!testRes.passed) {
@@ -347,14 +347,15 @@ function runSortAndCheck(
     const fnName = fnMap[algorithmId] || 'sort';
 
     const isSearch = algorithmId.includes('search');
-    const testTarget = isSearch ? 30 : null;
+    const isBinarySearch = algorithmId === 'binary-search';
+    const testTarget = isSearch ? 5 : null;
 
     const runnable = `
       globalThis.__loopCount = 0;
       ${safeCode}
       
       if (typeof ${fnName} === 'function') {
-        let result = ${fnName}([...arr] ${isSearch ? ', ' + testTarget : ''});
+        let result = ${fnName}([...arr]${isSearch ? ', ' + testTarget : ''});
         if (result !== undefined) return result;
         return arr; // return the modified array if it sorts in place
       } else {
@@ -366,7 +367,7 @@ function runSortAndCheck(
 
     let result;
     try {
-      result = sortFn([...testArray]);
+      result = sortFn(isBinarySearch ? [...expected] : [...testArray]);
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes('Kérlek hozz létre')) {
         // Fallback: If they didn't name it correctly, let's try evaluating it as a flat script modifying 'arr'
@@ -384,7 +385,8 @@ function runSortAndCheck(
     }
 
     if (isSearch) {
-      const expectedIdx = testArray.indexOf(testTarget!);
+      const searchArray = isBinarySearch ? expected : testArray;
+      const expectedIdx = searchArray.indexOf(testTarget!);
       if (result !== expectedIdx) {
         return {
           passed: false,

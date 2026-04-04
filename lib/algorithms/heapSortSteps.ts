@@ -68,7 +68,7 @@ export function generateHeapSortSteps(initialValues: number[]): SortStep[] {
         activeIndices: [i, largest],
         swapping: true,
         sortedIndices: [...sorted],
-        description: `Swaping ${arr[i].val} ↔ ${arr[largest].val} to maintain heap property`,
+        description: `Swapping ${arr[i].val} ↔ ${arr[largest].val} to maintain heap property`,
         comparisons,
         swapCount,
         pass: 0,

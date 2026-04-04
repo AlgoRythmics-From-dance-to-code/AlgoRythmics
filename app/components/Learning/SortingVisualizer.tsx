@@ -174,7 +174,7 @@ export default function SortingVisualizer({
                 {t('visualizer.comparisons')}
               </div>
             </div>
-            {visualState.swapCount !== undefined && visualState.swapCount > 0 && (
+            {visualState.swapCount !== undefined && (
               <>
                 <div className="w-px h-8 bg-gray-200 dark:bg-white/10" />
                 <div className="text-center">

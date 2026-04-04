@@ -509,7 +509,11 @@
     "safe": "Nincs ütésben",
     "conflict": "Ütésben van",
     "stuck": "Nincsen további érvényes lépés!",
-    "hint_on": "Súgó (be)"
+    "hint_on": "Súgó (be)",
+    "row": "{row}. sor",
+    "game_won_message": "{n} királynő lehelyezve {mistakes} hibás próbálkozással",
+    "game_over_message": "Lehelyeztél {queensPlaced} / {n} királynőt. {mistakes} hiba.",
+    "hint_explainer": "A zöld cellák biztonságosak — kattints egyre!"
   },
   "create": {
     "title": "Egészítsd ki a kódot",

@@ -385,7 +385,7 @@ export const binarySearchTemplate: CodeTemplate = {
       placeholder: '___________',
       widthCh: 12,
       options: ['low <= high', 'low < high', 'true', 'low != high'],
-      hint: 'Continue searching enquanto the range is valid.',
+      hint: 'Continue searching while the range is valid.',
     },
     {
       id: 'blank3',
@@ -527,7 +527,7 @@ export const bogosortTemplate: CodeTemplate = {
       placeholder: '_______',
       widthCh: 7,
       options: ['shuffle', 'randomize', 'permute', 'mix'],
-      hint: 'Radomly reorder the elements.',
+      hint: 'Randomly reorder the elements.',
     },
   ],
 };
