@@ -17,6 +17,8 @@ interface SortingVisualizerProps {
   disabled?: boolean;
   /** Extra classes for the container */
   className?: string;
+  /** Custom legend items */
+  legend?: { color: string; labelKey: string }[];
 }
 
 /**
@@ -31,6 +33,7 @@ export default function SortingVisualizer({
   selectedIndices = [],
   disabled = false,
   className = '',
+  legend,
 }: SortingVisualizerProps) {
   const { t } = useLocale();
   const visualState = steps[currentStep];
@@ -40,6 +43,22 @@ export default function SortingVisualizer({
 
   return (
     <div className={`w-full flex flex-col items-center ${className}`}>
+      {/* Target Badge for Search */}
+      {visualState.target !== undefined && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 shadow-sm"
+        >
+          <span className="font-montserrat text-xs font-bold text-amber-600 uppercase tracking-wider">
+            {t('visualizer.searching_for') || 'Searching for'}:
+          </span>
+          <span className="font-montserrat font-bold text-lg text-amber-700 dark:text-amber-400">
+            {visualState.target}
+          </span>
+        </motion.div>
+      )}
+
       {/* Bar Chart */}
       <div className="w-full h-72 sm:h-80 flex items-end justify-center gap-1.5 sm:gap-3 p-6 sm:p-8 bg-gray-50/50 dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/5 overflow-hidden shadow-inner relative">
         {/* Arrow indicators above active pair */}
@@ -65,14 +84,19 @@ export default function SortingVisualizer({
           {visualState.array.map((item, idx) => {
             const isActive = visualState.activeIndices.includes(idx);
             const isSorted = visualState.sortedIndices.includes(idx);
+            const isDiscarded = visualState.discardedIndices?.includes(idx);
+            const isPivot = visualState.pivotIndex === idx;
             const isSwapping = isActive && visualState.swapping;
             const isSelected = selectedIndices.includes(idx);
 
             let bgColor = '#e5e7eb';
             if (isSwapping) bgColor = '#f97316';
+            else if (isPivot)
+              bgColor = '#a855f7'; // Purple for pivot
             else if (isSelected) bgColor = '#8b5cf6';
             else if (isActive) bgColor = '#269984';
             else if (isSorted) bgColor = '#4ade80';
+            else if (isDiscarded) bgColor = '#d1d5db';
 
             return (
               <motion.div
@@ -80,7 +104,7 @@ export default function SortingVisualizer({
                 layout
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{
-                  opacity: 1,
+                  opacity: isDiscarded ? 0.3 : 1, // Dimmed if discarded
                   scale: 1,
                   backgroundColor: bgColor,
                 }}
@@ -94,7 +118,7 @@ export default function SortingVisualizer({
                 onClick={onBarClick && !disabled ? () => onBarClick(idx) : undefined}
                 className={`w-8 sm:w-14 min-h-[20px] rounded-t-xl relative group shadow-sm ${
                   onBarClick && !disabled ? 'cursor-pointer hover:brightness-110' : ''
-                } ${!isActive && !isSorted && !isSelected ? 'dark:bg-white/10' : ''}`}
+                } ${!isActive && !isSorted && !isSelected && !isDiscarded ? 'dark:bg-white/10' : ''}`}
                 style={{ height: `${(item.val / maxVal) * 80}%` }}
               >
                 {/* Value Badge */}
@@ -150,15 +174,19 @@ export default function SortingVisualizer({
                 {t('visualizer.comparisons')}
               </div>
             </div>
-            <div className="w-px h-8 bg-gray-200 dark:bg-white/10" />
-            <div className="text-center">
-              <div className="font-montserrat font-bold text-lg text-black dark:text-white">
-                {visualState.swapCount}
-              </div>
-              <div className="font-montserrat text-[10px] uppercase tracking-widest text-gray-400">
-                {t('visualizer.swaps')}
-              </div>
-            </div>
+            {visualState.swapCount !== undefined && (
+              <>
+                <div className="w-px h-8 bg-gray-200 dark:bg-white/10" />
+                <div className="text-center">
+                  <div className="font-montserrat font-bold text-lg text-black dark:text-white">
+                    {visualState.swapCount}
+                  </div>
+                  <div className="font-montserrat text-[10px] uppercase tracking-widest text-gray-400">
+                    {t('visualizer.swaps')}
+                  </div>
+                </div>
+              </>
+            )}
             {visualState.pass !== undefined && (
               <>
                 <div className="w-px h-8 bg-gray-200 dark:bg-white/10" />
@@ -177,24 +205,37 @@ export default function SortingVisualizer({
 
         {/* Legend */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#269984]" />
-            <span className="text-xs font-montserrat font-bold text-gray-500 uppercase tracking-widest">
-              {t('visualizer.legend_compare')}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-orange-500" />
-            <span className="text-xs font-montserrat font-bold text-gray-500 uppercase tracking-widest">
-              {t('visualizer.legend_swap')}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-xs font-montserrat font-bold text-gray-500 uppercase tracking-widest">
-              {t('visualizer.legend_sorted')}
-            </span>
-          </div>
+          {legend ? (
+            legend.map((item, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="text-xs font-montserrat font-bold text-gray-500 uppercase tracking-widest">
+                  {t(item.labelKey)}
+                </span>
+              </div>
+            ))
+          ) : (
+            <>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-[#269984]" />
+                <span className="text-xs font-montserrat font-bold text-gray-500 uppercase tracking-widest">
+                  {t('visualizer.legend_compare')}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-orange-500" />
+                <span className="text-xs font-montserrat font-bold text-gray-500 uppercase tracking-widest">
+                  {t('visualizer.legend_swap')}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span className="text-xs font-montserrat font-bold text-gray-500 uppercase tracking-widest">
+                  {t('visualizer.legend_sorted')}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

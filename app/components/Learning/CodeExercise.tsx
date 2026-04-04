@@ -46,18 +46,19 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
   const [isComplete, setIsComplete] = useState(false);
   const startTime = useRef(Date.now());
   const lastTickRef = useRef(Date.now());
-  const { algorithmProgress, resetAlgorithmProgressTab } = useAlgorithmStore();
+  const { resetAlgorithmProgressTab } = useAlgorithmStore();
 
   // Track spent time on unmount
   React.useEffect(() => {
+    const componentLastTick = lastTickRef.current;
     return () => {
-      const delta = Date.now() - lastTickRef.current;
-      const currentTotal = algorithmProgress[algorithmId]?.createTotalTimeMs || 0;
+      const delta = Date.now() - componentLastTick;
+      const currentTotal =
+        useAlgorithmStore.getState().algorithmProgress[algorithmId]?.createTotalTimeMs || 0;
       updateProgress({
         createTotalTimeMs: currentTotal + delta,
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [algorithmId, updateProgress]);
 
   const blanksMap = useMemo(() => {

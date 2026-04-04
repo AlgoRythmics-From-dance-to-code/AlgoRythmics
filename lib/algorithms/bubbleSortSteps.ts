@@ -21,6 +21,12 @@ export interface SortStep {
   swapCount?: number;
   /** Which outer-loop pass (0-indexed) */
   pass?: number;
+  /** Current target value being searched for */
+  target?: number;
+  /** Indices that have been discarded from the search space */
+  discardedIndices?: number[];
+  /** Special index for the pivot (Quick Sort) */
+  pivotIndex?: number;
 }
 
 /**

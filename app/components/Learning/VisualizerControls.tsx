@@ -13,6 +13,7 @@ interface VisualizerControlsProps {
   speed: number;
   setSpeed: (speed: number) => void;
   progress: number;
+  speedOptions?: number[];
 }
 
 export default function VisualizerControls({
@@ -25,7 +26,9 @@ export default function VisualizerControls({
   speed,
   setSpeed,
   progress,
+  speedOptions,
 }: VisualizerControlsProps) {
+  const speeds = speedOptions ?? [0.5, 1, 2];
   return (
     <div className="w-full max-w-3xl mx-auto mt-8 p-6 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -97,7 +100,7 @@ export default function VisualizerControls({
 
         {/* Speed Controls */}
         <div className="flex items-center gap-2 p-1 bg-gray-50 dark:bg-white/5 rounded-xl">
-          {[0.5, 1, 2].map((s) => (
+          {speeds.map((s) => (
             <button
               key={s}
               type="button"

@@ -11,8 +11,12 @@ import {
 } from '../../../lib/algorithms/bubbleSortSteps';
 
 export default function BubbleSortVisualizer({ id = 'bubble-sort' }: { id?: string }) {
-  const { visualizerProgress, updateVisualizerProgress, algorithmProgress, resetAlgorithmProgressTab } =
-    useAlgorithmStore();
+  const {
+    visualizerProgress,
+    updateVisualizerProgress,
+    algorithmProgress,
+    resetAlgorithmProgressTab,
+  } = useAlgorithmStore();
   const { trackEvent, updateProgress } = useAnalytics(id, 'animation');
 
   const initialProgress = visualizerProgress[id] || { step: 0, speed: 1 };
@@ -29,14 +33,15 @@ export default function BubbleSortVisualizer({ id = 'bubble-sort' }: { id?: stri
 
   // Track spent time on unmount
   useEffect(() => {
+    const componentStartTime = startTime.current;
     return () => {
-      const spentMs = Date.now() - startTime.current;
-      const currentTotal = algorithmProgress[id]?.animationTotalTimeMs || 0;
+      const spentMs = Date.now() - componentStartTime;
+      const currentTotal =
+        useAlgorithmStore.getState().algorithmProgress[id]?.animationTotalTimeMs || 0;
       updateProgress({
         animationTotalTimeMs: currentTotal + spentMs,
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, updateProgress]);
 
   // Pre-calculate all steps

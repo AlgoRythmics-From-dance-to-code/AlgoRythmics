@@ -4,6 +4,7 @@ import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Lightbulb, RotateCcw } from 'lucide-react';
 import SortingVisualizer from './SortingVisualizer';
+import QueensControl from './QueensControl';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { getAlgorithm } from '../../../lib/algorithms/registry';
@@ -18,86 +19,118 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
   const { trackEvent, updateProgress } = useAnalytics(algorithmId, 'control');
 
   const algo = getAlgorithm(algorithmId);
+  // For N-Queens we use a dedicated step type where every interactive step is a "Try" step (swapping: false)
+  // immediately followed by the outcome (safe: swapping: false with sortedIndices including row,
+  // or conflict: swapping: true).
   const steps = useMemo(() => (algo ? algo.generateSteps(algo.defaultArray) : []), [algo]);
 
-  // We track which "expected step" the user is on
-  // The expected step alternates between: compare (pick two adjacent), then swap-or-skip
-  const [expectedStepIndex, setExpectedStepIndex] = useState(1); // Start at step 1 (first compare)
+  const isSorting = algo?.category === 'sorting' || algo?.category === 'fun';
+  const isBacktracking = algo?.category === 'backtracking';
+  const selectionLimit = isSorting ? 2 : 1;
+
+  const [expectedStepIndex, setExpectedStepIndex] = useState(1);
+
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [mistakes, setMistakes] = useState(0);
   const [correctFirstTry, setCorrectFirstTry] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
   const progress = useAlgorithmStore((state) => state.algorithmProgress[algorithmId]);
+  const progressRef = useRef(progress);
+  React.useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
   const [isHinting, setIsHinting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [attemptedWrong, setAttemptedWrong] = useState(false);
+  // For sorting: select → decide. For N-Queens: always 'select' (decision tied to cell click)
   const [interactionMode, setInteractionMode] = useState<'select' | 'decide'>('select');
   const { setInteractionLocked, resetAlgorithmProgressTab } = useAlgorithmStore();
 
-  // Sync lock with interaction mode
   React.useEffect(() => {
     setInteractionLocked(interactionMode === 'decide');
   }, [interactionMode, setInteractionLocked]);
 
-  // Unlock on unmount
   React.useEffect(() => {
     return () => setInteractionLocked(false);
   }, [setInteractionLocked]);
 
   const startTime = useRef(Date.now());
-  const lastTickRef = useRef(Date.now());
+
   const currentExpected = steps[expectedStepIndex];
   const isFinished = expectedStepIndex >= steps.length - 1;
 
-  // Track spent time and attempts on unmount
   React.useEffect(() => {
     return () => {
-      const delta = Date.now() - lastTickRef.current;
-      const currentTotal = progress?.controlTotalTimeMs || 0;
+      const spentMs = Date.now() - startTime.current;
+      const currentTotal = progressRef.current?.controlTotalTimeMs || 0;
       updateProgress({
-        controlAttempts: (progress?.controlAttempts || 0) + 1,
-        controlTotalTimeMs: currentTotal + delta,
+        controlAttempts: (progressRef.current?.controlAttempts || 0) + 1,
+        controlTotalTimeMs: currentTotal + spentMs,
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [algorithmId, updateProgress]);
 
-  // Handle bar click — select elements
+  const finishControl = useCallback(() => {
+    setIsComplete(true);
+    const elapsed = Date.now() - startTime.current;
+    const score = totalCorrect > 0 ? Math.round((correctFirstTry / totalCorrect) * 100) : 100;
+
+    trackEvent('control_complete', { score, mistakes, timeMs: elapsed });
+    updateProgress(
+      {
+        controlCompleted: true,
+        controlBestScore: score,
+        controlMistakes: mistakes,
+        controlCompletedAt: new Date().toISOString(),
+      },
+      true,
+    );
+
+    // Force immediate sync on finish
+    const store = useAlgorithmStore.getState();
+    fetch('/api/account/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        completedIds: store.completedIds,
+        visualizerProgress: store.visualizerProgress,
+        algorithmProgress: {
+          [algorithmId]: store.algorithmProgress[algorithmId],
+        },
+      }),
+    }).catch((err) => console.error('[ControlVisualizer] Failed to sync finish:', err));
+  }, [correctFirstTry, totalCorrect, mistakes, trackEvent, updateProgress, algorithmId]);
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+
   const handleBarClick = useCallback(
     (index: number) => {
       if (isComplete || isFinished || interactionMode === 'decide') return;
-
       trackEvent('control_select', { index });
-
       setSelectedIndices((prev) => {
-        if (prev.includes(index)) {
-          return prev.filter((i) => i !== index);
-        }
-        if (prev.length >= 2) {
-          return [index];
-        }
+        if (prev.includes(index)) return prev.filter((i) => i !== index);
+        if (prev.length >= selectionLimit) return [index];
         return [...prev, index].sort((a, b) => a - b);
       });
       setFeedback(null);
     },
-    [isComplete, isFinished, trackEvent, interactionMode],
+    [isComplete, isFinished, trackEvent, interactionMode, selectionLimit],
   );
 
-  // Check the user's selection against the expected step
-  const handleCompare = useCallback(() => {
-    if (selectedIndices.length !== 2 || !currentExpected) return;
-
+  // Sorting: Check the pair selection
+  const handleCheck = useCallback(() => {
+    if (!currentExpected || !isSorting) return;
+    if (selectedIndices.length !== selectionLimit) return;
     const expectedActive = currentExpected.activeIndices;
     const isCorrect =
       selectedIndices.length === expectedActive.length &&
-      selectedIndices[0] === expectedActive[0] &&
-      selectedIndices[1] === expectedActive[1];
+      expectedActive.every((idx) => selectedIndices.includes(idx));
 
     if (isCorrect) {
       setFeedback('correct');
-      trackEvent('control_compare', {
-        pair: selectedIndices,
+      trackEvent('control_check', {
+        selected: selectedIndices,
         isCorrect: true,
         step: expectedStepIndex,
       });
@@ -111,22 +144,17 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         actual: selectedIndices,
         step: expectedStepIndex,
       });
-
-      setTimeout(() => {
-        setFeedback(null);
-      }, 600);
+      setTimeout(() => setFeedback(null), 600);
     }
-  }, [selectedIndices, currentExpected, trackEvent, expectedStepIndex]);
+  }, [selectedIndices, currentExpected, trackEvent, expectedStepIndex, isSorting, selectionLimit]);
 
-  // Handle the decision (Swap or Stay)
-  const handleDecision = useCallback(
+  // Sorting: Handle swap/stay decision
+  const handleSortingDecision = useCallback(
     (action: 'swap' | 'stay') => {
       if (!currentExpected) return;
-
       const nextIdx = expectedStepIndex + 1;
       const stepAfter = steps[nextIdx];
       const shouldSwap = stepAfter && stepAfter.swapping;
-
       const isCorrectDecision =
         (action === 'swap' && shouldSwap) || (action === 'stay' && !shouldSwap);
 
@@ -136,32 +164,15 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         setTotalCorrect((c) => c + 1);
         trackEvent('control_decision', { action, isCorrect: true, step: expectedStepIndex });
 
-        // Advance
         setTimeout(() => {
           let advanceIdx = nextIdx;
-          if (shouldSwap) advanceIdx++; // Skip the swap snapshot itself for the next interaction
-
-          // Skip non-interactive steps (like pass completion/sorted markers)
+          if (stepAfter?.swapping) advanceIdx++;
           while (advanceIdx < steps.length && steps[advanceIdx].activeIndices.length === 0) {
             advanceIdx++;
           }
 
           if (advanceIdx >= steps.length) {
-            setIsComplete(true);
-            const elapsed = Date.now() - startTime.current;
-            const nextCorrectFirstTry = correctFirstTry + (!attemptedWrong ? 1 : 0);
-            const nextTotalCorrect = totalCorrect + 1;
-            trackEvent('control_complete', {
-              score: Math.round((nextCorrectFirstTry / nextTotalCorrect) * 100) || 100,
-              mistakes,
-              timeMs: elapsed,
-            });
-            updateProgress({
-              controlCompleted: true,
-              controlBestScore: Math.round((nextCorrectFirstTry / nextTotalCorrect) * 100),
-              controlMistakes: mistakes,
-              controlCompletedAt: new Date().toISOString(),
-            });
+            finishControl();
           } else {
             setExpectedStepIndex(advanceIdx);
           }
@@ -178,32 +189,87 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         setTimeout(() => setFeedback(null), 600);
       }
     },
+    [currentExpected, expectedStepIndex, steps, trackEvent, attemptedWrong, finishControl],
+  );
+
+  // Search: Combined selection + decision
+  const handleSearchDecision = useCallback(
+    (action: 'found' | 'next') => {
+      if (!currentExpected) return;
+
+      // First validate the selection
+      const selectionIsCorrect =
+        selectedIndices.length === 1 && currentExpected.activeIndices.includes(selectedIndices[0]);
+      if (!selectionIsCorrect) {
+        setFeedback('incorrect');
+        setMistakes((m) => m + 1);
+        setAttemptedWrong(true);
+        trackEvent('control_selection_mistake', { step: expectedStepIndex });
+        setTimeout(() => setFeedback(null), 600);
+        return;
+      }
+
+      // Then validate the decision
+      const nextIdx = expectedStepIndex + 1;
+      const stepAfter = steps[nextIdx];
+      const nextStepIsFound =
+        stepAfter?.sortedIndices.length > currentExpected.sortedIndices.length;
+      const isCorrectDecision =
+        (action === 'found' && nextStepIsFound) || (action === 'next' && !nextStepIsFound);
+
+      if (isCorrectDecision) {
+        setFeedback('correct');
+        if (!attemptedWrong) setCorrectFirstTry((c) => c + 1);
+        setTotalCorrect((c) => c + 1);
+        trackEvent('control_decision', { action, isCorrect: true, step: expectedStepIndex });
+
+        setTimeout(() => {
+          let advanceIdx = nextIdx;
+          while (
+            advanceIdx < steps.length &&
+            (steps[advanceIdx].activeIndices.length === 0 ||
+              steps[advanceIdx].activeIndices[0] === currentExpected.activeIndices[0])
+          ) {
+            advanceIdx++;
+          }
+
+          if (advanceIdx >= steps.length) {
+            finishControl();
+          } else {
+            setExpectedStepIndex(advanceIdx);
+          }
+          setSelectedIndices([]);
+          setFeedback(null);
+          setAttemptedWrong(false);
+        }, 150);
+      } else {
+        setFeedback('incorrect');
+        setMistakes((m) => m + 1);
+        setAttemptedWrong(true);
+        trackEvent('control_decision', { action, isCorrect: false, step: expectedStepIndex });
+        setTimeout(() => setFeedback(null), 600);
+      }
+    },
     [
       currentExpected,
       expectedStepIndex,
       steps,
       trackEvent,
       attemptedWrong,
-      correctFirstTry,
-      totalCorrect,
-      startTime,
-      mistakes,
-      updateProgress,
+      selectedIndices,
+      finishControl,
     ],
   );
 
-  // Show hint
   const handleHint = useCallback(() => {
     if (!currentExpected) return;
     setIsHinting(true);
     trackEvent('control_hint', { step: expectedStepIndex });
-
     const currentHintCount = progress?.controlHintsUsed || 0;
     updateProgress({ controlHintsUsed: currentHintCount + 1 });
-
     setTimeout(() => setIsHinting(false), 3000);
   }, [currentExpected, expectedStepIndex, trackEvent, updateProgress, progress]);
-  // Reset
+
   const handleReset = useCallback(() => {
     setExpectedStepIndex(1);
     setSelectedIndices([]);
@@ -216,22 +282,23 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
     setInteractionMode('select');
     trackEvent('control_reset');
 
-    // 1. Reset progress in store
-    resetAlgorithmProgressTab(algorithmId, 'control');
+    // 1. Accumulate time before reset
+    const spentMs = Date.now() - startTime.current;
+    const currentTotal = progress?.controlTotalTimeMs || 0;
 
-    // 2. Synchronize with analytics and flush any pending updates
+    resetAlgorithmProgressTab(algorithmId, 'control');
     updateProgress(
       {
         controlCompleted: false,
         controlBestScore: 0,
         controlMistakes: 0,
-        controlTotalTimeMs: 0,
+        controlTotalTimeMs: currentTotal + spentMs,
         controlCompletedAt: null,
       },
-      true, // syncNow
+      true,
     );
 
-    // 3. Immediate Sync to Backend (Redundant but ensures state integrity)
+    // 2. Force manual sync on reset
     const store = useAlgorithmStore.getState();
     fetch('/api/account/progress', {
       method: 'POST',
@@ -243,30 +310,49 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
           [algorithmId]: store.algorithmProgress[algorithmId],
         },
       }),
-    }).catch((err) => console.error('[Control] Failed to sync reset:', err));
+    }).catch((err) => console.error('[ControlVisualizer] Failed to sync reset:', err));
 
     startTime.current = Date.now();
-    lastTickRef.current = Date.now();
-  }, [algorithmId, resetAlgorithmProgressTab, trackEvent, updateProgress]);
+  }, [
+    algorithmId,
+    resetAlgorithmProgressTab,
+    trackEvent,
+    updateProgress,
+    progress?.controlTotalTimeMs,
+  ]);
 
-  // Build the visual state to show — show the array at the current expected step
-  // but without the active highlighting (user needs to figure that out)
+  // ── Display state ──────────────────────────────────────────────────────────
+
   const displaySteps = useMemo(() => {
     if (!steps.length) return [];
     const step = steps[expectedStepIndex] || steps[steps.length - 1];
-
-    // If we are in decide mode, we want to show the HIGHLIGHTED pair
-    // because the user already selected it correctly
     return [
       {
         ...step,
-        activeIndices: interactionMode === 'decide' ? selectedIndices : [],
-        sortedIndices: isComplete ? step.array.map((_, i) => i) : step.sortedIndices,
-        swapping: false,
-        description: isComplete ? t('visualizer.sorted_complete') : step.description,
+        activeIndices: interactionMode === 'decide' ? step.activeIndices : [],
+        sortedIndices: isComplete
+          ? step.array.map((_: unknown, i: number) => i)
+          : step.sortedIndices,
+        swapping: interactionMode === 'decide' ? step.swapping : false,
+        description: isComplete
+          ? t('visualizer.sorted_complete')
+          : interactionMode === 'decide'
+            ? step.description
+            : '',
       },
     ];
-  }, [steps, expectedStepIndex, interactionMode, selectedIndices, isComplete, t]);
+  }, [steps, expectedStepIndex, interactionMode, isComplete, t]);
+
+  // ── Hint content ───────────────────────────────────────────────────────────
+
+  const hintText = useMemo(() => {
+    if (!currentExpected) return '';
+    return currentExpected.activeIndices
+      .map((idx: number) => steps[expectedStepIndex]?.array[idx]?.val)
+      .join(' & ');
+  }, [currentExpected, steps, expectedStepIndex]);
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   if (!algo || steps.length === 0) {
     return (
@@ -274,16 +360,44 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
     );
   }
 
+  // N-Queens: use dedicated puzzle UI
+  if (isBacktracking) {
+    const boardSize = algo.defaultArray?.[0] ?? 8;
+    return <QueensControl n={boardSize} algorithmId={algorithmId} />;
+  }
+
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6">
+      {/* Search target badge */}
+      {currentExpected?.target !== undefined && !isBacktracking && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 shadow-sm"
+        >
+          <span className="font-montserrat text-xs font-bold text-amber-600 uppercase tracking-wider">
+            {t('visualizer.searching_for')}:
+          </span>
+          <span className="font-montserrat font-bold text-lg text-amber-700 dark:text-amber-400">
+            {currentExpected.target}
+          </span>
+        </motion.div>
+      )}
+
       {/* Instruction */}
       <div className="w-full text-center">
-        <p className="font-montserrat font-bold text-sm text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-          {isComplete ? t('control.well_done') : t('control.select_pair')}
+        <p className="font-montserrat font-bold text-sm text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-relaxed">
+          {isComplete
+            ? isSorting
+              ? t('control.well_done')
+              : t('control.found_it')
+            : isSorting
+              ? t('control.select_pair')
+              : t('control.select_next')}
         </p>
       </div>
 
-      {/* Visualizer with clickable bars */}
+      {/* Visualizer */}
       {displaySteps.length > 0 && (
         <SortingVisualizer
           steps={displaySteps}
@@ -292,10 +406,11 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
           onBarClick={handleBarClick}
           selectedIndices={selectedIndices}
           disabled={interactionMode === 'decide'}
+          legend={algo.legend}
         />
       )}
 
-      {/* Hint highlight overlay */}
+      {/* Hint */}
       {isHinting && currentExpected && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -304,15 +419,12 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
           className="text-center"
         >
           <p className="font-montserrat text-sm text-[#269984] animate-pulse">
-            💡 {t('control.hint')}: {t('control.select_pair')} —{' '}
-            {currentExpected.activeIndices
-              .map((idx: number) => steps[expectedStepIndex].array[idx]?.val)
-              .join(' & ')}
+            💡 {t('control.hint')}: {hintText}
           </p>
         </motion.div>
       )}
 
-      {/* Feedback Animation */}
+      {/* Feedback */}
       <AnimatePresence>
         {feedback && (
           <motion.div
@@ -343,33 +455,52 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3">
-        {interactionMode === 'select' ? (
-          <button
-            onClick={handleCompare}
-            disabled={selectedIndices.length !== 2 || isComplete}
-            className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-[#269984] text-white shadow-lg shadow-[#269984]/20 hover:bg-[#1f7a6a] transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            {t('control.compare') || 'Compare'}
-          </button>
+        {isSorting ? (
+          interactionMode === 'select' ? (
+            <button
+              onClick={handleCheck}
+              disabled={selectedIndices.length !== selectionLimit || isComplete}
+              className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-[#269984] text-white shadow-lg shadow-[#269984]/20 hover:bg-[#1f7a6a] transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              {t('control.compare')}
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => handleSortingDecision('swap')}
+                className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-orange-500 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95"
+              >
+                {t('control.swap')}
+              </button>
+              <button
+                onClick={() => handleSortingDecision('stay')}
+                className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-blue-500 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all active:scale-95"
+              >
+                {t('control.stay')}
+              </button>
+            </>
+          )
         ) : (
-          <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-150">
+          <>
             <button
-              onClick={() => handleDecision('swap')}
-              className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-orange-500 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95"
+              onClick={() => handleSearchDecision('found')}
+              disabled={selectedIndices.length === 0 || isComplete}
+              className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-green-500 text-white shadow-lg shadow-green-500/20 hover:bg-green-600 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {t('control.swap') || 'Swap'}
+              {t('control.found')}
             </button>
             <button
-              onClick={() => handleDecision('stay')}
-              className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-blue-500 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all active:scale-95"
+              onClick={() => handleSearchDecision('next')}
+              disabled={selectedIndices.length === 0 || isComplete}
+              className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-blue-500 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {t('control.stay') || 'Next'}
+              {t('control.not_found')}
             </button>
-          </div>
+          </>
         )}
         <button
           onClick={handleHint}
-          disabled={isComplete || interactionMode === 'decide'}
+          disabled={isComplete}
           className="p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 text-amber-500 transition-all active:scale-90 disabled:opacity-20"
           title={t('control.hint')}
         >
@@ -377,15 +508,14 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         </button>
         <button
           onClick={handleReset}
-          disabled={interactionMode === 'decide'}
-          className="p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400 transition-all active:scale-90 disabled:opacity-20 disabled:cursor-not-allowed"
+          className="p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400 transition-all active:scale-90"
           title="Reset"
         >
           <RotateCcw className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Stats Bar */}
+      {/* Stats */}
       <div className="flex items-center gap-6 px-6 py-3 rounded-2xl bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-white/5 shadow-sm">
         <div className="text-center">
           <div className="font-montserrat font-bold text-lg text-green-500">{totalCorrect}</div>
@@ -402,7 +532,7 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         </div>
       </div>
 
-      {/* Completion Summary */}
+      {/* Completion */}
       {isComplete && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}

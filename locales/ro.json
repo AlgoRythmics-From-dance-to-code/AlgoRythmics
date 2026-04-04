@@ -482,7 +482,10 @@
     "pass": "Trecere",
     "legend_compare": "Comparare",
     "legend_swap": "Interschimbare",
-    "legend_sorted": "Sortat"
+    "legend_sorted": "Sortat",
+    "legend_pivot": "Pivot",
+    "searching_for": "Valoarea căutată",
+    "sorted_complete": "Vector sortat!"
   },
   "control": {
     "select_pair": "Selectează două elemente adiacente pentru comparare",
@@ -495,7 +498,18 @@
     "compare": "Compară",
     "swap": "Interschimbă",
     "stay": "Următorul",
-    "reset": "Resetare"
+    "reset": "Resetare",
+    "found_it": "Valoarea a fost găsită!",
+    "select_next": "Selectați următorul element pe care îl va verifica algoritmul",
+    "check": "Verifică",
+    "found": "Este acesta",
+    "not_found": "Nu este",
+    "queens_placed": "Toate reginele au fost plasate!",
+    "select_next_queen": "Selectați celula pentru următoarea regină",
+    "safe": "Fără conflicte",
+    "conflict": "Are conflicte",
+    "stuck": "Nu mai există mutări valide!",
+    "hint_on": "Indiciu (activ)"
   },
   "create": {
     "title": "Completează codul",

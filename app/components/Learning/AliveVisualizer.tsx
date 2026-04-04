@@ -400,7 +400,14 @@ interface NodeModeProps {
   t: (key: string) => string;
 }
 
-function NodeMode({ algorithmId, trackEvent, updateProgress, handleReset, startTime, t }: NodeModeProps) {
+function NodeMode({
+  algorithmId,
+  trackEvent,
+  updateProgress,
+  handleReset,
+  startTime,
+  t,
+}: NodeModeProps) {
   const allNodes = useMemo(() => getAlgorithmNodes(algorithmId) || [], [algorithmId]);
 
   // Palette: shuffled nodes
