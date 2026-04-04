@@ -212,7 +212,7 @@ export default function AlgorithmsPage() {
         {filteredAlgorithms.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
             {filteredAlgorithms.map((algo, index) => (
-              <AlgorithmCard key={algo.id} algorithm={algo} index={index} />
+              <AlgorithmCard key={algo.id} algorithm={algo} index={index} priority={index < 3} />
             ))}
           </div>
         ) : (

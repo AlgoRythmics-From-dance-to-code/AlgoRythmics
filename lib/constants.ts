@@ -121,15 +121,15 @@ export const VIDEOS: Video[] = [
     duration: '3:22',
     views: '112K',
     categoryId: 'searching',
-    thumbnail: 'algo_group_109.svg',
-    youtubeId: 'PuqKbu9K3U',
+    thumbnail: 'algo_linear_search.svg',
+    youtubeId: '-PuqKbu9K3U',
   },
   {
     id: 'binary-search',
     duration: '4:15',
     views: '145K',
     categoryId: 'searching',
-    thumbnail: 'algo_group_142.svg',
+    thumbnail: 'algo_binary_search.svg',
     youtubeId: 'iP897Z5Nerk',
   },
   {
@@ -137,7 +137,7 @@ export const VIDEOS: Video[] = [
     duration: '6:50',
     views: '45K',
     categoryId: 'backtracking',
-    thumbnail: 'algo_group_109.svg',
+    thumbnail: 'algo_n_queens.svg',
     youtubeId: 'R8bM6pxlrLY',
   },
 ];
@@ -148,6 +148,7 @@ export interface Algorithm {
   illAsset: string;
   complexity: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
+  steps: string[];
 }
 
 export const ALGORITHMS: Algorithm[] = [
@@ -157,6 +158,13 @@ export const ALGORITHMS: Algorithm[] = [
     illAsset: 'algo_group_109.svg',
     complexity: 'O(n²)',
     difficulty: 'Easy',
+    steps: [
+      'Compare adjacent elements',
+      'Swap if they are in the wrong order',
+      'Move to the next pair',
+      'Repeat until no swaps are needed',
+      'The list is now sorted',
+    ],
   },
   {
     id: 'insertion-sort',
@@ -164,6 +172,13 @@ export const ALGORITHMS: Algorithm[] = [
     illAsset: 'algo_group_142.svg',
     complexity: 'O(n²)',
     difficulty: 'Easy',
+    steps: [
+      'Start with the second element',
+      'Compare with elements to its left',
+      'Shift larger elements right',
+      'Insert the element in its correct position',
+      'Repeat for all remaining elements',
+    ],
   },
   {
     id: 'selection-sort',
@@ -171,6 +186,12 @@ export const ALGORITHMS: Algorithm[] = [
     illAsset: 'algo_group_119.svg',
     complexity: 'O(n²)',
     difficulty: 'Easy',
+    steps: [
+      'Find the minimum element in the unsorted region',
+      'Swap it with the first unsorted element',
+      'Expand the sorted region by one',
+      'Repeat until the entire array is sorted',
+    ],
   },
   {
     id: 'shell-sort',
@@ -178,6 +199,13 @@ export const ALGORITHMS: Algorithm[] = [
     illAsset: 'algo_group_132.svg',
     complexity: 'O(n log n)',
     difficulty: 'Medium',
+    steps: [
+      'Choose a gap sequence',
+      'Sort elements separated by the gap using insertion sort',
+      'Reduce the gap',
+      'Repeat until the gap is 1',
+      'Perform final insertion sort pass',
+    ],
   },
   {
     id: 'merge-sort',
@@ -185,6 +213,13 @@ export const ALGORITHMS: Algorithm[] = [
     illAsset: 'algo_group_166.svg',
     complexity: 'O(n log n)',
     difficulty: 'Medium',
+    steps: [
+      'Divide the array into two halves',
+      'Recursively sort each half',
+      'Merge the sorted halves',
+      'Compare elements from each half',
+      'Place the smaller element into the result',
+    ],
   },
   {
     id: 'quick-sort',
@@ -192,6 +227,13 @@ export const ALGORITHMS: Algorithm[] = [
     illAsset: 'algo_group_167.svg',
     complexity: 'O(n log n)',
     difficulty: 'Medium',
+    steps: [
+      'Choose a pivot element',
+      'Partition: elements < pivot go left, > pivot go right',
+      'Recursively sort the left partition',
+      'Recursively sort the right partition',
+      'Combine the results',
+    ],
   },
   {
     id: 'heap-sort',
@@ -199,33 +241,66 @@ export const ALGORITHMS: Algorithm[] = [
     illAsset: 'algo_group_168.svg',
     complexity: 'O(n log n)',
     difficulty: 'Hard',
+    steps: [
+      'Build a max-heap from the array',
+      'Extract the root (maximum) element',
+      'Move it to the end of the array',
+      'Heapify the reduced heap',
+      'Repeat until all elements are sorted',
+    ],
   },
   {
     id: 'linear-search',
     category: 'searching',
-    illAsset: 'algo_group_109.svg',
+    illAsset: 'algo_linear_search.svg',
     complexity: 'O(n)',
     difficulty: 'Easy',
+    steps: [
+      'Start from the first element',
+      'Compare with the target',
+      'If match, return position',
+      'If no match, move to the next element',
+      'If end of list, target not found',
+    ],
   },
   {
     id: 'binary-search',
     category: 'searching',
-    illAsset: 'algo_group_142.svg',
+    illAsset: 'algo_binary_search.svg',
     complexity: 'O(log n)',
     difficulty: 'Easy',
+    steps: [
+      'Ensure the array is sorted',
+      'Find the middle element',
+      'Compare with the target',
+      'If target is smaller, search the left half',
+      'If target is larger, search the right half',
+    ],
   },
   {
     id: 'n-queens',
     category: 'backtracking',
-    illAsset: 'algo_group_109.svg',
+    illAsset: 'algo_n_queens.svg',
     complexity: 'O(n!)',
     difficulty: 'Hard',
+    steps: [
+      'Place a queen in the first row',
+      'Move to the next row and try each column',
+      'Check if placement is safe (no conflicts)',
+      'If no safe column exists, backtrack',
+      'Repeat until all queens are placed',
+    ],
   },
   {
     id: 'bogosort',
     category: 'fun',
-    illAsset: 'algo_group_119.svg',
+    illAsset: 'algo_bogosort.svg',
     complexity: 'O(n! · n)',
     difficulty: 'Easy',
+    steps: [
+      'Check if the list is sorted',
+      'If not sorted, shuffle the list randomly',
+      'Repeat until the list is sorted by chance',
+    ],
   },
 ];

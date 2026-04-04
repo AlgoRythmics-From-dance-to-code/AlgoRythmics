@@ -11,7 +11,7 @@ export default function BottomBanner() {
       >
         <Image
           src="/assets/illustration_no_bg.png"
-          alt="AlgoRythmics illustration"
+          alt="AlgoRythmics visualization footer banner"
           width={2866}
           height={1080}
           sizes="(max-width: 768px) 100vw, 1100px"

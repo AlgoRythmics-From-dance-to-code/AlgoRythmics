@@ -92,6 +92,13 @@ export default function Features() {
             </Link>
           ))}
         </div>
+
+        {/* Background GIFs Preloader */}
+        <div className="hidden" aria-hidden="true">
+          {features.map((f) => (
+            <Image key={`preload-${f.id}`} src={f.gifSrc} alt="" width={1} height={1} unoptimized />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -124,7 +131,7 @@ function FeatureCard({
         {/* Base Static Illustration */}
         <Image
           src={src}
-          alt={alt}
+          alt={`Illustration for ${label}`}
           width={width}
           height={height}
           sizes="(max-width: 768px) 100vw, 280px"

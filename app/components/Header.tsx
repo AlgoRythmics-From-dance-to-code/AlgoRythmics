@@ -81,9 +81,10 @@ export default function Header({
         <Link href={ROUTES.HOME} className="flex-shrink-0">
           <Image
             src="/assets/logowhite.svg"
-            alt="AlgoRythmics Logo"
+            alt="AlgoRythmics Logo - Dance to Code"
             width={294}
             height={57}
+            priority
             sizes="(max-width: 768px) 150px, 200px"
             style={{
               height: 'clamp(40px, 4vw, 48px)',
@@ -101,11 +102,13 @@ export default function Header({
                 href={ROUTES.ALGORITHMS}
                 label={t('nav.algorithms')}
                 active={pathname?.startsWith(ROUTES.ALGORITHMS) ?? false}
+                prefetch={true}
               />
               <NavLink
                 href={ROUTES.COURSES}
                 label={t('nav.courses')}
                 active={pathname === ROUTES.COURSES}
+                prefetch={true}
               />
             </>
           )}
@@ -133,15 +136,26 @@ export default function Header({
 
           {/* Language Dropdown */}
           <div className="relative" ref={dropdownRef}>
+            {/* Hidden preloader for other flags */}
+            <div className="hidden">
+              {languages
+                .filter((l) => l.code !== locale)
+                .map((lang) => (
+                  <Image key={lang.code} src={lang.flag} alt="" width={1} height={1} priority={false} />
+                ))}
+            </div>
+
             <button
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity p-2"
+              aria-label={t('nav.language')}
             >
               <Image
                 src={currentLang.flag}
-                alt={currentLang.code}
+                alt={`${currentLang.label} flag`}
                 width={20}
                 height={15}
+                priority
                 className="rounded-sm"
                 style={{ width: '20px', height: '15px', objectFit: 'cover' }}
               />
@@ -181,7 +195,7 @@ export default function Header({
                   >
                     <Image
                       src={lang.flag}
-                      alt={lang.code}
+                      alt={`${lang.label} flag`}
                       width={20}
                       height={15}
                       className="rounded-sm"
@@ -418,10 +432,21 @@ export default function Header({
   );
 }
 
-function NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+function NavLink({
+  href,
+  label,
+  active,
+  prefetch,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+  prefetch?: boolean;
+}) {
   return (
     <Link
       href={href}
+      prefetch={prefetch}
       className={`font-montserrat transition-colors text-sm lg:text-[17px] ${
         active ? 'text-white font-bold' : 'text-white/90 hover:text-white'
       }`}

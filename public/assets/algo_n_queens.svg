@@ -1,0 +1,22 @@
+<svg width="330" height="330" viewBox="0 0 330 330" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="165" cy="165" r="150" fill="#269984" fill-opacity="0.05"/>
+  <rect x="65" y="65" width="200" height="200" rx="4" fill="white" stroke="#269984" stroke-width="4"/>
+  <path d="M115 65V265M165 65V265M215 65V265M65 115H265M65 165H265M65 215H265" stroke="#269984" stroke-opacity="0.2" stroke-width="4"/>
+  
+  <g transform="translate(130, 80) scale(0.6)">
+    <path d="M10 50L25 15L40 40L55 15L70 50H10Z" fill="#FBB03B"/>
+    <circle cx="40" cy="10" r="5" fill="#FBB03B"/>
+  </g>
+  <g transform="translate(205, 130) scale(0.6)">
+    <path d="M10 50L25 15L40 40L55 15L70 50H10Z" fill="#FBB03B"/>
+    <circle cx="40" cy="10" r="5" fill="#FBB03B"/>
+  </g>
+  <g transform="translate(80, 180) scale(0.6)">
+    <path d="M10 50L25 15L40 40L55 15L70 50H10Z" fill="#FBB03B"/>
+    <circle cx="40" cy="10" r="5" fill="#FBB03B"/>
+  </g>
+  <g transform="translate(155, 230) scale(0.6)">
+    <path d="M10 50L25 15L40 40L55 15L70 50H10Z" fill="#FBB03B"/>
+    <circle cx="40" cy="10" r="5" fill="#FBB03B"/>
+  </g>
+</svg>

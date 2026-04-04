@@ -15,11 +15,11 @@ export default function Hero() {
         <div className="absolute inset-0 w-full h-full pointer-events-none z-10 hidden md:block">
           <Image
             src="/assets/hero_ground_path.svg"
-            alt="Hero illustration"
+            alt="AlgoRythmics visualization of sorting algorithms"
             width={818}
             height={744}
             priority
-            sizes="30vw"
+            sizes="(max-width: 1920px) 35vw, 600px"
             className="absolute dark:invert dark:hue-rotate-180"
             style={{
               bottom: '-1px', // Függőlegesen a vonalon tartja
@@ -37,7 +37,7 @@ export default function Hero() {
           {/* ── Decorative vine/dots (top-left) ── */}
           <Image
             src="/assets/group_23.svg"
-            alt=""
+            alt="Decorative algorithmic pattern"
             width={186}
             height={361}
             sizes="200px"
@@ -73,9 +73,10 @@ export default function Hero() {
           <div className="md:hidden flex flex-col items-center px-6 py-12 gap-8 z-20 relative">
             <Image
               src="/assets/group_21.svg"
-              alt="Hero illustration"
+              alt="AlgoRythmics visualization mobile"
               width={818}
               height={744}
+              priority
               sizes="(max-width: 768px) 80vw, 400px"
               className="max-w-[400px] pointer-events-none select-none dark:invert dark:hue-rotate-180"
               style={{ width: '80%', height: 'auto' }}

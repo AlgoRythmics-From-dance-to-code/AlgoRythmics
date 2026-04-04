@@ -11,9 +11,10 @@ import { useAlgorithmStore } from '../store/useAlgorithmStore';
 interface AlgorithmCardProps {
   algorithm: Algorithm;
   index: number;
+  priority?: boolean;
 }
 
-export default function AlgorithmCard({ algorithm, index }: AlgorithmCardProps) {
+export default function AlgorithmCard({ algorithm, index, priority }: AlgorithmCardProps) {
   const { t } = useLocale();
 
   const completed = useAlgorithmStore((s) => s.completedIds.includes(algorithm.id));
@@ -44,9 +45,11 @@ export default function AlgorithmCard({ algorithm, index }: AlgorithmCardProps) 
 
         <Image
           src={`/assets/${algorithm.illAsset}`}
-          alt={name}
+          alt={`Illustration for ${name} algorithm`}
           width={200}
           height={200}
+          priority={priority}
+          sizes="(max-width: 640px) 150px, (max-width: 1024px) 200px, 200px"
           className="w-auto h-32 sm:h-40 object-contain dark:invert dark:hue-rotate-180 drop-shadow-xl group-hover:scale-110 transition-transform duration-500"
         />
 
