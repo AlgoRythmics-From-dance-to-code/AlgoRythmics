@@ -461,15 +461,16 @@
     },
     "views": "vizualizări",
     "list": {
-      "bubble-sort-dance": "Dansul sortării prin metoda bulelor",
-      "insertion-sort-folk": "Dans popular sortare prin inserție",
-      "selection-sort-waltz": "Valsul sortării prin selecție",
-      "merge-sort-tango": "Tangoul sortării prin interclasare",
-      "quick-sort-salsa": "Salsa sortării rapide",
-      "heap-sort-ballet": "Baletul sortării Heap",
-      "shell-sort-flamenco": "Flamenco sortării Shell",
-      "linear-search-hip-hop": "Hip Hop căutare liniară",
-      "binary-search-swing": "Swing căutare binară"
+      "bubble-sort": "Sortarea prin metoda bulelor",
+      "insertion-sort": "Sortare prin inserție",
+      "selection-sort": "Sortare prin selecție",
+      "merge-sort": "Sortare prin interclasare",
+      "quick-sort": "Sortare rapidă",
+      "heap-sort": "Sortare Heap",
+      "shell-sort": "Sortare Shell",
+      "linear-search": "Căutare liniară",
+      "binary-search": "Căutare binară",
+      "n-queens": "Problema N-regine"
     }
   },
   "visualizer": {

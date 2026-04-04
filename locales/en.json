@@ -461,15 +461,16 @@
     },
     "views": "views",
     "list": {
-      "bubble-sort-dance": "Bubble Sort Dance",
-      "insertion-sort-folk": "Insertion Sort Folk Dance",
-      "selection-sort-waltz": "Selection Sort Waltz",
-      "merge-sort-tango": "Merge Sort Tango",
-      "quick-sort-salsa": "Quick Sort Salsa",
-      "heap-sort-ballet": "Heap Sort Ballet",
-      "shell-sort-flamenco": "Shell Sort Flamenco",
-      "linear-search-hip-hop": "Linear Search Hip Hop",
-      "binary-search-swing": "Binary Search Swing"
+      "bubble-sort": "Bubble Sort",
+      "insertion-sort": "Insertion Sort",
+      "selection-sort": "Selection Sort",
+      "merge-sort": "Merge Sort",
+      "quick-sort": "Quick Sort",
+      "heap-sort": "Heap Sort",
+      "shell-sort": "Shell Sort",
+      "linear-search": "Linear Search",
+      "binary-search": "Binary Search",
+      "n-queens": "N-Queens Problem"
     }
   },
   "visualizer": {

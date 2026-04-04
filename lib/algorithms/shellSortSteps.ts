@@ -39,49 +39,44 @@ export function generateShellSortSteps(initialValues: number[]): SortStep[] {
     });
 
     for (let i = gap; i < n; i++) {
-      const temp = arr[i];
       let j = i;
 
-      result.push({
-        array: [...arr],
-        activeIndices: [i, j - gap],
-        swapping: false,
-        sortedIndices: [],
-        description: `Inserting arr[${i}] into its gap-sorted position`,
-        comparisons,
-        swapCount,
-        pass: gap,
-      });
-
-      while (j >= gap && arr[j - gap].val > temp.val) {
+      while (j >= gap) {
         comparisons++;
-        arr[j] = arr[j - gap];
-        j -= gap;
-        swapCount++;
-
+        // Comparison step
         result.push({
           array: [...arr],
-          activeIndices: [j, j + gap],
-          swapping: true,
+          activeIndices: [j, j - gap],
+          swapping: false,
           sortedIndices: [],
-          description: `Shifting element at arr[${j + gap}] to arr[${j}]`,
+          description: `Comparing elements with gap ${gap}: ${arr[j - gap].val} and ${arr[j].val}`,
           comparisons,
           swapCount,
           pass: gap,
         });
-      }
-      arr[j] = temp;
 
-      result.push({
-        array: [...arr],
-        activeIndices: [j],
-        swapping: false,
-        sortedIndices: [],
-        description: `Placed element in its position for current gap`,
-        comparisons,
-        swapCount,
-        pass: gap,
-      });
+        if (arr[j - gap].val > arr[j].val) {
+          // Swap
+          const temp = arr[j];
+          arr[j] = arr[j - gap];
+          arr[j - gap] = temp;
+          swapCount++;
+
+          result.push({
+            array: [...arr],
+            activeIndices: [j, j - gap],
+            swapping: true,
+            sortedIndices: [],
+            description: `Swapping ${arr[j].val} ↔ ${arr[j - gap].val}`,
+            comparisons,
+            swapCount,
+            pass: gap,
+          });
+          j -= gap;
+        } else {
+          break;
+        }
+      }
     }
   }
 

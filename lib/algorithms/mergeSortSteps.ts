@@ -23,11 +23,12 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
   ];
 
   let comparisons = 0;
+  let swapCount = 0; // Tracking placements as visual "swaps"
   const sorted: number[] = [];
 
   function merge(arr: SortItem[], start: number, mid: number, end: number) {
-    const leftArr = arr.slice(start, mid + 1);
-    const rightArr = arr.slice(mid + 1, end + 1);
+    const leftArr = [...arr.slice(start, mid + 1)];
+    const rightArr = [...arr.slice(mid + 1, end + 1)];
     let i = 0,
       j = 0,
       k = start;
@@ -37,9 +38,9 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
       activeIndices: [start, end],
       swapping: false,
       sortedIndices: [...sorted],
-      description: `Merging subarrays from index ${start} to ${end}`,
+      description: `Merging subarrays: [${start}-${mid}] and [${mid + 1}-${end}]`,
       comparisons,
-      swapCount: 0,
+      swapCount,
       pass: 0,
     });
 
@@ -50,63 +51,143 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
         activeIndices: [start + i, mid + 1 + j],
         swapping: false,
         sortedIndices: [...sorted],
-        description: `Comparing elements from both subarrays`,
+        description: `Comparing elements: ${leftArr[i].val} and ${rightArr[j].val}`,
         comparisons,
-        swapCount: 0,
+        swapCount,
         pass: 0,
       });
 
+      const targetItem = leftArr[i].val <= rightArr[j].val ? leftArr[i] : rightArr[j];
+      const targetId = targetItem.id;
+
+      // Find where this ID is in the current array to perform a swap
+      let foundIdx = -1;
+      for (let p = k; p <= end; p++) {
+        if (arr[p].id === targetId) {
+          foundIdx = p;
+          break;
+        }
+      }
+
+      if (foundIdx !== -1 && foundIdx !== k) {
+        const temp = arr[k];
+        arr[k] = arr[foundIdx];
+        arr[foundIdx] = temp;
+        swapCount++;
+
+        result.push({
+          array: [...arr],
+          activeIndices: [k, foundIdx],
+          swapping: true,
+          sortedIndices: [...sorted],
+          description: `Placing ${arr[k].val} into position ${k}`,
+          comparisons,
+          swapCount,
+          pass: 0,
+        });
+      } else if (foundIdx === k) {
+        result.push({
+          array: [...arr],
+          activeIndices: [k],
+          swapping: false,
+          sortedIndices: [...sorted],
+          description: `${arr[k].val} is already in the correct position`,
+          comparisons,
+          swapCount,
+          pass: 0,
+        });
+      }
+
       if (leftArr[i].val <= rightArr[j].val) {
-        arr[k] = leftArr[i];
         i++;
       } else {
-        arr[k] = rightArr[j];
         j++;
       }
       k++;
-
-      result.push({
-        array: [...arr],
-        activeIndices: [k - 1],
-        swapping: true,
-        sortedIndices: [...sorted],
-        description: `Placing the smaller element back into the merged array`,
-        comparisons,
-        swapCount: 0,
-        pass: 0,
-      });
     }
 
     while (i < leftArr.length) {
-      arr[k] = leftArr[i];
+      const targetId = leftArr[i].id;
+      let foundIdx = -1;
+      for (let p = k; p <= end; p++) {
+        if (arr[p].id === targetId) {
+          foundIdx = p;
+          break;
+        }
+      }
+
+      if (foundIdx !== -1 && foundIdx !== k) {
+        const temp = arr[k];
+        arr[k] = arr[foundIdx];
+        arr[foundIdx] = temp;
+        swapCount++;
+
+        result.push({
+          array: [...arr],
+          activeIndices: [k, foundIdx],
+          swapping: true,
+          sortedIndices: [...sorted],
+          description: `Copying remaining element ${arr[k].val} from left side`,
+          comparisons,
+          swapCount,
+          pass: 0,
+        });
+      } else if (foundIdx === k) {
+        result.push({
+          array: [...arr],
+          activeIndices: [k],
+          swapping: false,
+          sortedIndices: [...sorted],
+          description: `${arr[k].val} is already in position`,
+          comparisons,
+          swapCount,
+          pass: 0,
+        });
+      }
       i++;
       k++;
-      result.push({
-        array: [...arr],
-        activeIndices: [k - 1],
-        swapping: true,
-        sortedIndices: [...sorted],
-        description: `Copying remaining element from left side`,
-        comparisons,
-        swapCount: 0,
-        pass: 0,
-      });
     }
 
     while (j < rightArr.length) {
-      arr[k] = rightArr[j];
+      const targetId = rightArr[j].id;
+      let foundIdx = -1;
+      for (let p = k; p <= end; p++) {
+        if (arr[p].id === targetId) {
+          foundIdx = p;
+          break;
+        }
+      }
+
+      if (foundIdx !== -1 && foundIdx !== k) {
+        const temp = arr[k];
+        arr[k] = arr[foundIdx];
+        arr[foundIdx] = temp;
+        swapCount++;
+
+        result.push({
+          array: [...arr],
+          activeIndices: [k, foundIdx],
+          swapping: true,
+          sortedIndices: [...sorted],
+          description: `Copying remaining element ${arr[k].val} from right side`,
+          comparisons,
+          swapCount,
+          pass: 0,
+        });
+      } else if (foundIdx === k) {
+        result.push({
+          array: [...arr],
+          activeIndices: [k],
+          swapping: false,
+          sortedIndices: [...sorted],
+          description: `${arr[k].val} is already in position`,
+          comparisons,
+          swapCount,
+          pass: 0,
+        });
+      }
       j++;
       k++;
-      result.push({
-        array: [...arr],
-        activeIndices: [k - 1],
-        swapping: true,
-        sortedIndices: [...sorted],
-        description: `Copying remaining element from right side`,
-        comparisons,
-        swapCount: 0,
-        pass: 0,
-      });
     }
   }
 
@@ -119,9 +200,9 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
         activeIndices: [start, mid, end],
         swapping: false,
         sortedIndices: [...sorted],
-        description: `Splitting array into halves: range [${start}-${mid}] and [${mid + 1}-${end}]`,
+        description: `Splitting: [${start}-${mid}] and [${mid + 1}-${end}]`,
         comparisons,
-        swapCount: 0,
+        swapCount,
         pass: 0,
       });
 
@@ -147,7 +228,7 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
     sortedIndices: finalArr.map((_, i) => i),
     description: `Merge Sort complete!`,
     comparisons,
-    swapCount: 0,
+    swapCount,
     pass: 0,
   });
 

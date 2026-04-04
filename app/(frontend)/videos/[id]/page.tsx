@@ -28,16 +28,7 @@ export default function VideoDetailPage({ params }: { params: { id: string } }) 
   const categoryLabel = t(`videos.filters.${video.categoryId}`);
 
   // Try to find if there's an algorithm description we can reuse
-  const algoBaseId = video.id
-    .replace('-dance', '')
-    .replace('-folk', '')
-    .replace('-waltz', '')
-    .replace('-tango', '')
-    .replace('-salsa', '')
-    .replace('-ballet', '')
-    .replace('-flamenco', '')
-    .replace('-hip-hop', '')
-    .replace('-swing', '');
+  const algoBaseId = video.id;
 
   const description =
     t(`algorithms.list.${algoBaseId}.description`) || t('videos.hero_description');

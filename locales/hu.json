@@ -461,15 +461,16 @@
     },
     "views": "megtekintés",
     "list": {
-      "bubble-sort-dance": "Buborékrendezés tánc",
-      "insertion-sort-folk": "Beszúró rendezés néptánc",
-      "selection-sort-waltz": "Kiválasztó rendezés keringő",
-      "merge-sort-tango": "Összefuttatásos rendezés tangó",
-      "quick-sort-salsa": "Gyorsrendezés salsa",
-      "heap-sort-ballet": "Kupacrendezés balett",
-      "shell-sort-flamenco": "Shell-rendezés flamenco",
-      "linear-search-hip-hop": "Lineáris keresés hip-hop",
-      "binary-search-swing": "Bináris keresés swing"
+      "bubble-sort": "Buborékrendezés",
+      "insertion-sort": "Beszúró rendezés",
+      "selection-sort": "Kiválasztó rendezés",
+      "merge-sort": "Összefuttatásos rendezés",
+      "quick-sort": "Gyorsrendezés",
+      "heap-sort": "Kupacrendezés",
+      "shell-sort": "Shell-rendezés",
+      "linear-search": "Lineáris keresés",
+      "binary-search": "Bináris keresés",
+      "n-queens": "N-királynő probléma"
     }
   },
   "visualizer": {
