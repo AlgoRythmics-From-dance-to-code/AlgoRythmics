@@ -5,7 +5,8 @@
     "all": "Összes",
     "cancel": "Mégse",
     "restart": "Újrakezdés",
-    "confirm": "Megerősítés"
+    "confirm": "Megerősítés",
+    "min": "perc"
   },
   "nav": {
     "home": "Kezdőlap",
@@ -19,7 +20,9 @@
     "profile": "Profil",
     "language": "Nyelv",
     "switch_theme": "Séma váltása",
-    "about": "Rólunk"
+    "about": "Rólunk",
+    "terms": "Felhasználási feltételek",
+    "privacy": "Adatvédelmi irányelvek"
   },
   "aria": {
     "go_home": "Ugrás a kezdőlapra",
@@ -192,7 +195,7 @@
     "confirm_password_label": "Jelszó megerősítése",
     "confirm_password_placeholder": "Erősítsd meg a jelszavad",
     "terms_accept": "Elfogadom a {terms} és a {privacy} feltételeit",
-    "terms_link": "Szolgáltatási feltételek",
+    "terms_link": "Felhasználási feltételek",
     "privacy_link": "Adatvédelmi irányelvek",
     "register_btn": "Regisztráció",
     "registering": "Regisztráció...",
@@ -231,6 +234,8 @@
     "email": "E-mail",
     "address": "Cím",
     "phone": "Telefon",
+    "address_val": "123 Algoritmus utca, Budapest, Magyarország",
+    "phone_val": "+36 1 234 5678",
     "send_us_message": "Küldj nekünk üzenetet",
     "success_title": "Üzenet elküldve!",
     "success_desc": "Hamarosan válaszolunk megkeresésedre.",
@@ -356,47 +361,121 @@
     "list": {
       "bubble-sort": {
         "name": "Buborékrendezés",
-        "description": "A buborékrendezés célja, hogy a legnagyobb elemeket egyenként a sor végére juttassa (mint a felszálló buborékok), miközben a szomszédos elemeket párban hasonlítja össze és cseréli fel."
+        "description": "A buborékrendezés célja, hogy a legnagyobb elemeket egyenként a sor végére juttassa (mint a felszálló buborékok), miközben a szomszédos elemeket párban hasonlítja össze és cseréli fel.",
+        "steps": [
+          "Hasonlítsd össze a szomszédos elemeket",
+          "Cseréld fel őket, ha rossz sorrendben vannak",
+          "Lépj a következő párra",
+          "Ismételd, amíg nincs több csere",
+          "A lista most már rendezett"
+        ]
       },
       "insertion-sort": {
         "name": "Beszúró rendezés",
-        "description": "A beszúró rendezés úgy működik, mint amikor a kártyákat rendezzük a kezünkben: minden új elemet a már rendezett rész megfelelő helyére szúrunk be."
+        "description": "A beszúró rendezés úgy működik, mint amikor a kártyákat rendezzük a kezünkben: minden új elemet a már rendezett rész megfelelő helyére szúrunk be.",
+        "steps": [
+          "Kezdj a második elemmel",
+          "Hasonlítsd össze a tőle balra lévő elemekkel",
+          "Mozgasd jobbra a nagyobb elemeket",
+          "Szúrd be az elemet a megfelelő helyre",
+          "Ismételd az összes többi elemre"
+        ]
       },
       "selection-sort": {
         "name": "Kiválasztó rendezés",
-        "description": "A kiválasztó rendezés minden körben megkeresi a legkisebb elemet a még nem rendezett részből, és a rendezett rész elejére teszi."
+        "description": "A kiválasztó rendezés minden körben megkeresi a legkisebb elemet a még nem rendezett részből, és a rendezett rész elejére teszi.",
+        "steps": [
+          "Keresd meg a legkisebb elemet a rendezetlen részen",
+          "Cseréld fel az első rendezetlen elemmel",
+          "Bővítsd a rendezett részt eggyel",
+          "Ismételd, amíg a teljes tömb rendezett nem lesz"
+        ]
       },
       "shell-sort": {
         "name": "Shell-rendezés",
-        "description": "A Donald Shell által 1959-ben javasolt algoritmus a beszúró rendezés egy változata, amely lehetővé teszi, hogy az elemek nagyobbat lépjenek az elején."
+        "description": "A Donald Shell által 1959-ben javasolt algoritmus a beszúró rendezés egy változata, amely lehetővé teszi, hogy az elemek nagyobbat lépjenek az elején.",
+        "steps": [
+          "Válassz egy távolság-sorozatot",
+          "Rendezd a csoportokat beszúró rendezéssel",
+          "Csökkentsd a távolságot",
+          "Ismételd, amíg a távolság 1 nem lesz",
+          "Végezz egy utolsó beszúró rendezést"
+        ]
       },
       "merge-sort": {
         "name": "Összefuttatásos rendezés",
-        "description": "Az összefuttatásos rendezés egy oszd meg és uralkodj algoritmus, amely a tömböt félbe vágja, külön-külön rendezi őket, majd összefésüli a helyes sorrendben."
+        "description": "Az összefuttatásos rendezés egy oszd meg és uralkodj algoritmus, amely a tömböt félbe vágja, külön-külön rendezi őket, majd összefésüli a helyes sorrendben.",
+        "steps": [
+          "Oszd a tömböt két félre",
+          "Rendezd rekurzívan mindkét felet",
+          "Fésüld össze a rendezett feleket",
+          "Hasonlítsd össze az elemeket mindkét félből",
+          "Helyezd a kisebb elemet az eredménybe"
+        ]
       },
       "quick-sort": {
         "name": "Gyorsrendezés",
-        "description": "A gyorsrendezés kiválaszt egy pivot elemet, és köré rendezi a tömböt: a kisebbeket elé, a nagyobbakat utána, majd rekurzívan teszi ugyanezt."
+        "description": "A gyorsrendezés kiválaszt egy pivot elemet, és köré rendezi a tömböt: a kisebbeket elé, a nagyobbakat utána, majd rekurzívan teszi ugyanezt.",
+        "steps": [
+          "Válassz egy pivot elemet",
+          "Partícionálás: kisebbek balra, nagyobbak jobbra",
+          "Rendezd rekurzívan a bal oldalt",
+          "Rendezd rekurzívan a jobb oldalt",
+          "Egyesítsd az eredményeket"
+        ]
       },
       "heap-sort": {
         "name": "Kupacrendezés",
-        "description": "A kupacrendezés bináris kupac adatszerkezetet használ. Felépít egy max-kupacot, majd folyamatosan kiveszi a legnagyobb elemet a rendezett tömbhöz."
+        "description": "A kupacrendezés bináris kupac adatszerkezetet használ. Felépít egy max-kupacot, majd folyamatosan kiveszi a legnagyobb elemet a rendezett tömbhöz.",
+        "steps": [
+          "Építs maximum-kupacot a tömbből",
+          "Vedd ki a gyökérelemet (legnagyobbat)",
+          "Mozgasd a tömb végére",
+          "Kupacold újra az adatszerkezetet",
+          "Ismételd, amíg minden elem rendezett nem lesz"
+        ]
       },
       "linear-search": {
         "name": "Lineáris keresés",
-        "description": "Egy egyszerű keresési algoritmus, amely a tömb elejétől kezdve minden elemet megvizsgál, és összehasonlítja a keresett értékkel."
+        "description": "Egy egyszerű keresési algoritmus, amely a tömb elejétől kezdve minden elemet megvizsgál, és összehasonlítja a keresett értékkel.",
+        "steps": [
+          "Kezdd az első elemnél",
+          "Hasonlítsd össze a keresett értékkel",
+          "Ha egyezik, add vissza a pozíciót",
+          "Ha nem egyezik, lépj a következőre",
+          "Ha a lista végére értél, nincs találat"
+        ]
       },
       "binary-search": {
         "name": "Bináris keresés",
-        "description": "Hatékony keresési algoritmus, amely egy rendezett tömböt folyamatosan felez, amíg meg nem találja a célértéket vagy a tartomány ki nem ürül."
+        "description": "Hatékony keresési algoritmus, amely egy rendezett tömböt folyamatosan felez, amíg meg nem találja a célértéket vagy a tartomány ki nem ürül.",
+        "steps": [
+          "Győződj meg róla, hogy a tömb rendezett",
+          "Keresd meg a középső elemet",
+          "Hasonlítsd össze a célértékkel",
+          "Ha a cél kisebb, keresd a bal félben",
+          "Ha a cél nagyobb, keresd a jobb félben"
+        ]
       },
       "n-queens": {
         "name": "N-királynő probléma",
-        "description": "Az N-királynő probléma egy klasszikus visszalépéses feladat, amelyben N sakktábla-királynőt kell elhelyezni egy N×N-es táblán úgy, hogy ne üssék egymást."
+        "description": "Az N-királynő probléma egy klasszikus visszalépéses feladat, amelyben N sakktábla-királynőt kell elhelyezni egy N×N-es táblán úgy, hogy ne üssék egymást.",
+        "steps": [
+          "Helyezz el egy királynőt az első sorba",
+          "Lépj a következő sorra és próbálj minden oszlopot",
+          "Ellenőrizd, hogy a hely biztonságos-e",
+          "Ha nincs több oszlop, lépj vissza",
+          "Ismételd, amíg minden királynő el nem fogy"
+        ]
       },
       "bogosort": {
         "name": "Bogosort",
-        "description": "A Bogosort egy szándékosan hatástalan rendezési eljárás, amely véletlenszerűen keveri a tömböt, amíg az véletlenül sorba nem kerül. Vicces látni táncban!"
+        "description": "A Bogosort egy szándékosan hatástalan rendezési eljárás, amely véletlenszerűen keveri a tömböt, amíg az véletlenül sorba nem kerül. Vicces látni táncban!",
+        "steps": [
+          "Ellenőrizd, hogy a lista rendezett-e",
+          "Ha nem, keverd össze véletlenszerűen",
+          "Ismételd, amíg szerencséd nem lesz"
+        ]
       }
     }
   },
@@ -474,6 +553,7 @@
     }
   },
   "visualizer": {
+    "initial": "Kezdeti állapot — rendezésre kész",
     "comparing": "{a} és {b} összehasonlítása...",
     "swapping": "{a} ↔ {b} cseréje",
     "sorted_element": "{value} most már rendezett!",
@@ -544,5 +624,49 @@
     "available_blocks": "Elérhető blokkok",
     "your_program": "A programod",
     "reference": "Szükséges elemek"
+  },
+  "terms_page": {
+    "title": "Felhasználási feltételek",
+    "intro_title": "1. Bevezetés",
+    "intro_text": "Üdvözöljük az AlgoRythmics oldalon. A webhelyünk elérésével vagy használatával Ön beleegyezik a jelen Felhasználási feltételek és az összes vonatkozó törvény és jogszabály betartásába. Ha nem ért egyet ezen feltételek bármelyikével, tilos az oldal használata vagy elérése.",
+    "license_title": "2. Felhasználási engedély",
+    "license_text": "Engedélyezett az anyagok (információk vagy szoftverek) egy példányának ideiglenes letöltése az AlgoRythmics webhelyéről, kizárólag személyes, nem kereskedelmi célú, átmeneti megtekintés céljából.",
+    "license_list": [
+      "Az anyagok módosítása vagy másolása;",
+      "Az anyagok kereskedelmi célú felhasználása vagy bármilyen nyilvános bemutatása (kereskedelmi vagy nem kereskedelmi);",
+      "Kísérlet az AlgoRythmics webhelyén található szoftverek visszafejtésére vagy fordítására;",
+      "Bármilyen szerzői jogi vagy egyéb tulajdonjogi jelzés eltávolítása az anyagokról."
+    ],
+    "disclaimer_title": "3. Felelősségkizárás",
+    "disclaimer_text": "Az AlgoRythmics webhelyén található anyagok 'úgy ahogy vannak' alapon állnak rendelkezésre. Az AlgoRythmics nem vállal garanciát, kifejezett vagy hallgatólagos módon, és ezennel elhárít és kizár minden egyéb garanciát, beleértve, korlátozás nélkül, a hallgatólagos garanciákat vagy az eladhatóságra, egy adott célra való alkalmasságra vagy a szellemi tulajdon megsértésének elkerülésére vonatkozó feltételeket.",
+    "limitations_title": "4. Korlátozások",
+    "limitations_text": "Az AlgoRythmics vagy beszállítói semmilyen esetben sem felelősek semmilyen kárért (beleértve, korlátozás nélkül, az adatok vagy a haszon elvesztéséből, illetve az üzletmenet megszakadásából eredő károkat), amelyek az AlgoRythmics webhelyén található anyagok használatából vagy használatának hiányából erednek.",
+    "law_title": "5. Irányadó jog",
+    "law_text": "Ezeket a feltételeket a jogszabályok szabályozzák és azok szerint értelmezendők, és Ön visszavonhatatlanul aláveti magát az adott államban vagy helyen található bíróságok kizárólagos joghatóságának.",
+    "back_home": "Vissza a kezdőlapra"
+  },
+  "privacy_page": {
+    "title": "Adatvédelmi irányelvek",
+    "gen_title": "1. Általános információk",
+    "gen_text": "Az AlgoRythmics-nél az Ön adatainak védelme prioritás. Ez az Adatvédelmi irányelv elmagyarázza, hogyan gyűjtjük, használjuk és védjük az Ön személyes adatait.",
+    "data_title": "2. Gyűjtött adatok",
+    "data_text": "A következő típusú adatokat gyűjtjük:",
+    "data_list": [
+      "Profilinformációk: keresztnév, vezetéknév, e-mail cím;",
+      "Haladási adatok: a platformon töltött idő, elvégzett leckék és feladat eredmények;",
+      "Sütik: a felhasználói élmény javítása és a fiók biztonságának biztosítása érdekében."
+    ],
+    "usage_title": "3. Adatfelhasználás",
+    "usage_text": "A gyűjtött adatokat a következőkre használjuk:",
+    "usage_list": [
+      "Hozzáférés biztosítása az interaktív kurzusokhoz és gyakorlatokhoz;",
+      "Haladás szinkronizálása az eszközök között;",
+      "Oktatási tartalom fejlesztése a felhasználói visszajelzések alapján."
+    ],
+    "protection_title": "4. Adatvédelem",
+    "protection_text": "Technikai és szervezeti biztonsági intézkedéseket alkalmazunk az adatok jogosulatlan hozzáférés, módosítás vagy megsemmisítés elleni védelme érdekében.",
+    "rights_title": "5. Az Ön jogai",
+    "rights_text": "Önnek joga van hozzáférni, helyesbíteni vagy törölni személyes adatait. Fiókját bármikor törölheti közvetlenül a 'Profil' menüpontban.",
+    "back_home": "Vissza a kezdőlapra"
   }
 }

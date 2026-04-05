@@ -13,8 +13,12 @@ export interface SortStep {
   activeIndices: number[];
   swapping: boolean;
   sortedIndices: number[];
-  /** Human-readable description of this step */
+  /** Human-readable description of this step (fallback) */
   description?: string;
+  /** i18n key for the description */
+  descriptionKey?: string;
+  /** Parameters for the i18n description */
+  descriptionParams?: Record<string, string | number>;
   /** Running count of comparisons so far */
   comparisons?: number;
   /** Running count of swaps so far */
@@ -42,6 +46,7 @@ export function generateBubbleSortSteps(initialValues: number[]): SortStep[] {
       swapping: false,
       sortedIndices: [],
       description: 'Initial array — ready to sort',
+      descriptionKey: 'visualizer.initial',
       comparisons: 0,
       swapCount: 0,
       pass: 0,
@@ -63,6 +68,8 @@ export function generateBubbleSortSteps(initialValues: number[]): SortStep[] {
         swapping: false,
         sortedIndices: [...sorted],
         description: `Comparing ${arr[j].val} and ${arr[j + 1].val}...`,
+        descriptionKey: 'visualizer.comparing',
+        descriptionParams: { a: arr[j].val, b: arr[j + 1].val },
         comparisons,
         swapCount,
         pass: i,
@@ -81,6 +88,8 @@ export function generateBubbleSortSteps(initialValues: number[]): SortStep[] {
           swapping: true,
           sortedIndices: [...sorted],
           description: `Swapping ${arr[j].val} ↔ ${arr[j + 1].val}`,
+          descriptionKey: 'visualizer.swapping',
+          descriptionParams: { a: arr[j].val, b: arr[j + 1].val },
           comparisons,
           swapCount,
           pass: i,
@@ -96,6 +105,8 @@ export function generateBubbleSortSteps(initialValues: number[]): SortStep[] {
       swapping: false,
       sortedIndices: [...sorted],
       description: `${arr[arr.length - i - 1].val} is now sorted!`,
+      descriptionKey: 'visualizer.sorted_element',
+      descriptionParams: { value: arr[arr.length - i - 1].val },
       comparisons,
       swapCount,
       pass: i,

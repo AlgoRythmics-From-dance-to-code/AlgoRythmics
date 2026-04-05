@@ -114,7 +114,7 @@ export default function ContactPage() {
                   {t('contact.address')}
                 </h3>
                 <p className="font-montserrat text-sm sm:text-base text-[#666] dark:text-gray-400">
-                  123 Algorithm Street, Budapest, Hungary
+                  {t('contact.address_val')}
                 </p>
               </div>
             </div>
@@ -140,7 +140,7 @@ export default function ContactPage() {
                   {t('contact.phone')}
                 </h3>
                 <p className="font-montserrat text-sm sm:text-base text-[#666] dark:text-gray-400">
-                  +36 1 234 5678
+                  {t('contact.phone_val')}
                 </p>
               </div>
             </div>

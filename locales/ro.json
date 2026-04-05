@@ -5,7 +5,8 @@
     "all": "Toate",
     "cancel": "Anulează",
     "restart": "Repornește",
-    "confirm": "Confirmă"
+    "confirm": "Confirmă",
+    "min": "min"
   },
   "nav": {
     "home": "Acasă",
@@ -19,7 +20,9 @@
     "profile": "Profil",
     "language": "Limbă",
     "switch_theme": "Schimbă tema",
-    "about": "Despre noi"
+    "about": "Despre noi",
+    "terms": "Termenii și condițiile",
+    "privacy": "Politica de confidențialitate"
   },
   "aria": {
     "go_home": "Mergi la pagina principală",
@@ -231,6 +234,8 @@
     "email": "Email",
     "address": "Adresă",
     "phone": "Telefon",
+    "address_val": "Strada Algoritmului 123, Budapesta, Ungaria",
+    "phone_val": "+36 1 234 5678",
     "send_us_message": "Trimite-ne un mesaj",
     "success_title": "Mesaj trimis!",
     "success_desc": "Te vom contacta în curând.",
@@ -356,47 +361,121 @@
     "list": {
       "bubble-sort": {
         "name": "Sortarea prin metoda bulelor",
-        "description": "O formă de sortare prin schimbare care pur și simplu interschimbă perechile de elemente care nu sunt în ordine într-o serie de treceri prin fișier, până când lista este sortată."
+        "description": "O formă de sortare prin schimbare care pur și simplu interschimbă perechile de elemente care nu sunt în ordine într-o serie de treceri prin fișier, până când lista este sortată.",
+        "steps": [
+          "Compară elementele adiacente",
+          "Schimbă-le dacă sunt în ordine greșită",
+          "Treci la următoarea pereche",
+          "Repetă până când nu mai sunt necesare schimbări",
+          "Lista este acum sortată"
+        ]
       },
       "insertion-sort": {
         "name": "Sortarea prin inserție",
-        "description": "Sortarea prin inserție este un algoritm simplu de sortare care construiește matricea sortată finală câte un element pe rând. Este mult mai puțin eficientă pe liste mari decât algoritmii mai avansați."
+        "description": "Sortarea prin inserție este un algoritm simplu de sortare care construiește matricea sortată finală câte un element pe rând. Este mult mai puțin eficientă pe liste mari decât algoritmii mai avansați.",
+        "steps": [
+          "Începe cu al doilea element",
+          "Compară cu elementele din stânga sa",
+          "Deplasează elementele mai mari la dreapta",
+          "Inserează elementul în poziția corectă",
+          "Repetă pentru toate elementele rămase"
+        ]
       },
       "selection-sort": {
         "name": "Sortarea prin selecție",
-        "description": "Sortarea prin selecție este un algoritm de sortare, în special o sortare prin comparație pe loc. Are o complexitate temporală O(n²), ceea ce o face ineficientă pe liste mari."
+        "description": "Sortarea prin selecție este un algoritm de sortare, în special o sortare prin comparație pe loc. Are o complexitate temporală O(n²), ceea ce o face ineficientă pe liste mari.",
+        "steps": [
+          "Găsește elementul minim în regiunea nesortată",
+          "Schimbă-l cu primul element nesortat",
+          "Extinde regiunea sortată cu unu",
+          "Repetă până când întregul tablou este sortat"
+        ]
       },
       "shell-sort": {
         "name": "Sortarea Shell",
-        "description": "Un algoritm de sortare propus de Donald Shell în 1959, este o variantă a sortării prin inserție directă care permite înregistrărilor să facă salturi lungi în loc de pași simpli."
+        "description": "Un algoritm de sortare propus de Donald Shell în 1959, este o variantă a sortării prin inserție directă care permite înregistrărilor să facă salturi lungi în loc de pași simpli.",
+        "steps": [
+          "Alege o secvență de intervale",
+          "Sortează elementele separate de interval folosind sortarea prin inserție",
+          "Redu intervalul",
+          "Repetă până când intervalul este 1",
+          "Efectuează o ultimă trecere de sortare prin inserție"
+        ]
       },
       "merge-sort": {
         "name": "Sortarea prin interclasare",
-        "description": "Sortarea prin interclasare este un algoritm de tip divide et impera care împarte matricea în jumătate, sortează fiecare jumătate și apoi le îmbină la loc în ordinea corectă."
+        "description": "Sortarea prin interclasare este un algoritm de tip divide et impera care împarte matricea în jumătate, sortează fiecare jumătate și apoi le îmbină la loc în ordinea corectă.",
+        "steps": [
+          "Împarte tabloul în două jumătăți",
+          "Sortează recursiv fiecare jumătate",
+          "Interclasează jumătățile sortate",
+          "Compară elementele din fiecare jumătate",
+          "Plasează elementul mai mic în rezultat"
+        ]
       },
       "quick-sort": {
         "name": "Sortarea rapidă",
-        "description": "Sortarea rapidă selectează un element pivot și partiționează matricea în jurul acestuia, plasând elementele mai mici înainte și cele mai mari după pivot, apoi sortează recursiv ambele părți."
+        "description": "Sortarea rapidă selectează un element pivot și partiționează matricea în jurul acestuia, plasând elementele mai mici înainte și cele mai mari după pivot, apoi sortează recursiv ambele părți.",
+        "steps": [
+          "Alege un element pivot",
+          "Partiționare: elementele < pivot merg la stânga, > pivot la dreapta",
+          "Sortează recursiv partiția stângă",
+          "Sortează recursiv partiția dreaptă",
+          "Combină rezultatele"
+        ]
       },
       "heap-sort": {
         "name": "Sortarea prin metoda Heap",
-        "description": "Sortarea Heap folosește o structură de date de tip heap binar. Construiește un max-heap din matrice, apoi extrage repetat elementul maxim pentru a construi matricea sortată."
+        "description": "Sortarea Heap folosește o structură de date de tip heap binar. Construiește un max-heap din matrice, apoi extrage repetat elementul maxim pentru a construi matricea sortată.",
+        "steps": [
+          "Construiește un max-heap din tablou",
+          "Extrage elementul rădăcină (maximul)",
+          "Mută-l la sfârșitul tabloului",
+          "Refă structura de heap (heapify)",
+          "Repetă până când toate elementele sunt sortate"
+        ]
       },
       "linear-search": {
         "name": "Căutarea liniară",
-        "description": "Un algoritm de căutare secvențială care verifică fiecare element al matricei de la început, comparând fiecare element cu valoarea dorită."
+        "description": "Un algoritm de căutare secvențială care verifică fiecare element al matricei de la început, comparând fiecare element cu valoarea dorită.",
+        "steps": [
+          "Începe de la primul element",
+          "Compară cu ținta",
+          "Dacă se potrivește, returnează poziția",
+          "Dacă nu se potrivește, treci la următorul element",
+          "Dacă ai ajuns la sfârșitul listei, ținta nu a fost găsită"
+        ]
       },
       "binary-search": {
         "name": "Căutarea binară",
-        "description": "Un algoritm de căutare eficient care împarte repetat intervalul de căutare sortat în jumătate până când valoarea țintă este găsită sau intervalul este gol."
+        "description": "Un algoritm de căutare eficient care împarte repetat intervalul de căutare sortat în jumătate până când valoarea țintă este găsită sau intervalul este gol.",
+        "steps": [
+          "Asigură-te că tabloul este sortat",
+          "Găsește elementul din mijloc",
+          "Compară cu ținta",
+          "Dacă ținta este mai mică, caută în jumătatea stângă",
+          "Dacă ținta este mai mare, caută în jumătatea dreaptă"
+        ]
       },
       "n-queens": {
         "name": "Problema celor N regine",
-        "description": "Problema celor N regine este o problemă clasică de backtracking care implică plasarea a N regine pe o tablă de șah N×N astfel încât nicio regină să nu se amenințe una pe cealaltă."
+        "description": "Problema celor N regine este o problemă clasică de backtracking care implică plasarea a N regine pe o tablă de șah N×N astfel încât nicio regină să nu se amenințe una pe cealaltă.",
+        "steps": [
+          "Plasează o regină în prima linie",
+          "Treci la linia următoare și încearcă fiecare coloană",
+          "Verifică dacă plasarea este sigură (fără conflicte)",
+          "Dacă nu există o coloană sigură, revino (backtrack)",
+          "Repetă până când toate reginele sunt plasate"
+        ]
       },
       "bogosort": {
         "name": "Bogosort",
-        "description": "Bogosort este un algoritm de sortare intenționat ineficient care amestecă aleatoriu elementele până când acestea se așează singure. Super distractiv în dans!"
+        "description": "Bogosort este un algoritm de sortare intenționat ineficient care amestecă aleatoriu elementele până când acestea se așează singure. Super distractiv în dans!",
+        "steps": [
+          "Verifică dacă lista este sortată",
+          "Dacă nu este sortată, amestecă lista aleatoriu",
+          "Repetă până când lista este sortată prin noroc"
+        ]
       }
     }
   },
@@ -474,6 +553,7 @@
     }
   },
   "visualizer": {
+    "initial": "Tablou inițial — gata de sortat",
     "comparing": "Comparare {a} și {b}...",
     "swapping": "Interschimbare {a} ↔ {b}",
     "sorted_element": "{value} este acum sortat!",
@@ -540,5 +620,49 @@
     "available_blocks": "Blocuri disponibile",
     "your_program": "Programul tău",
     "reference": "Elemente necesare"
+  },
+  "terms_page": {
+    "title": "Termeni și Condiții",
+    "intro_title": "1. Introducere",
+    "intro_text": "Bine ați venit la AlgoRythmics. Prin accesarea sau utilizarea site-ului nostru, sunteți de acord să respectați acești Termeni și Condiții și toate legile și reglementările aplicabile. Dacă nu sunteți de acord cu oricare dintre acești termeni, vă este interzis să utilizați sau să accesați acest site.",
+    "license_title": "2. Licență de Utilizare",
+    "license_text": "Se acordă permisiunea de a descărca temporar o copie a materialelor (informații sau software) de pe site-ul AlgoRythmics doar pentru vizualizare personală, necomercială și tranzitorie.",
+    "license_list": [
+      "Modificarea sau copierea materialelor;",
+      "Utilizarea materialelor în scopuri comerciale sau pentru orice afișare publică (comercială sau necomercială);",
+      "Încercarea de a decompila sau de a face reverse engineering pentru orice software conținut pe site-ul AlgoRythmics;",
+      "Eliminarea oricăror mențiuni privind drepturile de autor sau alte mențiuni de proprietate din materiale."
+    ],
+    "disclaimer_title": "3. Exonerare de Răspundere",
+    "disclaimer_text": "Materialele de pe site-ul AlgoRythmics sunt furnizate 'ca atare'. AlgoRythmics nu oferă garanții, exprese sau implicite, și prin prezenta declină și neagă toate celelalte garanții, inclusiv, fără limitare, garanțiile implicite sau condițiile de vandabilitate, adecvarea pentru un anumit scop sau neîncălcarea proprietății intelectuale sau alte încălcări ale drepturilor.",
+    "limitations_title": "4. Limitări",
+    "limitations_text": "În niciun caz AlgoRythmics sau furnizorii săi nu vor fi răspunzători pentru orice daune (inclusiv, fără limitare, daune pentru pierderea de date sau profit, sau din cauza întreruperii activității) rezultate din utilizarea sau incapacitatea de a utiliza materialele de pe site-ul AlgoRythmics.",
+    "law_title": "5. Legea Aplicabilă",
+    "law_text": "Acești termeni și condiții sunt guvernați de și interpretați în conformitate cu legile și vă supuneți irevocabil jurisdicției exclusive a instanțelor din acel stat sau locație.",
+    "back_home": "Înapoi la Acasă"
+  },
+  "privacy_page": {
+    "title": "Politica de Confidențialitate",
+    "gen_title": "1. Informații Generale",
+    "gen_text": "La AlgoRythmics, confidențialitatea datelor dumneavoastră este o prioritate. Această Politică de Confidențialitate explică modul în care colectăm, utilizăm și protejăm informațiile dumneavoastră personale.",
+    "data_title": "2. Date Colectate",
+    "data_text": "Colectăm următoarele tipuri de date:",
+    "data_list": [
+      "Informații de profil: nume, prenume, adresă de e-mail;",
+      "Date de progres: timpul petrecut pe platformă, lecțiile finalizate și rezultatele exercițiilor;",
+      "Cookie-uri: pentru a îmbunătăți experiența de utilizare și a asigura securitatea contului."
+    ],
+    "usage_title": "3. Utilizarea Datelor",
+    "usage_text": "Folosim datele colectate pentru:",
+    "usage_list": [
+      "Furnizarea accesului la cursurile și exercițiile interactive;",
+      "Sincronizarea progresului între dispozitive;",
+      "Îmbunătățirea conținutului educațional bazat pe feedback-ul utilizatorilor."
+    ],
+    "protection_title": "4. Protecția Datelor",
+    "protection_text": "Implementăm măsuri de securitate tehnice și organizatorice pentru a proteja datele dumneavoastră împotriva accesului neautorizat, alterării sau distrugerii.",
+    "rights_title": "5. Drepturile Dumneavoastră",
+    "rights_text": "Aveți dreptul de a accesa, rectifica sau șterge datele dumneavoastră personale. Vă puteți șterge contul oricând direct din secțiunea „Profil”.",
+    "back_home": "Înapoi la Acasă"
   }
 }
