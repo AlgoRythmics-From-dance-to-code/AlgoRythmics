@@ -156,7 +156,12 @@ export default function SortingVisualizer({
           className="mt-4 text-center"
         >
           <p className="font-montserrat font-bold text-sm sm:text-base text-[#269984] dark:text-[#3dd9b8]">
-            {visualState.description}
+            {visualState.descriptionKey
+              ? t(
+                  visualState.descriptionKey,
+                  visualState.descriptionParams as Record<string, string | number>,
+                )
+              : visualState.description}
           </p>
         </motion.div>
       )}

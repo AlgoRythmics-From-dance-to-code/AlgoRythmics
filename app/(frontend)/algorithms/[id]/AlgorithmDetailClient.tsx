@@ -52,7 +52,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
       complexity: algo.complexity,
       description: t(`algorithms.list.${id}.description`),
       illAsset: algo.illAsset,
-      steps: algo.steps,
+      steps: (t(`algorithms.list.${id}.steps`) as unknown as string[]) || algo.steps,
     };
   }, [id, t]);
 

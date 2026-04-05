@@ -19,20 +19,14 @@ export default function Footer() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Image
-              src="/assets/path_1.svg"
-              alt="Facebook"
-              width={28}
-              height={28}
-              sizes="100vw"
-              unoptimized
-              className="h-7 sm:h-8 w-auto"
-              style={{
-                filter: 'brightness(0) invert(1)',
-                width: 'auto',
-                height: 'auto',
-              }}
-            />
+            <div className="relative h-7 sm:h-8 w-7 sm:w-8">
+              <Image
+                src="/assets/path_1.svg"
+                alt="Facebook"
+                fill
+                className="brightness-0 invert object-contain"
+              />
+            </div>
           </a>
           <a
             href="https://www.youtube.com/@AlgoRythmics"
@@ -40,20 +34,14 @@ export default function Footer() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Image
-              src="/assets/group_77.svg"
-              alt="YouTube"
-              width={32}
-              height={32}
-              sizes="100vw"
-              unoptimized
-              className="h-7 sm:h-8 w-auto"
-              style={{
-                filter: 'brightness(0) invert(1)',
-                width: 'auto',
-                height: 'auto',
-              }}
-            />
+            <div className="relative h-7 sm:h-8 w-8 sm:w-9">
+              <Image
+                src="/assets/group_77.svg"
+                alt="YouTube"
+                fill
+                className="brightness-0 invert object-contain"
+              />
+            </div>
           </a>
           <a
             href="https://www.youtube.com/@AlgoRythmics"
@@ -61,20 +49,14 @@ export default function Footer() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Image
-              src="/assets/path_3.svg"
-              alt="Instagram"
-              width={28}
-              height={28}
-              sizes="100vw"
-              unoptimized
-              className="h-7 sm:h-8 w-auto"
-              style={{
-                filter: 'brightness(0) invert(1)',
-                width: 'auto',
-                height: 'auto',
-              }}
-            />
+            <div className="relative h-7 sm:h-8 w-7 sm:w-8">
+              <Image
+                src="/assets/path_3.svg"
+                alt="Instagram"
+                fill
+                className="brightness-0 invert object-contain"
+              />
+            </div>
           </a>
         </div>
 
@@ -83,6 +65,14 @@ export default function Footer() {
           © {new Date().getFullYear()} | algorythmics.com |{' '}
           <Link href="/about" className="hover:underline">
             {t('nav.about')}
+          </Link>{' '}
+          |{' '}
+          <Link href="/terms" className="hover:underline">
+            {t('nav.terms')}
+          </Link>{' '}
+          |{' '}
+          <Link href="/privacy" className="hover:underline">
+            {t('nav.privacy')}
           </Link>
         </p>
       </div>

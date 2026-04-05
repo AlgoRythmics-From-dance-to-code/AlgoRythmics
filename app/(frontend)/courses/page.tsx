@@ -173,7 +173,7 @@ export default function CoursesPage() {
                       </span>
                     </td>
                     <td className="font-montserrat text-sm sm:text-base p-3 sm:p-4 border-b border-[#F0F0F0] dark:border-neutral-800 text-[#666] dark:text-gray-400">
-                      {course.duration}
+                      {course.duration.replace('min', t('common.min'))}
                     </td>
                     <td className="font-montserrat text-sm sm:text-base p-3 sm:p-4 border-b border-[#F0F0F0] dark:border-neutral-800 text-[#666] dark:text-gray-400">
                       {levelName}

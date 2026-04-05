@@ -84,6 +84,7 @@ export default function RegisterPage() {
               alt="Register illustration"
               width={600}
               height={600}
+              priority
               className="opacity-90"
               style={{ width: '100%', height: 'auto' }}
             />
@@ -257,7 +258,7 @@ export default function RegisterPage() {
                               return (
                                 <Link
                                   key={i}
-                                  href="#"
+                                  href="/terms"
                                   className="font-bold underline md:no-underline md:hover:underline"
                                   style={{ color: '#36D6BA' }}
                                 >
@@ -269,7 +270,7 @@ export default function RegisterPage() {
                               return (
                                 <Link
                                   key={i}
-                                  href="#"
+                                  href="/privacy"
                                   className="font-bold underline md:no-underline md:hover:underline"
                                   style={{ color: '#36D6BA' }}
                                 >
