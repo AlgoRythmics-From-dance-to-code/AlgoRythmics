@@ -139,10 +139,10 @@ export default function AlgorithmsPage() {
         }`}
       >
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-8">
             {/* Elegant Sliding Pilled Category Tabs */}
             <div
-              className={`relative flex items-center p-1 rounded-2xl overflow-x-auto no-scrollbar scroll-smooth transition-colors duration-500 ${
+              className={`relative flex items-center p-1 rounded-2xl overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden transition-colors duration-500 ${
                 isScrolled ? 'bg-gray-100/30 dark:bg-white/5' : 'bg-transparent'
               }`}
             >
@@ -165,7 +165,7 @@ export default function AlgorithmsPage() {
                       buttonRefs.current[cat.id] = el;
                     }}
                     onClick={() => setCategory(cat.id as Category)}
-                    className={`relative px-5 py-2 rounded-xl font-montserrat font-bold text-xs sm:text-sm transition-colors duration-300 whitespace-nowrap cursor-pointer z-10 ${
+                    className={`relative px-4 sm:px-5 py-2 rounded-xl font-montserrat font-bold text-[11px] sm:text-xs lg:text-sm transition-colors duration-300 whitespace-nowrap cursor-pointer z-10 ${
                       isActive
                         ? 'text-white'
                         : `text-[#999] dark:text-gray-500 hover:text-[#269984] dark:hover:text-gray-300`
@@ -178,14 +178,14 @@ export default function AlgorithmsPage() {
             </div>
 
             {/* Premium Focused Search Input */}
-            <div className={`relative w-full md:max-w-xs group transition-all duration-500`}>
+            <div className={`relative w-full lg:max-w-[340px] group transition-all duration-500`}>
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999] dark:text-gray-600 group-focus-within:text-[#269984] transition-colors" />
               <input
                 type="text"
                 placeholder={t('sidebar.search_placeholder') || 'Find an algorithm...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full border transition-all duration-500 outline-none font-montserrat text-sm text-black dark:text-white shadow-sm focus:ring-4 focus:ring-[#269984]/5 rounded-xl py-2.5 pl-11 pr-10 ${
+                className={`w-full border transition-all duration-500 outline-none font-montserrat text-sm text-black dark:text-white shadow-sm focus:ring-4 focus:ring-[#269984]/5 rounded-xl py-2.5 sm:py-3 pl-11 pr-10 ${
                   isScrolled
                     ? 'bg-white dark:bg-black/20 border-gray-200 dark:border-white/10 focus:border-[#269984]/40 dark:focus:border-[#269984]/50 group-hover:border-gray-300 dark:group-hover:border-white/20'
                     : 'bg-gray-50/50 dark:bg-white/5 border-transparent focus:bg-white dark:focus:bg-[#1a1a1a] focus:border-[#269984]/30'

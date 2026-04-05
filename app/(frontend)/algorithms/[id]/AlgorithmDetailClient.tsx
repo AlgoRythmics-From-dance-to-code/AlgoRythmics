@@ -343,15 +343,15 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
       </div>
 
       {/* View Tabs */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-        <div className="flex overflow-x-auto border-b-2 border-[#E0E0E0] dark:border-neutral-800 scrollbar-hide">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative group">
+        <div className="flex overflow-x-auto border-b-2 border-[#E0E0E0] dark:border-neutral-800 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {availableViews.map((v) => {
             const status = getViewStatus(v);
             return (
               <button
                 key={v}
                 onClick={() => handleTabClick(v)}
-                className="flex-shrink-0 font-montserrat font-bold transition-all px-5 sm:px-8 py-4 text-sm sm:text-base cursor-pointer whitespace-nowrap border-b-3 flex items-center gap-2"
+                className="flex-shrink-0 font-montserrat font-bold transition-all px-6 sm:px-8 py-5 text-sm sm:text-base cursor-pointer whitespace-nowrap border-b-4 flex items-center gap-2.5"
                 style={{
                   color: activeView === v ? '#269984' : '',
                   borderColor: activeView === v ? '#269984' : 'transparent',
@@ -367,10 +367,10 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
                   {t(`features.${v.toLowerCase()}`)}
                 </span>
                 {status.completed && (
-                  <div className="flex items-center gap-1 ml-1 scale-90 sm:scale-100">
-                    <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                  <div className="flex items-center gap-1.5 ml-0.5 scale-90 sm:scale-100">
+                    <CheckCircle className="w-4 h-4 text-green-500 fill-green-500/10" />
                     {v === 'Alive' && status.score > 0 && (
-                      <span className="text-[10px] font-mono bg-green-500/10 text-green-600 dark:text-green-400 px-1 rounded">
+                      <span className="text-[10px] font-black bg-green-500/10 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded-lg border border-green-500/20">
                         {status.score}%
                       </span>
                     )}
@@ -380,10 +380,12 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
             );
           })}
         </div>
+        {/* Subtle scroll masks for mobile */}
+        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-[#0a0a0a] to-transparent pointer-events-none md:hidden opacity-100 group-hover:opacity-0 transition-opacity" />
       </div>
 
       {/* View Content */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 md:py-14 min-h-[500px]">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 md:py-16 min-h-[500px]">
         <div className="animate-in fade-in slide-in-from-bottom-5 duration-500" key={activeView}>
           {renderTabContent()}
         </div>
@@ -392,35 +394,41 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
           const currentGuides = getRaw(`algorithms.guides.${activeView.toLowerCase()}`);
           let displaySteps = Array.isArray(currentGuides) ? currentGuides : data.steps;
 
-          // Remove the first step if in Video tab as it is redundant with the Simple Explanation box
           if (activeView === 'Video' && displaySteps.length > 0) {
             displaySteps = displaySteps.slice(1);
           }
 
+          if (displaySteps.length === 0) return null;
+
           return (
-            <>
-              <h2 className="font-montserrat font-bold text-xl sm:text-2xl lg:text-3xl text-black dark:text-white mb-6 mt-16 md:mt-24">
-                {t('algorithms.detail.step_by_step')}
-              </h2>
-              <div className="space-y-4 max-w-2xl">
+            <div className="mt-20 md:mt-32">
+              <div className="flex items-center gap-4 mb-8 sm:mb-12">
+                <div className="h-px flex-1 bg-gray-100 dark:bg-white/5" />
+                <h2 className="font-montserrat font-black text-2xl sm:text-3xl text-black dark:text-white uppercase tracking-tight">
+                  {t('algorithms.detail.step_by_step')}
+                </h2>
+                <div className="h-px flex-1 bg-gray-100 dark:bg-white/5" />
+              </div>
+
+              <div className="space-y-6 max-w-3xl mx-auto">
                 {displaySteps.map((step: string, i: number) => (
                   <div
                     key={i}
-                    className="flex items-start gap-4 p-4 sm:p-5 rounded-xl bg-[#F8F8F8] dark:bg-[#1a1a1a]"
+                    className="flex items-start gap-5 p-6 rounded-2xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md transition-all group/step"
                   >
                     <div
-                      className="flex items-center justify-center rounded-full font-montserrat font-bold text-white flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 text-sm"
+                      className="flex items-center justify-center rounded-2xl font-montserrat font-black text-white flex-shrink-0 w-12 h-12 shadow-lg shadow-[#269984]/20 group-hover/step:scale-110 transition-transform"
                       style={{ backgroundColor: '#269984' }}
                     >
                       {i + 1}
                     </div>
-                    <p className="font-montserrat text-sm sm:text-base text-black dark:text-white pt-1.5">
+                    <p className="font-montserrat text-base sm:text-lg text-gray-700 dark:text-gray-300 pt-2 leading-relaxed">
                       {step}
                     </p>
                   </div>
                 ))}
               </div>
-            </>
+            </div>
           );
         })()}
       </div>

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useLocale, Locale } from '../i18n/LocaleProvider';
+import { useTheme } from 'next-themes';
 import ThemeToggle from './ThemeToggle';
 import { User as UserIcon } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
@@ -40,12 +41,13 @@ export default function Header({
   const initials = getInitials();
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
   const { locale, setLocale, t } = useLocale();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const { clearStore } = useAlgorithmStore();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -77,6 +79,19 @@ export default function Header({
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-[var(--header-height)] bg-[#269984]">
       <div className="max-w-[1400px] mx-auto h-full flex items-center justify-between px-6 lg:px-12">
+        {/* Hidden preloader for all flags to ensure they are ready when dropdown opens */}
+        <div className="hidden" aria-hidden="true">
+          {languages.map((lang) => (
+            <Image
+              key={`preload-${lang.code}`}
+              src={lang.flag}
+              alt=""
+              width={20}
+              height={15}
+              priority
+            />
+          ))}
+        </div>
         {/* Logo */}
         <Link href={ROUTES.HOME} className="flex-shrink-0">
           <Image
@@ -136,15 +151,6 @@ export default function Header({
 
           {/* Language Dropdown */}
           <div className="relative" ref={dropdownRef}>
-            {/* Hidden preloader for other flags */}
-            <div className="hidden">
-              {languages
-                .filter((l) => l.code !== locale)
-                .map((lang) => (
-                  <Image key={lang.code} src={lang.flag} alt="" width={1} height={1} priority={false} />
-                ))}
-            </div>
-
             <button
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity p-2"
@@ -301,61 +307,65 @@ export default function Header({
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden absolute top-[var(--header-height)] left-0 right-0 bg-[#269984] shadow-lg border-t border-white/20">
-          <nav className="flex flex-col p-6 gap-4">
+        <div className="md:hidden absolute top-[var(--header-height)] left-0 right-0 bg-[#269984] shadow-2xl border-t border-white/10 overflow-hidden animate-in slide-in-from-top-2 duration-300">
+          <nav className="flex flex-col p-8 gap-6">
             {isAuthenticated && (
-              <>
+              <div className="flex flex-col gap-5">
                 <Link
                   href={ROUTES.HOME}
-                  className="font-montserrat text-white text-lg"
+                  className={`font-montserrat text-xl ${pathname === ROUTES.HOME ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.home')}
                 </Link>
                 <Link
                   href={ROUTES.ALGORITHMS}
-                  className="font-montserrat text-white text-lg"
+                  className={`font-montserrat text-xl ${pathname?.startsWith(ROUTES.ALGORITHMS) ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.algorithms')}
                 </Link>
                 <Link
                   href={ROUTES.COURSES}
-                  className="font-montserrat text-white text-lg"
+                  className={`font-montserrat text-xl ${pathname === ROUTES.COURSES ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.courses')}
                 </Link>
-              </>
+              </div>
             )}
+            
             <Link
               href="/contact"
-              className="font-montserrat text-white text-lg"
+              className={`font-montserrat text-xl ${pathname === '/contact' ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
               onClick={() => setMenuOpen(false)}
             >
               {t('nav.contact')}
             </Link>
 
-            <div className="border-t border-white/20 pt-4 mt-2">
-              <p className="text-white/60 text-sm font-montserrat mb-2">{t('nav.language')}</p>
-              <div className="flex gap-4">
+            <div className="pt-6 border-t border-white/10 mt-2">
+              <p className="text-white/50 text-[10px] uppercase tracking-widest font-montserrat font-bold mb-4">{t('nav.language')}</p>
+              <div className="flex flex-wrap gap-3">
                 {languages.map((lang) => (
                   <button
                     key={lang.code}
-                    onClick={() => setLocale(lang.code)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md border ${
+                    onClick={() => {
+                      setLocale(lang.code);
+                      setMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all active:scale-95 ${
                       locale === lang.code
-                        ? 'bg-white text-[#269984] border-white'
-                        : 'text-white border-white/30'
+                        ? 'bg-white text-[#269984] shadow-lg'
+                        : 'bg-white/10 text-white border border-white/10'
                     }`}
                   >
                     <Image
                       src={lang.flag}
                       alt={lang.code}
-                      width={20}
-                      height={15}
-                      className="rounded-sm"
-                      style={{ width: '20px', height: '15px', objectFit: 'cover' }}
+                      width={18}
+                      height={12}
+                      className="rounded-[1px]"
+                      style={{ width: '18px', height: '12px', objectFit: 'cover' }}
                     />
                     <span className="font-montserrat text-sm uppercase font-bold">{lang.code}</span>
                   </button>
@@ -363,68 +373,74 @@ export default function Header({
               </div>
             </div>
 
-            <hr className="border-white/20" />
+            <div
+              className="pt-4 border-t border-white/10 mt-2 flex items-center justify-between w-full text-left transition-all outline-none"
+            >
+              <div className="flex items-center gap-3 text-white">
+                <ThemeToggle />
+                <span className="font-montserrat text-sm font-medium">{t('nav.switch_theme')}</span>
+              </div>
+            </div>
+
             {!isAuthenticated ? (
-              <>
+              <div className="grid grid-cols-2 gap-4 mt-4 pt-6 border-t border-white/10">
                 <Link
                   href={ROUTES.REGISTER}
-                  className="font-montserrat text-white text-lg"
+                  className="font-montserrat bg-white text-[#269984] py-3 rounded-xl text-center font-bold text-sm"
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.register')}
                 </Link>
                 <Link
                   href={ROUTES.LOGIN}
-                  className="font-montserrat text-white text-lg"
+                  className="font-montserrat border border-white/30 text-white py-3 rounded-xl text-center font-bold text-sm"
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.login')}
                 </Link>
-              </>
+              </div>
             ) : (
-              <>
+              <div className="mt-4 pt-6 border-t border-white/10 flex flex-col gap-4">
                 <Link
                   href={ROUTES.PROFILE}
-                  className="flex items-center gap-3 font-montserrat text-white text-lg"
+                  className="flex items-center gap-4 font-montserrat text-white"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <div className="w-8 h-8 rounded-full border border-white/30 overflow-hidden bg-white/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full border-2 border-white/20 overflow-hidden bg-white/10 flex items-center justify-center">
                     {avatarUrl ? (
                       <Image
                         src={avatarUrl}
                         alt="Profile"
-                        width={32}
-                        height={32}
+                        width={40}
+                        height={40}
                         className="w-full h-full object-cover"
                         style={{ width: '100%', height: '100%' }}
                       />
                     ) : initials ? (
-                      <span className="text-white text-[10px] font-bold uppercase">{initials}</span>
+                      <span className="text-white text-xs font-bold uppercase">{initials}</span>
                     ) : (
-                      <UserIcon className="w-5 h-5 text-white/70" />
+                      <UserIcon className="w-6 h-6 text-white/70" />
                     )}
                   </div>
-                  {t('nav.profile')}
+                  <div>
+                    <p className="text-sm font-bold">{firstName} {lastName}</p>
+                    <p className="text-[10px] text-white/60 uppercase tracking-widest">{t('nav.profile')}</p>
+                  </div>
                 </Link>
                 <button
                   onClick={async () => {
                     setMenuOpen(false);
-                    clearStore(); // Clear storage on logout
+                    clearStore();
                     await axios.post(API_ROUTES.AUTH.LOGOUT).catch(() => {});
                     await signOut({ redirect: false });
                     window.location.href = ROUTES.LOGIN;
                   }}
-                  className="font-montserrat text-white text-lg text-left font-bold"
+                  className="w-full font-montserrat bg-red-500/20 text-red-50 py-3 rounded-xl text-center font-bold text-sm border border-red-500/20"
                 >
                   {t('nav.logout')}
                 </button>
-              </>
+              </div>
             )}
-
-            <div className="flex items-center gap-2 text-white">
-              <ThemeToggle />
-              <span className="font-montserrat">{t('nav.switch_theme')}</span>
-            </div>
           </nav>
         </div>
       )}

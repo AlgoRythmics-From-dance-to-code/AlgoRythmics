@@ -11,7 +11,6 @@ export default function Hero() {
       {/* ━━━ HERO SECTION ━━━ */}
       <section className="w-full relative overflow-hidden bg-white dark:bg-[#0a0a0a]">
         {/* ── TELJES SZÉLESSÉGŰ RÉTEG A GRAFIKÁNAK ── */}
-        {/* Ezt a réteget kivettük a max-w-[1920px] konténerből, így 100vw alapon működik */}
         <div className="absolute inset-0 w-full h-full pointer-events-none z-10 hidden md:block">
           <Image
             src="/assets/hero_ground_path.svg"
@@ -22,15 +21,15 @@ export default function Hero() {
             sizes="(max-width: 1920px) 35vw, 600px"
             className="absolute dark:invert dark:hue-rotate-180"
             style={{
-              bottom: '-1px', // Függőlegesen a vonalon tartja
-              right: '8%', // 2560px-nél pontosan a helyén lesz
-              width: '35.2%', // Az arányos zsugorodásért felel
+              bottom: '-1px',
+              right: '8%',
+              width: '35.2%',
               height: 'auto',
             }}
           />
         </div>
 
-        {/* Content wrapper – 1920 based layout (Itt marad a szöveg és az apró dekoráció) */}
+        {/* Content wrapper – 1920 based layout */}
         <div className="relative mx-auto" style={{ maxWidth: '1920px' }}>
           <div className="hidden md:block" style={{ height: '655px' }} />
 

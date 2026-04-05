@@ -24,9 +24,14 @@ export default function Footer() {
               alt="Facebook"
               width={28}
               height={28}
+              sizes="100vw"
               unoptimized
               className="h-7 sm:h-8 w-auto"
-              style={{ filter: 'brightness(0) invert(1)' }}
+              style={{
+                filter: 'brightness(0) invert(1)',
+                width: 'auto',
+                height: 'auto',
+              }}
             />
           </a>
           <a
@@ -40,9 +45,14 @@ export default function Footer() {
               alt="YouTube"
               width={32}
               height={32}
+              sizes="100vw"
               unoptimized
               className="h-7 sm:h-8 w-auto"
-              style={{ filter: 'brightness(0) invert(1)' }}
+              style={{
+                filter: 'brightness(0) invert(1)',
+                width: 'auto',
+                height: 'auto',
+              }}
             />
           </a>
           <a
@@ -56,9 +66,14 @@ export default function Footer() {
               alt="Instagram"
               width={28}
               height={28}
+              sizes="100vw"
               unoptimized
               className="h-7 sm:h-8 w-auto"
-              style={{ filter: 'brightness(0) invert(1)' }}
+              style={{
+                filter: 'brightness(0) invert(1)',
+                width: 'auto',
+                height: 'auto',
+              }}
             />
           </a>
         </div>
