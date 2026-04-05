@@ -24,6 +24,7 @@ export default function Footer() {
                 src="/assets/path_1.svg"
                 alt="Facebook"
                 fill
+                sizes="(max-width: 640px) 28px, 32px"
                 className="brightness-0 invert object-contain"
               />
             </div>
@@ -39,6 +40,7 @@ export default function Footer() {
                 src="/assets/group_77.svg"
                 alt="YouTube"
                 fill
+                sizes="(max-width: 640px) 32px, 36px"
                 className="brightness-0 invert object-contain"
               />
             </div>
@@ -54,6 +56,7 @@ export default function Footer() {
                 src="/assets/path_3.svg"
                 alt="Instagram"
                 fill
+                sizes="(max-width: 640px) 28px, 32px"
                 className="brightness-0 invert object-contain"
               />
             </div>

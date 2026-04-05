@@ -47,14 +47,16 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
       };
     }
 
+    const localizedSteps = getRaw(`algorithms.list.${id}.steps`);
+
     return {
       name: t(`algorithms.list.${id}.name`),
       complexity: algo.complexity,
       description: t(`algorithms.list.${id}.description`),
       illAsset: algo.illAsset,
-      steps: (t(`algorithms.list.${id}.steps`) as unknown as string[]) || algo.steps,
+      steps: Array.isArray(localizedSteps) ? localizedSteps : algo.steps,
     };
-  }, [id, t]);
+  }, [id, t, getRaw]);
 
   const matchingVideo = VIDEOS.find((v) => v.id.startsWith(id));
   const algoHasFullContent = hasFullContent(id);

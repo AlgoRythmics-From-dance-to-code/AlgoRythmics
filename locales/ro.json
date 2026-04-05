@@ -408,7 +408,7 @@
         "steps": [
           "Împarte tabloul în două jumătăți",
           "Sortează recursiv fiecare jumătate",
-          "Interclasează jumătătile sortate",
+          "Interclasează jumătățile sortate",
           "Compară elementele din fiecare jumătate",
           "Plasează elementul mai mic în rezultat"
         ]

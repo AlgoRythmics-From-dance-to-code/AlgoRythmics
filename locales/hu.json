@@ -453,7 +453,7 @@
           "Győződj meg róla, hogy a tömb rendezett",
           "Keresd meg a középső elemet",
           "Hasonlítsd össze a célértékkel",
-          "Ha a célkisebb, keresd a bal félben",
+          "Ha a cél kisebb, keresd a bal félben",
           "Ha a cél nagyobb, keresd a jobb félben"
         ]
       },
