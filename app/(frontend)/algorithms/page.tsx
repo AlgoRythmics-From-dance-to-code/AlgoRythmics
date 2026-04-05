@@ -142,7 +142,7 @@ export default function AlgorithmsPage() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-8">
             {/* Elegant Sliding Pilled Category Tabs */}
             <div
-              className={`relative flex items-center p-1 rounded-2xl overflow-x-auto no-scrollbar scroll-smooth transition-colors duration-500 ${
+              className={`relative flex items-center p-1 rounded-2xl overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden transition-colors duration-500 ${
                 isScrolled ? 'bg-gray-100/30 dark:bg-white/5' : 'bg-transparent'
               }`}
             >

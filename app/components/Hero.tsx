@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useLocale } from '../i18n/LocaleProvider';
 
 export default function Hero() {

@@ -374,16 +374,7 @@ export default function Header({
             </div>
 
             <div
-              role="button"
-              tabIndex={0}
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setTheme(theme === 'dark' ? 'light' : 'dark');
-                }
-              }}
-              className="pt-4 border-t border-white/10 mt-2 flex items-center justify-between w-full text-left active:scale-[0.98] transition-all cursor-pointer outline-none"
+              className="pt-4 border-t border-white/10 mt-2 flex items-center justify-between w-full text-left transition-all outline-none"
             >
               <div className="flex items-center gap-3 text-white">
                 <ThemeToggle />

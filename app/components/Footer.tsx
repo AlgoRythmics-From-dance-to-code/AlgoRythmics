@@ -22,8 +22,8 @@ export default function Footer() {
             <Image
               src="/assets/path_1.svg"
               alt="Facebook"
-              width={0}
-              height={0}
+              width={28}
+              height={28}
               sizes="100vw"
               unoptimized
               className="h-7 sm:h-8 w-auto"
@@ -43,8 +43,8 @@ export default function Footer() {
             <Image
               src="/assets/group_77.svg"
               alt="YouTube"
-              width={0}
-              height={0}
+              width={32}
+              height={32}
               sizes="100vw"
               unoptimized
               className="h-7 sm:h-8 w-auto"
@@ -64,8 +64,8 @@ export default function Footer() {
             <Image
               src="/assets/path_3.svg"
               alt="Instagram"
-              width={0}
-              height={0}
+              width={28}
+              height={28}
               sizes="100vw"
               unoptimized
               className="h-7 sm:h-8 w-auto"

@@ -283,7 +283,7 @@ export default function ProfilePage() {
 
               <div className="absolute -bottom-10 left-0 right-0 sm:left-8 flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-6 z-10 px-4 sm:px-0">
                 <div className="relative group flex-shrink-0">
-                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl border-4 sm:border-6 border-white dark:border-[#111] bg-white dark:bg-neutral-800 shadow-xl overflow-hidden flex items-center justify-center relative">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl border-4 sm:border-[6px] border-white dark:border-[#111] bg-white dark:bg-neutral-800 shadow-xl overflow-hidden flex items-center justify-center relative">
                     {avatarUrl ? (
                       <Image
                         src={avatarUrl}

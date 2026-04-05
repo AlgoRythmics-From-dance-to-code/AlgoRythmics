@@ -344,7 +344,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
 
       {/* View Tabs */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative group">
-        <div className="flex overflow-x-auto border-b-2 border-[#E0E0E0] dark:border-neutral-800 no-scrollbar scroll-smooth">
+        <div className="flex overflow-x-auto border-b-2 border-[#E0E0E0] dark:border-neutral-800 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {availableViews.map((v) => {
             const status = getViewStatus(v);
             return (
