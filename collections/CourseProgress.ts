@@ -1,0 +1,62 @@
+import type { CollectionConfig } from 'payload';
+
+export const CourseProgress: CollectionConfig = {
+  slug: 'course-progress',
+  admin: {
+    useAsTitle: 'courseId',
+    group: 'Learning',
+    defaultColumns: ['user', 'courseId', 'activePhaseIndex', 'updatedAt'],
+  },
+  access: {
+    read: ({ req: { user } }) => {
+      if (!user) return false;
+      if (user.role === 'admin') return true;
+      return { user: { equals: user.id } };
+    },
+    create: () => true,
+    update: ({ req: { user } }) => {
+      if (!user) return false;
+      if (user.role === 'admin') return true;
+      return { user: { equals: user.id } };
+    },
+    delete: ({ req: { user } }) => user?.role === 'admin',
+  },
+  fields: [
+    {
+      name: 'user',
+      type: 'relationship',
+      relationTo: 'users',
+      required: true,
+      index: true,
+    },
+    {
+      name: 'courseId',
+      type: 'text',
+      required: true,
+      index: true,
+    },
+    {
+      name: 'activePhaseIndex',
+      type: 'number',
+      defaultValue: 0,
+    },
+    {
+      name: 'completedPhases',
+      type: 'text',
+      hasMany: true,
+    },
+    {
+      name: 'lastConfidenceRating',
+      type: 'text',
+    },
+    {
+      name: 'phaseResults',
+      type: 'json',
+    },
+    {
+      name: 'points',
+      type: 'number',
+      defaultValue: 0,
+    },
+  ],
+};

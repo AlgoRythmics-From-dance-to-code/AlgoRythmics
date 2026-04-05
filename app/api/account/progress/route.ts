@@ -26,16 +26,35 @@ export async function GET() {
       depth: 0,
     });
 
+    const courseProgressDocs = await payload.find({
+      collection: 'course-progress',
+      where: { user: { equals: userId } },
+      pagination: false,
+      depth: 0,
+    });
+
     const algorithmProgress: Record<string, unknown> = {};
     progressDocs.docs.forEach((doc) => {
       const progressDoc = doc as unknown as AlgorithmProgress;
       algorithmProgress[progressDoc.algorithmId] = progressDoc;
     });
 
+    const courseProgress: Record<string, unknown> = {};
+    courseProgressDocs.docs.forEach((doc) => {
+      courseProgress[(doc as any).courseId] = {
+        activePhaseIndex: (doc as any).activePhaseIndex,
+        completedPhases: (doc as any).completedPhases || [],
+        lastConfidenceRating: (doc as any).lastConfidenceRating,
+        phaseResults: (doc as any).phaseResults,
+        points: (doc as any).points,
+      };
+    });
+
     return NextResponse.json({
       completedIds: user.completedAlgorithms || [],
       visualizerProgress: user.visualizerProgress || {},
       algorithmProgress,
+      courseProgress,
     });
   } catch (error) {
     console.error('Error fetching progress:', error);
@@ -51,7 +70,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { completedIds, visualizerProgress, algorithmProgress } = await req.json();
+    const { completedIds, visualizerProgress, algorithmProgress, courseProgress } = await req.json();
 
     // Runtime validation
     if (completedIds !== undefined && !Array.isArray(completedIds)) {
@@ -133,6 +152,45 @@ export async function POST(req: Request) {
               },
             });
           }
+        }
+      }
+    }
+
+    // 3. Sync Course-specific Progress
+    if (courseProgress && typeof courseProgress === 'object') {
+      const now = new Date().toISOString();
+      const courseEntries = Object.entries(courseProgress).filter(
+        ([, data]) => data && typeof data === 'object',
+      ) as [string, Record<string, any>][];
+
+      for (const [slug, data] of courseEntries) {
+        const { docs: existingCourseDocs } = await payload.find({
+          collection: 'course-progress',
+          where: {
+            and: [{ user: { equals: userId } }, { courseId: { equals: slug } }],
+          },
+          limit: 1,
+          depth: 0,
+        });
+
+        const updates = { ...data };
+        delete updates.user;
+        delete updates.courseId;
+        delete updates.id;
+        delete updates.createdAt;
+        delete updates.updatedAt;
+
+        if (existingCourseDocs.length > 0) {
+          await payload.update({
+            collection: 'course-progress',
+            id: existingCourseDocs[0].id,
+            data: { ...updates, updatedAt: now },
+          });
+        } else {
+          await payload.create({
+            collection: 'course-progress',
+            data: { ...updates, user: userId, courseId: slug, createdAt: now, updatedAt: now },
+          });
         }
       }
     }

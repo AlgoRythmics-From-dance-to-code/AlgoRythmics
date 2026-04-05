@@ -9,6 +9,8 @@ import sharp from 'sharp';
 import { Users } from './collections/Users';
 import { LearningEvents } from './collections/LearningEvents';
 import { AlgorithmProgress } from './collections/AlgorithmProgress';
+import { Courses } from './collections/Courses';
+import { CourseProgress } from './collections/CourseProgress';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -24,7 +26,7 @@ export default buildConfig({
     'https://nextjs-frontend-three-eta.vercel.app',
   ].filter(Boolean),
   cookiePrefix: 'algorythmics-admin',
-  collections: [Users, LearningEvents, AlgorithmProgress],
+  collections: [Users, LearningEvents, AlgorithmProgress, Courses, CourseProgress],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'fallback-secret',
   typescript: {

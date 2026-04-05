@@ -63,7 +63,35 @@ interface AlgorithmState {
     completedIds?: string[];
     visualizerProgress?: Record<string, { step: number; speed: number }>;
     algorithmProgress?: Record<string, AlgorithmProgress>;
+    courseProgress?: Record<
+      string,
+      {
+        activePhaseIndex: number;
+        completedPhases: string[];
+        lastConfidenceRating?: string;
+        phaseResults?: Record<string, 'success' | 'fail'>;
+      }
+    >;
   }) => void;
+
+  // Course progress
+  courseProgress: Record<
+    string,
+    {
+      activePhaseIndex: number;
+      completedPhases: string[];
+      lastConfidenceRating?: string;
+      phaseResults?: Record<string, 'success' | 'fail'>;
+      points?: number;
+    }
+  >;
+  setCourseActivePhase: (courseId: string, activePhaseIndex: number) => void;
+  markCoursePhaseComplete: (courseId: string, phaseId: string) => void;
+  resetCoursePhasesFrom: (courseId: string, phaseIndex: number, phaseIds: string[]) => void;
+  resetCourseProgress: (courseId: string) => void;
+  setCourseConfidenceRating: (courseId: string, rating: string) => void;
+  setCoursePhaseResult: (courseId: string, phaseId: string, result: 'success' | 'fail') => void;
+  addCoursePoints: (courseId: string, points: number) => void;
 
   isInteractionLocked: boolean;
   setInteractionLocked: (locked: boolean) => void;
@@ -82,6 +110,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       completedIds: [],
       visualizerProgress: {},
       algorithmProgress: {},
+      courseProgress: {},
 
       // Actions
       setCategory: (category) => set({ activeCategory: category }),
@@ -193,7 +222,129 @@ export const useAlgorithmStore = create<AlgorithmState>()(
           completedIds: data.completedIds || state.completedIds,
           visualizerProgress: data.visualizerProgress || state.visualizerProgress,
           algorithmProgress: data.algorithmProgress || state.algorithmProgress,
+          courseProgress: data.courseProgress || state.courseProgress,
         }));
+      },
+
+      setCourseActivePhase: (courseId, activePhaseIndex) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: { ...current, activePhaseIndex },
+          },
+        });
+      },
+
+      markCoursePhaseComplete: (courseId, phaseId) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        if (current.completedPhases?.includes(phaseId)) return;
+
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              completedPhases: [...(current.completedPhases || []), phaseId],
+            },
+          },
+        });
+      },
+
+      resetCoursePhasesFrom: (courseId, phaseIndex, phaseIds) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+
+        // Keep phases AT or BEFORE phaseIndex
+        const keptPhaseIds = phaseIds.slice(0, phaseIndex + 1);
+        const nextCompleted = (current.completedPhases || []).filter((id) =>
+          keptPhaseIds.includes(id),
+        );
+
+        // Filter phaseResults to keep only results for kept phases
+        const currentResults = current.phaseResults || {};
+        const nextResults: Record<string, 'success' | 'fail'> = {};
+        nextCompleted.forEach((id) => {
+          if (currentResults[id]) {
+            nextResults[id] = currentResults[id];
+          }
+        });
+
+        // Recalculate points for staying phases
+        // Each completed phase gives 20 points, unless it was a 'fail' result
+        const nextPoints = nextCompleted.reduce((acc, id) => {
+          if (nextResults[id] === 'fail') return acc;
+          return acc + 20;
+        }, 0);
+
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              activePhaseIndex: phaseIndex,
+              completedPhases: nextCompleted,
+              phaseResults: nextResults,
+              points: nextPoints,
+            },
+          },
+        });
+      },
+
+      resetCourseProgress: (courseId) => {
+        const { courseProgress } = get();
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              activePhaseIndex: 0,
+              completedPhases: [],
+              phaseResults: {},
+              lastConfidenceRating: undefined,
+              points: 0,
+            },
+          },
+        });
+      },
+
+      setCourseConfidenceRating: (courseId, rating) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: { ...current, lastConfidenceRating: rating },
+          },
+        });
+      },
+
+      setCoursePhaseResult: (courseId, phaseId, result) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const results = current.phaseResults || {};
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              phaseResults: { ...results, [phaseId]: result },
+            },
+          },
+        });
+      },
+
+      addCoursePoints: (courseId, pointsToAdd) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const currentPoints = current.points || 0;
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: { ...current, points: currentPoints + pointsToAdd },
+          },
+        });
       },
 
       isInteractionLocked: false,
@@ -205,6 +356,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
           completedIds: [],
           visualizerProgress: {},
           algorithmProgress: {},
+          courseProgress: {},
           activeCategory: 'all',
           searchQuery: '',
           isInteractionLocked: false,

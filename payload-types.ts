@@ -70,6 +70,8 @@ export interface Config {
     users: User;
     'learning-events': LearningEvent;
     'algorithm-progress': AlgorithmProgress;
+    courses: Course;
+    'course-progress': CourseProgress;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -80,6 +82,8 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     'learning-events': LearningEventsSelect<false> | LearningEventsSelect<true>;
     'algorithm-progress': AlgorithmProgressSelect<false> | AlgorithmProgressSelect<true>;
+    courses: CoursesSelect<false> | CoursesSelect<true>;
+    'course-progress': CourseProgressSelect<false> | CourseProgressSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -303,6 +307,200 @@ export interface AlgorithmProgress {
   createdAt: string;
 }
 /**
+ * Reusable course blueprints with phases, mascot behavior, confidence prompts, and complexity guidance.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses".
+ */
+export interface Course {
+  id: number;
+  /**
+   * Pick the bubble sort starter template or start from a blank custom course.
+   */
+  preset: 'bubble-sort' | 'custom';
+  title: string;
+  /**
+   * Used in the public URL, for example bubble-sort.
+   */
+  slug: string;
+  /**
+   * The canonical algorithm or topic id that the course teaches.
+   */
+  algorithmId: string;
+  summary: string;
+  /**
+   * A short line used on the course landing page hero.
+   */
+  heroTagline?: string | null;
+  /**
+   * Emoji or short icon token for the course card.
+   */
+  icon?: string | null;
+  /**
+   * Primary accent color used in cards and buttons.
+   */
+  accentColor?: string | null;
+  /**
+   * Asset filename from /public/assets.
+   */
+  illustrationAsset?: string | null;
+  /**
+   * Approximate total learning time in minutes.
+   */
+  estimatedMinutes: number;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  /**
+   * Why this course deserves a featured card on the course index.
+   */
+  featuredReason?: string | null;
+  /**
+   * Short labels such as Video intuition, Drag-and-drop, or Debugging.
+   */
+  learningModes?: string[] | null;
+  /**
+   * Per-course mascot configuration and trigger copy.
+   */
+  mascot: {
+    name: string;
+    /**
+     * Preset key for course-specific mascot styling.
+     */
+    preset?: string | null;
+    asset?: string | null;
+    accentColor?: string | null;
+    idleTriggerSeconds?: number | null;
+    mistakeTriggerCount?: number | null;
+    summonLabel?: string | null;
+    /**
+     * Message used when the learner stalls for a while.
+     */
+    idlePrompt?: string | null;
+    /**
+     * Message used after repeated wrong attempts.
+     */
+    mistakePrompt?: string | null;
+    confidencePrompt?: string | null;
+  };
+  /**
+   * Confidence-based learning copy and reward configuration.
+   */
+  confidenceLearning?: {
+    enabled?: boolean | null;
+    promptLabel?: string | null;
+    praiseText?: string | null;
+    correctionText?: string | null;
+    rewardBadge?: string | null;
+    /**
+     * Probability of occasionally prompting a confidence check.
+     */
+    idleCheckProbability?: number | null;
+  };
+  /**
+   * Complexity notes, diagrams, and mistake impact details.
+   */
+  complexity?: {
+    timeComplexity?: string | null;
+    spaceComplexity?: string | null;
+    bestCase?: string | null;
+    averageCase?: string | null;
+    worstCase?: string | null;
+    diagramChoices?:
+      | {
+          label: string;
+          explanation: string;
+          impact: string;
+          correct?: boolean | null;
+          id?: string | null;
+        }[]
+      | null;
+    mistakeImpacts?:
+      | {
+          label: string;
+          impact: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  /**
+   * Ordered course phases; these are the main building blocks of the course.
+   */
+  phases?:
+    | {
+        phaseId: string;
+        title: string;
+        kind: 'motivation' | 'guided-visualization' | 'code-building' | 'analysis' | 'final-challenge';
+        /**
+         * Which existing algorithm learning view this phase should embed.
+         */
+        sourceView: 'video' | 'animation' | 'control' | 'create' | 'alive';
+        /**
+         * Algorithm id to pull the learning step from, such as bubble-sort.
+         */
+        sourceAlgorithmId?: string | null;
+        summary: string;
+        objective: string;
+        durationMinutes: number;
+        /**
+         * Prompt shown after the learner answers or before a checkpoint.
+         */
+        confidencePrompt?: string | null;
+        mascotLine?: string | null;
+        taskTitle: string;
+        taskPrompt: string;
+        successCopy: string;
+        hintCopy: string;
+        rewardLabel: string;
+        tips?:
+          | {
+              tip: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Final debugging and quiz challenge configuration.
+   */
+  finalChallenge: {
+    title?: string | null;
+    debuggingPrompt: string;
+    quizPrompt: string;
+    mentorPolicy: string;
+    badge?: string | null;
+  };
+  /**
+   * Optional authoring notes for the next course blueprint.
+   */
+  nextSteps?: string[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-progress".
+ */
+export interface CourseProgress {
+  id: number;
+  user: number | User;
+  courseId: string;
+  activePhaseIndex?: number | null;
+  completedPhases?: string[] | null;
+  lastConfidenceRating?: string | null;
+  phaseResults?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  points?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -337,6 +535,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'algorithm-progress';
         value: number | AlgorithmProgress;
+      } | null)
+    | ({
+        relationTo: 'courses';
+        value: number | Course;
+      } | null)
+    | ({
+        relationTo: 'course-progress';
+        value: number | CourseProgress;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -485,6 +691,127 @@ export interface AlgorithmProgressSelect<T extends boolean = true> {
   totalTimeSpentMs?: T;
   lastActivityAt?: T;
   firstStartedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses_select".
+ */
+export interface CoursesSelect<T extends boolean = true> {
+  preset?: T;
+  title?: T;
+  slug?: T;
+  algorithmId?: T;
+  summary?: T;
+  heroTagline?: T;
+  icon?: T;
+  accentColor?: T;
+  illustrationAsset?: T;
+  estimatedMinutes?: T;
+  difficulty?: T;
+  featuredReason?: T;
+  learningModes?: T;
+  mascot?:
+    | T
+    | {
+        name?: T;
+        preset?: T;
+        asset?: T;
+        accentColor?: T;
+        idleTriggerSeconds?: T;
+        mistakeTriggerCount?: T;
+        summonLabel?: T;
+        idlePrompt?: T;
+        mistakePrompt?: T;
+        confidencePrompt?: T;
+      };
+  confidenceLearning?:
+    | T
+    | {
+        enabled?: T;
+        promptLabel?: T;
+        praiseText?: T;
+        correctionText?: T;
+        rewardBadge?: T;
+        idleCheckProbability?: T;
+      };
+  complexity?:
+    | T
+    | {
+        timeComplexity?: T;
+        spaceComplexity?: T;
+        bestCase?: T;
+        averageCase?: T;
+        worstCase?: T;
+        diagramChoices?:
+          | T
+          | {
+              label?: T;
+              explanation?: T;
+              impact?: T;
+              correct?: T;
+              id?: T;
+            };
+        mistakeImpacts?:
+          | T
+          | {
+              label?: T;
+              impact?: T;
+              id?: T;
+            };
+      };
+  phases?:
+    | T
+    | {
+        phaseId?: T;
+        title?: T;
+        kind?: T;
+        sourceView?: T;
+        sourceAlgorithmId?: T;
+        summary?: T;
+        objective?: T;
+        durationMinutes?: T;
+        confidencePrompt?: T;
+        mascotLine?: T;
+        taskTitle?: T;
+        taskPrompt?: T;
+        successCopy?: T;
+        hintCopy?: T;
+        rewardLabel?: T;
+        tips?:
+          | T
+          | {
+              tip?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  finalChallenge?:
+    | T
+    | {
+        title?: T;
+        debuggingPrompt?: T;
+        quizPrompt?: T;
+        mentorPolicy?: T;
+        badge?: T;
+      };
+  nextSteps?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-progress_select".
+ */
+export interface CourseProgressSelect<T extends boolean = true> {
+  user?: T;
+  courseId?: T;
+  activePhaseIndex?: T;
+  completedPhases?: T;
+  lastConfidenceRating?: T;
+  phaseResults?: T;
+  points?: T;
   updatedAt?: T;
   createdAt?: T;
 }

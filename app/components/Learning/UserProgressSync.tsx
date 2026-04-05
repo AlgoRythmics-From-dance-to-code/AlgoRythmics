@@ -11,18 +11,24 @@ import { APP_CONFIG } from '../../../lib/constants';
  */
 export default function UserProgressSync() {
   const { data: session, status } = useSession();
-  const { completedIds, visualizerProgress, algorithmProgress, hydrate, clearStore } =
-    useAlgorithmStore();
+  const {
+    completedIds,
+    visualizerProgress,
+    algorithmProgress,
+    courseProgress,
+    hydrate,
+    clearStore,
+  } = useAlgorithmStore();
 
   const isInitialMount = useRef(true);
   const isHydrating = useRef(false);
-  const lastSynced = useRef({ ids: '', progress: '', algorithm: '' });
+  const lastSynced = useRef({ ids: '', progress: '', algorithm: '', course: '' });
 
   // 0. Cleanup on Logout: Clear the store when the user logs out
   useEffect(() => {
     if (status === 'unauthenticated') {
       clearStore();
-      lastSynced.current = { ids: '', progress: '', algorithm: '' };
+      lastSynced.current = { ids: '', progress: '', algorithm: '', course: '' };
       isInitialMount.current = true;
     }
   }, [status, clearStore]);
@@ -30,16 +36,6 @@ export default function UserProgressSync() {
   // 1. Initial Hydration: Fill the store with server data on login
   useEffect(() => {
     if (status !== 'authenticated' || !session?.user || isHydrating.current) return;
-
-    const serverUser = session.user;
-
-    // Phase 1: Immediate hydration from session (for completedAlgorithms which are small)
-    if (serverUser.completedAlgorithms && completedIds.length === 0) {
-      hydrate({
-        completedIds: serverUser.completedAlgorithms as string[],
-        visualizerProgress: {}, // Will be filled by Phase 2
-      });
-    }
 
     // Phase 2: Background hydration of full progress (including large JSON objects)
     const fetchFullProgress = async () => {
@@ -52,11 +48,13 @@ export default function UserProgressSync() {
             completedIds: data.completedIds,
             visualizerProgress: data.visualizerProgress,
             algorithmProgress: data.algorithmProgress,
+            courseProgress: data.courseProgress,
           });
           lastSynced.current = {
             ids: JSON.stringify(data.completedIds),
             progress: JSON.stringify(data.visualizerProgress),
             algorithm: JSON.stringify(data.algorithmProgress),
+            course: JSON.stringify(data.courseProgress),
           };
         }
       } catch (err) {
@@ -77,12 +75,14 @@ export default function UserProgressSync() {
     const currentIds = JSON.stringify(completedIds);
     const currentProgress = JSON.stringify(visualizerProgress);
     const currentAlgorithmProgress = JSON.stringify(algorithmProgress);
+    const currentCourseProgress = JSON.stringify(courseProgress);
 
     // Only sync if data actually changed from what we last sent
     if (
       currentIds === lastSynced.current.ids &&
       currentProgress === lastSynced.current.progress &&
-      currentAlgorithmProgress === lastSynced.current.algorithm
+      currentAlgorithmProgress === lastSynced.current.algorithm &&
+      currentCourseProgress === lastSynced.current.course
     ) {
       return;
     }
@@ -91,7 +91,7 @@ export default function UserProgressSync() {
       const response = await fetch('/api/account/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completedIds, visualizerProgress, algorithmProgress }),
+        body: JSON.stringify({ completedIds, visualizerProgress, algorithmProgress, courseProgress }),
       });
 
       if (response.ok) {
@@ -99,12 +99,13 @@ export default function UserProgressSync() {
           ids: currentIds,
           progress: currentProgress,
           algorithm: currentAlgorithmProgress,
+          course: currentCourseProgress,
         };
       }
     } catch (err) {
       console.error('[AlgoRythmics] Failed to sync progress to cloud:', err);
     }
-  }, [completedIds, visualizerProgress, algorithmProgress, status]);
+  }, [completedIds, visualizerProgress, algorithmProgress, courseProgress, status]);
 
   // 3. Continuous Sync: Save local changes to the cloud
   useEffect(() => {
@@ -123,7 +124,7 @@ export default function UserProgressSync() {
     // Debounce to avoid hitting the API too frequently during fast interactions
     const timer = setTimeout(syncProgress, APP_CONFIG.SYNC_INTERVAL_MS);
     return () => clearTimeout(timer);
-  }, [completedIds, visualizerProgress, algorithmProgress, status, syncProgress]);
+  }, [completedIds, visualizerProgress, algorithmProgress, courseProgress, status, syncProgress]);
 
   // 4. Lifecycle Sync: Immediate persistence on tab closure or visibility change
   useEffect(() => {
@@ -132,16 +133,18 @@ export default function UserProgressSync() {
       const currentIds = JSON.stringify(completedIds);
       const currentProgress = JSON.stringify(visualizerProgress);
       const currentAlgorithmProgress = JSON.stringify(algorithmProgress);
+      const currentCourseProgress = JSON.stringify(courseProgress);
 
       if (
         currentIds !== lastSynced.current.ids ||
         currentProgress !== lastSynced.current.progress ||
-        currentAlgorithmProgress !== lastSynced.current.algorithm
+        currentAlgorithmProgress !== lastSynced.current.algorithm ||
+        currentCourseProgress !== lastSynced.current.course
       ) {
         // Use sendBeacon for best-effort delivery during page unload
         if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
           const blob = new Blob(
-            [JSON.stringify({ completedIds, visualizerProgress, algorithmProgress })],
+            [JSON.stringify({ completedIds, visualizerProgress, algorithmProgress, courseProgress })],
             { type: 'application/json' },
           );
           navigator.sendBeacon('/api/account/progress', blob);
