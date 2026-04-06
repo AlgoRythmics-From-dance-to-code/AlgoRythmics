@@ -9,13 +9,19 @@ const difficultyOptions = [
 ];
 
 const sourceViewOptions = [
-  { label: 'Video', value: 'video' },
+  { label: 'Video (Blueprint)', value: 'video' },
+  { label: 'Video (Custom)', value: 'video-custom' },
   { label: 'Animation', value: 'animation' },
   { label: 'Interactive Control', value: 'control' },
   { label: 'Code Builder (Create)', value: 'create' },
   { label: 'Live Simulation (Alive)', value: 'alive' },
   { label: 'Quiz', value: 'quiz' },
+  { label: 'Matching (Connecting)', value: 'match' },
+  { label: 'Ordering (Sequencing)', value: 'order' },
+  { label: 'Code Debugging', value: 'debug' },
+  { label: 'Gap Fill (Blanks)', value: 'gap-fill' },
   { label: 'Information', value: 'info' },
+  { label: 'Final Challenge', value: 'final-challenge' },
 ];
 
 export const Courses: CollectionConfig = {
@@ -295,7 +301,7 @@ export const Courses: CollectionConfig = {
                 {
                   name: 'sourceAlgorithmId',
                   type: 'text',
-                  required: true,
+                  required: true, // Legyen kötelező a meglévő algoritmusokhoz való kapcsolódás miatt
                   admin: {
                     description:
                       'Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).',
@@ -368,6 +374,14 @@ export const Courses: CollectionConfig = {
                   },
                 },
                 {
+                  name: 'customVideoId',
+                  type: 'text',
+                  admin: {
+                    description: 'YouTube Video ID (pl. d995_u3q6mE). Csak egyéni videó esetén.',
+                    condition: (data, siblingData) => siblingData?.sourceView === 'video-custom',
+                  },
+                },
+                {
                   name: 'quiz',
                   type: 'array',
                   admin: {
@@ -405,6 +419,62 @@ export const Courses: CollectionConfig = {
                       localized: true,
                     },
                   ],
+                },
+                {
+                  name: 'matching',
+                  type: 'array',
+                  admin: {
+                    description: 'Párosító feladat (bal és jobb oldal összekötése).',
+                    condition: (data, siblingData) => siblingData?.sourceView === 'match',
+                  },
+                  fields: [
+                    { name: 'left', type: 'text', required: true, localized: true },
+                    { name: 'right', type: 'text', required: true, localized: true },
+                  ],
+                },
+                {
+                  name: 'ordering',
+                  type: 'array',
+                  admin: {
+                    description: 'Sorrendbe rendezés feladat.',
+                    condition: (data, siblingData) => siblingData?.sourceView === 'order',
+                  },
+                  fields: [{ name: 'text', type: 'text', required: true, localized: true }],
+                },
+                {
+                  name: 'debugCode',
+                  type: 'textarea',
+                  admin: {
+                    description: 'A hibás kód, amit ki kell javítani.',
+                    condition: (data, siblingData) => siblingData?.sourceView === 'debug',
+                  },
+                },
+                {
+                  name: 'expectedCode',
+                  type: 'textarea',
+                  admin: {
+                    description: 'Az elvárt kód a javítás után.',
+                    condition: (data, siblingData) => siblingData?.sourceView === 'debug',
+                  },
+                },
+                {
+                  name: 'gapFillContent',
+                  type: 'textarea',
+                  localized: true,
+                  admin: {
+                    description:
+                      'A szöveg hiányzó részekkel (pl: "A buborékrendezés {{gap}} algoritmus").',
+                    condition: (data, siblingData) => siblingData?.sourceView === 'gap-fill',
+                  },
+                },
+                {
+                  name: 'gapFillOptions',
+                  type: 'array',
+                  admin: {
+                    description: 'Választható szavak a hiányzó részekhez.',
+                    condition: (data, siblingData) => siblingData?.sourceView === 'gap-fill',
+                  },
+                  fields: [{ name: 'option', type: 'text', required: true, localized: true }],
                 },
               ],
             },

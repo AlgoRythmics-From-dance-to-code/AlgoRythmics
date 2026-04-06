@@ -67,10 +67,10 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    courses: Course;
     users: User;
     'learning-events': LearningEvent;
     'algorithm-progress': AlgorithmProgress;
-    courses: Course;
     'course-progress': CourseProgress;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -79,10 +79,10 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    courses: CoursesSelect<false> | CoursesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'learning-events': LearningEventsSelect<false> | LearningEventsSelect<true>;
     'algorithm-progress': AlgorithmProgressSelect<false> | AlgorithmProgressSelect<true>;
-    courses: CoursesSelect<false> | CoursesSelect<true>;
     'course-progress': CourseProgressSelect<false> | CourseProgressSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -122,6 +122,261 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
+}
+/**
+ * Reusable course blueprints with phases, mascot behavior, confidence prompts, and complexity guidance.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses".
+ */
+export interface Course {
+  id: number;
+  /**
+   * A kurzus teljes neve (pl. Buborékrendezés alapjai).
+   */
+  title: string;
+  /**
+   * A kurzus azonosítója az URL-ben (pl. bubble-sort-basics).
+   */
+  slug: string;
+  /**
+   * Rővid összefoglaló szöveg, ami a kurzuslistában jelenik meg.
+   */
+  summary: string;
+  /**
+   * Egy rövid szlogen, ami a kurzus kezdőoldalának fejlécében látható.
+   */
+  heroTagline?: string | null;
+  /**
+   * Emoji vagy ikon kód a kurzus kártyájához.
+   */
+  icon?: string | null;
+  /**
+   * A kurzus gombjainak és UI elemeinek elsődleges szine.
+   */
+  accentColor?: string | null;
+  /**
+   * A kurzus fejlécében megjelenő illusztráció fájlneve.
+   */
+  illustrationAsset?: string | null;
+  /**
+   * A kurzus elvégzéséhez szükséges becsült idő percekben.
+   */
+  estimatedMinutes: number;
+  /**
+   * A kurzus nehézségi szintje.
+   */
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  /**
+   * Per-course mascot configuration and trigger copy.
+   */
+  mascot: {
+    /**
+     * Ki/Bekapcsolja a kabalát a teljes kurzusra.
+     */
+    enabled?: boolean | null;
+    /**
+     * A kabala neve (pl. Bubi). Ez jelenik meg a szövegbuborékok felett.
+     */
+    name: string;
+    /**
+     * A kabala vizuális megjelenése (választható illusztráció).
+     */
+    asset?: string | null;
+    /**
+     * A kabala szövegbuborékainak és UI elemeinek egyedi színe.
+     */
+    accentColor?: string | null;
+    /**
+     * Hány másodperc inaktivitás után szólaljon meg a kabala automatikusan.
+     */
+    idleTriggerSeconds?: number | null;
+    /**
+     * Hány egymást követő rossz válasz után ajánljon fel proaktív segítséget.
+     */
+    mistakeTriggerCount?: number | null;
+    /**
+     * A gomb felirata, amivel a kabalát bármikor manuálisan elő lehet hívni.
+     */
+    summonLabel?: string | null;
+    /**
+     * Rövid figyelemfelkeltő üzenet inaktivitás esetén (pl. "Segíthetek a következő lépésben?").
+     */
+    idlePrompt?: string | null;
+    /**
+     * Rövid üzenet gyanúsan sok hiba esetén, mielőtt megnyílna a tipp-felület.
+     */
+    mistakePrompt?: string | null;
+    /**
+     * Üdvözlő üzenetek a kurzus indításakor (véletlenszerűen választva).
+     */
+    welcomeMessages?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Részletes tippek/üzenetek, ha a felhasználó láthatóan elakadt a feladattal.
+     */
+    idleHelpMessages?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Szakmai tanácsok/magyarázatok ismételt hibázás után.
+     */
+    mistakeHelpMessages?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Üzenetek arra az esetre, ha a felhasználó magabiztos volt, de elrontotta a feladatot.
+     */
+    overconfidentMessages?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Dicsérő, bíztató üzenetek sikeres válaszsorozatok (streak) esetén.
+     */
+    streakMessages?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  /**
+   * Ordered course phases; these are the main building blocks of the course.
+   */
+  phases?:
+    | {
+        /**
+         * Egyedi technikai azonosító (pl. bubble-sort-intro). Használd a javaslat gombot!
+         */
+        phaseId: string;
+        /**
+         * A fázis címe a tanuló felé.
+         */
+        title: string;
+        /**
+         * Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).
+         */
+        sourceAlgorithmId: string;
+        /**
+         * Az interaktív felület típusa (videó, kvíz, animáció stb.).
+         */
+        sourceView:
+          | 'video'
+          | 'video-custom'
+          | 'animation'
+          | 'control'
+          | 'create'
+          | 'alive'
+          | 'quiz'
+          | 'match'
+          | 'order'
+          | 'debug'
+          | 'gap-fill'
+          | 'info'
+          | 'final-challenge';
+        /**
+         * Fázis leírása: miről szól ez a rész?
+         */
+        summary: string;
+        /**
+         * Opcionális: Részletes tanulási célkitűzés.
+         */
+        objective?: string | null;
+        /**
+         * Opcionális: A kabala egyedi bátorító mondata.
+         */
+        mascotLine?: string | null;
+        /**
+         * Segítség, ha elakad a tanuló.
+         */
+        hintCopy?: string | null;
+        /**
+         * Legyen-e magabiztosság ellenőrzés (kérdőív) a fázis befejezése után?
+         */
+        askConfidence?: boolean | null;
+        /**
+         * Információs szöveg (csak info nézetnél látszik).
+         */
+        infoContent?: string | null;
+        /**
+         * YouTube Video ID (pl. d995_u3q6mE). Csak egyéni videó esetén.
+         */
+        customVideoId?: string | null;
+        /**
+         * Kvíz kérdések (csak kvíz nézetnél látszik).
+         */
+        quiz?:
+          | {
+              question: string;
+              options?:
+                | {
+                    option: string;
+                    id?: string | null;
+                  }[]
+                | null;
+              correctIndex: number;
+              explanation: string;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * Párosító feladat (bal és jobb oldal összekötése).
+         */
+        matching?:
+          | {
+              left: string;
+              right: string;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * Sorrendbe rendezés feladat.
+         */
+        ordering?:
+          | {
+              text: string;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * A hibás kód, amit ki kell javítani.
+         */
+        debugCode?: string | null;
+        /**
+         * Az elvárt kód a javítás után.
+         */
+        expectedCode?: string | null;
+        /**
+         * A szöveg hiányzó részekkel (pl: "A buborékrendezés {{gap}} algoritmus").
+         */
+        gapFillContent?: string | null;
+        /**
+         * Választható szavak a hiányzó részekhez.
+         */
+        gapFillOptions?:
+          | {
+              option: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -307,204 +562,6 @@ export interface AlgorithmProgress {
   createdAt: string;
 }
 /**
- * Reusable course blueprints with phases, mascot behavior, confidence prompts, and complexity guidance.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "courses".
- */
-export interface Course {
-  id: number;
-  /**
-   * A kurzus teljes neve (pl. Buborékrendezés alapjai).
-   */
-  title: string;
-  /**
-   * A kurzus azonosítója az URL-ben (pl. bubble-sort-basics).
-   */
-  slug: string;
-  /**
-   * Rővid összefoglaló szöveg, ami a kurzuslistában jelenik meg.
-   */
-  summary: string;
-  /**
-   * Egy rövid szlogen, ami a kurzus kezdőoldalának fejlécében látható.
-   */
-  heroTagline?: string | null;
-  /**
-   * Emoji vagy ikon kód a kurzus kártyájához.
-   */
-  icon?: string | null;
-  /**
-   * A kurzus gombjainak és UI elemeinek elsődleges szine.
-   */
-  accentColor?: string | null;
-  /**
-   * A kurzus fejlécében megjelenő illusztráció fájlneve.
-   */
-  illustrationAsset?: string | null;
-  /**
-   * A kurzus elvégzéséhez szükséges becsült idő percekben.
-   */
-  estimatedMinutes: number;
-  /**
-   * A kurzus nehézségi szintje.
-   */
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  /**
-   * Per-course mascot configuration and trigger copy.
-   */
-  mascot: {
-    /**
-     * Ki/Bekapcsolja a kabalát a teljes kurzusra.
-     */
-    enabled?: boolean | null;
-    /**
-     * A kabala neve (pl. Bubi). Ez jelenik meg a szövegbuborékok felett.
-     */
-    name: string;
-    /**
-     * A kabala vizuális megjelenése (választható illusztráció).
-     */
-    asset?: string | null;
-    /**
-     * A kabala szövegbuborékainak és UI elemeinek egyedi színe.
-     */
-    accentColor?: string | null;
-    /**
-     * Hány másodperc inaktivitás után szólaljon meg a kabala automatikusan.
-     */
-    idleTriggerSeconds?: number | null;
-    /**
-     * Hány egymást követő rossz válasz után ajánljon fel proaktív segítséget.
-     */
-    mistakeTriggerCount?: number | null;
-    /**
-     * A gomb felirata, amivel a kabalát bármikor manuálisan elő lehet hívni.
-     */
-    summonLabel?: string | null;
-    /**
-     * Rövid figyelemfelkeltő üzenet inaktivitás esetén (pl. "Segíthetek a következő lépésben?").
-     */
-    idlePrompt?: string | null;
-    /**
-     * Rövid üzenet gyanúsan sok hiba esetén, mielőtt megnyílna a tipp-felület.
-     */
-    mistakePrompt?: string | null;
-    /**
-     * Üdvözlő üzenetek a kurzus indításakor (véletlenszerűen választva).
-     */
-    welcomeMessages?:
-      | {
-          text: string;
-          id?: string | null;
-        }[]
-      | null;
-    /**
-     * Részletes tippek/üzenetek, ha a felhasználó láthatóan elakadt a feladattal.
-     */
-    idleHelpMessages?:
-      | {
-          text: string;
-          id?: string | null;
-        }[]
-      | null;
-    /**
-     * Szakmai tanácsok/magyarázatok ismételt hibázás után.
-     */
-    mistakeHelpMessages?:
-      | {
-          text: string;
-          id?: string | null;
-        }[]
-      | null;
-    /**
-     * Üzenetek arra az esetre, ha a felhasználó magabiztos volt, de elrontotta a feladatot.
-     */
-    overconfidentMessages?:
-      | {
-          text: string;
-          id?: string | null;
-        }[]
-      | null;
-    /**
-     * Dicsérő, bíztató üzenetek sikeres válaszsorozatok (streak) esetén.
-     */
-    streakMessages?:
-      | {
-          text: string;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  /**
-   * Ordered course phases; these are the main building blocks of the course.
-   */
-  phases?:
-    | {
-        /**
-         * Egyedi technikai azonosító (pl. bubble-sort-intro). Használd a javaslat gombot!
-         */
-        phaseId: string;
-        /**
-         * A fázis címe a tanuló felé.
-         */
-        title: string;
-        /**
-         * Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).
-         */
-        sourceAlgorithmId: string;
-        /**
-         * Az interaktív felület típusa (videó, kvíz, animáció stb.).
-         */
-        sourceView: 'video' | 'animation' | 'control' | 'create' | 'alive' | 'quiz' | 'info';
-        /**
-         * Fázis leírása: miről szól ez a rész?
-         */
-        summary: string;
-        /**
-         * Opcionális: Részletes tanulási célkitűzés.
-         */
-        objective?: string | null;
-        /**
-         * Opcionális: A kabala egyedi bátorító mondata.
-         */
-        mascotLine?: string | null;
-        /**
-         * Segítség, ha elakad a tanuló.
-         */
-        hintCopy?: string | null;
-        /**
-         * Legyen-e magabiztosság ellenőrzés (kérdőív) a fázis befejezése után?
-         */
-        askConfidence?: boolean | null;
-        /**
-         * Információs szöveg (csak info nézetnél látszik).
-         */
-        infoContent?: string | null;
-        /**
-         * Kvíz kérdések (csak kvíz nézetnél látszik).
-         */
-        quiz?:
-          | {
-              question: string;
-              options?:
-                | {
-                    option: string;
-                    id?: string | null;
-                  }[]
-                | null;
-              correctIndex: number;
-              explanation: string;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "course-progress".
  */
@@ -583,6 +640,10 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'courses';
+        value: number | Course;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
@@ -593,10 +654,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'algorithm-progress';
         value: number | AlgorithmProgress;
-      } | null)
-    | ({
-        relationTo: 'courses';
-        value: number | Course;
       } | null)
     | ({
         relationTo: 'course-progress';
@@ -643,6 +700,118 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses_select".
+ */
+export interface CoursesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  summary?: T;
+  heroTagline?: T;
+  icon?: T;
+  accentColor?: T;
+  illustrationAsset?: T;
+  estimatedMinutes?: T;
+  difficulty?: T;
+  mascot?:
+    | T
+    | {
+        enabled?: T;
+        name?: T;
+        asset?: T;
+        accentColor?: T;
+        idleTriggerSeconds?: T;
+        mistakeTriggerCount?: T;
+        summonLabel?: T;
+        idlePrompt?: T;
+        mistakePrompt?: T;
+        welcomeMessages?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        idleHelpMessages?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        mistakeHelpMessages?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        overconfidentMessages?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        streakMessages?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+      };
+  phases?:
+    | T
+    | {
+        phaseId?: T;
+        title?: T;
+        sourceAlgorithmId?: T;
+        sourceView?: T;
+        summary?: T;
+        objective?: T;
+        mascotLine?: T;
+        hintCopy?: T;
+        askConfidence?: T;
+        infoContent?: T;
+        customVideoId?: T;
+        quiz?:
+          | T
+          | {
+              question?: T;
+              options?:
+                | T
+                | {
+                    option?: T;
+                    id?: T;
+                  };
+              correctIndex?: T;
+              explanation?: T;
+              id?: T;
+            };
+        matching?:
+          | T
+          | {
+              left?: T;
+              right?: T;
+              id?: T;
+            };
+        ordering?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        debugCode?: T;
+        expectedCode?: T;
+        gapFillContent?: T;
+        gapFillOptions?:
+          | T
+          | {
+              option?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -749,95 +918,6 @@ export interface AlgorithmProgressSelect<T extends boolean = true> {
   totalTimeSpentMs?: T;
   lastActivityAt?: T;
   firstStartedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "courses_select".
- */
-export interface CoursesSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  summary?: T;
-  heroTagline?: T;
-  icon?: T;
-  accentColor?: T;
-  illustrationAsset?: T;
-  estimatedMinutes?: T;
-  difficulty?: T;
-  mascot?:
-    | T
-    | {
-        enabled?: T;
-        name?: T;
-        asset?: T;
-        accentColor?: T;
-        idleTriggerSeconds?: T;
-        mistakeTriggerCount?: T;
-        summonLabel?: T;
-        idlePrompt?: T;
-        mistakePrompt?: T;
-        welcomeMessages?:
-          | T
-          | {
-              text?: T;
-              id?: T;
-            };
-        idleHelpMessages?:
-          | T
-          | {
-              text?: T;
-              id?: T;
-            };
-        mistakeHelpMessages?:
-          | T
-          | {
-              text?: T;
-              id?: T;
-            };
-        overconfidentMessages?:
-          | T
-          | {
-              text?: T;
-              id?: T;
-            };
-        streakMessages?:
-          | T
-          | {
-              text?: T;
-              id?: T;
-            };
-      };
-  phases?:
-    | T
-    | {
-        phaseId?: T;
-        title?: T;
-        sourceAlgorithmId?: T;
-        sourceView?: T;
-        summary?: T;
-        objective?: T;
-        mascotLine?: T;
-        hintCopy?: T;
-        askConfidence?: T;
-        infoContent?: T;
-        quiz?:
-          | T
-          | {
-              question?: T;
-              options?:
-                | T
-                | {
-                    option?: T;
-                    id?: T;
-                  };
-              correctIndex?: T;
-              explanation?: T;
-              id?: T;
-            };
-        id?: T;
-      };
   updatedAt?: T;
   createdAt?: T;
 }

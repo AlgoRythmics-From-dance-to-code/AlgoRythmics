@@ -1,10 +1,15 @@
 export type CourseSourceView =
   | 'video'
+  | 'video-custom'
   | 'animation'
   | 'control'
   | 'create'
   | 'alive'
   | 'quiz'
+  | 'match'
+  | 'order'
+  | 'debug'
+  | 'gap-fill'
   | 'info'
   | 'final-challenge';
 
@@ -27,6 +32,13 @@ export type CoursePhase = {
   askConfidence?: boolean;
   quiz?: CourseQuizQuestion[];
   infoContent?: string;
+  customVideoId?: string;
+  matching?: { left: string; right: string }[];
+  ordering?: { text: string }[];
+  debugCode?: string;
+  expectedCode?: string;
+  gapFillContent?: string;
+  gapFillOptions?: string[];
 };
 
 export type CourseMascot = {
@@ -133,6 +145,24 @@ function toPhases(value: unknown): CoursePhase[] {
         askConfidence: !!current.askConfidence,
         quiz,
         infoContent: current.infoContent as string,
+        customVideoId: current.customVideoId as string,
+        matching: Array.isArray(current.matching)
+          ? current.matching.map((m: any) => ({
+              left: (m.left as string) || '',
+              right: (m.right as string) || '',
+            }))
+          : undefined,
+        ordering: Array.isArray(current.ordering)
+          ? current.ordering.map((o: any) => ({
+              text: (o.text as string) || '',
+            }))
+          : undefined,
+        debugCode: current.debugCode as string,
+        expectedCode: current.expectedCode as string,
+        gapFillContent: current.gapFillContent as string,
+        gapFillOptions: Array.isArray(current.gapFillOptions)
+          ? current.gapFillOptions.map((o: any) => o.option as string)
+          : undefined,
       };
     })
     .filter((phase): phase is CoursePhase => phase !== null);

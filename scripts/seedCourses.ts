@@ -7,10 +7,32 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function flattenLocales(data: any, locale: string): any {
+  if (!data || typeof data !== 'object') return data;
+  if (Array.isArray(data)) return data.map((item) => flattenLocales(item, locale));
+
+  const result: any = {};
+  for (const key in data) {
+    const value = data[key];
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      // Check if this looks like a localized field object
+      const keys = Object.keys(value);
+      if (keys.includes('hu') || keys.includes('en') || keys.includes('ro')) {
+        result[key] = value[locale] !== undefined ? value[locale] : value['hu'] || null;
+      } else {
+        result[key] = flattenLocales(value, locale);
+      }
+    } else {
+      result[key] = flattenLocales(value, locale);
+    }
+  }
+  return result;
+}
+
 async function seed() {
   const payload = await getPayload({ config });
 
-  console.log('Seeding courses from local JSON data...');
+  console.log('Seeding courses from local JSON data (Multi-language support)...');
 
   const seedPath = path.resolve(__dirname, '../lib/courses/seed_data.json');
 
@@ -19,43 +41,56 @@ async function seed() {
     process.exit(1);
   }
 
-  const coursesData = JSON.parse(fs.readFileSync(seedPath, 'utf8')) as Record<string, unknown>[];
+  const coursesData = JSON.parse(fs.readFileSync(seedPath, 'utf8')) as any[];
 
   console.log(`Found ${coursesData.length} courses to seed.`);
 
-  for (const courseDoc of coursesData) {
-    console.log(`Creating/Updating course: ${courseDoc.slug}...`);
+  const locales = ['hu', 'en', 'ro'];
 
-    // Check if course already exists
+  for (const courseDoc of coursesData) {
+    const slug = typeof courseDoc.slug === 'object' ? courseDoc.slug.hu : courseDoc.slug;
+    console.log(`Processing course: ${slug}...`);
+
+    // 1. Initial creation (base record)
     const existing = await payload.find({
       collection: 'courses',
-      where: {
-        slug: {
-          equals: courseDoc.slug,
-        },
-      },
+      where: { slug: { equals: slug } },
     });
 
+    let courseId: any;
     if (existing.docs.length > 0) {
-      console.log(`Course ${courseDoc.slug} already exists. Updating...`);
+      courseId = existing.docs[0].id;
+    } else {
+      // Create first with HU data
+      const huData = flattenLocales(courseDoc, 'hu');
+      const result = await payload.create({
+        collection: 'courses',
+        data: huData,
+        locale: 'hu',
+      });
+      courseId = result.id;
+    }
+
+    // 2. Multi-pass update for each locale to ensure all translations are saved
+    for (const locale of locales) {
+      console.log(`  Updating locale: ${locale}`);
+      const localizedData = flattenLocales(courseDoc, locale);
+      
+      // Remove ID and timestamps to avoid conflicts during update
+      delete localizedData.id;
+      delete localizedData.updatedAt;
+      delete localizedData.createdAt;
+      
       await payload.update({
         collection: 'courses',
-        id: existing.docs[0].id,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data: courseDoc as any,
-      });
-    } else {
-      console.log(`Creating new course: ${courseDoc.slug}`);
-      await payload.create({
-        collection: 'courses',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data: courseDoc as any,
-        locale: 'hu', // Default locale to start with (since Payload will populate other locales from the object if it has all keys)
+        id: courseId,
+        data: localizedData,
+        locale: locale as any,
       });
     }
   }
 
-  console.log('Seed completed successfully!');
+  console.log('Multi-language seed completed successfully!');
   process.exit(0);
 }
 

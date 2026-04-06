@@ -35,7 +35,7 @@ export default buildConfig({
     'https://nextjs-frontend-three-eta.vercel.app',
   ].filter(Boolean),
   cookiePrefix: 'algorythmics-admin',
-  collections: [Users, LearningEvents, AlgorithmProgress, Courses, CourseProgress],
+  collections: [Courses, Users, LearningEvents, AlgorithmProgress, CourseProgress],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'fallback-secret',
   typescript: {

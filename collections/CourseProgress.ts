@@ -4,7 +4,7 @@ export const CourseProgress: CollectionConfig = {
   slug: 'course-progress',
   admin: {
     useAsTitle: 'courseId',
-    group: 'Learning',
+    group: 'Analytics',
     defaultColumns: ['user', 'courseId', 'activePhaseIndex', 'updatedAt'],
   },
   access: {
