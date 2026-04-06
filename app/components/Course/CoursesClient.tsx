@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
 import type { CourseBlueprint } from '../../../lib/courses/courseCatalog';
+import RestartCourseModal from './RestartCourseModal';
 
 interface CoursesClientProps {
   courses: CourseBlueprint[];
@@ -13,8 +14,11 @@ interface CoursesClientProps {
 
 export default function CoursesClient({ courses }: CoursesClientProps) {
   const { t } = useLocale();
-  const { courseProgress } = useAlgorithmStore();
+  const router = useRouter();
+  const { courseProgress, resetCourseProgress, resetAlgorithmProgressTab, syncProgress } = useAlgorithmStore();
   const [activeTab, setActiveTab] = useState<'available' | 'completed'>('available');
+  const [selectedCourse, setSelectedCourse] = useState<CourseBlueprint | null>(null);
+  const [showRestartModal, setShowRestartModal] = useState(false);
 
   const filteredCourses = useMemo(() => {
     return courses.filter((course) => {
@@ -29,6 +33,30 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
   }, [courses, courseProgress]);
 
   const availableCount = courses.length - completedCount;
+
+  const handleCourseClick = (course: CourseBlueprint) => {
+    const isCompleted = !!courseProgress[course.slug]?.isCompleted;
+    if (isCompleted) {
+      setSelectedCourse(course);
+      setShowRestartModal(true);
+    } else {
+      router.push(`/courses/${course.slug}`);
+    }
+  };
+
+  const handleConfirmRestart = () => {
+    if (!selectedCourse) return;
+    
+    resetCourseProgress(selectedCourse.slug);
+    selectedCourse.phases.forEach((p) => {
+      resetAlgorithmProgressTab(p.sourceAlgorithmId || selectedCourse.algorithmId, p.sourceView);
+    });
+    
+    syncProgress();
+    
+    setShowRestartModal(false);
+    router.push(`/courses/${selectedCourse.slug}`);
+  };
 
   return (
     <div className="w-full">
@@ -114,14 +142,14 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
 
               <div className="divide-y divide-gray-100 dark:divide-white/10">
                 {filteredCourses.map((course) => (
-                  <Link
+                  <button
                     key={course.slug}
-                    href={`/courses/${course.slug}`}
-                    className="grid grid-cols-1 gap-6 px-8 py-8 transition-all hover:bg-[#fafafa] dark:hover:bg-white/5 md:grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.35fr] md:items-center"
+                    onClick={() => handleCourseClick(course)}
+                    className="w-full text-left grid grid-cols-1 gap-6 px-8 py-8 transition-all hover:bg-[#fafafa] dark:hover:bg-white/5 md:grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.35fr] md:items-center group"
                   >
                     <div className="flex items-center gap-5 min-w-0">
                       <div
-                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.25rem] text-3xl shadow-lg"
+                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.25rem] text-3xl shadow-lg transition-transform group-hover:scale-110"
                         style={{
                           backgroundColor: `${course.accentColor}15`,
                           color: course.accentColor,
@@ -164,13 +192,21 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
                       <span>OPEN</span>
                       <span className="transition-transform group-hover:translate-x-1">→</span>
                     </div>
-                  </Link>
+                  </button>
                 ))}
               </div>
             </>
           )}
         </motion.div>
       </AnimatePresence>
+
+      <RestartCourseModal
+        isOpen={showRestartModal}
+        onClose={() => setShowRestartModal(false)}
+        onConfirm={handleConfirmRestart}
+        message="Ezt a kurzust már sikeresen teljesítetted. Ha újra elkezded, az eddigi haladásod és pontjaid törlődnek ebből a kurzusból."
+        cancelLabel="Vissza a listához"
+      />
     </div>
   );
 }

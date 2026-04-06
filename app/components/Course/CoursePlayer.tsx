@@ -18,6 +18,7 @@ const ControlVisualizer = dynamic(() => import('../Learning/ControlVisualizer'))
 const CodeExercise = dynamic(() => import('../Learning/CodeExercise'));
 const AliveVisualizer = dynamic(() => import('../Learning/AliveVisualizer'));
 const VideoPlayer = dynamic(() => import('../Learning/VideoPlayer'));
+const RestartCourseModal = dynamic(() => import('./RestartCourseModal'));
 
 type ConfidenceLevel = 'very-sure' | 'sure' | 'unsure' | 'guess';
 type PendingAdvance = {
@@ -218,6 +219,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     incrementCourseMascotInteraction,
     incrementCourseMistakes,
     updateCourseTotalTime,
+    syncProgress,
   } = useAlgorithmStore();
   const { t } = useLocale();
   const router = useRouter();
@@ -264,30 +266,55 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const [showConfidenceModal, setShowConfidenceModal] = useState(false);
   const [isFinished, setIsFinished] = useState(!!courseProgress[course.slug]?.isCompleted);
   const [showRestartModal, setShowRestartModal] = useState(false);
+  const [isInternalReset, setIsInternalReset] = useState(false);
+  const [modalMode, setModalMode] = useState<'restart' | 'checkpoint'>('restart');
+  const [pendingPhaseIndex, setPendingPhaseIndex] = useState<number | null>(null);
   const promptShownRef = useRef(false);
 
   // Auto-prompt to restart if course was already completed on entry
   useEffect(() => {
     if (courseProgress[course.slug]?.isCompleted && !promptShownRef.current) {
       promptShownRef.current = true;
+      setIsInternalReset(false);
+      setModalMode('restart');
       setShowRestartModal(true);
     }
   }, [course.slug, courseProgress[course.slug]?.isCompleted]);
 
   const handleConfirmRestart = () => {
-    resetCourseProgress(course.slug);
-    course.phases.forEach((p) => {
-      resetAlgorithmProgressTab(p.sourceAlgorithmId || course.algorithmId, p.sourceView);
-    });
-    setActivePhaseIndex(0);
-    setIsFinished(false);
-    setPhaseKey((v) => v + 1);
+    if (modalMode === 'restart') {
+      resetCourseProgress(course.slug);
+      course.phases.forEach((p) => {
+        resetAlgorithmProgressTab(p.sourceAlgorithmId || course.algorithmId, p.sourceView);
+      });
+      setActivePhaseIndex(0);
+      setIsFinished(false);
+      setPhaseKey((v) => v + 1);
+      setMascotVisible(false);
+      setPendingAdvance(null);
+      setShowConfidenceModal(false);
+      syncProgress();
+    } else if (modalMode === 'checkpoint' && pendingPhaseIndex !== null) {
+      resetFutureProgressFrom(pendingPhaseIndex);
+      resetCoursePhasesFrom(
+        course.slug,
+        pendingPhaseIndex,
+        course.phases.map((p) => p.phaseId),
+      );
+      setActivePhaseIndex(pendingPhaseIndex);
+      setPhaseKey((v) => v + 1);
+      syncProgress();
+    }
     setShowRestartModal(false);
+    setPendingPhaseIndex(null);
   };
 
   const handleCancelRestart = () => {
     setShowRestartModal(false);
-    router.push('/courses');
+    setPendingPhaseIndex(null);
+    if (!isInternalReset && modalMode === 'restart') {
+      router.push('/courses');
+    }
   };
 
   const [mascotDragPos, setMascotDragPos] = useState({ x: 0, y: 0 });
@@ -442,28 +469,14 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     }
 
     if (phaseIndex < activePhaseIndex) {
-      const confirmed = window.confirm(
-        'Biztosan visszalépsz erre a checkpointre? A későbbi haladásod ezen a kurzuson törlődni fog, és újra meg kell csinálnod a lépéseket.',
-      );
-
-      if (!confirmed) {
-        return;
-      }
-
-      resetFutureProgressFrom(phaseIndex);
-      // Reset store state for future phases starting from phaseIndex
-      resetCoursePhasesFrom(
-        course.slug,
-        phaseIndex,
-        course.phases.map((p) => p.phaseId),
-      );
-
-      setPhaseKey((value) => value + 1);
-      setMascotVisible(false);
-      setPendingAdvance(null);
-    } else {
-      setActivePhaseIndex(phaseIndex);
+      setIsInternalReset(true);
+      setModalMode('checkpoint');
+      setPendingPhaseIndex(phaseIndex);
+      setShowRestartModal(true);
+      return;
     }
+
+    setActivePhaseIndex(phaseIndex);
   };
 
   const applyAdvance = (level?: ConfidenceLevel) => {
@@ -579,23 +592,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   };
 
   const handleResetCourse = () => {
-    const confirmed = window.confirm(
-      'Biztosan törölni szeretnéd a kurzus egészét? Minden haladásod és megszerzett pontod elvész ebből a kurzusból.',
-    );
-    if (confirmed) {
-      resetCourseProgress(course.slug);
-
-      // Also reset global algorithm progress for each phase in this course
-      course.phases.forEach((phase) => {
-        resetAlgorithmProgressTab(phase.sourceAlgorithmId || course.algorithmId, phase.sourceView);
-      });
-
-      setActivePhaseIndex(0);
-      setPhaseKey((v) => v + 1);
-      setMascotVisible(false);
-      setPendingAdvance(null);
-      setShowConfidenceModal(false);
-    }
+    setIsInternalReset(true);
+    setModalMode('restart');
+    setShowRestartModal(true);
   };
 
   if (!activePhase) return null;
@@ -603,47 +602,21 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   return (
     <section className="relative rounded-[2.25rem] border border-[#269984]/15 bg-white p-6 shadow-[0_18px_70px_rgba(0,0,0,0.08)] dark:border-white/10 dark:bg-white/5">
       <AnimatePresence>
-        {showRestartModal && (
-          <motion.div
-            key="restart-modal"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              className="max-w-md w-full bg-white dark:bg-neutral-900 rounded-[2.5rem] p-8 shadow-2xl border border-[#269984]/20"
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="h-20 w-20 bg-amber-100 dark:bg-amber-900/30 rounded-[1.5rem] flex items-center justify-center mb-6">
-                  <RotateCcw className="h-10 w-10 text-amber-500" />
-                </div>
-                <h3 className="text-2xl font-black text-black dark:text-white uppercase tracking-tight mb-4">
-                  Újrakezded a kurzust?
-                </h3>
-                <p className="text-neutral-500 dark:text-neutral-400 mb-8 font-medium">
-                  Ezt a kurzust már sikeresen teljesítetted. Ha újra elkezded, az eddigi haladásod és pontjaid törlődnek ebből a kurzusból.
-                </p>
-                <div className="flex flex-col gap-3 w-full">
-                  <button
-                    onClick={handleConfirmRestart}
-                    className="w-full py-4 bg-[#269984] hover:bg-[#1f7a6a] text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg active:scale-95"
-                  >
-                    Igen, tiszta lappal!
-                  </button>
-                  <button
-                    onClick={handleCancelRestart}
-                    className="w-full py-4 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 rounded-2xl font-bold uppercase tracking-widest transition-all"
-                  >
-                    Mégse, menjünk vissza
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
+        <RestartCourseModal
+          isOpen={showRestartModal}
+          onClose={handleCancelRestart}
+          onConfirm={handleConfirmRestart}
+          title={modalMode === 'restart' ? 'Újrakezded a kurzust?' : 'Visszalépsz ide?'}
+          message={
+            modalMode === 'restart'
+              ? (courseProgress[course.slug]?.isCompleted && !isInternalReset 
+                  ? 'Ezt a kurzust már sikeresen teljesítetted. Ha újra elkezded, az eddigi haladásod és pontjaid törlődnek ebből a kurzusból.'
+                  : 'Ha újra elkezded, az eddigi haladásod és pontjaid törlődnek ebből a kurzusból.')
+              : 'A későbbi haladásod ezen a kurzuson törlődni fog, és újra meg kell csinálnod a lépéseket.'
+          }
+          confirmLabel={modalMode === 'restart' ? 'Igen, tiszta lappal!' : 'Igen, lépjünk vissza!'}
+          cancelLabel={isInternalReset ? 'Mégse, folytassuk' : 'Mégse, menjünk vissza'}
+        />
 
         {isFinished && (
           <motion.div

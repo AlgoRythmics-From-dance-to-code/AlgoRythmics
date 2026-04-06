@@ -131,6 +131,7 @@ interface AlgorithmState {
   setCourseConfidenceRating: (courseId: string, rating: string) => void;
   setCoursePhaseResult: (courseId: string, phaseId: string, result: 'success' | 'fail') => void;
   addCoursePoints: (courseId: string, points: number) => void;
+  syncProgress: () => Promise<void>;
 
   isInteractionLocked: boolean;
   setInteractionLocked: (locked: boolean) => void;
@@ -422,7 +423,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         });
       },
 
-      resetCourseProgress: (courseId) => {
+      resetCourseProgress: (courseId: string) => {
         const { courseProgress } = get();
         set({
           courseProgress: {
@@ -433,6 +434,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
               phaseResults: {},
               confidenceResults: {},
               lastConfidenceRating: undefined,
+              isCompleted: false,
               points: 0,
               totalTimeMs: 0,
               totalMistakes: 0,
@@ -443,6 +445,24 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             },
           },
         });
+      },
+
+      syncProgress: async () => {
+        const { completedIds, visualizerProgress, algorithmProgress, courseProgress } = get();
+        try {
+          await fetch('/api/account/progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              completedIds,
+              visualizerProgress,
+              algorithmProgress,
+              courseProgress,
+            }),
+          });
+        } catch (err) {
+          console.error('[Store] Sync failed:', err);
+        }
       },
 
       setCourseConfidenceRating: (courseId, rating) => {
