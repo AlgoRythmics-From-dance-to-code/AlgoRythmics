@@ -48,13 +48,29 @@ export async function GET() {
         lastConfidenceRating?: string;
         phaseResults?: Record<string, string>;
         points?: number;
+        isCompleted?: boolean;
+        totalTimeMs?: number;
+        totalMistakes?: number;
+        mascotInteractionsTotal?: number;
+        confidenceResults?: Record<string, string>;
+        firstStartedAt?: string;
+        lastActivityAt?: string;
+        detailedStats?: Record<string, unknown>;
       };
       courseProgress[pDoc.courseId] = {
         activePhaseIndex: pDoc.activePhaseIndex,
         completedPhases: pDoc.completedPhases || [],
         lastConfidenceRating: pDoc.lastConfidenceRating,
         phaseResults: pDoc.phaseResults,
-        points: pDoc.points,
+        points: pDoc.points || 0,
+        isCompleted: !!pDoc.isCompleted,
+        totalTimeMs: pDoc.totalTimeMs || 0,
+        totalMistakes: pDoc.totalMistakes || 0,
+        mascotInteractionsTotal: pDoc.mascotInteractionsTotal || 0,
+        confidenceResults: pDoc.confidenceResults || {},
+        firstStartedAt: pDoc.firstStartedAt,
+        lastActivityAt: pDoc.lastActivityAt,
+        detailedStats: pDoc.detailedStats || {},
       };
     });
 

@@ -58,5 +58,49 @@ export const CourseProgress: CollectionConfig = {
       type: 'number',
       defaultValue: 0,
     },
+    {
+      name: 'isCompleted',
+      type: 'checkbox',
+      defaultValue: false,
+    },
+    {
+      name: 'totalTimeMs',
+      type: 'number',
+      defaultValue: 0,
+    },
+    {
+      name: 'totalMistakes',
+      type: 'number',
+      defaultValue: 0,
+    },
+    {
+      name: 'mascotInteractionsTotal',
+      type: 'number',
+      defaultValue: 0,
+    },
+    {
+      name: 'confidenceResults',
+      type: 'json',
+      admin: {
+        description: 'History of confidence ratings per phase',
+      },
+    },
+    {
+      name: 'firstStartedAt',
+      type: 'date',
+      admin: { date: { pickerAppearance: 'dayAndTime' } },
+    },
+    {
+      name: 'lastActivityAt',
+      type: 'date',
+      admin: { date: { pickerAppearance: 'dayAndTime' } },
+    },
+    {
+      name: 'detailedStats',
+      type: 'json',
+      admin: {
+        description: 'Comprehensive per-phase telemetry (time, results, mistakes, mascot help, etc.)',
+      },
+    },
   ],
 };

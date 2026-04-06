@@ -70,6 +70,7 @@ interface AlgorithmState {
         completedPhases: string[];
         lastConfidenceRating?: string;
         phaseResults?: Record<string, 'success' | 'fail'>;
+        isCompleted?: boolean;
       }
     >;
   }) => void;
@@ -83,10 +84,48 @@ interface AlgorithmState {
       lastConfidenceRating?: string;
       phaseResults?: Record<string, 'success' | 'fail'>;
       points?: number;
+      isCompleted?: boolean;
+      totalTimeMs?: number;
+      totalMistakes?: number;
+      mascotInteractionsTotal?: number;
+      confidenceResults?: Record<string, string>;
+      firstStartedAt?: string;
+      lastActivityAt?: string;
+      detailedStats?: Record<
+        string,
+        {
+          timeSpentMs: number;
+          completed: boolean;
+          completedAt?: string | null;
+          result: 'success' | 'fail' | null;
+          helpUsed: boolean;
+          mascotHelpCount: number;
+          improvedAfterMascot: boolean;
+          attempts: number;
+          mistakes: number;
+        }
+      >;
     }
   >;
   setCourseActivePhase: (courseId: string, activePhaseIndex: number) => void;
+  updateCoursePhaseStats: (
+    courseId: string,
+    phaseId: string,
+    updates: Partial<{
+      timeSpentMs: number;
+      completed: boolean;
+      result: 'success' | 'fail';
+      helpUsed: boolean;
+      mascotHelpCount: number;
+      improvedAfterMascot: boolean;
+      mistakes: number;
+    }>,
+  ) => void;
+  incrementCourseMascotInteraction: (courseId: string) => void;
+  updateCourseTotalTime: (courseId: string, timeToAddMs: number) => void;
+  incrementCourseMistakes: (courseId: string) => void;
   markCoursePhaseComplete: (courseId: string, phaseId: string) => void;
+  markCourseCompleted: (courseId: string) => void;
   resetCoursePhasesFrom: (courseId: string, phaseIndex: number, phaseIds: string[]) => void;
   resetCourseProgress: (courseId: string) => void;
   setCourseConfidenceRating: (courseId: string, rating: string) => void;
@@ -168,7 +207,6 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             updates.animationCompletedAt = null;
             updates.animationTotalTimeMs = 0;
             updates.animationPlayCount = 0;
-            // Also reset visualizer step
             set({
               visualizerProgress: {
                 ...visualizerProgress,
@@ -204,9 +242,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             break;
         }
 
-        // If any tab is reset, the whole algorithm is no longer "completed"
         const nextCompletedIds = completedIds.filter((item) => item !== id);
-
         set({
           completedIds: nextCompletedIds,
           algorithmProgress: {
@@ -237,6 +273,91 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         });
       },
 
+      updateCoursePhaseStats: (courseId, phaseId, updates) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const stats = current.detailedStats || {};
+        const old = stats[phaseId] || {
+          timeSpentMs: 0,
+          completed: false,
+          result: null,
+          helpUsed: false,
+          mascotHelpCount: 0,
+          improvedAfterMascot: false,
+          attempts: 0,
+          mistakes: 0,
+        };
+
+        const now = new Date().toISOString();
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              firstStartedAt: current.firstStartedAt || now,
+              lastActivityAt: now,
+              detailedStats: {
+                ...stats,
+                [phaseId]: {
+                  ...old,
+                  ...updates,
+                  attempts: (old.attempts || 0) + 1,
+                  completedAt: updates.completed ? now : old.completedAt,
+                },
+              },
+            },
+          },
+        });
+      },
+
+      incrementCourseMascotInteraction: (courseId) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const interactions = (current.mascotInteractionsTotal || 0) + 1;
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              mascotInteractionsTotal: interactions,
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      updateCourseTotalTime: (courseId, timeToAddMs) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const total = (current.totalTimeMs || 0) + timeToAddMs;
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              totalTimeMs: total,
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      incrementCourseMistakes: (courseId) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const mistakesCount = (current.totalMistakes || 0) + 1;
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              totalMistakes: mistakesCount,
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
       markCoursePhaseComplete: (courseId, phaseId) => {
         const { courseProgress } = get();
         const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
@@ -248,6 +369,22 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             [courseId]: {
               ...current,
               completedPhases: [...(current.completedPhases || []), phaseId],
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      markCourseCompleted: (courseId: string) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              isCompleted: true,
+              lastActivityAt: new Date().toISOString(),
             },
           },
         });
@@ -256,24 +393,15 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       resetCoursePhasesFrom: (courseId, phaseIndex, phaseIds) => {
         const { courseProgress } = get();
         const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
-
-        // Keep phases AT or BEFORE phaseIndex
         const keptPhaseIds = phaseIds.slice(0, phaseIndex + 1);
         const nextCompleted = (current.completedPhases || []).filter((id) =>
           keptPhaseIds.includes(id),
         );
-
-        // Filter phaseResults to keep only results for kept phases
         const currentResults = current.phaseResults || {};
         const nextResults: Record<string, 'success' | 'fail'> = {};
         nextCompleted.forEach((id) => {
-          if (currentResults[id]) {
-            nextResults[id] = currentResults[id];
-          }
+          if (currentResults[id]) nextResults[id] = currentResults[id];
         });
-
-        // Recalculate points for staying phases
-        // Each completed phase gives 20 points, unless it was a 'fail' result
         const nextPoints = nextCompleted.reduce((acc, id) => {
           if (nextResults[id] === 'fail') return acc;
           return acc + 20;
@@ -288,6 +416,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
               completedPhases: nextCompleted,
               phaseResults: nextResults,
               points: nextPoints,
+              lastActivityAt: new Date().toISOString(),
             },
           },
         });
@@ -302,8 +431,15 @@ export const useAlgorithmStore = create<AlgorithmState>()(
               activePhaseIndex: 0,
               completedPhases: [],
               phaseResults: {},
+              confidenceResults: {},
               lastConfidenceRating: undefined,
               points: 0,
+              totalTimeMs: 0,
+              totalMistakes: 0,
+              mascotInteractionsTotal: 0,
+              detailedStats: {},
+              lastActivityAt: new Date().toISOString(),
+              firstStartedAt: new Date().toISOString(),
             },
           },
         });
@@ -312,10 +448,17 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       setCourseConfidenceRating: (courseId, rating) => {
         const { courseProgress } = get();
         const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const history = current.confidenceResults || {};
+        const phaseId = current.activePhaseIndex.toString(); // We should probably pass phaseId, but using activePhaseIndex for now
         set({
           courseProgress: {
             ...courseProgress,
-            [courseId]: { ...current, lastConfidenceRating: rating },
+            [courseId]: {
+              ...current,
+              lastConfidenceRating: rating,
+              confidenceResults: { ...history, [phaseId]: rating },
+              lastActivityAt: new Date().toISOString(),
+            },
           },
         });
       },
@@ -330,6 +473,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             [courseId]: {
               ...current,
               phaseResults: { ...results, [phaseId]: result },
+              lastActivityAt: new Date().toISOString(),
             },
           },
         });
@@ -342,7 +486,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         set({
           courseProgress: {
             ...courseProgress,
-            [courseId]: { ...current, points: currentPoints + pointsToAdd },
+            [courseId]: {
+              ...current,
+              points: currentPoints + pointsToAdd,
+              lastActivityAt: new Date().toISOString(),
+            },
           },
         });
       },
@@ -363,7 +511,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         }),
     }),
     {
-      name: 'algorythmics-learning-storage', // Persistence key
+      name: 'algorythmics-learning-storage',
     },
   ),
 );

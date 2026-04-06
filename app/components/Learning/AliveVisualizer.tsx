@@ -70,16 +70,21 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
     lastTickRef.current = Date.now();
   }, [algorithmId, resetAlgorithmProgressTab, trackEvent, updateProgress]);
 
+  const progressRef = useRef(progress);
+  React.useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
+
   // Track spent time on unmount
   React.useEffect(() => {
     return () => {
       const delta = Date.now() - lastTickRef.current;
-      const currentTotal = progress?.aliveTotalTimeMs || 0;
+      const currentTotal = progressRef.current?.aliveTotalTimeMs || 0;
       updateProgress({
         aliveTotalTimeMs: currentTotal + delta,
       });
     };
-  }, [algorithmId, updateProgress, progress?.aliveTotalTimeMs]);
+  }, [algorithmId, updateProgress]);
 
   return (
     <div className="w-full max-w-4xl mx-auto">

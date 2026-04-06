@@ -525,6 +525,36 @@ export interface CourseProgress {
     | boolean
     | null;
   points?: number | null;
+  isCompleted?: boolean | null;
+  totalTimeMs?: number | null;
+  totalMistakes?: number | null;
+  mascotInteractionsTotal?: number | null;
+  /**
+   * History of confidence ratings per phase
+   */
+  confidenceResults?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  firstStartedAt?: string | null;
+  lastActivityAt?: string | null;
+  /**
+   * Comprehensive per-phase telemetry (time, results, mistakes, mascot help, etc.)
+   */
+  detailedStats?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -823,6 +853,14 @@ export interface CourseProgressSelect<T extends boolean = true> {
   lastConfidenceRating?: T;
   phaseResults?: T;
   points?: T;
+  isCompleted?: T;
+  totalTimeMs?: T;
+  totalMistakes?: T;
+  mascotInteractionsTotal?: T;
+  confidenceResults?: T;
+  firstStartedAt?: T;
+  lastActivityAt?: T;
+  detailedStats?: T;
   updatedAt?: T;
   createdAt?: T;
 }

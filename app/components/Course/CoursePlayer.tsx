@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Check, ShieldAlert, Sparkles, Star } from 'lucide-react';
+import { ChevronRight, Check, ShieldAlert, Sparkles, Star, X, RotateCcw } from 'lucide-react';
 
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
@@ -211,8 +213,19 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     resetCourseProgress,
     setCourseConfidenceRating,
     addCoursePoints,
+    markCourseCompleted,
+    updateCoursePhaseStats,
+    incrementCourseMascotInteraction,
+    incrementCourseMistakes,
+    updateCourseTotalTime,
   } = useAlgorithmStore();
   const { t } = useLocale();
+  const router = useRouter();
+
+  const phaseStartTime = useRef(Date.now());
+  const mascotHelpedCurrentPhase = useRef(false);
+  const phaseMascotHelpCount = useRef(0);
+  const phaseMistakes = useRef(0);
 
   const completedPhaseStatuses = useMemo(
     () =>
@@ -249,6 +262,34 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const [phaseKey, setPhaseKey] = useState(0);
   const [pendingAdvance, setPendingAdvance] = useState<PendingAdvance | null>(null);
   const [showConfidenceModal, setShowConfidenceModal] = useState(false);
+  const [isFinished, setIsFinished] = useState(!!courseProgress[course.slug]?.isCompleted);
+  const [showRestartModal, setShowRestartModal] = useState(false);
+  const promptShownRef = useRef(false);
+
+  // Auto-prompt to restart if course was already completed on entry
+  useEffect(() => {
+    if (courseProgress[course.slug]?.isCompleted && !promptShownRef.current) {
+      promptShownRef.current = true;
+      setShowRestartModal(true);
+    }
+  }, [course.slug, courseProgress[course.slug]?.isCompleted]);
+
+  const handleConfirmRestart = () => {
+    resetCourseProgress(course.slug);
+    course.phases.forEach((p) => {
+      resetAlgorithmProgressTab(p.sourceAlgorithmId || course.algorithmId, p.sourceView);
+    });
+    setActivePhaseIndex(0);
+    setIsFinished(false);
+    setPhaseKey((v) => v + 1);
+    setShowRestartModal(false);
+  };
+
+  const handleCancelRestart = () => {
+    setShowRestartModal(false);
+    router.push('/courses');
+  };
+
   const [mascotDragPos, setMascotDragPos] = useState({ x: 0, y: 0 });
 
   const getRandomMessage = (pool: string[]) => {
@@ -320,8 +361,13 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       setMascotMessage(hint ? `${intro} ${hint}` : intro);
       setMascotVisible(true);
       setMascotActions(false);
+      incrementCourseMascotInteraction(course.slug);
+      incrementCourseMistakes(course.slug);
+      mascotHelpedCurrentPhase.current = true;
+      phaseMascotHelpCount.current += 1;
+      phaseMistakes.current += 1;
     }
-  }, [currentMistakeTriggered, course.mascot.mistakeHelpMessages, activePhase.hintCopy]);
+  }, [currentMistakeTriggered, course.mascot.mistakeHelpMessages, activePhase.hintCopy, course.slug, incrementCourseMascotInteraction, incrementCourseMistakes]);
 
   const activeProgress =
     algorithmProgress[activePhase?.sourceAlgorithmId || course.algorithmId] || {};
@@ -334,25 +380,49 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
   // Remove the automatic hiding of the mascot on phase change to fulfill "ne resetelődjön amikor válaszol"
 
+  // Only jump index when the course slug changes (mount or navigation)
+  const lastSlug = useRef(course.slug);
   useEffect(() => {
-    if (activePhaseIndex !== initialPhaseIndex) {
+    if (lastSlug.current !== course.slug) {
       setActivePhaseIndex(initialPhaseIndex);
-      // Show contextual advice when phase changes
-      const phaseAdvice = activePhase.mascotLine || activePhase.objective;
-      if (phaseAdvice) {
-        setMascotMood('welcome');
-        setMascotMessage(phaseAdvice);
-        setMascotVisible(true);
-        setMascotActions(false);
+      lastSlug.current = course.slug;
+    }
+  }, [course.slug, initialPhaseIndex]);
+
+  // Handle mascot message when phase changes (triggered by user or slug change)
+  useEffect(() => {
+    // 1. Log time for PREVIOUS phase before moving on
+    const logPreviousPhaseTime = () => {
+      const elapsed = Date.now() - phaseStartTime.current;
+      updateCourseTotalTime(course.slug, elapsed);
+
+      // Extract the PREVIOUS phase ID
+      // This is tricky because we already advanced activePhaseIndex in some cases
+      // But we can use a ref for lastActiveIndex
+    };
+
+    // Actually, it's better to update on unmount of the phase or when handleContinue happens.
+
+    const phaseAdvice = activePhase.mascotLine || activePhase.objective;
+    if (phaseAdvice) {
+      setMascotMood('welcome');
+      setMascotMessage(phaseAdvice);
+      setMascotVisible(true);
+      setMascotActions(false);
+      // If it's a specific instruction (not just general objective), count it
+      if (activePhase.mascotLine) {
+        incrementCourseMascotInteraction(course.slug);
+        mascotHelpedCurrentPhase.current = true;
       }
     }
-  }, [
-    activePhase.mascotLine,
-    activePhase.objective,
-    activePhaseIndex,
-    initialPhaseIndex,
-    course.mascot.welcomeMessages,
-  ]);
+    
+    phaseStartTime.current = Date.now();
+    phaseMascotHelpCount.current = phaseAdvice ? 1 : 0;
+    phaseMistakes.current = 0;
+    mascotHelpedCurrentPhase.current = !!phaseAdvice;
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePhaseIndex, course.slug]);
 
   useEffect(() => {
     setCourseActivePhase(course.slug, activePhaseIndex);
@@ -443,8 +513,41 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       }
     }
 
+    const elapsed = Date.now() - phaseStartTime.current;
+    
+    // Auto-success for info and video phases once completed
+    const isAutoSuccess = activePhase.sourceView === 'info' || activePhase.sourceView === 'video';
+    const storedResult = courseProgress[course.slug]?.phaseResults?.[activePhase.phaseId];
+    const finalResult = storedResult || (isAutoSuccess ? 'success' : null);
+    const isSuccess = finalResult === 'success';
+
+    // Track "improved after mascot"
+    const improved = mascotHelpedCurrentPhase.current && isSuccess;
+
+    // Determine if help was used in the algorithm part
+    const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
+    let helpUsed = false;
+    if (activePhase.sourceView === 'create') helpUsed = !!progress.createHelpUsed;
+    if (activePhase.sourceView === 'alive' || activePhase.sourceView === 'final-challenge') helpUsed = !!progress.aliveHelpUsed;
+    if (activePhase.sourceView === 'control') helpUsed = (progress.controlHintsUsed || 0) > 0;
+
+    updateCoursePhaseStats(course.slug, activePhase.phaseId, {
+      timeSpentMs: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.timeSpentMs || 0) + elapsed,
+      completed: true,
+      result: isSuccess ? 'success' : 'fail',
+      helpUsed,
+      mascotHelpCount: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mascotHelpCount || 0) + phaseMascotHelpCount.current,
+      improvedAfterMascot: improved,
+      mistakes: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mistakes || 0) + phaseMistakes.current,
+    });
+    updateCourseTotalTime(course.slug, elapsed);
+
     if (activePhaseIndex < course.phases.length - 1) {
       setActivePhaseIndex((value) => value + 1);
+    } else {
+      markCourseCompleted(course.slug);
+      setIsFinished(true);
+      promptShownRef.current = true;
     }
 
     setPendingAdvance(null);
@@ -498,7 +601,115 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   if (!activePhase) return null;
 
   return (
-    <section className="rounded-[2.25rem] border border-[#269984]/15 bg-white p-6 shadow-[0_18px_70px_rgba(0,0,0,0.08)] dark:border-white/10 dark:bg-white/5">
+    <section className="relative rounded-[2.25rem] border border-[#269984]/15 bg-white p-6 shadow-[0_18px_70px_rgba(0,0,0,0.08)] dark:border-white/10 dark:bg-white/5">
+      <AnimatePresence>
+        {showRestartModal && (
+          <motion.div
+            key="restart-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="max-w-md w-full bg-white dark:bg-neutral-900 rounded-[2.5rem] p-8 shadow-2xl border border-[#269984]/20"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="h-20 w-20 bg-amber-100 dark:bg-amber-900/30 rounded-[1.5rem] flex items-center justify-center mb-6">
+                  <RotateCcw className="h-10 w-10 text-amber-500" />
+                </div>
+                <h3 className="text-2xl font-black text-black dark:text-white uppercase tracking-tight mb-4">
+                  Újrakezded a kurzust?
+                </h3>
+                <p className="text-neutral-500 dark:text-neutral-400 mb-8 font-medium">
+                  Ezt a kurzust már sikeresen teljesítetted. Ha újra elkezded, az eddigi haladásod és pontjaid törlődnek ebből a kurzusból.
+                </p>
+                <div className="flex flex-col gap-3 w-full">
+                  <button
+                    onClick={handleConfirmRestart}
+                    className="w-full py-4 bg-[#269984] hover:bg-[#1f7a6a] text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg active:scale-95"
+                  >
+                    Igen, tiszta lappal!
+                  </button>
+                  <button
+                    onClick={handleCancelRestart}
+                    className="w-full py-4 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 rounded-2xl font-bold uppercase tracking-widest transition-all"
+                  >
+                    Mégse, menjünk vissza
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {isFinished && (
+          <motion.div
+            key="finish-screen"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-50 flex items-center justify-center rounded-[2.25rem] bg-white/90 p-8 backdrop-blur-md dark:bg-black/90"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="relative mb-8">
+                <div className="absolute -inset-4 animate-pulse rounded-full bg-amber-400/20 blur-xl px-12" />
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', damping: 10, stiffness: 100 }}
+                  className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-amber-400 to-orange-500 shadow-2xl"
+                >
+                  <Sparkles className="h-12 w-12 text-white" />
+                </motion.div>
+              </div>
+
+              <h2 className="mb-2 text-4xl font-black text-black dark:text-white uppercase tracking-tight">
+                Gratulálunk!
+              </h2>
+              <p className="mb-8 text-lg font-bold text-[#269984] uppercase tracking-widest">
+                Sikeresen teljesítetted a(z) {course.title} kurzust!
+              </p>
+
+              <div className="mb-10 grid grid-cols-2 gap-4">
+                <div className="rounded-[1.5rem] border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-900/20 dark:bg-amber-900/10">
+                  <div className="text-[10px] font-black uppercase tracking-tighter text-amber-600 dark:text-amber-500/70 mb-1">
+                    Total Score
+                  </div>
+                  <div className="text-3xl font-black text-[#B45309] dark:text-amber-400 tabular-nums">
+                    {courseProgress[course.slug]?.points || 0}
+                  </div>
+                </div>
+                <div className="rounded-[1.5rem] border border-[#269984]/10 bg-[#f0fbf9]/50 p-4 dark:border-white/5 dark:bg-white/5">
+                  <div className="text-[10px] font-black uppercase tracking-tighter text-[#269984] dark:text-[#269984]/70 mb-1">
+                    Checkpoints
+                  </div>
+                  <div className="text-3xl font-black text-[#269984] dark:text-[#269984] tabular-nums">
+                    {course.phases.length}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Link
+                  href="/courses"
+                  className="inline-flex items-center gap-3 rounded-2xl bg-[#269984] px-8 py-4 font-black uppercase tracking-widest text-white shadow-xl shadow-[#269984]/30 transition-transform hover:-translate-y-1"
+                >
+                  Tovább a többi kurzusra
+                  <ChevronRight className="h-5 w-5" />
+                </Link>
+                <button
+                  onClick={() => setIsFinished(false)}
+                  className="rounded-2xl border border-gray-100 bg-white px-8 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-colors hover:bg-gray-50 dark:border-white/5 dark:bg-white/5 dark:text-gray-500"
+                >
+                  Kurzus áttekintése
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-[#f0fbf9] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#269984] dark:bg-white/10">

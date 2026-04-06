@@ -59,7 +59,7 @@ export const AlgorithmProgress: CollectionConfig = {
       admin: { position: 'sidebar' },
     },
     { name: 'videoWatchTimeMs', type: 'number', defaultValue: 0 },
-    { name: 'videoCompletedAt', type: 'date' },
+    { name: 'videoCompletedAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
 
     // ─── Animation ──────────────────────────────────────
     {
@@ -70,7 +70,7 @@ export const AlgorithmProgress: CollectionConfig = {
     },
     { name: 'animationTotalTimeMs', type: 'number', defaultValue: 0 },
     { name: 'animationPlayCount', type: 'number', defaultValue: 0 },
-    { name: 'animationCompletedAt', type: 'date' },
+    { name: 'animationCompletedAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
 
     // ─── Control ────────────────────────────────────────
     {
@@ -84,7 +84,7 @@ export const AlgorithmProgress: CollectionConfig = {
     { name: 'controlHintsUsed', type: 'number', defaultValue: 0 },
     { name: 'controlAttempts', type: 'number', defaultValue: 0 },
     { name: 'controlBestTimeMs', type: 'number', defaultValue: 0 },
-    { name: 'controlCompletedAt', type: 'date' },
+    { name: 'controlCompletedAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
 
     // ─── Create (code fill-in) ──────────────────────────
     {
@@ -108,7 +108,7 @@ export const AlgorithmProgress: CollectionConfig = {
     },
     { name: 'createBlanksTotal', type: 'number', defaultValue: 0 },
     { name: 'createTotalTimeMs', type: 'number', defaultValue: 0 },
-    { name: 'createCompletedAt', type: 'date' },
+    { name: 'createCompletedAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
 
     // ─── Alive (free code / nodes) ──────────────────────
     {
@@ -131,7 +131,7 @@ export const AlgorithmProgress: CollectionConfig = {
     },
     { name: 'aliveBestScore', type: 'number', defaultValue: 0 },
     { name: 'aliveTotalTimeMs', type: 'number', defaultValue: 0 },
-    { name: 'aliveCompletedAt', type: 'date' },
+    { name: 'aliveCompletedAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
 
     // ─── Overall ────────────────────────────────────────
     {
@@ -143,7 +143,7 @@ export const AlgorithmProgress: CollectionConfig = {
       admin: { description: 'Weighted % across all 5 tabs (0–100).' },
     },
     { name: 'totalTimeSpentMs', type: 'number', defaultValue: 0 },
-    { name: 'lastActivityAt', type: 'date' },
-    { name: 'firstStartedAt', type: 'date' },
+    { name: 'lastActivityAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
+    { name: 'firstStartedAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
   ],
 };

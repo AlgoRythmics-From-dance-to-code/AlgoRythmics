@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "vercel-build": "payload generate:importmap && payload migrate && next build",
+    "vercel-build": "payload generate:importmap && payload migrate && npm run seed && next build",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
