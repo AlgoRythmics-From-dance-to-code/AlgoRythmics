@@ -294,7 +294,9 @@ export default function ProfilePage() {
                         style={{ width: '100%', height: '100%' }}
                       />
                     ) : (
-                      <span className="text-2xl sm:text-3xl font-black text-[#269984]">{initials}</span>
+                      <span className="text-2xl sm:text-3xl font-black text-[#269984]">
+                        {initials}
+                      </span>
                     )}
                   </div>
                   {/* Role Badge on the Avatar - Only for Admins */}

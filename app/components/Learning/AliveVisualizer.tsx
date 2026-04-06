@@ -79,8 +79,7 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
         aliveTotalTimeMs: currentTotal + delta,
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [algorithmId, updateProgress]);
+  }, [algorithmId, updateProgress, progress?.aliveTotalTimeMs]);
 
   return (
     <div className="w-full max-w-4xl mx-auto">

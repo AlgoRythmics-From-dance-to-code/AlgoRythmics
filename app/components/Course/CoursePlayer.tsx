@@ -2,16 +2,13 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Check, ShieldAlert, Sparkles, Wand2, Star, ChevronLeft, LayoutPanelTop, History } from 'lucide-react';
+import { ChevronRight, Check, ShieldAlert, Sparkles, Star } from 'lucide-react';
 
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
-import type {
-  CourseBlueprint,
-  CoursePhase,
-  CourseSourceView,
-} from '../../../lib/courses/courseCatalog';
+import type { CourseBlueprint, CoursePhase } from '../../../lib/courses/courseCatalog';
 import { VIDEOS } from '../../../lib/constants';
 
 const BubbleSortVisualizer = dynamic(() => import('../Learning/BubbleSortVisualizer'));
@@ -42,23 +39,8 @@ function getCompletionFlag(
     case 'create':
       return !!progress?.createCompleted;
     case 'alive':
+    case 'final-challenge':
       return !!progress?.aliveCompleted;
-    default:
-      return false;
-  }
-}
-
-function getMistakeSignal(
-  progress: ReturnType<typeof useAlgorithmStore.getState>['algorithmProgress'][string],
-  sourceView: CourseSourceView,
-) {
-  switch (sourceView) {
-    case 'control':
-      return (progress?.controlMistakes || 0) >= 2;
-    case 'create':
-      return (progress?.createAttempts || 0) >= 2 && !progress?.createCompleted;
-    case 'alive':
-      return (progress?.aliveCodeSubmissions || 0) >= 2 && !progress?.aliveCompleted;
     default:
       return false;
   }
@@ -166,7 +148,7 @@ function QuizComponent({ phase, courseId }: { phase: CoursePhase; courseId: stri
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           className={`p-5 rounded-2xl border-l-4 ${
-            (selectedIdx === q.correctIndex || (isDone && selectedIdx === null))
+            selectedIdx === q.correctIndex || (isDone && selectedIdx === null)
               ? 'bg-green-500/5 border-green-500 text-green-800 dark:text-green-400'
               : 'bg-red-500/5 border-red-500 text-red-800 dark:text-red-400'
           }`}
@@ -205,6 +187,15 @@ function PhaseBody({ phase, course }: { phase: CoursePhase; course: CourseBluepr
       return <CodeExercise algorithmId={algorithmId} />;
     case 'alive':
       return <AliveVisualizer algorithmId={algorithmId} />;
+    case 'final-challenge':
+      return (
+        <div className="relative">
+          <div className="absolute -top-4 -right-4 z-10 rotate-12 bg-amber-500 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-xl border-2 border-white">
+            Final Challenge
+          </div>
+          <AliveVisualizer algorithmId={algorithmId} />
+        </div>
+      );
     default:
       return null;
   }
@@ -219,7 +210,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     resetCoursePhasesFrom,
     resetCourseProgress,
     setCourseConfidenceRating,
-    setCoursePhaseResult,
     addCoursePoints,
   } = useAlgorithmStore();
   const { t } = useLocale();
@@ -250,17 +240,15 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
   const [activePhaseIndex, setActivePhaseIndex] = useState(initialPhaseIndex);
   const [mascotVisible, setMascotVisible] = useState(false);
-  const [mascotMood, setMascotMood] = useState<'idle' | 'mistake' | 'confidence' | 'neutral' | 'welcome' | 'streak' | 'overconfident'>(
-    'welcome',
-  );
+  const [mascotMood, setMascotMood] = useState<
+    'idle' | 'mistake' | 'confidence' | 'neutral' | 'welcome' | 'streak' | 'overconfident'
+  >('welcome');
   const [mascotMessage, setMascotMessage] = useState<string>('');
   const [mascotActions, setMascotActions] = useState<boolean>(false); // Show Yes/No buttons
   const [streak, setStreak] = useState(0);
   const [phaseKey, setPhaseKey] = useState(0);
   const [pendingAdvance, setPendingAdvance] = useState<PendingAdvance | null>(null);
-  const [lastConfidenceLevel, setLastConfidenceLevel] = useState<ConfidenceLevel | null>(null);
   const [showConfidenceModal, setShowConfidenceModal] = useState(false);
-  const [isActivityResetReq, setIsActivityResetReq] = useState(0);
   const [mascotDragPos, setMascotDragPos] = useState({ x: 0, y: 0 });
 
   const getRandomMessage = (pool: string[]) => {
@@ -278,12 +266,15 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
     const resetTimer = () => {
       clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        setMascotMood('idle');
-        setMascotMessage(course.mascot.idlePrompt);
-        setMascotActions(true); // Offer help buttons
-        setMascotVisible(true);
-      }, (course.mascot.idleTriggerSeconds || 30) * 1000);
+      timeout = setTimeout(
+        () => {
+          setMascotMood('idle');
+          setMascotMessage(course.mascot.idlePrompt);
+          setMascotActions(true); // Offer help buttons
+          setMascotVisible(true);
+        },
+        (course.mascot.idleTriggerSeconds || 30) * 1000,
+      );
     };
 
     const handleActivity = () => {
@@ -302,7 +293,17 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       window.removeEventListener('keydown', handleActivity);
       window.removeEventListener('click', handleActivity);
     };
-  }, [activePhaseIndex, course.mascot.idleTriggerSeconds, phaseKey]);
+  }, [
+    activePhaseIndex,
+    course.mascot.idleTriggerSeconds,
+    course.mascot.idlePrompt,
+    phaseKey,
+    setMascotActions,
+    setMascotMessage,
+    setMascotMood,
+    setMascotVisible,
+    activePhase,
+  ]);
 
   const currentMistakeTriggered = useMemo(() => {
     if (!activePhase) return false;
@@ -345,13 +346,17 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         setMascotActions(false);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPhaseIndex, course.mascot.welcomeMessages]);
+  }, [
+    activePhase.mascotLine,
+    activePhase.objective,
+    activePhaseIndex,
+    initialPhaseIndex,
+    course.mascot.welcomeMessages,
+  ]);
 
   useEffect(() => {
     setCourseActivePhase(course.slug, activePhaseIndex);
   }, [activePhaseIndex, course.slug, setCourseActivePhase]);
-
 
   const resetFutureProgressFrom = (phaseIndex: number) => {
     const futurePhases = course.phases.slice(phaseIndex + 1);
@@ -382,7 +387,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         phaseIndex,
         course.phases.map((p) => p.phaseId),
       );
-      
+
       setPhaseKey((value) => value + 1);
       setMascotVisible(false);
       setPendingAdvance(null);
@@ -395,7 +400,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     if (!activePhase) return;
 
     const result = courseProgress[course.slug]?.phaseResults?.[activePhase.phaseId];
-    const isAlreadyCompleted = courseProgress[course.slug]?.completedPhases.includes(activePhase.phaseId);
+    const isAlreadyCompleted = courseProgress[course.slug]?.completedPhases.includes(
+      activePhase.phaseId,
+    );
     // Don't award points if the user failed a quiz phase
     const isFailure = activePhase.sourceView === 'quiz' && result === 'fail';
 
@@ -425,14 +432,12 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     }
 
     if (level) {
-      setLastConfidenceLevel(level);
       // Only award points if the phase was not already completed and it's not a failure
       if (!isAlreadyCompleted && !isFailure) {
         addCoursePoints(course.slug, 20);
       }
       setCourseConfidenceRating(course.slug, level);
     } else {
-      setLastConfidenceLevel(null);
       if (!isAlreadyCompleted && !isFailure) {
         addCoursePoints(course.slug, 20);
       }
@@ -460,7 +465,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     if (askConfidenceNow) {
       if (course.mascot.enabled) {
         setMascotMood('confidence');
-        setMascotMessage("Hogy érzed, mennyire sikerült eddig elsajátítani a látottakat?");
+        setMascotMessage('Hogy érzed, mennyire sikerült eddig elsajátítani a látottakat?');
         setMascotVisible(true);
       }
       setShowConfidenceModal(true);
@@ -486,7 +491,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       setPhaseKey((v) => v + 1);
       setMascotVisible(false);
       setPendingAdvance(null);
-      setLastConfidenceLevel(null);
       setShowConfidenceModal(false);
     }
   };
@@ -514,13 +518,15 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
           >
             Kurzus Resetelése
           </button>
-          
+
           <div className="flex flex-wrap items-center gap-3">
             <div className="rounded-2xl border border-gray-100 bg-[#fafafa] px-4 py-3 text-sm dark:border-white/10 dark:bg-black/20">
               <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">
                 Points
               </div>
-              <div className="mt-1 font-bold text-black dark:text-white">{courseProgress[course.slug]?.points || 0}</div>
+              <div className="mt-1 font-bold text-black dark:text-white">
+                {courseProgress[course.slug]?.points || 0}
+              </div>
             </div>
             <div className="rounded-2xl border border-gray-100 bg-[#fafafa] px-4 py-3 text-sm dark:border-white/10 dark:bg-black/20">
               <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">
@@ -539,14 +545,14 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         <div className="relative pt-12">
           {/* Main Track */}
           <div className="absolute top-1/2 left-0 w-full h-[6px] -translate-y-1/2 rounded-full bg-gray-100 dark:bg-white/5" />
-          
+
           {/* Active Fill Track */}
           <motion.div
             initial={false}
-            animate={{ 
-              width: `${(activePhaseIndex / Math.max(1, course.phases.length - 1)) * 100}%` 
+            animate={{
+              width: `${(activePhaseIndex / Math.max(1, course.phases.length - 1)) * 100}%`,
             }}
-            transition={{ type: "spring", stiffness: 100, damping: 20 }}
+            transition={{ type: 'spring', stiffness: 100, damping: 20 }}
             className="absolute top-1/2 left-0 h-[6px] -translate-y-1/2 rounded-full bg-gradient-to-r from-[#269984] to-[#36b39c]"
           />
 
@@ -556,12 +562,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
               const completed = completedPhaseStatuses[index];
               const isActive = index === activePhaseIndex;
               const locked = !canOpenPhase(index) && !completed;
-              
+
               return (
-                <div 
-                  key={phase.phaseId} 
-                  className="relative flex flex-col items-center group"
-                >
+                <div key={phase.phaseId} className="relative flex flex-col items-center group">
                   {/* Tooltip Label (Shows on Hover) */}
                   <div className="absolute bottom-full mb-6 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-30">
                     <div className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-xl flex flex-col items-center">
@@ -595,7 +598,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
                   {/* Phase Status indicator below */}
                   {isActive && (
-                    <motion.div 
+                    <motion.div
                       layoutId="active-indicator"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -636,7 +639,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             </div>
           </div>
           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-black/20 px-3 py-1 rounded-full border border-gray-100 dark:border-white/5">
-            {phaseComplete ? 'Phase complete' : 'In Progress'} • {activePhaseIndex + 1}/{course.phases.length}
+            {phaseComplete ? 'Phase complete' : 'In Progress'} • {activePhaseIndex + 1}/
+            {course.phases.length}
           </div>
         </div>
       </div>
@@ -714,7 +718,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             </div>
           </div>
         )}
-
       </div>
 
       <AnimatePresence>
@@ -760,9 +763,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   Hogy állunk a tudással?
                 </h3>
                 <p className="mb-8 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                  Szeretnénk tudni, hogy eddig mennyire érted a kurzust, és minden világos-e számodra.
+                  Szeretnénk tudni, hogy eddig mennyire érted a kurzust, és minden világos-e
+                  számodra.
                 </p>
-                
+
                 <div className="grid w-full gap-3">
                   {(
                     [
@@ -787,7 +791,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                     </button>
                   ))}
                 </div>
-                
+
                 <button
                   onClick={() => setShowConfidenceModal(false)}
                   className="mt-6 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600"
@@ -804,17 +808,17 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         <motion.div
           drag
           dragMomentum={false}
-          dragConstraints={{ 
-            left: 0, 
-            right: typeof window !== 'undefined' ? window.innerWidth - 100 : 1000, 
-            top: typeof window !== 'undefined' ? -window.innerHeight + 100 : -1000, 
-            bottom: 0 
+          dragConstraints={{
+            left: 0,
+            right: typeof window !== 'undefined' ? window.innerWidth - 100 : 1000,
+            top: typeof window !== 'undefined' ? -window.innerHeight + 100 : -1000,
+            bottom: 0,
           }}
           animate={{ x: mascotDragPos.x, y: mascotDragPos.y }}
           onDragEnd={(_, info) => {
-            setMascotDragPos({ 
-              x: mascotDragPos.x + info.offset.x, 
-              y: mascotDragPos.y + info.offset.y 
+            setMascotDragPos({
+              x: mascotDragPos.x + info.offset.x,
+              y: mascotDragPos.y + info.offset.y,
             });
           }}
           className="fixed bottom-8 left-8 z-[60] pointer-events-none flex flex-col items-start"
@@ -829,11 +833,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   exit={{ opacity: 0, scale: 0.8, y: 10 }}
                   className="flex flex-col items-start gap-4 w-64"
                 >
-                  <motion.div
-                    className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-[#269984]/20 relative cursor-default"
-                  >
+                  <motion.div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-[#269984]/20 relative cursor-default">
                     <div className="absolute top-full left-6 w-3 h-3 bg-white dark:bg-gray-900 rotate-45 border-r border-b border-[#269984]/20" />
-                    
+
                     {mascotMood === 'mistake' && (
                       <div className="mb-2 flex items-center gap-1.5 text-amber-600 dark:text-amber-500 font-bold text-[10px] uppercase tracking-widest">
                         <ShieldAlert className="w-3.5 h-3.5" />
@@ -850,8 +852,11 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                         <button
                           onClick={() => {
                             setMascotMood('neutral');
-                            const advice = activePhase.hintCopy || activePhase.mascotLine || activePhase.summary;
-                            setMascotMessage(advice || getRandomMessage(course.mascot.idleHelpMessages));
+                            const advice =
+                              activePhase.hintCopy || activePhase.mascotLine || activePhase.summary;
+                            setMascotMessage(
+                              advice || getRandomMessage(course.mascot.idleHelpMessages),
+                            );
                             setMascotActions(false);
                           }}
                           className="flex-1 py-1.5 bg-[#269984] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider"
@@ -871,7 +876,11 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                       <div className="mt-3 flex flex-col gap-1.5">
                         <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                           <button
-                            onClick={() => setMascotMessage(`${activePhase.title}: ${activePhase.hintCopy || activePhase.mascotLine || activePhase.objective}`)}
+                            onClick={() =>
+                              setMascotMessage(
+                                `${activePhase.title}: ${activePhase.hintCopy || activePhase.mascotLine || activePhase.objective}`,
+                              )
+                            }
                             className="px-2 py-1 bg-[#269984]/5 hover:bg-[#269984]/15 text-[#269984] rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
                           >
                             Hogy állunk?
@@ -902,10 +911,12 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                     }}
                   >
                     <div className="absolute inset-0 bg-[#269984]/10 rounded-full blur-2xl group-hover:bg-[#269984]/20 transition-colors" />
-                    <img
+                    <Image
                       src={`/assets/${course.mascot.asset}`}
                       alt={course.mascot.name}
-                      className="w-16 h-16 drop-shadow-2xl transform active:scale-95 transition-transform"
+                      width={64}
+                      height={64}
+                      className="drop-shadow-2xl transform active:scale-95 transition-transform"
                     />
                   </motion.div>
                 </motion.div>
@@ -917,7 +928,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   exit={{ opacity: 0, scale: 0.8 }}
                   onClick={() => {
                     setMascotMood('neutral');
-                    const welcomeMsg = activePhase.mascotLine || `Ebben a részben épp: ${activePhase.objective}`;
+                    const welcomeMsg =
+                      activePhase.mascotLine || `Ebben a részben épp: ${activePhase.objective}`;
                     setMascotMessage(welcomeMsg);
                     setMascotActions(false);
                     setMascotVisible(true);
@@ -925,7 +937,13 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-900 border border-[#269984]/20 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 text-[#269984] group cursor-grab active:cursor-grabbing select-none"
                 >
                   <div className="w-5 h-5 rounded-full overflow-hidden border border-[#269984]/10 pointer-events-none">
-                    <img src={`/assets/${course.mascot.asset}`} alt="Mascot" className="w-full h-auto" />
+                    <Image
+                      src={`/assets/${course.mascot.asset}`}
+                      alt="Mascot"
+                      width={20}
+                      height={20}
+                      className="w-full h-auto"
+                    />
                   </div>
                   <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-[#269984] pointer-events-none">
                     {course.mascot.summonLabel}

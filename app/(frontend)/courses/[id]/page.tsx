@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -24,6 +23,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
       depth: 0,
       limit: 50,
       sort: 'title',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       locale: locale as any,
     });
     docs = result.docs as unknown as CourseCollectionDoc[];

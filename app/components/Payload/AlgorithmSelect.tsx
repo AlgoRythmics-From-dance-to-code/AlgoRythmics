@@ -21,7 +21,10 @@ const algorithmOptions = [
   { label: 'N-Queens', value: 'n-queens' },
 ];
 
-export const AlgorithmIdSelect: React.FC<any> = ({ path, label: labelFromProps }) => {
+export const AlgorithmIdSelect: React.FC<{
+  path: string;
+  label?: string | { htmlFor: string };
+}> = ({ path, label: labelFromProps }) => {
   const { value, setValue } = useField<string>({ path });
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -128,10 +131,13 @@ export const AlgorithmIdSelect: React.FC<any> = ({ path, label: labelFromProps }
               style={{
                 padding: '10px 15px',
                 cursor: 'pointer',
-                backgroundColor: value === option.value ? 'var(--theme-elevation-200)' : 'transparent',
+                backgroundColor:
+                  value === option.value ? 'var(--theme-elevation-200)' : 'transparent',
                 fontSize: '13px',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--theme-elevation-250)')}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = 'var(--theme-elevation-250)')
+              }
               onMouseLeave={(e) =>
                 (e.currentTarget.style.backgroundColor =
                   value === option.value ? 'var(--theme-elevation-200)' : 'transparent')
@@ -147,7 +153,10 @@ export const AlgorithmIdSelect: React.FC<any> = ({ path, label: labelFromProps }
   );
 };
 
-export const PhaseIdSelect: React.FC<any> = ({ path, label: labelFromProps }) => {
+export const PhaseIdSelect: React.FC<{
+  path: string;
+  label?: string | { htmlFor: string };
+}> = ({ path, label: labelFromProps }) => {
   const { value, setValue } = useField<string>({ path });
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -178,7 +187,8 @@ export const PhaseIdSelect: React.FC<any> = ({ path, label: labelFromProps }) =>
 
   if (!isMounted) return null;
 
-  const labelText = typeof labelFromProps === 'string' ? labelFromProps : 'Fázis Azonosító (Phase ID)';
+  const labelText =
+    typeof labelFromProps === 'string' ? labelFromProps : 'Fázis Azonosító (Phase ID)';
 
   return (
     <div
@@ -264,7 +274,9 @@ export const PhaseIdSelect: React.FC<any> = ({ path, label: labelFromProps }) =>
                   fontSize: '12px',
                   borderBottom: '1px solid var(--theme-elevation-150)',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--theme-elevation-250)')}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = 'var(--theme-elevation-250)')
+                }
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 <strong>{phase.label}</strong>

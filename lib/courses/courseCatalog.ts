@@ -1,4 +1,12 @@
-export type CourseSourceView = 'video' | 'animation' | 'control' | 'create' | 'alive' | 'quiz' | 'info';
+export type CourseSourceView =
+  | 'video'
+  | 'animation'
+  | 'control'
+  | 'create'
+  | 'alive'
+  | 'quiz'
+  | 'info'
+  | 'final-challenge';
 
 export type CourseQuizQuestion = {
   question: string;
@@ -78,7 +86,13 @@ function toStringArray(value: unknown, property: string = 'text'): string[] {
       if (typeof item === 'string') return item;
       if (item && typeof item === 'object') {
         const record = item as Record<string, unknown>;
-        const candidate = record[property] || record.tip || record.value || record.label || record.text || record.option;
+        const candidate =
+          record[property] ||
+          record.tip ||
+          record.value ||
+          record.label ||
+          record.text ||
+          record.option;
         if (typeof candidate === 'string') return candidate;
       }
       return '';
@@ -92,82 +106,96 @@ function toPhases(value: unknown): CoursePhase[] {
   return value
     .map((phase, index): CoursePhase | null => {
       if (!phase || typeof phase !== 'object') return null;
-      const current = phase as any;
-      const phaseId = current.phaseId || `phase-${index + 1}`;
+      const current = phase as Record<string, unknown>;
+      const phaseId = (current.phaseId as string) || `phase-${index + 1}`;
 
       const quiz: CourseQuizQuestion[] | undefined = Array.isArray(current.quiz)
-        ? current.quiz.map((q: any) => ({
-            question: q.question || '',
-            options: toStringArray(q.options, 'option'),
-            correctIndex: typeof q.correctIndex === 'number' ? q.correctIndex : 0,
-            explanation: q.explanation || '',
-          }))
+        ? current.quiz.map((q: unknown) => {
+            const quizItem = q as Record<string, unknown>;
+            return {
+              question: (quizItem.question as string) || '',
+              options: toStringArray(quizItem.options, 'option'),
+              correctIndex: typeof quizItem.correctIndex === 'number' ? quizItem.correctIndex : 0,
+              explanation: (quizItem.explanation as string) || '',
+            };
+          })
         : undefined;
 
       return {
         phaseId,
-        title: current.title || humanizeSlug(phaseId),
-        sourceView: current.sourceView || 'video',
-        sourceAlgorithmId: current.sourceAlgorithmId || 'bubble-sort',
-        summary: current.summary || '',
-        objective: current.objective || '',
-        mascotLine: current.mascotLine || '',
-        hintCopy: current.hintCopy || '',
+        title: (current.title as string) || humanizeSlug(phaseId),
+        sourceView: (current.sourceView as CourseSourceView) || 'video',
+        sourceAlgorithmId: (current.sourceAlgorithmId as string) || 'bubble-sort',
+        summary: (current.summary as string) || '',
+        objective: (current.objective as string) || '',
+        mascotLine: (current.mascotLine as string) || '',
+        hintCopy: (current.hintCopy as string) || '',
         askConfidence: !!current.askConfidence,
         quiz,
-        infoContent: current.infoContent,
+        infoContent: current.infoContent as string,
       };
     })
     .filter((phase): phase is CoursePhase => phase !== null);
 }
 
-
-export function normalizeCourse(doc: any): CourseBlueprint {
-  const slug = doc.slug || 'untitled-course';
+export function normalizeCourse(doc: Record<string, unknown>): CourseBlueprint {
+  const slug = (doc.slug as string) || 'untitled-course';
+  const mascot = (doc.mascot as Record<string, unknown>) || {};
+  const phases = (doc.phases as unknown[]) || [];
 
   return {
     slug,
-    title: doc.title || humanizeSlug(slug),
-    algorithmId: doc.phases?.[0]?.sourceAlgorithmId || doc.algorithmId || slug,
+    title: (doc.title as string) || humanizeSlug(slug),
+    algorithmId:
+      ((phases[0] as Record<string, unknown>)?.sourceAlgorithmId as string) ||
+      (doc.algorithmId as string) ||
+      slug,
     summary:
-      doc.summary || 'A structured course blueprint for learning the algorithm through practice.',
-    heroTagline: doc.heroTagline || 'Learn by predicting, building, debugging, and reflecting.',
-    icon: doc.icon || '📘',
-    accentColor: doc.accentColor || DEFAULT_ACCENT,
-    illustrationAsset: doc.illustrationAsset || 'algo_group_109.svg',
+      (doc.summary as string) ||
+      'A structured course blueprint for learning the algorithm through practice.',
+    heroTagline:
+      (doc.heroTagline as string) || 'Learn by predicting, building, debugging, and reflecting.',
+    icon: (doc.icon as string) || '📘',
+    accentColor: (doc.accentColor as string) || DEFAULT_ACCENT,
+    illustrationAsset: (doc.illustrationAsset as string) || 'algo_group_109.svg',
     estimatedMinutes: Number(doc.estimatedMinutes || 0),
-    difficulty: doc.difficulty || 'Beginner',
+    difficulty: (doc.difficulty as 'Beginner' | 'Intermediate' | 'Advanced') || 'Beginner',
     mascot: {
-      enabled: doc.mascot?.enabled ?? true,
-      name: doc.mascot?.name || 'Guide',
-      asset: doc.mascot?.asset || 'algo_group_109.svg',
-      accentColor: doc.mascot?.accentColor || DEFAULT_ACCENT,
-      idleTriggerSeconds: Number(doc.mascot?.idleTriggerSeconds || 30),
-      mistakeTriggerCount: Number(doc.mascot?.mistakeTriggerCount || 2),
-      summonLabel: doc.mascot?.summonLabel || 'Summon guide',
-      idlePrompt: doc.mascot?.idlePrompt || 'Need a hint?',
-      mistakePrompt: doc.mascot?.mistakePrompt || 'Let us slow down and inspect the rule again.',
-      welcomeMessages: toStringArray(doc.mascot?.welcomeMessages),
-      idleHelpMessages: toStringArray(doc.mascot?.idleHelpMessages),
-      mistakeHelpMessages: toStringArray(doc.mascot?.mistakeHelpMessages),
-      overconfidentMessages: toStringArray(doc.mascot?.overconfidentMessages),
-      streakMessages: toStringArray(doc.mascot?.streakMessages),
+      enabled: mascot.enabled !== false,
+      name: (mascot.name as string) || 'Guide',
+      asset: (mascot.asset as string) || 'algo_group_109.svg',
+      accentColor: (mascot.accentColor as string) || DEFAULT_ACCENT,
+      idleTriggerSeconds: Number(mascot.idleTriggerSeconds || 30),
+      mistakeTriggerCount: Number(mascot.mistakeTriggerCount || 2),
+      summonLabel: (mascot.summonLabel as string) || 'Summon guide',
+      idlePrompt: (mascot.idlePrompt as string) || 'Need a hint?',
+      mistakePrompt:
+        (mascot.mistakePrompt as string) || 'Let us slow down and inspect the rule again.',
+      welcomeMessages: toStringArray(mascot.welcomeMessages),
+      idleHelpMessages: toStringArray(mascot.idleHelpMessages),
+      mistakeHelpMessages: toStringArray(mascot.mistakeHelpMessages),
+      overconfidentMessages: toStringArray(mascot.overconfidentMessages),
+      streakMessages: toStringArray(mascot.streakMessages),
     },
-    phases: toPhases(doc.phases || []),
+    phases: toPhases(phases),
   };
 }
 
 export const courseBlueprints: CourseBlueprint[] = [];
 
-export async function getCourseCatalog(docs: any[] = []) {
+export async function getCourseCatalog(docs: unknown[] = []) {
   return docs
-    .filter(Boolean)
+    .filter((doc): doc is Record<string, unknown> => !!doc && typeof doc === 'object')
     .map((doc) => normalizeCourse(doc))
     .sort((left, right) => left.title.localeCompare(right.title));
 }
 
-export function findCourseBySlug(slug: string, docs: any[] = []) {
-  const found = docs.find((d: any) => d.slug === slug);
+export function findCourseBySlug(slug: string, docs: unknown[] = []) {
+  const found = docs.find((d) => {
+    const doc = d as Record<string, unknown>;
+    return doc && doc.slug === slug;
+  }) as Record<string, unknown> | undefined;
+
   if (found) {
     return normalizeCourse(found);
   }

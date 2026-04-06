@@ -63,7 +63,9 @@ export const Courses: CollectionConfig = {
               type: 'textarea',
               required: true,
               localized: true,
-              admin: { description: 'Rővid összefoglaló szöveg, ami a kurzuslistában jelenik meg.' },
+              admin: {
+                description: 'Rővid összefoglaló szöveg, ami a kurzuslistában jelenik meg.',
+              },
             },
             {
               name: 'heroTagline',
@@ -144,7 +146,8 @@ export const Courses: CollectionConfig = {
                   defaultValue: 'Guide',
                   localized: true,
                   admin: {
-                    description: 'A kabala neve (pl. Bubi). Ez jelenik meg a szövegbuborékok felett.',
+                    description:
+                      'A kabala neve (pl. Bubi). Ez jelenik meg a szövegbuborékok felett.',
                   },
                 },
                 {
@@ -171,7 +174,8 @@ export const Courses: CollectionConfig = {
                   type: 'number',
                   defaultValue: 30,
                   admin: {
-                    description: 'Hány másodperc inaktivitás után szólaljon meg a kabala automatikusan.',
+                    description:
+                      'Hány másodperc inaktivitás után szólaljon meg a kabala automatikusan.',
                   },
                 },
                 {
@@ -179,7 +183,8 @@ export const Courses: CollectionConfig = {
                   type: 'number',
                   defaultValue: 2,
                   admin: {
-                    description: 'Hány egymást követő rossz válasz után ajánljon fel proaktív segítséget.',
+                    description:
+                      'Hány egymást követő rossz válasz után ajánljon fel proaktív segítséget.',
                   },
                 },
                 {
@@ -188,7 +193,8 @@ export const Courses: CollectionConfig = {
                   defaultValue: 'Summon guide',
                   localized: true,
                   admin: {
-                    description: 'A gomb felirata, amivel a kabalát bármikor manuálisan elő lehet hívni.',
+                    description:
+                      'A gomb felirata, amivel a kabalát bármikor manuálisan elő lehet hívni.',
                   },
                 },
                 {
@@ -196,7 +202,8 @@ export const Courses: CollectionConfig = {
                   type: 'textarea',
                   localized: true,
                   admin: {
-                    description: 'Rövid figyelemfelkeltő üzenet inaktivitás esetén (pl. "Segíthetek a következő lépésben?").',
+                    description:
+                      'Rövid figyelemfelkeltő üzenet inaktivitás esetén (pl. "Segíthetek a következő lépésben?").',
                   },
                 },
                 {
@@ -204,14 +211,16 @@ export const Courses: CollectionConfig = {
                   type: 'textarea',
                   localized: true,
                   admin: {
-                    description: 'Rövid üzenet gyanúsan sok hiba esetén, mielőtt megnyílna a tipp-felület.',
+                    description:
+                      'Rövid üzenet gyanúsan sok hiba esetén, mielőtt megnyílna a tipp-felület.',
                   },
                 },
                 {
                   name: 'welcomeMessages',
                   type: 'array',
                   admin: {
-                    description: 'Üdvözlő üzenetek a kurzus indításakor (véletlenszerűen választva).',
+                    description:
+                      'Üdvözlő üzenetek a kurzus indításakor (véletlenszerűen választva).',
                   },
                   fields: [{ name: 'text', type: 'text', required: true, localized: true }],
                 },
@@ -219,7 +228,8 @@ export const Courses: CollectionConfig = {
                   name: 'idleHelpMessages',
                   type: 'array',
                   admin: {
-                    description: 'Részletes tippek/üzenetek, ha a felhasználó láthatóan elakadt a feladattal.',
+                    description:
+                      'Részletes tippek/üzenetek, ha a felhasználó láthatóan elakadt a feladattal.',
                   },
                   fields: [{ name: 'text', type: 'text', required: true, localized: true }],
                 },
@@ -235,7 +245,8 @@ export const Courses: CollectionConfig = {
                   name: 'overconfidentMessages',
                   type: 'array',
                   admin: {
-                    description: 'Üzenetek arra az esetre, ha a felhasználó magabiztos volt, de elrontotta a feladatot.',
+                    description:
+                      'Üzenetek arra az esetre, ha a felhasználó magabiztos volt, de elrontotta a feladatot.',
                   },
                   fields: [{ name: 'text', type: 'text', required: true }],
                 },
@@ -243,7 +254,8 @@ export const Courses: CollectionConfig = {
                   name: 'streakMessages',
                   type: 'array',
                   admin: {
-                    description: 'Dicsérő, bíztató üzenetek sikeres válaszsorozatok (streak) esetén.',
+                    description:
+                      'Dicsérő, bíztató üzenetek sikeres válaszsorozatok (streak) esetén.',
                   },
                   fields: [{ name: 'text', type: 'text', required: true }],
                 },
@@ -267,7 +279,8 @@ export const Courses: CollectionConfig = {
                   type: 'text',
                   required: true,
                   admin: {
-                    description: 'Egyedi technikai azonosító (pl. bubble-sort-intro). Használd a javaslat gombot!',
+                    description:
+                      'Egyedi technikai azonosító (pl. bubble-sort-intro). Használd a javaslat gombot!',
                     components: {
                       Field: '@/app/components/Payload/AlgorithmSelect#PhaseIdSelect',
                     },
@@ -284,7 +297,8 @@ export const Courses: CollectionConfig = {
                   type: 'text',
                   required: true,
                   admin: {
-                    description: 'Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).',
+                    description:
+                      'Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).',
                     components: {
                       Field: '@/app/components/Payload/AlgorithmSelect#AlgorithmIdSelect',
                     },
@@ -340,7 +354,8 @@ export const Courses: CollectionConfig = {
                   type: 'checkbox',
                   defaultValue: false,
                   admin: {
-                    description: 'Legyen-e magabiztosság ellenőrzés (kérdőív) a fázis befejezése után?',
+                    description:
+                      'Legyen-e magabiztosság ellenőrzés (kérdőív) a fázis befejezése után?',
                   },
                 },
                 {

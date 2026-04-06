@@ -40,8 +40,7 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
         videoWatchTimeMs: currentTotal + delta,
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [algorithmId, updateProgress, isWatched]);
+  }, [algorithmId, updateProgress, isWatched, algorithmProgress]);
 
   // If youtubeId is a placeholder, show a message instead of a broken iframe
   const isPlaceholder = youtubeId.startsWith('placeholder_');

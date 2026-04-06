@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers';
 import Link from 'next/link';
 
 import { getCourseCatalog, type CourseCollectionDoc } from '../../../lib/courses/courseCatalog';
@@ -17,6 +16,7 @@ export default async function CoursesPage() {
       depth: 0,
       limit: 50,
       sort: 'title',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       locale: locale as any,
     });
     docs = result.docs as unknown as CourseCollectionDoc[];

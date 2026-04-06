@@ -91,7 +91,12 @@ export default function UserProgressSync() {
       const response = await fetch('/api/account/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completedIds, visualizerProgress, algorithmProgress, courseProgress }),
+        body: JSON.stringify({
+          completedIds,
+          visualizerProgress,
+          algorithmProgress,
+          courseProgress,
+        }),
       });
 
       if (response.ok) {
@@ -144,7 +149,14 @@ export default function UserProgressSync() {
         // Use sendBeacon for best-effort delivery during page unload
         if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
           const blob = new Blob(
-            [JSON.stringify({ completedIds, visualizerProgress, algorithmProgress, courseProgress })],
+            [
+              JSON.stringify({
+                completedIds,
+                visualizerProgress,
+                algorithmProgress,
+                courseProgress,
+              }),
+            ],
             { type: 'application/json' },
           );
           navigator.sendBeacon('/api/account/progress', blob);
@@ -165,7 +177,7 @@ export default function UserProgressSync() {
       window.removeEventListener('beforeunload', handleExit);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [completedIds, visualizerProgress, algorithmProgress, syncProgress]);
+  }, [completedIds, visualizerProgress, algorithmProgress, courseProgress, syncProgress]);
 
   return null;
 }

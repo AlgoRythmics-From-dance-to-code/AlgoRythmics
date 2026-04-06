@@ -41,12 +41,20 @@ export async function GET() {
 
     const courseProgress: Record<string, unknown> = {};
     courseProgressDocs.docs.forEach((doc) => {
-      courseProgress[(doc as any).courseId] = {
-        activePhaseIndex: (doc as any).activePhaseIndex,
-        completedPhases: (doc as any).completedPhases || [],
-        lastConfidenceRating: (doc as any).lastConfidenceRating,
-        phaseResults: (doc as any).phaseResults,
-        points: (doc as any).points,
+      const pDoc = doc as unknown as {
+        courseId: string;
+        activePhaseIndex: number;
+        completedPhases?: string[];
+        lastConfidenceRating?: string;
+        phaseResults?: Record<string, string>;
+        points?: number;
+      };
+      courseProgress[pDoc.courseId] = {
+        activePhaseIndex: pDoc.activePhaseIndex,
+        completedPhases: pDoc.completedPhases || [],
+        lastConfidenceRating: pDoc.lastConfidenceRating,
+        phaseResults: pDoc.phaseResults,
+        points: pDoc.points,
       };
     });
 
@@ -70,7 +78,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { completedIds, visualizerProgress, algorithmProgress, courseProgress } = await req.json();
+    const { completedIds, visualizerProgress, algorithmProgress, courseProgress } =
+      await req.json();
 
     // Runtime validation
     if (completedIds !== undefined && !Array.isArray(completedIds)) {
@@ -161,7 +170,7 @@ export async function POST(req: Request) {
       const now = new Date().toISOString();
       const courseEntries = Object.entries(courseProgress).filter(
         ([, data]) => data && typeof data === 'object',
-      ) as [string, Record<string, any>][];
+      ) as [string, Record<string, unknown>][];
 
       for (const [slug, data] of courseEntries) {
         const { docs: existingCourseDocs } = await payload.find({

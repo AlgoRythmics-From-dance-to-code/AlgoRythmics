@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { useField } from '@payloadcms/ui';
 
 const assetOptions = [
@@ -51,7 +52,10 @@ const assetOptions = [
   { label: 'Path 3', value: 'path_3.svg' },
 ];
 
-const VisualSelect: React.FC<{ path: string; label?: any }> = ({ path, label: labelFromProps }) => {
+const VisualSelect: React.FC<{
+  path: string;
+  label?: string | { htmlFor: string };
+}> = ({ path, label: labelFromProps }) => {
   const { value, setValue } = useField<string>({ path });
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -71,7 +75,10 @@ const VisualSelect: React.FC<{ path: string; label?: any }> = ({ path, label: la
   if (!isMounted) return null;
 
   const selectedOption = assetOptions.find((opt) => opt.value === value);
-  const labelText = typeof labelFromProps === 'string' ? labelFromProps : (labelFromProps?.htmlFor || 'Válassz képet');
+  const labelText =
+    typeof labelFromProps === 'string'
+      ? labelFromProps
+      : labelFromProps?.htmlFor || 'Válassz képet';
 
   return (
     <div
@@ -79,7 +86,17 @@ const VisualSelect: React.FC<{ path: string; label?: any }> = ({ path, label: la
       ref={containerRef}
       style={{ marginBottom: '25px', position: 'relative' }}
     >
-      <div className="field-label" style={{ marginBottom: '10px', fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.05em', color: 'var(--theme-elevation-600)', textTransform: 'uppercase' }}>
+      <div
+        className="field-label"
+        style={{
+          marginBottom: '10px',
+          fontSize: '11px',
+          fontWeight: 'bold',
+          letterSpacing: '0.05em',
+          color: 'var(--theme-elevation-600)',
+          textTransform: 'uppercase',
+        }}
+      >
         {labelText}
       </div>
 
@@ -90,7 +107,9 @@ const VisualSelect: React.FC<{ path: string; label?: any }> = ({ path, label: la
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '10px 15px',
-          border: isOpen ? '1px solid var(--theme-elevation-400)' : '1px solid var(--theme-elevation-150)',
+          border: isOpen
+            ? '1px solid var(--theme-elevation-400)'
+            : '1px solid var(--theme-elevation-150)',
           borderRadius: '2px',
           backgroundColor: 'var(--theme-elevation-0)',
           cursor: 'pointer',
@@ -116,9 +135,11 @@ const VisualSelect: React.FC<{ path: string; label?: any }> = ({ path, label: la
                   border: '1px solid var(--theme-elevation-150)',
                 }}
               >
-                <img
+                <Image
                   src={`/assets/${value}`}
                   alt=""
+                  width={20}
+                  height={20}
                   style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                 />
               </div>
@@ -127,15 +148,19 @@ const VisualSelect: React.FC<{ path: string; label?: any }> = ({ path, label: la
               </span>
             </>
           ) : (
-            <span style={{ color: 'var(--theme-elevation-400)', fontStyle: 'italic' }}>Válassz egy képet a könyvtárból...</span>
+            <span style={{ color: 'var(--theme-elevation-400)', fontStyle: 'italic' }}>
+              Válassz egy képet a könyvtárból...
+            </span>
           )}
         </div>
-        <span style={{ 
-          fontSize: '10px', 
-          color: 'var(--theme-elevation-400)',
-          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.2s ease'
-        }}>
+        <span
+          style={{
+            fontSize: '10px',
+            color: 'var(--theme-elevation-400)',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s ease',
+          }}
+        >
           ▼
         </span>
       </div>
@@ -176,7 +201,9 @@ const VisualSelect: React.FC<{ path: string; label?: any }> = ({ path, label: la
                 transition: 'background-color 0.1s ease',
                 marginBottom: '2px',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--theme-elevation-250)')}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = 'var(--theme-elevation-250)')
+              }
               onMouseLeave={(e) =>
                 (e.currentTarget.style.backgroundColor =
                   value === option.value ? 'var(--theme-elevation-200)' : 'transparent')
@@ -195,9 +222,11 @@ const VisualSelect: React.FC<{ path: string; label?: any }> = ({ path, label: la
                   border: '1px solid var(--theme-elevation-150)',
                 }}
               >
-                <img
+                <Image
                   src={`/assets/${option.value}`}
                   alt=""
+                  width={28}
+                  height={28}
                   style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                 />
               </div>
@@ -211,12 +240,26 @@ const VisualSelect: React.FC<{ path: string; label?: any }> = ({ path, label: la
                 >
                   {option.label}
                 </span>
-                <span style={{ fontSize: '10px', color: 'var(--theme-elevation-400)', fontFamily: 'monospace' }}>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    color: 'var(--theme-elevation-400)',
+                    fontFamily: 'monospace',
+                  }}
+                >
                   {option.value}
                 </span>
               </div>
               {value === option.value && (
-                <span style={{ color: 'var(--theme-success-500)', fontSize: '14px', fontWeight: 'bold' }}>✓</span>
+                <span
+                  style={{
+                    color: 'var(--theme-success-500)',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  ✓
+                </span>
               )}
             </div>
           ))}
@@ -226,9 +269,15 @@ const VisualSelect: React.FC<{ path: string; label?: any }> = ({ path, label: la
   );
 };
 
-export const IllustrationSelect: React.FC<any> = (props) => (
-  <VisualSelect path={props.path || "illustrationAsset"} label={props.label || "Kurzus Illusztrációja"} />
+export const IllustrationSelect: React.FC<{
+  path?: string;
+  label?: string | { htmlFor: string };
+}> = (props) => (
+  <VisualSelect
+    path={props.path || 'illustrationAsset'}
+    label={props.label || 'Kurzus Illusztrációja'}
+  />
 );
-export const MascotSelect: React.FC<any> = (props) => (
-  <VisualSelect path={props.path || "mascot.asset"} label={props.label || "Kabala Figurája"} />
-);
+export const MascotSelect: React.FC<{ path?: string; label?: string | { htmlFor: string } }> = (
+  props,
+) => <VisualSelect path={props.path || 'mascot.asset'} label={props.label || 'Kabala Figurája'} />;
