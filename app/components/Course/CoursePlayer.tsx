@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Check, ShieldAlert, Sparkles, Wand2, Star, ChevronLeft, LayoutPanelTop, History } from 'lucide-react';
 
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import { useLocale } from '../../i18n/LocaleProvider';
 import type {
   CourseBlueprint,
   CoursePhase,
@@ -19,7 +20,7 @@ const CodeExercise = dynamic(() => import('../Learning/CodeExercise'));
 const AliveVisualizer = dynamic(() => import('../Learning/AliveVisualizer'));
 const VideoPlayer = dynamic(() => import('../Learning/VideoPlayer'));
 
-type ConfidenceLevel = 'very-sure' | 'unsure' | 'guess';
+type ConfidenceLevel = 'very-sure' | 'sure' | 'unsure' | 'guess';
 type PendingAdvance = {
   phaseId: string;
 };
@@ -221,6 +222,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     setCoursePhaseResult,
     addCoursePoints,
   } = useAlgorithmStore();
+  const { t } = useLocale();
 
   const completedPhaseStatuses = useMemo(
     () =>
@@ -313,12 +315,12 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     if (currentMistakeTriggered) {
       setMascotMood('mistake');
       const intro = getRandomMessage(course.mascot.mistakeHelpMessages);
-      const hint = activePhase.hintCopy || (activePhase.tips.length > 0 ? activePhase.tips[0] : '');
+      const hint = activePhase.hintCopy;
       setMascotMessage(hint ? `${intro} ${hint}` : intro);
       setMascotVisible(true);
       setMascotActions(false);
     }
-  }, [currentMistakeTriggered, course.mascot.mistakeHelpMessages, activePhase.hintCopy, activePhase.tips]);
+  }, [currentMistakeTriggered, course.mascot.mistakeHelpMessages, activePhase.hintCopy]);
 
   const activeProgress =
     algorithmProgress[activePhase?.sourceAlgorithmId || course.algorithmId] || {};
@@ -403,15 +405,17 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         setStreak(0);
         if (level === 'very-sure') {
           // Overconfident case
-          setMascotMood('overconfident');
-          setMascotMessage(getRandomMessage(course.mascot.overconfidentMessages));
-          setMascotVisible(true);
-          setMascotActions(false);
+          if (course.mascot.enabled) {
+            setMascotMood('overconfident');
+            setMascotMessage(getRandomMessage(course.mascot.overconfidentMessages));
+            setMascotVisible(true);
+            setMascotActions(false);
+          }
         }
       } else {
         const nextStreak = streak + 1;
         setStreak(nextStreak);
-        if (nextStreak >= 3) {
+        if (nextStreak >= 3 && course.mascot.enabled) {
           setMascotMood('streak');
           setMascotMessage(getRandomMessage(course.mascot.streakMessages));
           setMascotVisible(true);
@@ -451,10 +455,14 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       return;
     }
 
-    const askConfidenceNow =
-      course.confidenceLearning.enabled && Math.random() < 0.4;
+    const askConfidenceNow = activePhase.askConfidence;
 
     if (askConfidenceNow) {
+      if (course.mascot.enabled) {
+        setMascotMood('confidence');
+        setMascotMessage("Hogy érzed, mennyire sikerült eddig elsajátítani a látottakat?");
+        setMascotVisible(true);
+      }
       setShowConfidenceModal(true);
       return;
     }
@@ -681,15 +689,16 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         {pendingAdvance && (
           <div className="rounded-[2rem] border border-[#269984]/20 bg-[#f0fbf9] p-5 shadow-sm dark:bg-black/20">
             <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#269984]">
-              {course.confidenceLearning.promptLabel}
+              {t('courses.confidence_check')}
             </div>
             <p className="mt-2 text-sm leading-7 text-[#444] dark:text-gray-300">
-              {activePhase.confidencePrompt || course.mascot.confidencePrompt}
+              Hogy érzed, mennyire sikerült eddig elsajátítani a látottakat?
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               {(
                 [
                   ['very-sure', 'Nagyon biztos vagyok'],
+                  ['sure', 'Biztos vagyok'],
                   ['unsure', 'Bizonytalan vagyok'],
                   ['guess', 'Csak tippeltem'],
                 ] as const
@@ -751,14 +760,14 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   Hogy állunk a tudással?
                 </h3>
                 <p className="mb-8 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                  {activePhase.confidencePrompt || 
-                    "Szeretnénk tudni, hogy eddig mennyire érted a kurzust, és minden világos-e számodra."}
+                  Szeretnénk tudni, hogy eddig mennyire érted a kurzust, és minden világos-e számodra.
                 </p>
                 
                 <div className="grid w-full gap-3">
                   {(
                     [
-                      ['very-sure', 'Minden teljesen tiszta!'],
+                      ['very-sure', 'Nagyon biztos vagyok benne!'],
+                      ['sure', 'Azt hiszem, értem az egészet.'],
                       ['unsure', 'Vannak még homályos részek.'],
                       ['guess', 'Még csak barátkozom vele.'],
                     ] as const
@@ -791,142 +800,142 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         )}
       </AnimatePresence>
       {/* UNIFIED HUB: Handles both the summon button and Bubi himself */}
-      <motion.div
-        drag
-        dragMomentum={false}
-        dragConstraints={{ 
-          left: 0, 
-          right: typeof window !== 'undefined' ? window.innerWidth - 100 : 1000, 
-          top: typeof window !== 'undefined' ? -window.innerHeight + 100 : -1000, 
-          bottom: 0 
-        }}
-        animate={{ x: mascotDragPos.x, y: mascotDragPos.y }}
-        onDragEnd={(_, info) => {
-          setMascotDragPos({ 
-            x: mascotDragPos.x + info.offset.x, 
-            y: mascotDragPos.y + info.offset.y 
-          });
-        }}
-        className="fixed bottom-8 left-8 z-[60] pointer-events-none flex flex-col items-start"
-      >
-        <div className="pointer-events-auto">
-          <AnimatePresence mode="wait">
-            {mascotVisible ? (
-              <motion.div
-                key="mascot-full"
-                initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.8, y: 10 }}
-                className="flex flex-col items-start gap-4 w-64"
-              >
-                {/* Speech Bubble */}
+      {course.mascot.enabled && (
+        <motion.div
+          drag
+          dragMomentum={false}
+          dragConstraints={{ 
+            left: 0, 
+            right: typeof window !== 'undefined' ? window.innerWidth - 100 : 1000, 
+            top: typeof window !== 'undefined' ? -window.innerHeight + 100 : -1000, 
+            bottom: 0 
+          }}
+          animate={{ x: mascotDragPos.x, y: mascotDragPos.y }}
+          onDragEnd={(_, info) => {
+            setMascotDragPos({ 
+              x: mascotDragPos.x + info.offset.x, 
+              y: mascotDragPos.y + info.offset.y 
+            });
+          }}
+          className="fixed bottom-8 left-8 z-[60] pointer-events-none flex flex-col items-start"
+        >
+          <div className="pointer-events-auto">
+            <AnimatePresence mode="wait">
+              {mascotVisible ? (
                 <motion.div
-                  className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-[#269984]/20 relative cursor-default"
+                  key="mascot-full"
+                  initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                  className="flex flex-col items-start gap-4 w-64"
                 >
-                  <div className="absolute top-full left-6 w-3 h-3 bg-white dark:bg-gray-900 rotate-45 border-r border-b border-[#269984]/20" />
-                  
-                  {mascotMood === 'mistake' && (
-                    <div className="mb-2 flex items-center gap-1.5 text-amber-600 dark:text-amber-500 font-black text-[10px] uppercase tracking-widest bg-amber-50 dark:bg-amber-500/10 w-fit px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-500/20">
-                      <ShieldAlert className="w-3.5 h-3.5" />
-                      Mentor tipp
-                    </div>
-                  )}
+                  <motion.div
+                    className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-[#269984]/20 relative cursor-default"
+                  >
+                    <div className="absolute top-full left-6 w-3 h-3 bg-white dark:bg-gray-900 rotate-45 border-r border-b border-[#269984]/20" />
+                    
+                    {mascotMood === 'mistake' && (
+                      <div className="mb-2 flex items-center gap-1.5 text-amber-600 dark:text-amber-500 font-bold text-[10px] uppercase tracking-widest">
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                        Tanács
+                      </div>
+                    )}
 
-                  <p className="font-montserrat text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                    {mascotMessage}
-                  </p>
+                    <p className="font-montserrat text-sm leading-relaxed text-gray-700 dark:text-gray-300 pr-2">
+                      {mascotMessage}
+                    </p>
 
-                  {mascotActions && mascotMood === 'idle' && (
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => {
-                          setMascotMood('neutral');
-                          const advice = activePhase.hintCopy || activePhase.mascotLine || activePhase.summary;
-                          setMascotMessage(advice || getRandomMessage(course.mascot.idleHelpMessages));
-                          setMascotActions(false);
-                        }}
-                        className="flex-1 py-1.5 bg-[#269984] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#1f7a6a] transition-colors"
-                      >
-                        Igen, segíts!
-                      </button>
-                      <button
-                        onClick={() => setMascotVisible(false)}
-                        className="flex-1 py-1.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-gray-200 transition-colors"
-                      >
-                        Nem köszi
-                      </button>
-                    </div>
-                  )}
-
-                  {!mascotActions && (
-                    <div className="mt-3 flex flex-col gap-1.5">
-                      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                    {mascotActions && mascotMood === 'idle' && (
+                      <div className="mt-4 flex gap-2">
                         <button
-                          onClick={() => setMascotMessage(`${activePhase.title}: ${activePhase.hintCopy || activePhase.mascotLine || activePhase.objective}`)}
-                          className="px-2 py-1 bg-[#269984]/5 hover:bg-[#269984]/15 text-[#269984] rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
+                          onClick={() => {
+                            setMascotMood('neutral');
+                            const advice = activePhase.hintCopy || activePhase.mascotLine || activePhase.summary;
+                            setMascotMessage(advice || getRandomMessage(course.mascot.idleHelpMessages));
+                            setMascotActions(false);
+                          }}
+                          className="flex-1 py-1.5 bg-[#269984] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider"
                         >
-                          Hogy állunk most?
+                          Igen, segíts!
                         </button>
                         <button
-                          onClick={() => setMascotMessage(course.summary)}
-                          className="px-2 py-1 bg-[#269984]/5 hover:bg-[#269984]/15 text-[#269984] rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
+                          onClick={() => setMascotVisible(false)}
+                          className="flex-1 py-1.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 rounded-lg text-[10px] font-bold uppercase tracking-wider"
                         >
-                          Miről szól ez az egész?
+                          Nem köszi
                         </button>
                       </div>
-                      <button
-                        onClick={() => setMascotVisible(false)}
-                        className="block w-full text-center py-2 bg-[#f0fbf9] dark:bg-white/5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-[#269984] hover:bg-[#269984] hover:text-white transition-colors"
-                      >
-                        Rendben
-                      </button>
-                    </div>
-                  )}
-                </motion.div>
+                    )}
 
-                {/* Mascot Image */}
-                <motion.div
-                  className="w-16 h-16 relative cursor-grab active:cursor-grabbing group select-none ml-4"
-                  onClick={() => {
-                    setMascotMood('welcome');
-                    setMascotMessage(getRandomMessage(course.mascot.welcomeMessages));
-                    setMascotActions(false);
-                  }}
-                >
-                  <div className="absolute inset-0 bg-[#269984]/10 rounded-full blur-2xl group-hover:bg-[#269984]/20 transition-colors" />
-                  <img
-                    src={`/assets/${course.mascot.asset}`}
-                    alt={course.mascot.name}
-                    className="w-16 h-16 drop-shadow-2xl transform active:scale-95 transition-transform"
-                  />
+                    {!mascotActions && (
+                      <div className="mt-3 flex flex-col gap-1.5">
+                        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                          <button
+                            onClick={() => setMascotMessage(`${activePhase.title}: ${activePhase.hintCopy || activePhase.mascotLine || activePhase.objective}`)}
+                            className="px-2 py-1 bg-[#269984]/5 hover:bg-[#269984]/15 text-[#269984] rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
+                          >
+                            Hogy állunk?
+                          </button>
+                          <button
+                            onClick={() => setMascotMessage(course.summary)}
+                            className="px-2 py-1 bg-[#269984]/5 hover:bg-[#269984]/15 text-[#269984] rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
+                          >
+                            Összegzés
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => setMascotVisible(false)}
+                          className="block w-full text-center py-2 bg-[#f0fbf9] dark:bg-white/5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-[#269984] hover:bg-[#269984] hover:text-white transition-colors"
+                        >
+                          Értem
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+
+                  <motion.div
+                    className="w-16 h-16 relative cursor-grab active:cursor-grabbing group select-none ml-4"
+                    onClick={() => {
+                      setMascotMood('welcome');
+                      setMascotMessage(getRandomMessage(course.mascot.welcomeMessages));
+                      setMascotActions(false);
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-[#269984]/10 rounded-full blur-2xl group-hover:bg-[#269984]/20 transition-colors" />
+                    <img
+                      src={`/assets/${course.mascot.asset}`}
+                      alt={course.mascot.name}
+                      className="w-16 h-16 drop-shadow-2xl transform active:scale-95 transition-transform"
+                    />
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            ) : (
-              <motion.button
-                key="summon-btn"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onClick={() => {
-                  setMascotMood('neutral');
-                  const welcomeMsg = activePhase.mascotLine || `Ebben a részben épp: ${activePhase.objective}`;
-                  setMascotMessage(welcomeMsg);
-                  setMascotActions(false);
-                  setMascotVisible(true);
-                }}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-900 border border-[#269984]/20 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 text-[#269984] group cursor-grab active:cursor-grabbing select-none"
-              >
-                <div className="w-5 h-5 rounded-full overflow-hidden border border-[#269984]/10 pointer-events-none">
-                  <img src={`/assets/${course.mascot.asset}`} alt="Mascot" className="w-full h-auto" />
-                </div>
-                <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-[#269984] pointer-events-none">
-                  {course.mascot.summonLabel}
-                </span>
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
+              ) : (
+                <motion.button
+                  key="summon-btn"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={() => {
+                    setMascotMood('neutral');
+                    const welcomeMsg = activePhase.mascotLine || `Ebben a részben épp: ${activePhase.objective}`;
+                    setMascotMessage(welcomeMsg);
+                    setMascotActions(false);
+                    setMascotVisible(true);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-900 border border-[#269984]/20 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 text-[#269984] group cursor-grab active:cursor-grabbing select-none"
+                >
+                  <div className="w-5 h-5 rounded-full overflow-hidden border border-[#269984]/10 pointer-events-none">
+                    <img src={`/assets/${course.mascot.asset}`} alt="Mascot" className="w-full h-auto" />
+                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-[#269984] pointer-events-none">
+                    {course.mascot.summonLabel}
+                  </span>
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      )}
     </section>
   );
 }

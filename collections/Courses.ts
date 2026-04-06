@@ -1,7 +1,6 @@
 import type { CollectionConfig } from 'payload';
 
 import { ROLES } from '../lib/constants';
-import { bubbleSortCourseBlueprint } from '../lib/courses/courseCatalog';
 
 const difficultyOptions = [
   { label: 'Beginner', value: 'Beginner' },
@@ -9,32 +8,21 @@ const difficultyOptions = [
   { label: 'Advanced', value: 'Advanced' },
 ];
 
-const phaseKindOptions = [
-  { label: 'Motivation', value: 'motivation' },
-  { label: 'Guided visualization', value: 'guided-visualization' },
-  { label: 'Code building', value: 'code-building' },
-  { label: 'Analysis', value: 'analysis' },
-  { label: 'Final challenge', value: 'final-challenge' },
-];
-
-const coursePresetOptions = [
-  { label: 'Bubble Sort starter template', value: 'bubble-sort' },
-  { label: 'Custom course', value: 'custom' },
-];
-
 const sourceViewOptions = [
   { label: 'Video', value: 'video' },
   { label: 'Animation', value: 'animation' },
-  { label: 'Control', value: 'control' },
-  { label: 'Create', value: 'create' },
-  { label: 'Alive', value: 'alive' },
+  { label: 'Interactive Control', value: 'control' },
+  { label: 'Code Builder (Create)', value: 'create' },
+  { label: 'Live Simulation (Alive)', value: 'alive' },
+  { label: 'Quiz', value: 'quiz' },
+  { label: 'Information', value: 'info' },
 ];
 
 export const Courses: CollectionConfig = {
   slug: 'courses',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'algorithmId', 'difficulty', 'updatedAt'],
+    defaultColumns: ['title', 'slug', 'difficulty', 'updatedAt'],
     group: 'Learning',
     description:
       'Reusable course blueprints with phases, mascot behavior, confidence prompts, and complexity guidance.',
@@ -45,340 +33,369 @@ export const Courses: CollectionConfig = {
     update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
     delete: ({ req: { user } }) => user?.role === ROLES.ADMIN,
   },
-  hooks: {
-    beforeValidate: [
-      ({ data }) => {
-        if (!data) return data;
-
-        if (data.preset === 'bubble-sort') {
-          return {
-            ...bubbleSortCourseBlueprint,
-            ...data,
-            mascot: {
-              ...bubbleSortCourseBlueprint.mascot,
-              ...(data.mascot || {}),
-            },
-            confidenceLearning: {
-              ...bubbleSortCourseBlueprint.confidenceLearning,
-              ...(data.confidenceLearning || {}),
-            },
-            complexity: {
-              ...bubbleSortCourseBlueprint.complexity,
-              ...(data.complexity || {}),
-            },
-            finalChallenge: {
-              ...bubbleSortCourseBlueprint.finalChallenge,
-              ...(data.finalChallenge || {}),
-            },
-            phases: Array.isArray(data.phases)
-              ? data.phases.map((phase, index) => ({
-                  ...bubbleSortCourseBlueprint.phases[index],
-                  ...(phase || {}),
-                  tips: Array.isArray((phase as { tips?: unknown[] })?.tips)
-                    ? (phase as { tips: unknown[] }).tips
-                    : bubbleSortCourseBlueprint.phases[index]?.tips || [],
-                }))
-              : bubbleSortCourseBlueprint.phases,
-            nextSteps:
-              Array.isArray(data.nextSteps) && data.nextSteps.length > 0
-                ? data.nextSteps
-                : bubbleSortCourseBlueprint.nextSteps,
-          };
-        }
-
-        return data;
-      },
-    ],
-  },
   fields: [
     {
-      name: 'preset',
-      type: 'select',
-      defaultValue: 'bubble-sort',
-      options: coursePresetOptions,
-      required: true,
-      admin: {
-        description: 'Pick the bubble sort starter template or start from a blank custom course.',
-      },
-    },
-    {
-      name: 'title',
-      type: 'text',
-      required: true,
-      unique: true,
-    },
-    {
-      name: 'slug',
-      type: 'text',
-      required: true,
-      unique: true,
-      index: true,
-      admin: {
-        description: 'Used in the public URL, for example bubble-sort.',
-      },
-    },
-    {
-      name: 'algorithmId',
-      type: 'text',
-      required: true,
-      index: true,
-      admin: {
-        description: 'The canonical algorithm or topic id that the course teaches.',
-      },
-    },
-    {
-      name: 'summary',
-      type: 'textarea',
-      required: true,
-    },
-    {
-      name: 'heroTagline',
-      type: 'text',
-      admin: {
-        description: 'A short line used on the course landing page hero.',
-      },
-    },
-    {
-      name: 'icon',
-      type: 'text',
-      defaultValue: '📘',
-      admin: {
-        description: 'Emoji or short icon token for the course card.',
-      },
-    },
-    {
-      name: 'accentColor',
-      type: 'text',
-      defaultValue: '#269984',
-      admin: {
-        description: 'Primary accent color used in cards and buttons.',
-      },
-    },
-    {
-      name: 'illustrationAsset',
-      type: 'text',
-      defaultValue: 'algo_group_109.svg',
-      admin: {
-        description: 'Asset filename from /public/assets.',
-      },
-    },
-    {
-      name: 'estimatedMinutes',
-      type: 'number',
-      required: true,
-      min: 1,
-      admin: {
-        description: 'Approximate total learning time in minutes.',
-      },
-    },
-    {
-      name: 'difficulty',
-      type: 'select',
-      defaultValue: 'Beginner',
-      options: difficultyOptions,
-      required: true,
-    },
-    {
-      name: 'featuredReason',
-      type: 'textarea',
-      admin: {
-        description: 'Why this course deserves a featured card on the course index.',
-      },
-    },
-    {
-      name: 'learningModes',
-      type: 'text',
-      hasMany: true,
-      admin: {
-        description: 'Short labels such as Video intuition, Drag-and-drop, or Debugging.',
-      },
-    },
-    {
-      name: 'mascot',
-      type: 'group',
-      admin: {
-        description: 'Per-course mascot configuration and trigger copy.',
-      },
-      fields: [
-        { name: 'name', type: 'text', required: true, defaultValue: 'Guide' },
+      type: 'tabs',
+      tabs: [
         {
-          name: 'preset',
-          type: 'text',
-          admin: {
-            description: 'Preset key for course-specific mascot styling.',
-          },
-        },
-        { name: 'asset', type: 'text', defaultValue: 'algo_group_109.svg' },
-        { name: 'accentColor', type: 'text', defaultValue: '#269984' },
-        {
-          name: 'idleTriggerSeconds',
-          type: 'number',
-          defaultValue: 30,
-        },
-        {
-          name: 'mistakeTriggerCount',
-          type: 'number',
-          defaultValue: 2,
-        },
-        {
-          name: 'summonLabel',
-          type: 'text',
-          defaultValue: 'Summon guide',
-        },
-        {
-          name: 'idlePrompt',
-          type: 'textarea',
-          admin: {
-            description: 'Message used when the learner stalls for a while.',
-          },
-        },
-        {
-          name: 'mistakePrompt',
-          type: 'textarea',
-          admin: {
-            description: 'Message used after repeated wrong attempts.',
-          },
-        },
-        {
-          name: 'confidencePrompt',
-          type: 'text',
-          defaultValue: 'How sure are you?',
-        },
-      ],
-    },
-    {
-      name: 'confidenceLearning',
-      type: 'group',
-      admin: {
-        description: 'Confidence-based learning copy and reward configuration.',
-      },
-      fields: [
-        { name: 'enabled', type: 'checkbox', defaultValue: true },
-        { name: 'promptLabel', type: 'text', defaultValue: 'Confidence check' },
-        {
-          name: 'praiseText',
-          type: 'textarea',
-          defaultValue: 'Great reasoning. The confidence check matched your answer.',
-        },
-        {
-          name: 'correctionText',
-          type: 'textarea',
-          defaultValue: 'That is a common first guess. Let us inspect the rule once more.',
-        },
-        { name: 'rewardBadge', type: 'text', defaultValue: 'Confidence Builder' },
-        {
-          name: 'idleCheckProbability',
-          type: 'number',
-          defaultValue: 0.25,
-          admin: {
-            description: 'Probability of occasionally prompting a confidence check.',
-          },
-        },
-      ],
-    },
-    {
-      name: 'complexity',
-      type: 'group',
-      admin: {
-        description: 'Complexity notes, diagrams, and mistake impact details.',
-      },
-      fields: [
-        { name: 'timeComplexity', type: 'text', defaultValue: 'O(n^2)' },
-        { name: 'spaceComplexity', type: 'text', defaultValue: 'O(1)' },
-        { name: 'bestCase', type: 'textarea' },
-        { name: 'averageCase', type: 'textarea' },
-        { name: 'worstCase', type: 'textarea' },
-        {
-          name: 'diagramChoices',
-          type: 'array',
+          label: 'General info',
           fields: [
-            { name: 'label', type: 'text', required: true },
-            { name: 'explanation', type: 'textarea', required: true },
-            { name: 'impact', type: 'textarea', required: true },
-            { name: 'correct', type: 'checkbox', defaultValue: false },
+            {
+              name: 'title',
+              type: 'text',
+              required: true,
+              unique: true,
+              localized: true,
+              admin: { description: 'A kurzus teljes neve (pl. Buborékrendezés alapjai).' },
+            },
+            {
+              name: 'slug',
+              type: 'text',
+              required: true,
+              unique: true,
+              index: true,
+              admin: {
+                description: 'A kurzus azonosítója az URL-ben (pl. bubble-sort-basics).',
+              },
+            },
+            {
+              name: 'summary',
+              type: 'textarea',
+              required: true,
+              localized: true,
+              admin: { description: 'Rővid összefoglaló szöveg, ami a kurzuslistában jelenik meg.' },
+            },
+            {
+              name: 'heroTagline',
+              type: 'text',
+              localized: true,
+              admin: {
+                description: 'Egy rövid szlogen, ami a kurzus kezdőoldalának fejlécében látható.',
+              },
+            },
+            {
+              name: 'icon',
+              type: 'text',
+              defaultValue: '📘',
+              admin: {
+                description: 'Emoji vagy ikon kód a kurzus kártyájához.',
+              },
+            },
+            {
+              name: 'accentColor',
+              type: 'text',
+              defaultValue: '#269984',
+              admin: {
+                description: 'A kurzus gombjainak és UI elemeinek elsődleges szine.',
+              },
+            },
+            {
+              name: 'illustrationAsset',
+              type: 'text',
+              defaultValue: 'algo_group_109.svg',
+              admin: {
+                description: 'A kurzus fejlécében megjelenő illusztráció fájlneve.',
+                components: {
+                  Field: '@/app/components/Payload/AssetSelect#IllustrationSelect',
+                },
+              },
+            },
+            {
+              name: 'estimatedMinutes',
+              type: 'number',
+              required: true,
+              min: 1,
+              admin: {
+                description: 'A kurzus elvégzéséhez szükséges becsült idő percekben.',
+              },
+            },
+            {
+              name: 'difficulty',
+              type: 'select',
+              defaultValue: 'Beginner',
+              options: difficultyOptions,
+              required: true,
+              admin: { description: 'A kurzus nehézségi szintje.' },
+            },
           ],
         },
         {
-          name: 'mistakeImpacts',
-          type: 'array',
+          label: 'Mascot & Mentoring',
           fields: [
-            { name: 'label', type: 'text', required: true },
-            { name: 'impact', type: 'textarea', required: true },
+            {
+              name: 'mascot',
+              type: 'group',
+              admin: {
+                description: 'Per-course mascot configuration and trigger copy.',
+              },
+              fields: [
+                {
+                  name: 'enabled',
+                  type: 'checkbox',
+                  defaultValue: true,
+                  admin: {
+                    description: 'Ki/Bekapcsolja a kabalát a teljes kurzusra.',
+                  },
+                },
+                {
+                  name: 'name',
+                  type: 'text',
+                  required: true,
+                  defaultValue: 'Guide',
+                  localized: true,
+                  admin: {
+                    description: 'A kabala neve (pl. Bubi). Ez jelenik meg a szövegbuborékok felett.',
+                  },
+                },
+                {
+                  name: 'asset',
+                  type: 'text',
+                  defaultValue: 'algo_group_109.svg',
+                  admin: {
+                    description: 'A kabala vizuális megjelenése (választható illusztráció).',
+                    components: {
+                      Field: '@/app/components/Payload/AssetSelect#MascotSelect',
+                    },
+                  },
+                },
+                {
+                  name: 'accentColor',
+                  type: 'text',
+                  defaultValue: '#269984',
+                  admin: {
+                    description: 'A kabala szövegbuborékainak és UI elemeinek egyedi színe.',
+                  },
+                },
+                {
+                  name: 'idleTriggerSeconds',
+                  type: 'number',
+                  defaultValue: 30,
+                  admin: {
+                    description: 'Hány másodperc inaktivitás után szólaljon meg a kabala automatikusan.',
+                  },
+                },
+                {
+                  name: 'mistakeTriggerCount',
+                  type: 'number',
+                  defaultValue: 2,
+                  admin: {
+                    description: 'Hány egymást követő rossz válasz után ajánljon fel proaktív segítséget.',
+                  },
+                },
+                {
+                  name: 'summonLabel',
+                  type: 'text',
+                  defaultValue: 'Summon guide',
+                  localized: true,
+                  admin: {
+                    description: 'A gomb felirata, amivel a kabalát bármikor manuálisan elő lehet hívni.',
+                  },
+                },
+                {
+                  name: 'idlePrompt',
+                  type: 'textarea',
+                  localized: true,
+                  admin: {
+                    description: 'Rövid figyelemfelkeltő üzenet inaktivitás esetén (pl. "Segíthetek a következő lépésben?").',
+                  },
+                },
+                {
+                  name: 'mistakePrompt',
+                  type: 'textarea',
+                  localized: true,
+                  admin: {
+                    description: 'Rövid üzenet gyanúsan sok hiba esetén, mielőtt megnyílna a tipp-felület.',
+                  },
+                },
+                {
+                  name: 'welcomeMessages',
+                  type: 'array',
+                  admin: {
+                    description: 'Üdvözlő üzenetek a kurzus indításakor (véletlenszerűen választva).',
+                  },
+                  fields: [{ name: 'text', type: 'text', required: true, localized: true }],
+                },
+                {
+                  name: 'idleHelpMessages',
+                  type: 'array',
+                  admin: {
+                    description: 'Részletes tippek/üzenetek, ha a felhasználó láthatóan elakadt a feladattal.',
+                  },
+                  fields: [{ name: 'text', type: 'text', required: true, localized: true }],
+                },
+                {
+                  name: 'mistakeHelpMessages',
+                  type: 'array',
+                  admin: {
+                    description: 'Szakmai tanácsok/magyarázatok ismételt hibázás után.',
+                  },
+                  fields: [{ name: 'text', type: 'text', required: true }],
+                },
+                {
+                  name: 'overconfidentMessages',
+                  type: 'array',
+                  admin: {
+                    description: 'Üzenetek arra az esetre, ha a felhasználó magabiztos volt, de elrontotta a feladatot.',
+                  },
+                  fields: [{ name: 'text', type: 'text', required: true }],
+                },
+                {
+                  name: 'streakMessages',
+                  type: 'array',
+                  admin: {
+                    description: 'Dicsérő, bíztató üzenetek sikeres válaszsorozatok (streak) esetén.',
+                  },
+                  fields: [{ name: 'text', type: 'text', required: true }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Phases',
+          fields: [
+            {
+              name: 'phases',
+              type: 'array',
+              admin: {
+                description:
+                  'Ordered course phases; these are the main building blocks of the course.',
+              },
+              fields: [
+                {
+                  name: 'phaseId',
+                  type: 'text',
+                  required: true,
+                  admin: {
+                    description: 'Egyedi technikai azonosító (pl. bubble-sort-intro). Használd a javaslat gombot!',
+                    components: {
+                      Field: '@/app/components/Payload/AlgorithmSelect#PhaseIdSelect',
+                    },
+                  },
+                },
+                {
+                  name: 'title',
+                  type: 'text',
+                  required: true,
+                  admin: { description: 'A fázis címe a tanuló felé.' },
+                },
+                {
+                  name: 'sourceAlgorithmId',
+                  type: 'text',
+                  required: true,
+                  admin: {
+                    description: 'Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).',
+                    components: {
+                      Field: '@/app/components/Payload/AlgorithmSelect#AlgorithmIdSelect',
+                    },
+                  },
+                },
+                {
+                  name: 'sourceView',
+                  type: 'select',
+                  required: true,
+                  options: sourceViewOptions,
+                  admin: {
+                    description: 'Az interaktív felület típusa (videó, kvíz, animáció stb.).',
+                  },
+                },
+                {
+                  name: 'summary',
+                  type: 'textarea',
+                  required: true,
+                  localized: true,
+                  admin: { description: 'Fázis leírása: miről szól ez a rész?' },
+                },
+
+                // Opcionális / Haladó elemek
+                {
+                  name: 'objective',
+                  type: 'textarea',
+                  localized: true,
+                  admin: {
+                    description: 'Opcionális: Részletes tanulási célkitűzés.',
+                    condition: (data) => data?.mascot?.enabled,
+                  },
+                },
+                {
+                  name: 'mascotLine',
+                  type: 'textarea',
+                  localized: true,
+                  admin: {
+                    description: 'Opcionális: A kabala egyedi bátorító mondata.',
+                    condition: (data) => data?.mascot?.enabled,
+                  },
+                },
+                {
+                  name: 'hintCopy',
+                  type: 'textarea',
+                  localized: true,
+                  admin: {
+                    description: 'Segítség, ha elakad a tanuló.',
+                    condition: (data) => data?.mascot?.enabled,
+                  },
+                },
+                {
+                  name: 'askConfidence',
+                  type: 'checkbox',
+                  defaultValue: false,
+                  admin: {
+                    description: 'Legyen-e magabiztosság ellenőrzés (kérdőív) a fázis befejezése után?',
+                  },
+                },
+                {
+                  name: 'infoContent',
+                  type: 'textarea',
+                  localized: true,
+                  admin: {
+                    description: 'Információs szöveg (csak info nézetnél látszik).',
+                    condition: (data, siblingData) => siblingData?.sourceView === 'info',
+                  },
+                },
+                {
+                  name: 'quiz',
+                  type: 'array',
+                  admin: {
+                    description: 'Kvíz kérdések (csak kvíz nézetnél látszik).',
+                    condition: (data, siblingData) => siblingData?.sourceView === 'quiz',
+                  },
+                  fields: [
+                    {
+                      name: 'question',
+                      type: 'text',
+                      required: true,
+                      localized: true,
+                    },
+                    {
+                      name: 'options',
+                      type: 'array',
+                      fields: [
+                        {
+                          name: 'option',
+                          type: 'text',
+                          required: true,
+                          localized: true,
+                        },
+                      ],
+                    },
+                    {
+                      name: 'correctIndex',
+                      type: 'number',
+                      required: true,
+                    },
+                    {
+                      name: 'explanation',
+                      type: 'textarea',
+                      required: true,
+                      localized: true,
+                    },
+                  ],
+                },
+              ],
+            },
           ],
         },
       ],
-    },
-    {
-      name: 'phases',
-      type: 'array',
-      admin: {
-        description: 'Ordered course phases; these are the main building blocks of the course.',
-      },
-      fields: [
-        { name: 'phaseId', type: 'text', required: true },
-        { name: 'title', type: 'text', required: true },
-        { name: 'kind', type: 'select', required: true, options: phaseKindOptions },
-        {
-          name: 'sourceView',
-          type: 'select',
-          required: true,
-          options: sourceViewOptions,
-          admin: {
-            description: 'Which existing algorithm learning view this phase should embed.',
-          },
-        },
-        {
-          name: 'sourceAlgorithmId',
-          type: 'text',
-          defaultValue: 'bubble-sort',
-          admin: {
-            description: 'Algorithm id to pull the learning step from, such as bubble-sort.',
-          },
-        },
-        { name: 'summary', type: 'textarea', required: true },
-        { name: 'objective', type: 'textarea', required: true },
-        { name: 'durationMinutes', type: 'number', required: true, min: 1 },
-        {
-          name: 'confidencePrompt',
-          type: 'text',
-          admin: {
-            description: 'Prompt shown after the learner answers or before a checkpoint.',
-          },
-        },
-        { name: 'mascotLine', type: 'textarea' },
-        { name: 'taskTitle', type: 'text', required: true },
-        { name: 'taskPrompt', type: 'textarea', required: true },
-        { name: 'successCopy', type: 'textarea', required: true },
-        { name: 'hintCopy', type: 'textarea', required: true },
-        { name: 'rewardLabel', type: 'text', required: true },
-        {
-          name: 'tips',
-          type: 'array',
-          fields: [{ name: 'tip', type: 'text', required: true }],
-        },
-      ],
-    },
-    {
-      name: 'finalChallenge',
-      type: 'group',
-      admin: {
-        description: 'Final debugging and quiz challenge configuration.',
-      },
-      fields: [
-        { name: 'title', type: 'text', defaultValue: 'Final Challenge' },
-        { name: 'debuggingPrompt', type: 'textarea', required: true },
-        { name: 'quizPrompt', type: 'textarea', required: true },
-        { name: 'mentorPolicy', type: 'textarea', required: true },
-        { name: 'badge', type: 'text', defaultValue: 'Learning Complete' },
-      ],
-    },
-    {
-      name: 'nextSteps',
-      type: 'text',
-      hasMany: true,
-      admin: {
-        description: 'Optional authoring notes for the next course blueprint.',
-      },
     },
   ],
 };

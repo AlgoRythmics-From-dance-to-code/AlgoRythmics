@@ -32,6 +32,7 @@ export interface AlgorithmDefinition {
   codePatterns?: CodePattern[];
   legend: { color: string; labelKey: string }[];
   category: 'sorting' | 'searching' | 'backtracking' | 'fun';
+  suggestedPhases?: { id: string; label: string }[];
 }
 
 // ─── Registered Algorithms ────────────────────────────────────
@@ -50,6 +51,13 @@ const registry: Record<string, AlgorithmDefinition> = {
       { color: '#f97316', labelKey: 'visualizer.legend_swap' },
       { color: '#4ade80', labelKey: 'visualizer.legend_sorted' },
     ],
+    suggestedPhases: [
+      { id: 'motivation', label: 'Motiváció (Bevezetés)' },
+      { id: 'guided-visualization', label: 'Vezetett vizualizáció (Animáció)' },
+      { id: 'code-building', label: 'Kód építése (Szerkezet)' },
+      { id: 'analysis', label: 'Algoritmus elemzés (Komplexitás)' },
+      { id: 'final-challenge', label: 'Záró kihívás (Vége)' },
+    ],
   },
   'insertion-sort': {
     id: 'insertion-sort',
@@ -63,6 +71,13 @@ const registry: Record<string, AlgorithmDefinition> = {
       { color: '#269984', labelKey: 'visualizer.legend_compare' },
       { color: '#f97316', labelKey: 'visualizer.legend_swap' },
       { color: '#4ade80', labelKey: 'visualizer.legend_sorted' },
+    ],
+    suggestedPhases: [
+      { id: 'motivation', label: 'Motiváció (Bevezetés)' },
+      { id: 'guided-visualization', label: 'Vezetett vizualizáció (Animáció)' },
+      { id: 'code-building', label: 'Kód építése (Szerkezet)' },
+      { id: 'analysis', label: 'Algoritmus elemzés (Komplexitás)' },
+      { id: 'final-challenge', label: 'Záró kihívás (Vége)' },
     ],
   },
   'selection-sort': {

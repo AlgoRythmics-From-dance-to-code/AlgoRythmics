@@ -19,7 +19,7 @@ const LocaleContext = createContext<{
   t: (path: string, vars?: Record<string, string | number>) => string;
   getRaw: (path: string) => unknown;
 }>({
-  locale: 'en',
+  locale: 'hu',
   setLocale: () => {},
   t: () => '',
   getRaw: () => undefined,
@@ -30,7 +30,7 @@ export function useLocale() {
 }
 
 export default function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('en');
+  const [locale, setLocaleState] = useState<Locale>('hu');
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('locale') : null;

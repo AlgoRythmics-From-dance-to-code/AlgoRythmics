@@ -528,7 +528,11 @@
       "dance_party": "Algorithm Dance Party",
       "binary_rhythm": "Binary Search Rhythm",
       "n_queens_challenge": "N-Queens Challenge"
-    }
+    },
+    "open": "Open",
+    "checkpoints": "checkpoints",
+    "back_to_courses": "Back to courses",
+    "confidence_check": "Confidence check"
   },
   "videos": {
     "hero_title": "Videos",

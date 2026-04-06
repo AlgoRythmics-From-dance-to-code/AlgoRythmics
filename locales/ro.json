@@ -528,7 +528,11 @@
       "dance_party": "Petrecerea dansului algoritmilor",
       "binary_rhythm": "Ritmul căutării binare",
       "n_queens_challenge": "Provocarea celor N regine"
-    }
+    },
+    "open": "Deschide",
+    "checkpoints": "puncte de control",
+    "back_to_courses": "Înapoi la cursuri",
+    "confidence_check": "Verificarea încrederii"
   },
   "videos": {
     "hero_title": "Videoclipuri",

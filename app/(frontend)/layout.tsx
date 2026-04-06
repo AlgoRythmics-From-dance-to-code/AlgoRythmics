@@ -27,7 +27,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   const isAuthenticated = !!session;
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="hu" suppressHydrationWarning>
       <body className={`${montserrat.variable} antialiased min-h-screen flex flex-col`}>
         <NextAuthProvider session={session}>
           <ThemeProviderClient>

@@ -92,10 +92,10 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
-  fallbackLocale: null;
+  fallbackLocale: ('false' | 'none' | 'null') | false | null | ('hu' | 'en' | 'ro') | ('hu' | 'en' | 'ro')[];
   globals: {};
   globalsSelect: {};
-  locale: null;
+  locale: 'hu' | 'en' | 'ro';
   widgets: {
     collections: CollectionsWidget;
   };
@@ -315,108 +315,123 @@ export interface AlgorithmProgress {
 export interface Course {
   id: number;
   /**
-   * Pick the bubble sort starter template or start from a blank custom course.
+   * A kurzus teljes neve (pl. Buborékrendezés alapjai).
    */
-  preset: 'bubble-sort' | 'custom';
   title: string;
   /**
-   * Used in the public URL, for example bubble-sort.
+   * A kurzus azonosítója az URL-ben (pl. bubble-sort-basics).
    */
   slug: string;
   /**
-   * The canonical algorithm or topic id that the course teaches.
+   * Rővid összefoglaló szöveg, ami a kurzuslistában jelenik meg.
    */
-  algorithmId: string;
   summary: string;
   /**
-   * A short line used on the course landing page hero.
+   * Egy rövid szlogen, ami a kurzus kezdőoldalának fejlécében látható.
    */
   heroTagline?: string | null;
   /**
-   * Emoji or short icon token for the course card.
+   * Emoji vagy ikon kód a kurzus kártyájához.
    */
   icon?: string | null;
   /**
-   * Primary accent color used in cards and buttons.
+   * A kurzus gombjainak és UI elemeinek elsődleges szine.
    */
   accentColor?: string | null;
   /**
-   * Asset filename from /public/assets.
+   * A kurzus fejlécében megjelenő illusztráció fájlneve.
    */
   illustrationAsset?: string | null;
   /**
-   * Approximate total learning time in minutes.
+   * A kurzus elvégzéséhez szükséges becsült idő percekben.
    */
   estimatedMinutes: number;
+  /**
+   * A kurzus nehézségi szintje.
+   */
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  /**
-   * Why this course deserves a featured card on the course index.
-   */
-  featuredReason?: string | null;
-  /**
-   * Short labels such as Video intuition, Drag-and-drop, or Debugging.
-   */
-  learningModes?: string[] | null;
   /**
    * Per-course mascot configuration and trigger copy.
    */
   mascot: {
+    /**
+     * Ki/Bekapcsolja a kabalát a teljes kurzusra.
+     */
+    enabled?: boolean | null;
+    /**
+     * A kabala neve (pl. Bubi). Ez jelenik meg a szövegbuborékok felett.
+     */
     name: string;
     /**
-     * Preset key for course-specific mascot styling.
+     * A kabala vizuális megjelenése (választható illusztráció).
      */
-    preset?: string | null;
     asset?: string | null;
+    /**
+     * A kabala szövegbuborékainak és UI elemeinek egyedi színe.
+     */
     accentColor?: string | null;
+    /**
+     * Hány másodperc inaktivitás után szólaljon meg a kabala automatikusan.
+     */
     idleTriggerSeconds?: number | null;
+    /**
+     * Hány egymást követő rossz válasz után ajánljon fel proaktív segítséget.
+     */
     mistakeTriggerCount?: number | null;
+    /**
+     * A gomb felirata, amivel a kabalát bármikor manuálisan elő lehet hívni.
+     */
     summonLabel?: string | null;
     /**
-     * Message used when the learner stalls for a while.
+     * Rövid figyelemfelkeltő üzenet inaktivitás esetén (pl. "Segíthetek a következő lépésben?").
      */
     idlePrompt?: string | null;
     /**
-     * Message used after repeated wrong attempts.
+     * Rövid üzenet gyanúsan sok hiba esetén, mielőtt megnyílna a tipp-felület.
      */
     mistakePrompt?: string | null;
-    confidencePrompt?: string | null;
-  };
-  /**
-   * Confidence-based learning copy and reward configuration.
-   */
-  confidenceLearning?: {
-    enabled?: boolean | null;
-    promptLabel?: string | null;
-    praiseText?: string | null;
-    correctionText?: string | null;
-    rewardBadge?: string | null;
     /**
-     * Probability of occasionally prompting a confidence check.
+     * Üdvözlő üzenetek a kurzus indításakor (véletlenszerűen választva).
      */
-    idleCheckProbability?: number | null;
-  };
-  /**
-   * Complexity notes, diagrams, and mistake impact details.
-   */
-  complexity?: {
-    timeComplexity?: string | null;
-    spaceComplexity?: string | null;
-    bestCase?: string | null;
-    averageCase?: string | null;
-    worstCase?: string | null;
-    diagramChoices?:
+    welcomeMessages?:
       | {
-          label: string;
-          explanation: string;
-          impact: string;
-          correct?: boolean | null;
+          text: string;
           id?: string | null;
         }[]
       | null;
-    mistakeImpacts?:
+    /**
+     * Részletes tippek/üzenetek, ha a felhasználó láthatóan elakadt a feladattal.
+     */
+    idleHelpMessages?:
       | {
-          label: string;
-          impact: string;
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Szakmai tanácsok/magyarázatok ismételt hibázás után.
+     */
+    mistakeHelpMessages?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Üzenetek arra az esetre, ha a felhasználó magabiztos volt, de elrontotta a feladatot.
+     */
+    overconfidentMessages?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Dicsérő, bíztató üzenetek sikeres válaszsorozatok (streak) esetén.
+     */
+    streakMessages?:
+      | {
+          text: string;
           id?: string | null;
         }[]
       | null;
@@ -426,53 +441,66 @@ export interface Course {
    */
   phases?:
     | {
+        /**
+         * Egyedi technikai azonosító (pl. bubble-sort-intro). Használd a javaslat gombot!
+         */
         phaseId: string;
+        /**
+         * A fázis címe a tanuló felé.
+         */
         title: string;
-        kind: 'motivation' | 'guided-visualization' | 'code-building' | 'analysis' | 'final-challenge';
         /**
-         * Which existing algorithm learning view this phase should embed.
+         * Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).
          */
-        sourceView: 'video' | 'animation' | 'control' | 'create' | 'alive';
+        sourceAlgorithmId: string;
         /**
-         * Algorithm id to pull the learning step from, such as bubble-sort.
+         * Az interaktív felület típusa (videó, kvíz, animáció stb.).
          */
-        sourceAlgorithmId?: string | null;
+        sourceView: 'video' | 'animation' | 'control' | 'create' | 'alive' | 'quiz' | 'info';
+        /**
+         * Fázis leírása: miről szól ez a rész?
+         */
         summary: string;
-        objective: string;
-        durationMinutes: number;
         /**
-         * Prompt shown after the learner answers or before a checkpoint.
+         * Opcionális: Részletes tanulási célkitűzés.
          */
-        confidencePrompt?: string | null;
+        objective?: string | null;
+        /**
+         * Opcionális: A kabala egyedi bátorító mondata.
+         */
         mascotLine?: string | null;
-        taskTitle: string;
-        taskPrompt: string;
-        successCopy: string;
-        hintCopy: string;
-        rewardLabel: string;
-        tips?:
+        /**
+         * Segítség, ha elakad a tanuló.
+         */
+        hintCopy?: string | null;
+        /**
+         * Legyen-e magabiztosság ellenőrzés (kérdőív) a fázis befejezése után?
+         */
+        askConfidence?: boolean | null;
+        /**
+         * Információs szöveg (csak info nézetnél látszik).
+         */
+        infoContent?: string | null;
+        /**
+         * Kvíz kérdések (csak kvíz nézetnél látszik).
+         */
+        quiz?:
           | {
-              tip: string;
+              question: string;
+              options?:
+                | {
+                    option: string;
+                    id?: string | null;
+                  }[]
+                | null;
+              correctIndex: number;
+              explanation: string;
               id?: string | null;
             }[]
           | null;
         id?: string | null;
       }[]
     | null;
-  /**
-   * Final debugging and quiz challenge configuration.
-   */
-  finalChallenge: {
-    title?: string | null;
-    debuggingPrompt: string;
-    quizPrompt: string;
-    mentorPolicy: string;
-    badge?: string | null;
-  };
-  /**
-   * Optional authoring notes for the next course blueprint.
-   */
-  nextSteps?: string[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -699,10 +727,8 @@ export interface AlgorithmProgressSelect<T extends boolean = true> {
  * via the `definition` "courses_select".
  */
 export interface CoursesSelect<T extends boolean = true> {
-  preset?: T;
   title?: T;
   slug?: T;
-  algorithmId?: T;
   summary?: T;
   heroTagline?: T;
   icon?: T;
@@ -710,13 +736,11 @@ export interface CoursesSelect<T extends boolean = true> {
   illustrationAsset?: T;
   estimatedMinutes?: T;
   difficulty?: T;
-  featuredReason?: T;
-  learningModes?: T;
   mascot?:
     | T
     | {
+        enabled?: T;
         name?: T;
-        preset?: T;
         asset?: T;
         accentColor?: T;
         idleTriggerSeconds?: T;
@@ -724,40 +748,34 @@ export interface CoursesSelect<T extends boolean = true> {
         summonLabel?: T;
         idlePrompt?: T;
         mistakePrompt?: T;
-        confidencePrompt?: T;
-      };
-  confidenceLearning?:
-    | T
-    | {
-        enabled?: T;
-        promptLabel?: T;
-        praiseText?: T;
-        correctionText?: T;
-        rewardBadge?: T;
-        idleCheckProbability?: T;
-      };
-  complexity?:
-    | T
-    | {
-        timeComplexity?: T;
-        spaceComplexity?: T;
-        bestCase?: T;
-        averageCase?: T;
-        worstCase?: T;
-        diagramChoices?:
+        welcomeMessages?:
           | T
           | {
-              label?: T;
-              explanation?: T;
-              impact?: T;
-              correct?: T;
+              text?: T;
               id?: T;
             };
-        mistakeImpacts?:
+        idleHelpMessages?:
           | T
           | {
-              label?: T;
-              impact?: T;
+              text?: T;
+              id?: T;
+            };
+        mistakeHelpMessages?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        overconfidentMessages?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        streakMessages?:
+          | T
+          | {
+              text?: T;
               id?: T;
             };
       };
@@ -766,37 +784,30 @@ export interface CoursesSelect<T extends boolean = true> {
     | {
         phaseId?: T;
         title?: T;
-        kind?: T;
-        sourceView?: T;
         sourceAlgorithmId?: T;
+        sourceView?: T;
         summary?: T;
         objective?: T;
-        durationMinutes?: T;
-        confidencePrompt?: T;
         mascotLine?: T;
-        taskTitle?: T;
-        taskPrompt?: T;
-        successCopy?: T;
         hintCopy?: T;
-        rewardLabel?: T;
-        tips?:
+        askConfidence?: T;
+        infoContent?: T;
+        quiz?:
           | T
           | {
-              tip?: T;
+              question?: T;
+              options?:
+                | T
+                | {
+                    option?: T;
+                    id?: T;
+                  };
+              correctIndex?: T;
+              explanation?: T;
               id?: T;
             };
         id?: T;
       };
-  finalChallenge?:
-    | T
-    | {
-        title?: T;
-        debuggingPrompt?: T;
-        quizPrompt?: T;
-        mentorPolicy?: T;
-        badge?: T;
-      };
-  nextSteps?: T;
   updatedAt?: T;
   createdAt?: T;
 }

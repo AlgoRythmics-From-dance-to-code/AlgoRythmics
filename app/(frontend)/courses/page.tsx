@@ -1,9 +1,14 @@
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 
 import { getCourseCatalog, type CourseCollectionDoc } from '../../../lib/courses/courseCatalog';
 import { getPayloadInstance } from '../../../lib/payload';
+import { getT, getServerLocale } from '../../../lib/i18n-server';
 
 export default async function CoursesPage() {
+  const locale = await getServerLocale();
+  const t = await getT();
+
   let docs: CourseCollectionDoc[] = [];
   try {
     const payload = await getPayloadInstance();
@@ -12,6 +17,7 @@ export default async function CoursesPage() {
       depth: 0,
       limit: 50,
       sort: 'title',
+      locale: locale as any,
     });
     docs = result.docs as unknown as CourseCollectionDoc[];
   } catch {
@@ -25,20 +31,20 @@ export default async function CoursesPage() {
       <div className="mx-auto max-w-[1200px]">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-black dark:text-white sm:text-4xl">
-            Available courses
+            {t('courses.hero_title')}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[#666] dark:text-gray-400">
-            Csak az elérhető kurzusok listája látszik itt.
+            {t('courses.hero_description')}
           </p>
         </div>
 
         <div className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
           <div className="grid grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.35fr] gap-4 border-b border-gray-100 px-5 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:border-white/10">
-            <div>Course</div>
-            <div>Summary</div>
-            <div>Duration</div>
-            <div>Difficulty</div>
-            <div>Open</div>
+            <div>{t('courses.table.name')}</div>
+            <div>{t('features.summary') || 'Summary'}</div>
+            <div>{t('courses.table.duration')}</div>
+            <div>{t('courses.table.level')}</div>
+            <div>{t('features.open') || 'Open'}</div>
           </div>
 
           <div className="divide-y divide-gray-100 dark:divide-white/10">
@@ -63,7 +69,7 @@ export default async function CoursesPage() {
                       {course.title}
                     </div>
                     <div className="mt-1 truncate text-xs font-bold uppercase tracking-[0.18em] text-[#269984]">
-                      {course.mascot.name} · {course.phases.length} checkpoints
+                      {course.mascot.name} · {course.phases.length} {t('courses.checkpoints')}
                     </div>
                   </div>
                 </div>
@@ -81,7 +87,7 @@ export default async function CoursesPage() {
                 </div>
 
                 <div className="flex items-center gap-2 text-sm font-bold text-[#269984] md:justify-end">
-                  <span>Open</span>
+                  <span>{t('courses.open')}</span>
                   <span className="transition-transform hover:translate-x-1">→</span>
                 </div>
               </Link>

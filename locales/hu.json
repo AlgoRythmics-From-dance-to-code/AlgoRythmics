@@ -528,7 +528,10 @@
       "dance_party": "Algoritmus Tánc Party",
       "binary_rhythm": "Bináris keresés ritmusa",
       "n_queens_challenge": "N-királynő kihívás"
-    }
+    },
+    "open": "Megnyitás",
+    "checkpoints": "ellenőrzőpont",
+    "back_to_courses": "Vissza a tanfolyamokhoz"
   },
   "videos": {
     "hero_title": "Videók",

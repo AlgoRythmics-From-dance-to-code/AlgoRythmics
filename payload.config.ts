@@ -19,6 +19,15 @@ export default buildConfig({
   admin: {
     user: Users.slug,
   },
+  localization: {
+    locales: [
+      { label: 'Hungarian', code: 'hu' },
+      { label: 'English', code: 'en' },
+      { label: 'Romanian', code: 'ro' },
+    ],
+    defaultLocale: 'hu',
+    fallback: true,
+  },
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
   csrf: [
     process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
