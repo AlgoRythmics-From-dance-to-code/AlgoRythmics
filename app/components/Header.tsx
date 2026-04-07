@@ -190,6 +190,7 @@ export default function Header({
                     onClick={() => {
                       setLocale(lang.code);
                       setLangDropdownOpen(false);
+                      router.refresh();
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors ${
                       locale === lang.code
@@ -352,6 +353,7 @@ export default function Header({
                     onClick={() => {
                       setLocale(lang.code);
                       setMenuOpen(false);
+                      router.refresh();
                     }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all active:scale-95 ${
                       locale === lang.code

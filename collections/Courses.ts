@@ -231,30 +231,13 @@ export const Courses: CollectionConfig = {
                   fields: [{ name: 'text', type: 'text', required: true, localized: true }],
                 },
                 {
-                  name: 'idleHelpMessages',
-                  type: 'array',
-                  admin: {
-                    description:
-                      'Részletes tippek/üzenetek, ha a felhasználó láthatóan elakadt a feladattal.',
-                  },
-                  fields: [{ name: 'text', type: 'text', required: true, localized: true }],
-                },
-                {
-                  name: 'mistakeHelpMessages',
-                  type: 'array',
-                  admin: {
-                    description: 'Szakmai tanácsok/magyarázatok ismételt hibázás után.',
-                  },
-                  fields: [{ name: 'text', type: 'text', required: true }],
-                },
-                {
                   name: 'overconfidentMessages',
                   type: 'array',
                   admin: {
                     description:
                       'Üzenetek arra az esetre, ha a felhasználó magabiztos volt, de elrontotta a feladatot.',
                   },
-                  fields: [{ name: 'text', type: 'text', required: true }],
+                  fields: [{ name: 'text', type: 'text', required: true, localized: true }],
                 },
                 {
                   name: 'streakMessages',
@@ -263,7 +246,7 @@ export const Courses: CollectionConfig = {
                     description:
                       'Dicsérő, bíztató üzenetek sikeres válaszsorozatok (streak) esetén.',
                   },
-                  fields: [{ name: 'text', type: 'text', required: true }],
+                  fields: [{ name: 'text', type: 'text', required: true, localized: true }],
                 },
               ],
             },
@@ -296,6 +279,7 @@ export const Courses: CollectionConfig = {
                   name: 'title',
                   type: 'text',
                   required: true,
+                  localized: true,
                   admin: { description: 'A fázis címe a tanuló felé.' },
                 },
                 {
@@ -327,16 +311,7 @@ export const Courses: CollectionConfig = {
                   admin: { description: 'Fázis leírása: miről szól ez a rész?' },
                 },
 
-                // Opcionális / Haladó elemek
-                {
-                  name: 'objective',
-                  type: 'textarea',
-                  localized: true,
-                  admin: {
-                    description: 'Opcionális: Részletes tanulási célkitűzés.',
-                    condition: (data) => data?.mascot?.enabled,
-                  },
-                },
+
                 {
                   name: 'mascotLine',
                   type: 'textarea',
@@ -347,11 +322,29 @@ export const Courses: CollectionConfig = {
                   },
                 },
                 {
+                  name: 'mascotMistakeLine',
+                  type: 'textarea',
+                  localized: true,
+                  admin: {
+                    description: 'Opcionális: Egyedi üzenet sok hiba esetén (pl. "Látom elakadtál ennél a résznél...").',
+                    condition: (data) => data?.mascot?.enabled,
+                  },
+                },
+                {
                   name: 'hintCopy',
                   type: 'textarea',
                   localized: true,
                   admin: {
-                    description: 'Segítség, ha elakad a tanuló.',
+                    description: 'A konkrét szakmai segítség/tipp a fázishoz.',
+                    condition: (data) => data?.mascot?.enabled,
+                  },
+                },
+                {
+                  name: 'idleHelp',
+                  type: 'textarea',
+                  localized: true,
+                  admin: {
+                    description: 'Tipp vagy bátorítás, ha sokáig nem történik semmi a fázisban.',
                     condition: (data) => data?.mascot?.enabled,
                   },
                 },

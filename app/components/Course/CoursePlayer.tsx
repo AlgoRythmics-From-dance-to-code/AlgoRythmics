@@ -13,12 +13,17 @@ import { useLocale } from '../../i18n/LocaleProvider';
 import type { CourseBlueprint, CoursePhase } from '../../../lib/courses/courseCatalog';
 import { VIDEOS } from '../../../lib/constants';
 
-const BubbleSortVisualizer = dynamic(() => import('../Learning/BubbleSortVisualizer'));
+const AlgorithmVisualizer = dynamic(() => import('../Learning/AlgorithmVisualizer'));
 const ControlVisualizer = dynamic(() => import('../Learning/ControlVisualizer'));
 const CodeExercise = dynamic(() => import('../Learning/CodeExercise'));
 const AliveVisualizer = dynamic(() => import('../Learning/AliveVisualizer'));
 const VideoPlayer = dynamic(() => import('../Learning/VideoPlayer'));
 const RestartCourseModal = dynamic(() => import('./RestartCourseModal'));
+
+const MatchingComponent = dynamic(() => import('./MatchingComponent'));
+const OrderingComponent = dynamic(() => import('./OrderingComponent'));
+const GapFillComponent = dynamic(() => import('./GapFillComponent'));
+const DebugComponent = dynamic(() => import('./DebugComponent'));
 
 type ConfidenceLevel = 'very-sure' | 'sure' | 'unsure' | 'guess';
 type PendingAdvance = {
@@ -74,7 +79,7 @@ function InfoComponent({ phase, courseId }: { phase: CoursePhase; courseId: stri
   );
 }
 
-function QuizComponent({ phase, courseId }: { phase: CoursePhase; courseId: string }) {
+function QuizComponent({ phase, courseId, onMistake }: { phase: CoursePhase; courseId: string, onMistake?: () => void }) {
   const { markCoursePhaseComplete, setCoursePhaseResult } = useAlgorithmStore();
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -93,6 +98,7 @@ function QuizComponent({ phase, courseId }: { phase: CoursePhase; courseId: stri
     setShowFeedback(true);
 
     const isCorrect = idx === q.correctIndex;
+    if (!isCorrect) onMistake?.();
     setCoursePhaseResult(courseId, phase.phaseId, isCorrect ? 'success' : 'fail');
     markCoursePhaseComplete(courseId, phase.phaseId);
   };
@@ -166,14 +172,22 @@ function QuizComponent({ phase, courseId }: { phase: CoursePhase; courseId: stri
   );
 }
 
-function PhaseBody({ phase, course }: { phase: CoursePhase; course: CourseBlueprint }) {
+function PhaseBody({ 
+  phase, 
+  course, 
+  onMistake 
+}: { 
+  phase: CoursePhase; 
+  course: CourseBlueprint; 
+  onMistake?: () => void;
+}) {
   const algorithmId = phase.sourceAlgorithmId || course.algorithmId;
 
   switch (phase.sourceView) {
     case 'info':
       return <InfoComponent phase={phase} courseId={course.slug} />;
     case 'quiz':
-      return <QuizComponent phase={phase} courseId={course.slug} />;
+      return <QuizComponent phase={phase} courseId={course.slug} onMistake={onMistake} />;
     case 'video': {
       const video =
         VIDEOS.find((item) => item.id === algorithmId) ||
@@ -183,20 +197,36 @@ function PhaseBody({ phase, course }: { phase: CoursePhase; course: CourseBluepr
       ) : null;
     }
     case 'animation':
-      return <BubbleSortVisualizer id={algorithmId} />;
+      return <AlgorithmVisualizer id={algorithmId} />;
     case 'control':
-      return <ControlVisualizer algorithmId={algorithmId} />;
+      return <ControlVisualizer algorithmId={algorithmId} onMistake={onMistake} />;
     case 'create':
       return <CodeExercise algorithmId={algorithmId} />;
     case 'alive':
-      return <AliveVisualizer algorithmId={algorithmId} />;
+      return <AliveVisualizer algorithmId={algorithmId} onMistake={onMistake} />;
+    case 'match':
+      return <MatchingComponent phase={phase} courseId={course.slug} onMistake={onMistake} />;
+    case 'order':
+      return <OrderingComponent phase={phase} courseId={course.slug} onMistake={onMistake} />;
+    case 'gap-fill':
+      return <GapFillComponent phase={phase} courseId={course.slug} onMistake={onMistake} />;
+    case 'debug':
+      return <DebugComponent phase={phase} courseId={course.slug} onMistake={onMistake} />;
+    case 'video-custom':
+      return (
+        <VideoPlayer 
+          youtubeId={phase.customVideoId || ''} 
+          algorithmId={algorithmId} 
+          title={phase.title} 
+        />
+      );
     case 'final-challenge':
       return (
         <div className="relative">
           <div className="absolute -top-4 -right-4 z-10 rotate-12 bg-amber-500 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-xl border-2 border-white">
             Final Challenge
           </div>
-          <AliveVisualizer algorithmId={algorithmId} />
+          <AliveVisualizer algorithmId={algorithmId} onMistake={onMistake} />
         </div>
       );
     default:
@@ -224,10 +254,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const { t } = useLocale();
   const router = useRouter();
 
+  const [phaseMistakesCount, setPhaseMistakesCount] = useState(0);
   const phaseStartTime = useRef(Date.now());
   const mascotHelpedCurrentPhase = useRef(false);
   const phaseMascotHelpCount = useRef(0);
-  const phaseMistakes = useRef(0);
 
   const completedPhaseStatuses = useMemo(
     () =>
@@ -337,7 +367,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       timeout = setTimeout(
         () => {
           setMascotMood('idle');
-          setMascotMessage(course.mascot.idlePrompt);
+          setMascotMessage(activePhase.idleHelp || course.mascot.idlePrompt);
           setMascotActions(true); // Offer help buttons
           setMascotVisible(true);
         },
@@ -375,15 +405,23 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
   const currentMistakeTriggered = useMemo(() => {
     if (!activePhase) return false;
+    const thresh = course.mascot.mistakeTriggerCount || 2;
+    
+    // Check algorithm-level control mistakes (persistent)
     const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
-    const mistakes = progress.controlMistakes || 0;
-    return activePhase.sourceView === 'control' && mistakes >= course.mascot.mistakeTriggerCount;
-  }, [activePhase, algorithmProgress, course.algorithmId, course.mascot.mistakeTriggerCount]);
+    const algoMistakes = progress.controlMistakes || 0;
+
+    // Trigger if EITHER persistent control mistakes OR current phase session mistakes hit thresh
+    return (
+      (activePhase.sourceView === 'control' && algoMistakes >= thresh) ||
+      phaseMistakesCount >= thresh
+    );
+  }, [activePhase, algorithmProgress, course.algorithmId, course.mascot.mistakeTriggerCount, phaseMistakesCount]);
 
   useEffect(() => {
     if (currentMistakeTriggered) {
       setMascotMood('mistake');
-      const intro = getRandomMessage(course.mascot.mistakeHelpMessages);
+      const intro = activePhase.mascotMistakeLine || course.mascot.mistakePrompt || 'Vegyük át még egyszer a szabályt!';
       const hint = activePhase.hintCopy;
       setMascotMessage(hint ? `${intro} ${hint}` : intro);
       setMascotVisible(true);
@@ -392,9 +430,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       incrementCourseMistakes(course.slug);
       mascotHelpedCurrentPhase.current = true;
       phaseMascotHelpCount.current += 1;
-      phaseMistakes.current += 1;
     }
-  }, [currentMistakeTriggered, course.mascot.mistakeHelpMessages, activePhase.hintCopy, course.slug, incrementCourseMascotInteraction, incrementCourseMistakes]);
+  }, [currentMistakeTriggered, activePhase.mascotMistakeLine, activePhase.hintCopy, course.mascot.mistakePrompt, course.slug, incrementCourseMascotInteraction, incrementCourseMistakes]);
 
   const activeProgress =
     algorithmProgress[activePhase?.sourceAlgorithmId || course.algorithmId] || {};
@@ -430,7 +467,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
     // Actually, it's better to update on unmount of the phase or when handleContinue happens.
 
-    const phaseAdvice = activePhase.mascotLine || activePhase.objective;
+    const phaseAdvice = activePhase.mascotLine;
     if (phaseAdvice) {
       setMascotMood('welcome');
       setMascotMessage(phaseAdvice);
@@ -445,7 +482,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     
     phaseStartTime.current = Date.now();
     phaseMascotHelpCount.current = phaseAdvice ? 1 : 0;
-    phaseMistakes.current = 0;
+    setPhaseMistakesCount(0);
     mascotHelpedCurrentPhase.current = !!phaseAdvice;
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -551,7 +588,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       helpUsed,
       mascotHelpCount: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mascotHelpCount || 0) + phaseMascotHelpCount.current,
       improvedAfterMascot: improved,
-      mistakes: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mistakes || 0) + phaseMistakes.current,
+      mistakes: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mistakes || 0) + phaseMistakesCount,
     });
     updateCourseTotalTime(course.slug, elapsed);
 
@@ -856,7 +893,11 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
           </div>
 
           <div key={`${activePhase.phaseId}-${phaseKey}`} className="mt-6">
-            <PhaseBody phase={activePhase} course={course} />
+            <PhaseBody 
+            phase={activePhase} 
+            course={course} 
+            onMistake={() => setPhaseMistakesCount(c => c + 1)} 
+          />
           </div>
         </div>
 
@@ -1037,10 +1078,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                           onClick={() => {
                             setMascotMood('neutral');
                             const advice =
-                              activePhase.hintCopy || activePhase.mascotLine || activePhase.summary;
-                            setMascotMessage(
-                              advice || getRandomMessage(course.mascot.idleHelpMessages),
-                            );
+                              activePhase.idleHelp || activePhase.hintCopy || activePhase.mascotLine || activePhase.summary;
+                            setMascotMessage(advice);
                             setMascotActions(false);
                           }}
                           className="flex-1 py-1.5 bg-[#269984] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider"
@@ -1062,7 +1101,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                           <button
                             onClick={() =>
                               setMascotMessage(
-                                `${activePhase.title}: ${activePhase.hintCopy || activePhase.mascotLine || activePhase.objective}`,
+                                `${activePhase.title}: ${activePhase.hintCopy || activePhase.mascotLine || activePhase.summary}`,
                               )
                             }
                             className="px-2 py-1 bg-[#269984]/5 hover:bg-[#269984]/15 text-[#269984] rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
@@ -1113,7 +1152,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   onClick={() => {
                     setMascotMood('neutral');
                     const welcomeMsg =
-                      activePhase.mascotLine || `Ebben a részben épp: ${activePhase.objective}`;
+                      activePhase.mascotLine || `Ebben a részben épp: ${activePhase.title}`;
                     setMascotMessage(welcomeMsg);
                     setMascotActions(false);
                     setMascotVisible(true);

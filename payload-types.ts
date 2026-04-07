@@ -217,24 +217,6 @@ export interface Course {
         }[]
       | null;
     /**
-     * Részletes tippek/üzenetek, ha a felhasználó láthatóan elakadt a feladattal.
-     */
-    idleHelpMessages?:
-      | {
-          text: string;
-          id?: string | null;
-        }[]
-      | null;
-    /**
-     * Szakmai tanácsok/magyarázatok ismételt hibázás után.
-     */
-    mistakeHelpMessages?:
-      | {
-          text: string;
-          id?: string | null;
-        }[]
-      | null;
-    /**
      * Üzenetek arra az esetre, ha a felhasználó magabiztos volt, de elrontotta a feladatot.
      */
     overconfidentMessages?:
@@ -292,17 +274,21 @@ export interface Course {
          */
         summary: string;
         /**
-         * Opcionális: Részletes tanulási célkitűzés.
-         */
-        objective?: string | null;
-        /**
          * Opcionális: A kabala egyedi bátorító mondata.
          */
         mascotLine?: string | null;
         /**
-         * Segítség, ha elakad a tanuló.
+         * Opcionális: Egyedi üzenet sok hiba esetén (pl. "Látom elakadtál ennél a résznél...").
+         */
+        mascotMistakeLine?: string | null;
+        /**
+         * A konkrét szakmai segítség/tipp a fázishoz.
          */
         hintCopy?: string | null;
+        /**
+         * Tipp vagy bátorítás, ha sokáig nem történik semmi a fázisban.
+         */
+        idleHelp?: string | null;
         /**
          * Legyen-e magabiztosság ellenőrzés (kérdőív) a fázis befejezése után?
          */
@@ -733,18 +719,6 @@ export interface CoursesSelect<T extends boolean = true> {
               text?: T;
               id?: T;
             };
-        idleHelpMessages?:
-          | T
-          | {
-              text?: T;
-              id?: T;
-            };
-        mistakeHelpMessages?:
-          | T
-          | {
-              text?: T;
-              id?: T;
-            };
         overconfidentMessages?:
           | T
           | {
@@ -766,9 +740,10 @@ export interface CoursesSelect<T extends boolean = true> {
         sourceAlgorithmId?: T;
         sourceView?: T;
         summary?: T;
-        objective?: T;
         mascotLine?: T;
+        mascotMistakeLine?: T;
         hintCopy?: T;
+        idleHelp?: T;
         askConfidence?: T;
         infoContent?: T;
         customVideoId?: T;

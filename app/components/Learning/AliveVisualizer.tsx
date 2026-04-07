@@ -18,11 +18,12 @@ const EMPTY_PROGRESS: Readonly<Partial<AlgorithmProgress>> = Object.freeze({});
 
 interface AliveVisualizerProps {
   algorithmId: string;
+  onMistake?: () => void;
 }
 
 type Mode = 'code' | 'nodes';
 
-export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
+export default function AliveVisualizer({ algorithmId, onMistake }: AliveVisualizerProps) {
   const { t } = useLocale();
   const { trackEvent, updateProgress } = useAnalytics(algorithmId, 'alive');
   const { algorithmProgress, resetAlgorithmProgressTab } = useAlgorithmStore();
@@ -97,6 +98,7 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
           progress={progress}
           startTime={startTime.current}
           helpUsed={helpUsed}
+          onMistake={onMistake}
           onSwitchToNodes={() => {
             setMode('nodes');
             setHelpUsed(true);
@@ -112,6 +114,7 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
           handleReset={handleReset}
           startTime={startTime.current}
           t={t}
+          onMistake={onMistake}
         />
       )}
     </div>
@@ -130,6 +133,7 @@ interface CodeModeProps {
   helpUsed: boolean;
   onSwitchToNodes: () => void;
   t: (key: string) => string;
+  onMistake?: () => void;
 }
 
 function CodeMode({
@@ -142,6 +146,7 @@ function CodeMode({
   helpUsed,
   onSwitchToNodes,
   t,
+  onMistake,
 }: CodeModeProps) {
   const [code, setCode] = useState('');
   const [result, setResult] = useState<CodeAnalysisResult | null>(null);
@@ -183,6 +188,7 @@ function CodeMode({
         aliveCompletedAt: new Date().toISOString(),
       });
     } else {
+      onMistake?.();
       trackEvent('alive_code_error', {
         missing: analysis.missing,
         score: analysis.score,
@@ -402,6 +408,7 @@ interface NodeModeProps {
   handleReset: () => void;
   startTime: number;
   t: (key: string) => string;
+  onMistake?: () => void;
 }
 
 function NodeMode({
@@ -411,6 +418,7 @@ function NodeMode({
   handleReset,
   startTime,
   t,
+  onMistake,
 }: NodeModeProps) {
   const allNodes = useMemo(() => getAlgorithmNodes(algorithmId) || [], [algorithmId]);
 
@@ -565,6 +573,7 @@ function NodeMode({
         aliveCompletedAt: new Date().toISOString(),
       });
     } else {
+      onMistake?.();
       setResult('incorrect');
       updateProgress({
         aliveLastActivityAt: new Date().toISOString(),

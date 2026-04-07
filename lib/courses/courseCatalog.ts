@@ -26,9 +26,10 @@ export type CoursePhase = {
   sourceView: CourseSourceView;
   sourceAlgorithmId: string;
   summary: string;
-  objective: string;
   mascotLine: string;
+  mascotMistakeLine?: string;
   hintCopy: string;
+  idleHelp?: string;
   askConfidence?: boolean;
   quiz?: CourseQuizQuestion[];
   infoContent?: string;
@@ -52,8 +53,6 @@ export type CourseMascot = {
   idlePrompt: string;
   mistakePrompt: string;
   welcomeMessages: string[];
-  idleHelpMessages: string[];
-  mistakeHelpMessages: string[];
   overconfidentMessages: string[];
   streakMessages: string[];
 };
@@ -139,9 +138,10 @@ function toPhases(value: unknown): CoursePhase[] {
         sourceView: (current.sourceView as CourseSourceView) || 'video',
         sourceAlgorithmId: (current.sourceAlgorithmId as string) || 'bubble-sort',
         summary: (current.summary as string) || '',
-        objective: (current.objective as string) || '',
         mascotLine: (current.mascotLine as string) || '',
+        mascotMistakeLine: (current.mascotMistakeLine as string) || '',
         hintCopy: (current.hintCopy as string) || '',
+        idleHelp: (current.idleHelp as string) || '',
         askConfidence: !!current.askConfidence,
         quiz,
         infoContent: current.infoContent as string,
@@ -202,8 +202,6 @@ export function normalizeCourse(doc: Record<string, unknown>): CourseBlueprint {
       mistakePrompt:
         (mascot.mistakePrompt as string) || 'Let us slow down and inspect the rule again.',
       welcomeMessages: toStringArray(mascot.welcomeMessages),
-      idleHelpMessages: toStringArray(mascot.idleHelpMessages),
-      mistakeHelpMessages: toStringArray(mascot.mistakeHelpMessages),
       overconfidentMessages: toStringArray(mascot.overconfidentMessages),
       streakMessages: toStringArray(mascot.streakMessages),
     },
