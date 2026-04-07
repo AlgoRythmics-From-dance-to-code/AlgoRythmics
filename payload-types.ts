@@ -372,12 +372,16 @@ export interface User {
   id: number;
   firstName?: string | null;
   lastName?: string | null;
-  role: 'admin' | 'user';
+  role: 'admin' | 'editor' | 'user';
   bio?: string | null;
   /**
    * Profile image URL (synced from social providers).
    */
   imageUrl?: string | null;
+  /**
+   * Engedélyezze vagy tiltsa le a segítő kabalaállat megjelenését.
+   */
+  mascotEnabled?: boolean | null;
   /**
    * Algorithms the user has already mastered.
    */
@@ -396,6 +400,10 @@ export interface User {
         | 'bogosort'
       )[]
     | null;
+  /**
+   * Kurzusok, amiket a felhasználó már teljesített.
+   */
+  completedCourses?: (number | Course)[] | null;
   /**
    * Persistent state of the algorithm visualizer for each algorithm.
    */
@@ -798,7 +806,9 @@ export interface UsersSelect<T extends boolean = true> {
   role?: T;
   bio?: T;
   imageUrl?: T;
+  mascotEnabled?: T;
   completedAlgorithms?: T;
+  completedCourses?: T;
   visualizerProgress?: T;
   learningStats?:
     | T

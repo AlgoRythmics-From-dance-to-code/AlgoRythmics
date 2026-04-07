@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { ROLES } from '../lib/constants';
 
 /**
  * Per-user, per-algorithm progress aggregation.
@@ -13,27 +14,25 @@ export const AlgorithmProgress: CollectionConfig = {
   },
   access: {
     create: ({ req: { user }, data }) => {
-      // User must be authenticated
       if (!user) return false;
-      // Admin can create anything
-      if (user.role === 'admin') return true;
-      // Normal users can only create progress records for themselves
+      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       if (data && data.user) {
         return data.user === user.id;
       }
-      return true; // We also validate in hooks as best practice but this allows backend creation on behalf of req user
+      return true;
     },
     read: ({ req: { user } }) => {
       if (!user) return false;
-      if (user.role === 'admin') return true;
+      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { user: { equals: user.id } };
     },
     update: ({ req: { user } }) => {
       if (!user) return false;
-      if (user.role === 'admin') return true;
+      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { user: { equals: user.id } };
     },
-    delete: ({ req: { user } }) => user?.role === 'admin',
+    delete: ({ req: { user } }) =>
+      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
   },
   fields: [
     // ─── Identity ───────────────────────────────────────

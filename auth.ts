@@ -20,6 +20,7 @@ declare module 'next-auth' {
   }
   interface User extends BaseUser {
     completedAlgorithms?: PayloadUser['completedAlgorithms'];
+    mascotEnabled?: boolean;
   }
 }
 
@@ -34,6 +35,7 @@ declare module 'next-auth/jwt' {
     authProvider?: string;
     createdAt?: string;
     completedAlgorithms?: PayloadUser['completedAlgorithms'];
+    mascotEnabled?: boolean;
     provider?: string;
     remember?: boolean;
     iat?: number;
@@ -133,6 +135,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               bio: u.bio || undefined,
               imageUrl: u.imageUrl,
               completedAlgorithms: u.completedAlgorithms || [],
+              mascotEnabled: u.mascotEnabled !== false,
             };
           }
           logger.warn({ result: !!result }, 'Authorize: Failed (credentials or missing ID)');
@@ -237,6 +240,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               collection: 'users',
               id: existingUser.id,
               data: updateData,
+              overrideAccess: true,
             });
             logger.info({ provider: account.provider }, 'Updated user with latest provider info');
           }
@@ -268,36 +272,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.authProvider = u.authProvider || undefined;
           token.createdAt = u.createdAt;
           token.completedAlgorithms = u.completedAlgorithms || [];
+          token.mascotEnabled = u.mascotEnabled !== false;
         }
       }
 
-      // Dynamic expiry enforcement
+      // 1. Dynamic expiry enforcement
       if (token.iat && !token.remember) {
         const now = Math.floor(Date.now() / 1000);
         if (now - (token.iat as number) > APP_CONFIG.TOKEN_EXPIRATION_DEFAULT) {
-          return null; // Invalidates the session
+          return null;
         }
       }
 
-      // If manually updated via update() in the frontend
-      if (trigger === 'update' && session) {
-        // Merge provided session data into token
-        if (session.firstName) token.firstName = session.firstName;
-        if (session.lastName) token.lastName = session.lastName;
-        if (session.bio) token.bio = session.bio;
-        token.updatedAt = Date.now(); // Force update
-      }
-
-      // Sync from DB on session update OR social sign-in (where token.role is missing)
+      // 2. Sync from DB on session update OR social sign-in (where token.role is missing)
       if (token.email && (trigger === 'update' || (account && !token.role))) {
         try {
           const payload = await getPayloadInstance();
-
           const result = await payload.find({
             collection: 'users',
             where: { email: { equals: token.email } },
             limit: 1,
             depth: 0,
+            overrideAccess: true,
           });
 
           if (result.docs.length > 0) {
@@ -311,10 +307,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.authProvider = dbUser.authProvider || undefined;
             token.createdAt = dbUser.createdAt;
             token.completedAlgorithms = dbUser.completedAlgorithms || [];
+            token.mascotEnabled = dbUser.mascotEnabled !== false;
           }
         } catch (error) {
           logger.error({ error }, 'JWT callback profile sync error');
         }
+      }
+
+      // 3. Manual Client-Side Updates (via update() call)
+      // These should OVERRIDE the DB sync values to ensure the UI updates instantly
+      if (trigger === 'update' && session) {
+        if (typeof session.firstName === 'string') token.firstName = session.firstName;
+        if (typeof session.lastName === 'string') token.lastName = session.lastName;
+        if (typeof session.bio === 'string') token.bio = session.bio;
+        if (typeof session.mascotEnabled === 'boolean') token.mascotEnabled = session.mascotEnabled;
+        token.updatedAt = Date.now(); // Force update
       }
 
       return token;
@@ -331,6 +338,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.authProvider = String(token.authProvider || '');
         session.user.createdAt = String(token.createdAt || '');
         session.user.completedAlgorithms = token.completedAlgorithms;
+        session.user.mascotEnabled = token.mascotEnabled !== false;
       }
       return session;
     },

@@ -18,6 +18,11 @@ const dirname = path.dirname(filename);
 export default buildConfig({
   admin: {
     user: Users.slug,
+    components: {
+      afterNav: [
+        './app/components/Payload/RoleBodyClass#default',
+      ],
+    },
   },
   localization: {
     locales: [

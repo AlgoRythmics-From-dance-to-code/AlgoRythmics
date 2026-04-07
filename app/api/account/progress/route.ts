@@ -112,14 +112,33 @@ export async function POST(req: Request) {
     const payload = await getPayloadInstance();
     const userId = Number(session.user.id);
 
+    // Get completed course IDs from slugs
+    let completedCourseIds: (string | number)[] = [];
+    if (courseProgress && typeof courseProgress === 'object') {
+      const completedSlugs = Object.entries(courseProgress)
+        .filter(([, data]) => data && (data as any).isCompleted)
+        .map(([slug]) => slug);
+
+      if (completedSlugs.length > 0) {
+        const { docs: courseDocs } = await payload.find({
+          collection: 'courses',
+          where: { slug: { in: completedSlugs } },
+          depth: 0,
+          limit: 100,
+        });
+        completedCourseIds = courseDocs.map((c) => c.id);
+      }
+    }
+
     // 1. Update User level data
     await payload.update({
       collection: 'users',
       id: userId,
       data: {
         completedAlgorithms: completedIds as User['completedAlgorithms'],
+        completedCourses: completedCourseIds,
         visualizerProgress: (visualizerProgress || {}) as User['visualizerProgress'],
-      } as Partial<User>,
+      } as any,
     });
 
     // 2. Sync Algorithm-specific Progress (Analytics)

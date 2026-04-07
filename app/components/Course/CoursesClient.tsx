@@ -145,7 +145,7 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
                   <button
                     key={course.slug}
                     onClick={() => handleCourseClick(course)}
-                    className="w-full text-left grid grid-cols-1 gap-6 px-8 py-8 transition-all hover:bg-[#fafafa] dark:hover:bg-white/5 md:grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.35fr] md:items-center group"
+                    className="w-full text-left grid grid-cols-1 gap-6 px-8 py-8 transition-all hover:bg-gray-50/80 dark:hover:bg-white/[0.03] md:grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.35fr] md:items-center group cursor-pointer"
                   >
                     <div className="flex items-center gap-5 min-w-0">
                       <div

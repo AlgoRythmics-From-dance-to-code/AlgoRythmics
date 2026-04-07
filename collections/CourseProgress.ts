@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { ROLES } from '../lib/constants';
 
 export const CourseProgress: CollectionConfig = {
   slug: 'course-progress',
@@ -10,16 +11,17 @@ export const CourseProgress: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (!user) return false;
-      if (user.role === 'admin') return true;
+      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { user: { equals: user.id } };
     },
     create: () => true,
     update: ({ req: { user } }) => {
       if (!user) return false;
-      if (user.role === 'admin') return true;
+      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { user: { equals: user.id } };
     },
-    delete: ({ req: { user } }) => user?.role === 'admin',
+    delete: ({ req: { user } }) =>
+      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
   },
   fields: [
     {

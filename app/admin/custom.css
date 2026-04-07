@@ -1,0 +1,13 @@
+/**
+ * Custom Admin Styles for AlgoRythmics
+ */
+
+/* 1. Hide the Dashboard Layout controls (Edit Dashboard / Reset Layout) for anyone except ADMIN */
+body:not(.role-admin) .dashboard-breadcrumb-select {
+  display: none !important;
+}
+
+/* 2. Hide the edit controls on dashboard widgets when not in edit mode (extra safety) */
+body:not(.role-admin) .widget-wrapper__controls {
+  display: none !important;
+}

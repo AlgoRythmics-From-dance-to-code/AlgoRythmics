@@ -35,9 +35,12 @@ export const Courses: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: ({ req: { user } }) => user?.role === ROLES.ADMIN,
-    update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
-    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+    create: ({ req: { user } }) =>
+      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    update: ({ req: { user } }) =>
+      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    delete: ({ req: { user } }) =>
+      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
   },
   fields: [
     {

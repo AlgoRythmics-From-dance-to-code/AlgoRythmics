@@ -5,6 +5,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Check, ShieldAlert, Sparkles, Star, X, RotateCcw } from 'lucide-react';
 
@@ -56,6 +57,7 @@ function getCompletionFlag(
 
 function InfoComponent({ phase, courseId }: { phase: CoursePhase; courseId: string }) {
   const { markCoursePhaseComplete } = useAlgorithmStore();
+  const { t } = useLocale();
   const isRead = useAlgorithmStore((state) =>
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
@@ -72,7 +74,7 @@ function InfoComponent({ phase, courseId }: { phase: CoursePhase; courseId: stri
           onClick={() => markCoursePhaseComplete(courseId, phase.phaseId)}
           className="self-end px-8 py-3 bg-[#269984] text-white rounded-xl font-bold hover:bg-[#1f7a6a] transition-all shadow-lg shadow-[#269984]/20"
         >
-          Értem, mehetünk tovább!
+          {t('course.info_understand')}
         </button>
       )}
     </div>
@@ -80,6 +82,7 @@ function InfoComponent({ phase, courseId }: { phase: CoursePhase; courseId: stri
 }
 
 function QuizComponent({ phase, courseId, onMistake }: { phase: CoursePhase; courseId: string, onMistake?: () => void }) {
+  const { t } = useLocale();
   const { markCoursePhaseComplete, setCoursePhaseResult } = useAlgorithmStore();
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -163,7 +166,7 @@ function QuizComponent({ phase, courseId, onMistake }: { phase: CoursePhase; cou
           }`}
         >
           <p className="font-black uppercase tracking-widest text-[10px] mb-2 opacity-60">
-            Magyarázat
+            {t('course.quiz_explanation')}
           </p>
           <p className="text-sm leading-relaxed font-medium">{q.explanation}</p>
         </motion.div>
@@ -181,6 +184,7 @@ function PhaseBody({
   course: CourseBlueprint; 
   onMistake?: () => void;
 }) {
+  const { t } = useLocale();
   const algorithmId = phase.sourceAlgorithmId || course.algorithmId;
 
   switch (phase.sourceView) {
@@ -224,7 +228,7 @@ function PhaseBody({
       return (
         <div className="relative">
           <div className="absolute -top-4 -right-4 z-10 rotate-12 bg-amber-500 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-xl border-2 border-white">
-            Final Challenge
+            {t('course.final_challenge')}
           </div>
           <AliveVisualizer algorithmId={algorithmId} onMistake={onMistake} />
         </div>
@@ -253,6 +257,14 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   } = useAlgorithmStore();
   const { t } = useLocale();
   const router = useRouter();
+  const { data: session, status: sessionStatus } = useSession();
+  
+  // Enabled if still loading (on by default) or explicitly not false
+  const mascotEnabled = sessionStatus === 'loading' ? true : session?.user?.mascotEnabled !== false;
+
+  useEffect(() => {
+    if (!mascotEnabled) setMascotVisible(false);
+  }, [mascotEnabled]);
 
   const [phaseMistakesCount, setPhaseMistakesCount] = useState(0);
   const phaseStartTime = useRef(Date.now());
@@ -284,6 +296,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   }, [course.phases.length, course.slug, courseProgress, firstIncompletePhaseIndex]);
 
   const [activePhaseIndex, setActivePhaseIndex] = useState(initialPhaseIndex);
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [mascotVisible, setMascotVisible] = useState(false);
   const [mascotMood, setMascotMood] = useState<
     'idle' | 'mistake' | 'confidence' | 'neutral' | 'welcome' | 'streak' | 'overconfident'
@@ -300,6 +313,21 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const [modalMode, setModalMode] = useState<'restart' | 'checkpoint'>('restart');
   const [pendingPhaseIndex, setPendingPhaseIndex] = useState<number | null>(null);
   const promptShownRef = useRef(false);
+
+  // Resume from stored state after hydration
+  useEffect(() => {
+    setHasHydrated(true);
+    const storedProgress = courseProgress[course.slug];
+    if (storedProgress) {
+      if (typeof storedProgress.activePhaseIndex === 'number') {
+        const resumeIndex = Math.min(storedProgress.activePhaseIndex, firstIncompletePhaseIndex);
+        setActivePhaseIndex(resumeIndex);
+      }
+      if (storedProgress.isCompleted) {
+        setIsFinished(true);
+      }
+    }
+  }, [course.slug, firstIncompletePhaseIndex]); // Run once on mount (course.slug check handles navigation)
 
   // Auto-prompt to restart if course was already completed on entry
   useEffect(() => {
@@ -369,7 +397,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
           setMascotMood('idle');
           setMascotMessage(activePhase.idleHelp || course.mascot.idlePrompt);
           setMascotActions(true); // Offer help buttons
-          setMascotVisible(true);
+          if (mascotEnabled) setMascotVisible(true);
         },
         (course.mascot.idleTriggerSeconds || 30) * 1000,
       );
@@ -421,10 +449,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   useEffect(() => {
     if (currentMistakeTriggered) {
       setMascotMood('mistake');
-      const intro = activePhase.mascotMistakeLine || course.mascot.mistakePrompt || 'Vegyük át még egyszer a szabályt!';
+      const intro = activePhase.mascotMistakeLine || course.mascot.mistakePrompt || t('course.mistake_prompt');
       const hint = activePhase.hintCopy;
       setMascotMessage(hint ? `${intro} ${hint}` : intro);
-      setMascotVisible(true);
+      if (mascotEnabled) setMascotVisible(true);
       setMascotActions(false);
       incrementCourseMascotInteraction(course.slug);
       incrementCourseMistakes(course.slug);
@@ -471,7 +499,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     if (phaseAdvice) {
       setMascotMood('welcome');
       setMascotMessage(phaseAdvice);
-      setMascotVisible(true);
+      if (mascotEnabled) setMascotVisible(true);
       setMascotActions(false);
       // If it's a specific instruction (not just general objective), count it
       if (activePhase.mascotLine) {
@@ -489,8 +517,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   }, [activePhaseIndex, course.slug]);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     setCourseActivePhase(course.slug, activePhaseIndex);
-  }, [activePhaseIndex, course.slug, setCourseActivePhase]);
+  }, [activePhaseIndex, course.slug, setCourseActivePhase, hasHydrated]);
 
   const resetFutureProgressFrom = (phaseIndex: number) => {
     const futurePhases = course.phases.slice(phaseIndex + 1);
@@ -535,7 +564,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
           if (course.mascot.enabled) {
             setMascotMood('overconfident');
             setMascotMessage(getRandomMessage(course.mascot.overconfidentMessages));
-            setMascotVisible(true);
+            if (mascotEnabled) setMascotVisible(true);
             setMascotActions(false);
           }
         }
@@ -545,7 +574,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         if (nextStreak >= 3 && course.mascot.enabled) {
           setMascotMood('streak');
           setMascotMessage(getRandomMessage(course.mascot.streakMessages));
-          setMascotVisible(true);
+          if (mascotEnabled) setMascotVisible(true);
           setMascotActions(false);
         }
       }
@@ -589,6 +618,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       mascotHelpCount: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mascotHelpCount || 0) + phaseMascotHelpCount.current,
       improvedAfterMascot: improved,
       mistakes: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mistakes || 0) + phaseMistakesCount,
+      mascotIntentionallyDisabled: !mascotEnabled,
     });
     updateCourseTotalTime(course.slug, elapsed);
 
@@ -618,8 +648,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     if (askConfidenceNow) {
       if (course.mascot.enabled) {
         setMascotMood('confidence');
-        setMascotMessage('Hogy érzed, mennyire sikerült eddig elsajátítani a látottakat?');
-        setMascotVisible(true);
+        setMascotMessage(t('course.confidence_prompt'));
+        if (mascotEnabled) setMascotVisible(true);
       }
       setShowConfidenceModal(true);
       return;
@@ -643,16 +673,16 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
           isOpen={showRestartModal}
           onClose={handleCancelRestart}
           onConfirm={handleConfirmRestart}
-          title={modalMode === 'restart' ? 'Újrakezded a kurzust?' : 'Visszalépsz ide?'}
+          title={modalMode === 'restart' ? t('course.restart_title') : t('course.checkpoint_title')}
           message={
             modalMode === 'restart'
               ? (courseProgress[course.slug]?.isCompleted && !isInternalReset 
-                  ? 'Ezt a kurzust már sikeresen teljesítetted. Ha újra elkezded, az eddigi haladásod és pontjaid törlődnek ebből a kurzusból.'
-                  : 'Ha újra elkezded, az eddigi haladásod és pontjaid törlődnek ebből a kurzusból.')
-              : 'A későbbi haladásod ezen a kurzuson törlődni fog, és újra meg kell csinálnod a lépéseket.'
+                  ? t('course.restart_completed_message')
+                  : t('course.restart_message'))
+              : t('course.checkpoint_message')
           }
-          confirmLabel={modalMode === 'restart' ? 'Igen, tiszta lappal!' : 'Igen, lépjünk vissza!'}
-          cancelLabel={isInternalReset ? 'Mégse, folytassuk' : 'Mégse, menjünk vissza'}
+          confirmLabel={modalMode === 'restart' ? t('course.restart_confirm') : t('course.checkpoint_confirm')}
+          cancelLabel={isInternalReset ? t('course.cancel_continue') : t('course.cancel_back')}
         />
 
         {isFinished && (
@@ -676,16 +706,16 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
               </div>
 
               <h2 className="mb-2 text-4xl font-black text-black dark:text-white uppercase tracking-tight">
-                Gratulálunk!
+                {t('course.congratulations')}
               </h2>
               <p className="mb-8 text-lg font-bold text-[#269984] uppercase tracking-widest">
-                Sikeresen teljesítetted a(z) {course.title} kurzust!
+                {t('course.completed_course', { title: course.title })}
               </p>
 
               <div className="mb-10 grid grid-cols-2 gap-4">
                 <div className="rounded-[1.5rem] border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-900/20 dark:bg-amber-900/10">
                   <div className="text-[10px] font-black uppercase tracking-tighter text-amber-600 dark:text-amber-500/70 mb-1">
-                    Total Score
+                    {t('course.total_score')}
                   </div>
                   <div className="text-3xl font-black text-[#B45309] dark:text-amber-400 tabular-nums">
                     {courseProgress[course.slug]?.points || 0}
@@ -693,7 +723,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                 </div>
                 <div className="rounded-[1.5rem] border border-[#269984]/10 bg-[#f0fbf9]/50 p-4 dark:border-white/5 dark:bg-white/5">
                   <div className="text-[10px] font-black uppercase tracking-tighter text-[#269984] dark:text-[#269984]/70 mb-1">
-                    Checkpoints
+                    {t('course.total_checkpoints')}
                   </div>
                   <div className="text-3xl font-black text-[#269984] dark:text-[#269984] tabular-nums">
                     {course.phases.length}
@@ -706,14 +736,14 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   href="/courses"
                   className="inline-flex items-center gap-3 rounded-2xl bg-[#269984] px-8 py-4 font-black uppercase tracking-widest text-white shadow-xl shadow-[#269984]/30 transition-transform hover:-translate-y-1"
                 >
-                  Tovább a többi kurzusra
+                  {t('course.next_courses')}
                   <ChevronRight className="h-5 w-5" />
                 </Link>
                 <button
                   onClick={() => setIsFinished(false)}
                   className="rounded-2xl border border-gray-100 bg-white px-8 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-colors hover:bg-gray-50 dark:border-white/5 dark:bg-white/5 dark:text-gray-500"
                 >
-                  Kurzus áttekintése
+                  {t('course.review_course')}
                 </button>
               </div>
             </div>
@@ -724,7 +754,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-[#f0fbf9] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#269984] dark:bg-white/10">
             <Sparkles className="h-3.5 w-3.5" />
-            Playable course
+            {t('course.playable_course')}
           </div>
           <h2 className="mt-3 text-3xl font-bold text-black dark:text-white">{course.title}</h2>
           <p className="mt-2 max-w-3xl text-sm leading-7 text-[#666] dark:text-gray-400">
@@ -737,13 +767,13 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             onClick={handleResetCourse}
             className="text-[10px] font-bold uppercase tracking-widest text-red-500 hover:text-red-600 transition-colors bg-red-500/5 px-3 py-1.5 rounded-lg border border-red-500/10"
           >
-            Kurzus Resetelése
+            {t('course.reset_course')}
           </button>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="rounded-2xl border border-gray-100 bg-[#fafafa] px-4 py-3 text-sm dark:border-white/10 dark:bg-black/20">
               <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">
-                Points
+                {t('course.points')}
               </div>
               <div className="mt-1 font-bold text-black dark:text-white">
                 {courseProgress[course.slug]?.points || 0}
@@ -751,7 +781,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             </div>
             <div className="rounded-2xl border border-gray-100 bg-[#fafafa] px-4 py-3 text-sm dark:border-white/10 dark:bg-black/20">
               <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">
-                Phase
+                {t('course.phase')}
               </div>
               <div className="mt-1 font-bold text-black dark:text-white">
                 {activePhaseIndex + 1}/{course.phases.length}
@@ -1029,7 +1059,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         )}
       </AnimatePresence>
       {/* UNIFIED HUB: Handles both the summon button and Bubi himself */}
-      {course.mascot.enabled && (
+      {course.mascot.enabled && mascotEnabled && (
         <motion.div
           drag
           dragMomentum={false}

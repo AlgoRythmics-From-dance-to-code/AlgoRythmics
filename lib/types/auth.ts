@@ -17,4 +17,5 @@ export type BaseUser = {
   createdAt?: string;
   completedAlgorithms?: PayloadUser['completedAlgorithms'];
   visualizerProgress?: PayloadUser['visualizerProgress'];
+  mascotEnabled?: boolean;
 };

@@ -103,6 +103,7 @@ interface AlgorithmState {
           improvedAfterMascot: boolean;
           attempts: number;
           mistakes: number;
+          mascotIntentionallyDisabled?: boolean;
         }
       >;
     }
@@ -119,6 +120,7 @@ interface AlgorithmState {
       mascotHelpCount: number;
       improvedAfterMascot: boolean;
       mistakes: number;
+      mascotIntentionallyDisabled?: boolean;
     }>,
   ) => void;
   incrementCourseMascotInteraction: (courseId: string) => void;
@@ -287,6 +289,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
           improvedAfterMascot: false,
           attempts: 0,
           mistakes: 0,
+          mascotIntentionallyDisabled: false,
         };
 
         const now = new Date().toISOString();
