@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "vercel-build": "payload generate:importmap && payload migrate && npm run seed && next build",
+    "vercel-build": "payload generate:importmap && payload migrate && next build",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -18,9 +18,7 @@
     "payload": "payload",
     "generate:migration": "payload migrate:create",
     "migrate": "payload migrate",
-    "migrate:status": "payload migrate:status",
-    "seed": "npx tsx scripts/seedCourses.ts",
-    "export": "npx tsx scripts/exportCourses.ts"
+    "migrate:status": "payload migrate:status"
   },
   "dependencies": {
     "@auth/core": "^0.41.0",
