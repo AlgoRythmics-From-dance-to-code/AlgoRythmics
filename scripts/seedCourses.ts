@@ -22,7 +22,11 @@ function flattenLocales(data: any, locale: string): any {
       const keys = Object.keys(value);
       // Check if this looks like a localized field object
       if (keys.includes('hu') || keys.includes('en') || keys.includes('ro')) {
-        result[key] = value[locale] !== undefined ? value[locale] : value['hu'] ?? null;
+        let text = value[locale];
+        if (text === undefined) text = value['hu'];
+        if (text === undefined) text = value['en'];
+        if (text === undefined) text = value['ro'];
+        result[key] = text !== undefined ? text : '';
       } else {
         result[key] = flattenLocales(value, locale);
       }
