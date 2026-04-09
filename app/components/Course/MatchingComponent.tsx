@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, ArrowRight } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
@@ -28,9 +28,7 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
   const initialRight = phase.matching?.map((m, i) => ({ id: `R-${i}`, text: m.right })) || [];
 
   // Shuffle right side for the challenge
-  const [shuffledRight, setShuffledRight] = useState(() =>
-    [...initialRight].sort(() => Math.random() - 0.5),
-  );
+  const [shuffledRight] = useState(() => [...initialRight].sort(() => Math.random() - 0.5));
 
   const [matches, setMatches] = useState<MatchPair[]>(() =>
     initialLeft.map((l) => ({ leftId: l.id, rightId: null })),

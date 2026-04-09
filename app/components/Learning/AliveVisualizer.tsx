@@ -216,6 +216,7 @@ function CodeMode({
     updateProgress,
     result?.score,
     progress?.aliveCompleted,
+    onMistake,
   ]);
 
   const handleClear = () => {

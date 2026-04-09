@@ -428,7 +428,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         }, 0);
 
         // Preserve phasePoints only for kept phases
-        const nextPhasePoints: Record<string, any> = {};
+        const nextPhasePoints: Record<string, unknown> = {};
         nextCompleted.forEach((id) => {
           if (current.phasePoints?.[id]) nextPhasePoints[id] = current.phasePoints[id];
         });

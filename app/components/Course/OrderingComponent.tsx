@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, Reorder, AnimatePresence } from 'framer-motion';
+import { motion, Reorder } from 'framer-motion';
 import { Check, X, GripVertical } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';

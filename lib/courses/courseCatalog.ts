@@ -149,13 +149,13 @@ function toPhases(value: unknown): CoursePhase[] {
         infoContent: current.infoContent as string,
         customVideoId: current.customVideoId as string,
         matching: Array.isArray(current.matching)
-          ? current.matching.map((m: any) => ({
+          ? current.matching.map((m: Record<string, unknown>) => ({
               left: (m.left as string) || '',
               right: (m.right as string) || '',
             }))
           : undefined,
         ordering: Array.isArray(current.ordering)
-          ? current.ordering.map((o: any) => ({
+          ? current.ordering.map((o: Record<string, unknown>) => ({
               text: (o.text as string) || '',
             }))
           : undefined,
@@ -163,7 +163,7 @@ function toPhases(value: unknown): CoursePhase[] {
         expectedCode: current.expectedCode as string,
         gapFillContent: current.gapFillContent as string,
         gapFillOptions: Array.isArray(current.gapFillOptions)
-          ? current.gapFillOptions.map((o: any) => o.option as string)
+          ? current.gapFillOptions.map((o: Record<string, unknown>) => o.option as string)
           : undefined,
       };
     })

@@ -133,7 +133,7 @@ export default function ProfilePage() {
             duration: 2000,
           });
         }
-      } catch (error) {
+      } catch {
         if (showToast) {
           toast.error(t('toasts.profile_update_error'), {
             id: 'profile-update-error',
@@ -151,7 +151,7 @@ export default function ProfilePage() {
     if (status !== 'authenticated' || !lastSyncedEmail) return;
 
     // Check if anything actually changed to avoid initial/redundant saves
-    const u = session?.user as any;
+    const u = session?.user as BaseUser;
     if (
       firstName === (u.firstName || '') &&
       lastName === (u.lastName || '') &&
@@ -181,7 +181,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (status !== 'authenticated' || !lastSyncedEmail) return;
 
-    const u = session?.user as any;
+    const u = session?.user as BaseUser;
     if (mascotEnabled === (u.mascotEnabled !== false)) return;
 
     handleUpdateProfile(true); // Keep toast for toggle

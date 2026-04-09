@@ -118,7 +118,7 @@ export async function POST(req: Request) {
     let completedCourseIds: (string | number)[] = [];
     if (courseProgress && typeof courseProgress === 'object') {
       const completedSlugs = Object.entries(courseProgress)
-        .filter(([, data]) => data && (data as any).isCompleted)
+        .filter(([, data]) => data && (data as { isCompleted?: boolean }).isCompleted)
         .map(([slug]) => slug);
 
       if (completedSlugs.length > 0) {
@@ -138,9 +138,9 @@ export async function POST(req: Request) {
       id: userId,
       data: {
         completedAlgorithms: completedIds as User['completedAlgorithms'],
-        completedCourses: completedCourseIds,
+        completedCourses: completedCourseIds as User['completedCourses'],
         visualizerProgress: (visualizerProgress || {}) as User['visualizerProgress'],
-      } as any,
+      },
     });
 
     // 2. Sync Algorithm-specific Progress (Analytics)
@@ -281,25 +281,31 @@ export async function POST(req: Request) {
     let totalAliveAttempts = 0;
     const totalAlgorithmsStarted = allAlgoDocs.docs.length;
 
-    allAlgoDocs.docs.forEach((doc: any) => {
+    allAlgoDocs.docs.forEach((doc) => {
+      const aDoc = doc as unknown as AlgorithmProgress;
       totalTimeSpentMs +=
-        (doc.videoWatchTimeMs || 0) +
-        (doc.animationTotalTimeMs || 0) +
-        (doc.controlTotalTimeMs || 0) +
-        (doc.createTotalTimeMs || 0) +
-        (doc.aliveTotalTimeMs || 0);
-      totalMistakes += (doc.controlMistakes || 0) + (doc.createMistakes || 0);
+        (aDoc.videoWatchTimeMs || 0) +
+        (aDoc.animationTotalTimeMs || 0) +
+        (aDoc.controlTotalTimeMs || 0) +
+        (aDoc.createTotalTimeMs || 0) +
+        (aDoc.aliveTotalTimeMs || 0);
+      totalMistakes += (aDoc.controlMistakes || 0) + (aDoc.createMistakes || 0);
       totalHintsUsed +=
-        (doc.controlHintsUsed || 0) + (doc.createHelpUsed ? 1 : 0) + (doc.aliveHelpUsed ? 1 : 0);
-      totalControlAttempts += doc.controlAttempts || 0;
-      totalCreateAttempts += doc.createAttempts || 0;
-      totalAliveAttempts += doc.aliveCodeSubmissions || 0;
+        (aDoc.controlHintsUsed || 0) + (aDoc.createHelpUsed ? 1 : 0) + (aDoc.aliveHelpUsed ? 1 : 0);
+      totalControlAttempts += aDoc.controlAttempts || 0;
+      totalCreateAttempts += aDoc.createAttempts || 0;
+      totalAliveAttempts += aDoc.aliveCodeSubmissions || 0;
     });
 
-    allCourseDocs.docs.forEach((doc: any) => {
-      totalTimeSpentMs += doc.totalTimeMs || 0;
-      totalMistakes += doc.totalMistakes || 0;
-      totalHintsUsed += doc.mascotInteractionsTotal || 0;
+    allCourseDocs.docs.forEach((doc) => {
+      const cDoc = doc as unknown as {
+        totalTimeMs?: number;
+        totalMistakes?: number;
+        mascotInteractionsTotal?: number;
+      };
+      totalTimeSpentMs += cDoc.totalTimeMs || 0;
+      totalMistakes += cDoc.totalMistakes || 0;
+      totalHintsUsed += cDoc.mascotInteractionsTotal || 0;
     });
 
     // We do NOT completely overwrite learningStats to avoid destructive operations if only part of it was synced
@@ -309,7 +315,9 @@ export async function POST(req: Request) {
     const existingStats = (userDoc.learningStats || {}) as Record<string, unknown>;
 
     const totalAlgorithmsCompleted = completedIds?.length || 0;
-    const totalCoursesCompleted = allCourseDocs.docs.filter((doc: any) => doc.isCompleted).length;
+    const totalCoursesCompleted = allCourseDocs.docs.filter(
+      (doc) => (doc as unknown as { isCompleted?: boolean }).isCompleted,
+    ).length;
     const totalCoursesStarted = allCourseDocs.docs.length;
 
     await payload.update({
@@ -330,7 +338,7 @@ export async function POST(req: Request) {
           totalCoursesCompleted,
           lastActiveDate: new Date().toISOString(),
         },
-      } as any,
+      },
     });
 
     return NextResponse.json({ success: true });

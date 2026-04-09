@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
 
@@ -12,7 +12,11 @@ interface GapFillComponentProps {
   onMistake?: () => void;
 }
 
-export default function GapFillComponent({ phase, courseId, onMistake }: GapFillComponentProps) {
+export default function GapFillComponent({
+  phase,
+  courseId,
+  onMistake: _onMistake,
+}: GapFillComponentProps) {
   const { markCoursePhaseComplete, setCoursePhaseResult } = useAlgorithmStore();
   const isDone = useAlgorithmStore((state) =>
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),

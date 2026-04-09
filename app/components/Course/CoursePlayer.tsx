@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Check, ShieldAlert, Sparkles, Star, X, RotateCcw } from 'lucide-react';
+import { ChevronRight, Check, ShieldAlert, Sparkles, Star } from 'lucide-react';
 
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
@@ -213,7 +213,7 @@ function PhaseBody({
     case 'control':
       return <ControlVisualizer algorithmId={algorithmId} onMistake={onMistake} />;
     case 'create':
-      return <CodeExercise algorithmId={algorithmId} />;
+      return <CodeExercise algorithmId={algorithmId} onMistake={onMistake} />;
     case 'alive':
       return <AliveVisualizer algorithmId={algorithmId} onMistake={onMistake} />;
     case 'match':
@@ -336,7 +336,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         setIsFinished(true);
       }
     }
-  }, [course.slug, firstIncompletePhaseIndex]); // Run once on mount (course.slug check handles navigation)
+  }, [course.slug, firstIncompletePhaseIndex, courseProgress]); // Run once on mount (course.slug check handles navigation)
 
   // Auto-prompt to restart if course was already completed on entry
   useEffect(() => {
@@ -346,7 +346,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       setModalMode('restart');
       setShowRestartModal(true);
     }
-  }, [course.slug, courseProgress[course.slug]?.isCompleted]);
+  }, [course.slug, courseProgress]);
 
   const handleConfirmRestart = () => {
     if (modalMode === 'restart') {
@@ -438,6 +438,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     setMascotMood,
     setMascotVisible,
     activePhase,
+    mascotEnabled,
   ]);
 
   const currentMistakeTriggered = useMemo(() => {
@@ -483,6 +484,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     course.slug,
     incrementCourseMascotInteraction,
     incrementCourseMistakes,
+    mascotEnabled,
+    t,
   ]);
 
   const activeProgress =
@@ -507,17 +510,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
   // Handle mascot message when phase changes (triggered by user or slug change)
   useEffect(() => {
-    // 1. Log time for PREVIOUS phase before moving on
-    const logPreviousPhaseTime = () => {
-      const elapsed = Date.now() - phaseStartTime.current;
-      updateCourseTotalTime(course.slug, elapsed);
-
-      // Extract the PREVIOUS phase ID
-      // This is tricky because we already advanced activePhaseIndex in some cases
-      // But we can use a ref for lastActiveIndex
-    };
-
-    // Actually, it's better to update on unmount of the phase or when handleContinue happens.
+    // actually, it's better to update on unmount of the phase or when handleContinue happens.
 
     const phaseAdvice = activePhase.mascotLine;
     if (phaseAdvice) {

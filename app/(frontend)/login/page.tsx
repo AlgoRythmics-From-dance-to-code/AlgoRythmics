@@ -52,7 +52,7 @@ export default function LoginPage() {
       setSystemError(msg);
       toast.error(t('toasts.login_error'), { description: msg });
     }
-  }, [searchParams, t]);
+  }, [searchParams, t, clearStore]);
 
   const socialLogin = (provider: string) => {
     // Store remember preference in a cookie for the callback route

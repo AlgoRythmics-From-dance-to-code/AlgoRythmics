@@ -10,7 +10,7 @@ import '../../admin/custom.css';
  */
 export default function RoleBodyClass() {
   const { user } = useAuth();
-  const role = (user as any)?.role;
+  const role = (user as Record<string, unknown>)?.role;
 
   useEffect(() => {
     if (role) {
