@@ -10,9 +10,10 @@ import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 
 interface CodeExerciseProps {
   algorithmId: string;
+  onMistake?: () => void;
 }
 
-export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
+export default function CodeExercise({ algorithmId, onMistake }: CodeExerciseProps) {
   const { t } = useLocale();
   const { trackEvent, updateProgress } = useAnalytics(algorithmId, 'create');
 
@@ -127,7 +128,6 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
           createHelpUsed: helpActive,
           createBlanksCorrectFirst: firstTryCorrect,
           createBlanksTotal: totalBlanks,
-          createTotalTimeMs: elapsed,
           createCompletedAt: new Date().toISOString(),
         });
       } else if (isCorrect) {
@@ -141,6 +141,8 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
         } else {
           setActiveBlank(null);
         }
+      } else {
+        onMistake?.();
       }
     },
     [
@@ -152,6 +154,7 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
       trackEvent,
       updateProgress,
       template,
+      onMistake,
     ],
   );
 

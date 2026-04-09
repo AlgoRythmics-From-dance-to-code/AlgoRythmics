@@ -7,6 +7,7 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
     defaultColumns: ['email', 'role', 'authProvider', 'createdAt'],
+    hidden: ({ user }) => user?.role !== ROLES.ADMIN && user?.role !== ROLES.EDITOR,
   },
   auth: {
     verify: {
@@ -54,16 +55,20 @@ export const Users: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (!user) return false;
-      if (user.role === ROLES.ADMIN) return true;
+      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { id: { equals: user.id } };
     },
     create: () => true,
     update: ({ req: { user } }) => {
       if (!user) return false;
+      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
+      return { id: { equals: user.id } };
+    },
+    delete: ({ req: { user } }) => {
+      if (!user) return false;
       if (user.role === ROLES.ADMIN) return true;
       return { id: { equals: user.id } };
     },
-    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN,
   },
   hooks: {
     beforeChange: [
@@ -107,6 +112,7 @@ export const Users: CollectionConfig = {
       type: 'select',
       options: [
         { label: 'Admin', value: ROLES.ADMIN },
+        { label: 'Editor', value: ROLES.EDITOR },
         { label: 'User', value: ROLES.USER },
       ],
       defaultValue: ROLES.USER,
@@ -130,19 +136,38 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name: 'mascotEnabled',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Engedélyezze vagy tiltsa le a segítő kabalaállat megjelenését.',
+      },
+    },
+    {
       name: 'completedAlgorithms',
       type: 'select',
       hasMany: true,
-      options: ALGORITHMS.map((algo: { id: string }) => ({
+      options: ALGORITHMS.map((algo) => ({
         label: algo.id
           .split('-')
-          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' '),
         value: algo.id,
       })),
       admin: {
         position: 'sidebar',
         description: 'Algorithms the user has already mastered.',
+      },
+    },
+    {
+      name: 'completedCourses',
+      type: 'relationship',
+      relationTo: 'courses',
+      hasMany: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Kurzusok, amiket a felhasználó már teljesített.',
       },
     },
     {
@@ -160,6 +185,8 @@ export const Users: CollectionConfig = {
         { name: 'totalTimeSpentMs', type: 'number', defaultValue: 0 },
         { name: 'totalAlgorithmsStarted', type: 'number', defaultValue: 0 },
         { name: 'totalAlgorithmsCompleted', type: 'number', defaultValue: 0 },
+        { name: 'totalCoursesStarted', type: 'number', defaultValue: 0 },
+        { name: 'totalCoursesCompleted', type: 'number', defaultValue: 0 },
         { name: 'totalControlAttempts', type: 'number', defaultValue: 0 },
         { name: 'totalCreateAttempts', type: 'number', defaultValue: 0 },
         { name: 'totalAliveAttempts', type: 'number', defaultValue: 0 },

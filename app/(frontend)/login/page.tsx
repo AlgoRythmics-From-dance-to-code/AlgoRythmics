@@ -8,9 +8,29 @@ import { signIn } from 'next-auth/react';
 import { ROUTES, API_ROUTES } from '../../../lib/constants';
 import { toast } from 'sonner';
 import { useLocale } from '../../i18n/LocaleProvider';
+import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+
+/**
+ * Helper to clear all authentication related cookies manually
+ */
+const clearAuthCookies = () => {
+  if (typeof document === 'undefined') return;
+  const cookies = document.cookie.split(';');
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i];
+    const eqPos = cookie.indexOf('=');
+    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+    if (name.includes('auth') || name.includes('token') || name.includes('session')) {
+      document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+      document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;`;
+      document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict;`;
+    }
+  }
+};
 
 export default function LoginPage() {
   const { t } = useLocale();
+  const { clearStore } = useAlgorithmStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -22,13 +42,17 @@ export default function LoginPage() {
   const [systemError, setSystemError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Proactively clear stale state when arrival at login page
+    clearAuthCookies();
+    clearStore();
+
     const error = searchParams.get('error');
     if (error) {
       const msg = t('login.errors.auth_failed');
       setSystemError(msg);
       toast.error(t('toasts.login_error'), { description: msg });
     }
-  }, [searchParams, t]);
+  }, [searchParams, t, clearStore]);
 
   const socialLogin = (provider: string) => {
     // Store remember preference in a cookie for the callback route

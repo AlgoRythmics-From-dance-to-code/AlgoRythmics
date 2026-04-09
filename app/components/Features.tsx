@@ -84,7 +84,6 @@ export default function Features() {
               <FeatureCard
                 src={feature.src}
                 gifSrc={feature.gifSrc}
-                alt={feature.alt}
                 label={feature.label}
                 width={feature.width}
                 height={feature.height}
@@ -107,14 +106,12 @@ export default function Features() {
 function FeatureCard({
   src,
   gifSrc,
-  alt,
   label,
   width,
   height,
 }: {
   src: string;
   gifSrc: string;
-  alt: string;
   label: string;
   width: number;
   height: number;

@@ -30,7 +30,7 @@ export async function getServerLocale(): Promise<Locale> {
     // next/headers might throw if called outside of request scope
   }
 
-  return 'en';
+  return 'hu';
 }
 
 export async function getT() {

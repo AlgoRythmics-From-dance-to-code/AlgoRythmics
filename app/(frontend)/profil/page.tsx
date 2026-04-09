@@ -2,7 +2,7 @@
 
 import { BaseUser } from '../../../lib/types/auth';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -81,12 +81,12 @@ export default function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState('public');
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState({ text: '', type: '' });
 
   // Form states
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [bio, setBio] = useState('');
+  const [mascotEnabled, setMascotEnabled] = useState(true);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -109,16 +109,85 @@ export default function ProfilePage() {
         firstName?: string;
         lastName?: string;
         bio?: string;
+        mascotEnabled?: boolean;
       }
       const u = session.user as LocalUser;
       setFirstName(u.firstName || '');
       setLastName(u.lastName || '');
       setBio(u.bio || '');
+      setMascotEnabled(u.mascotEnabled !== false);
       setLastSyncedEmail(session.user.email);
     }
   }, [session, lastSyncedEmail]);
 
-  if (status === 'loading') {
+  const handleUpdateProfile = useCallback(
+    async (showToast = true) => {
+      setIsSaving(true);
+
+      try {
+        await axios.post('/api/profile/update', { firstName, lastName, bio, mascotEnabled });
+        await update({ firstName, lastName, bio, mascotEnabled });
+        if (showToast) {
+          toast.success(t('toasts.profile_updated'), {
+            id: 'profile-update',
+            duration: 2000,
+          });
+        }
+      } catch {
+        if (showToast) {
+          toast.error(t('toasts.profile_update_error'), {
+            id: 'profile-update-error',
+          });
+        }
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [firstName, lastName, bio, mascotEnabled, t, update],
+  );
+
+  // Autosave effect for text fields
+  useEffect(() => {
+    if (status !== 'authenticated' || !lastSyncedEmail) return;
+
+    // Check if anything actually changed to avoid initial/redundant saves
+    const u = session?.user as BaseUser;
+    if (
+      firstName === (u.firstName || '') &&
+      lastName === (u.lastName || '') &&
+      bio === (u.bio || '') &&
+      mascotEnabled === (u.mascotEnabled !== false)
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      handleUpdateProfile(false); // Silent save for text fields
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [
+    firstName,
+    lastName,
+    bio,
+    mascotEnabled,
+    status,
+    lastSyncedEmail,
+    session,
+    handleUpdateProfile,
+  ]);
+
+  // Mascot toggle is immediate
+  useEffect(() => {
+    if (status !== 'authenticated' || !lastSyncedEmail) return;
+
+    const u = session?.user as BaseUser;
+    if (mascotEnabled === (u.mascotEnabled !== false)) return;
+
+    handleUpdateProfile(true); // Keep toast for toggle
+  }, [mascotEnabled, status, lastSyncedEmail, session, handleUpdateProfile]);
+
+  if (status === 'loading' && !lastSyncedEmail) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-85px)] dark:bg-[#0a0a0a]">
         <div className="relative">
@@ -145,54 +214,43 @@ export default function ProfilePage() {
   const avatarUrl: string | undefined =
     (user as { imageUrl?: string }).imageUrl || user.image || undefined;
 
-  const handleUpdateProfile = async () => {
-    setIsSaving(true);
-    setSaveMessage({ text: '', type: '' });
-
-    try {
-      await axios.post('/api/profile/update', { firstName, lastName, bio });
-      setSaveMessage({ text: t('toasts.profile_updated'), type: 'success' });
-      toast.success(t('toasts.profile_updated'), {
-        description: t('toasts.profile_updated_desc'),
-      });
-      await update({ firstName, lastName, bio });
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError<{ error: string }>;
-      const errMsg = axiosError.response?.data?.error || t('toasts.profile_update_error');
-      setSaveMessage({ text: errMsg, type: 'error' });
-      toast.error(t('toasts.profile_update_error'), { description: errMsg });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleUpdatePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error(t('toasts.unexpected_error_desc'));
+      toast.error(t('login.errors.password_required'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error(t('toasts.password_update_error'));
+      toast.error(t('register.errors.password_mismatch'));
       return;
     }
+    if (newPassword.length < 6) {
+      toast.error(t('toasts.password_min'));
+      return;
+    }
+
     setIsSaving(true);
-    try {
+
+    const passwordPromise = (async () => {
       await axios.post('/api/profile/update-password', { currentPassword, newPassword });
-      setSaveMessage({ text: t('toasts.password_updated'), type: 'success' });
-      toast.success(t('toasts.password_updated'), {
-        description: t('toasts.password_updated_desc'),
-      });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (error: unknown) {
-      const errMsg =
-        error && typeof error === 'object' && 'response' in error
-          ? (error as { response: { data?: { error?: string } } }).response?.data?.error ||
-            t('toasts.profile_update_error')
-          : t('toasts.profile_update_error');
-      setSaveMessage({ text: errMsg, type: 'error' });
-      toast.error(t('toasts.password_update_error'), { description: errMsg });
+      return t('toasts.password_updated');
+    })();
+
+    toast.promise(passwordPromise, {
+      loading: t('profile.edit.saving'),
+      success: (data) => data,
+      error: (error: unknown) => {
+        const axiosError = error as AxiosError<{ error: string }>;
+        return axiosError.response?.data?.error || t('toasts.password_update_error');
+      },
+    });
+
+    try {
+      await passwordPromise;
+    } catch {
+      // Handled by toast.promise
     } finally {
       setIsSaving(false);
     }
@@ -202,15 +260,26 @@ export default function ProfilePage() {
     if (deleteConfirmation !== 'DELETE') return;
     setIsSaving(true);
     const { clearStore } = useAlgorithmStore.getState();
-    try {
+
+    const deletePromise = (async () => {
       await axios.delete('/api/profile/delete');
-      toast.success(t('toasts.account_deleted'), { description: t('toasts.account_deleted_desc') });
       clearStore();
       await signOut({ callbackUrl: '/' });
+      return t('toasts.account_deleted');
+    })();
+
+    toast.promise(deletePromise, {
+      loading: t('profile.edit.saving'),
+      success: (data) => data,
+      error: (error: unknown) => {
+        const axiosError = error as AxiosError<{ error: string }>;
+        return axiosError.response?.data?.error || t('toasts.delete_error');
+      },
+    });
+
+    try {
+      await deletePromise;
     } catch {
-      const errMsg = t('toasts.delete_error');
-      setSaveMessage({ text: errMsg, type: 'error' });
-      toast.error(t('toasts.delete_error'), { description: errMsg });
       setIsSaving(false);
     }
   };
@@ -250,7 +319,6 @@ export default function ProfilePage() {
                         key={link.key}
                         onClick={() => {
                           setActiveTab(link.key);
-                          setSaveMessage({ text: '', type: '' });
                         }}
                         className={`flex items-center gap-3 w-full text-left px-5 py-3.5 rounded-2xl font-montserrat font-bold text-sm transition-all select-none whitespace-nowrap ${
                           activeTab === link.key
@@ -294,7 +362,9 @@ export default function ProfilePage() {
                         style={{ width: '100%', height: '100%' }}
                       />
                     ) : (
-                      <span className="text-2xl sm:text-3xl font-black text-[#269984]">{initials}</span>
+                      <span className="text-2xl sm:text-3xl font-black text-[#269984]">
+                        {initials}
+                      </span>
                     )}
                   </div>
                   {/* Role Badge on the Avatar - Only for Admins */}
@@ -414,7 +484,7 @@ export default function ProfilePage() {
                           type="text"
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
-                          placeholder="Your first name"
+                          placeholder={t('profile.edit.first_name_placeholder')}
                           className="w-full font-montserrat h-14 border-2 border-gray-100 dark:border-neutral-800 bg-gray-50/50 dark:bg-[#1a1a1a] dark:text-white rounded-2xl px-5 text-base outline-none focus:border-[#269984] focus:bg-white transition-all shadow-sm"
                         />
                       </div>
@@ -426,7 +496,7 @@ export default function ProfilePage() {
                           type="text"
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
-                          placeholder="Your last name"
+                          placeholder={t('profile.edit.last_name_placeholder')}
                           className="w-full font-montserrat h-14 border-2 border-gray-100 dark:border-neutral-800 bg-gray-50/50 dark:bg-[#1a1a1a] dark:text-white rounded-2xl px-5 text-base outline-none focus:border-[#269984] focus:bg-white transition-all shadow-sm"
                         />
                       </div>
@@ -450,32 +520,43 @@ export default function ProfilePage() {
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
                         rows={4}
-                        placeholder="Tell us about yourself..."
+                        placeholder={t('profile.edit.bio_placeholder')}
                         className="w-full font-montserrat py-4 border-2 border-gray-100 dark:border-neutral-800 bg-gray-50/50 dark:bg-[#1a1a1a] dark:text-white rounded-2xl px-5 text-base outline-none focus:border-[#269984] focus:bg-white transition-all shadow-sm resize-none"
                       />
                     </div>
 
-                    <div className="flex items-center gap-6 pt-4">
+                    <div className="p-6 bg-[#f0fbf9] dark:bg-[#269984]/5 rounded-[2rem] border border-[#269984]/20 flex items-center justify-between">
+                      <div className="flex-1 pr-4">
+                        <p className="font-montserrat font-black text-[#269984] text-xs uppercase tracking-widest mb-1">
+                          {t('profile.edit.mascot_label')}
+                        </p>
+                        <p className="text-xs text-[#269984]/70 leading-relaxed">
+                          {t('profile.edit.mascot_description')}
+                        </p>
+                      </div>
                       <button
-                        onClick={handleUpdateProfile}
-                        disabled={isSaving}
-                        className="font-montserrat font-black text-white h-14 px-10 rounded-2xl text-base hover:scale-[1.03] active:scale-[0.98] shadow-lg shadow-[#269984]/30 transition-all cursor-pointer select-none bg-[#269984] disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => {
+                          setMascotEnabled(!mascotEnabled);
+                        }}
+                        className={`w-14 h-8 rounded-full transition-all relative p-1 ${mascotEnabled ? 'bg-[#269984]' : 'bg-gray-300 dark:bg-neutral-700'}`}
                       >
-                        {isSaving ? t('profile.edit.saving') : t('profile.edit.save')}
-                      </button>
-
-                      {saveMessage.text && (
                         <div
-                          className={`p-4 rounded-xl flex items-center gap-2 ${saveMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}
-                        >
-                          {saveMessage.type === 'success' ? (
-                            <CheckCircle2 size={18} />
-                          ) : (
-                            <AlertTriangle size={18} />
-                          )}
-                          <span className="text-sm font-bold uppercase tracking-tight">
-                            {saveMessage.text}
-                          </span>
+                          className={`w-6 h-6 bg-white rounded-full transition-all shadow-md ${mascotEnabled ? 'translate-x-6' : 'translate-x-0'}`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-4">
+                      {isSaving && (
+                        <div className="flex items-center gap-2 text-[#269984] font-montserrat font-bold text-sm animate-pulse">
+                          <div className="w-1.5 h-1.5 bg-[#269984] rounded-full"></div>
+                          {t('profile.edit.saving')}
+                        </div>
+                      )}
+                      {!isSaving && firstName && (
+                        <div className="flex items-center gap-2 text-gray-400 font-montserrat font-medium text-sm">
+                          <CheckCircle2 size={14} className="text-[#269984]" />
+                          {t('toasts.profile_updated_desc')}
                         </div>
                       )}
                     </div>
@@ -533,21 +614,8 @@ export default function ProfilePage() {
                           disabled={isSaving}
                           className="font-montserrat font-black text-white h-14 px-10 rounded-2xl text-base hover:scale-[1.03] active:scale-[0.98] shadow-lg shadow-[#269984]/30 transition-all cursor-pointer select-none bg-[#269984] disabled:opacity-50"
                         >
-                          {t('profile.security.update_btn')}
+                          {isSaving ? t('profile.edit.saving') : t('profile.security.update_btn')}
                         </button>
-
-                        {saveMessage.text && (
-                          <div
-                            className={`flex items-center gap-2 ${saveMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}
-                          >
-                            {saveMessage.type === 'success' ? (
-                              <CheckCircle2 size={18} />
-                            ) : (
-                              <AlertTriangle size={18} />
-                            )}
-                            <span className="text-sm font-bold uppercase">{saveMessage.text}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>

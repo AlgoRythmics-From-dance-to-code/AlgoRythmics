@@ -12,9 +12,10 @@ import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 
 interface ControlVisualizerProps {
   algorithmId: string;
+  onMistake?: () => void;
 }
 
-export default function ControlVisualizer({ algorithmId }: ControlVisualizerProps) {
+export default function ControlVisualizer({ algorithmId, onMistake }: ControlVisualizerProps) {
   const { t } = useLocale();
   const { trackEvent, updateProgress } = useAnalytics(algorithmId, 'control');
 
@@ -28,7 +29,11 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
   const isBacktracking = algo?.category === 'backtracking';
   const selectionLimit = isSorting ? 2 : 1;
 
-  const [expectedStepIndex, setExpectedStepIndex] = useState(1);
+  const [expectedStepIndex, setExpectedStepIndex] = useState(() => {
+    // Find the first step that actually requires an interaction (has active indices)
+    const firstInteractive = steps.findIndex((s, i) => i > 0 && s.activeIndices.length > 0);
+    return firstInteractive !== -1 ? firstInteractive : 1;
+  });
 
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
@@ -121,7 +126,24 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
   // Sorting: Check the pair selection
   const handleCheck = useCallback(() => {
     if (!currentExpected || !isSorting) return;
-    if (selectedIndices.length !== selectionLimit) return;
+
+    // If fewer than selectionLimit are selected, it's a mistake in logic/understanding
+    if (selectedIndices.length < selectionLimit) {
+      setFeedback('incorrect');
+      setMistakes((m) => m + 1);
+      updateProgress({ controlMistakes: mistakes + 1 });
+      onMistake?.();
+      setAttemptedWrong(true);
+      trackEvent('control_selection_incomplete', {
+        selected: selectedIndices.length,
+        required: selectionLimit,
+      });
+      setTimeout(() => setFeedback(null), 600);
+      return;
+    }
+
+    if (selectedIndices.length > selectionLimit) return;
+
     const expectedActive = currentExpected.activeIndices;
     const isCorrect =
       selectedIndices.length === expectedActive.length &&
@@ -137,7 +159,10 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
       setInteractionMode('decide');
     } else {
       setFeedback('incorrect');
-      setMistakes((m) => m + 1);
+      const nextMistakes = mistakes + 1;
+      setMistakes(nextMistakes);
+      updateProgress({ controlMistakes: nextMistakes });
+      onMistake?.();
       setAttemptedWrong(true);
       trackEvent('control_mistake', {
         expected: expectedActive,
@@ -146,7 +171,17 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
       });
       setTimeout(() => setFeedback(null), 600);
     }
-  }, [selectedIndices, currentExpected, trackEvent, expectedStepIndex, isSorting, selectionLimit]);
+  }, [
+    selectedIndices,
+    currentExpected,
+    trackEvent,
+    expectedStepIndex,
+    isSorting,
+    selectionLimit,
+    onMistake,
+    mistakes,
+    updateProgress,
+  ]);
 
   // Sorting: Handle swap/stay decision
   const handleSortingDecision = useCallback(
@@ -183,13 +218,26 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         }, 150);
       } else {
         setFeedback('incorrect');
-        setMistakes((m) => m + 1);
+        const nextMistakes = mistakes + 1;
+        setMistakes(nextMistakes);
+        updateProgress({ controlMistakes: nextMistakes });
+        onMistake?.();
         setAttemptedWrong(true);
         trackEvent('control_decision', { action, isCorrect: false, step: expectedStepIndex });
         setTimeout(() => setFeedback(null), 600);
       }
     },
-    [currentExpected, expectedStepIndex, steps, trackEvent, attemptedWrong, finishControl],
+    [
+      currentExpected,
+      expectedStepIndex,
+      steps,
+      trackEvent,
+      attemptedWrong,
+      finishControl,
+      mistakes,
+      updateProgress,
+      onMistake,
+    ],
   );
 
   // Search: Combined selection + decision
@@ -202,7 +250,10 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         selectedIndices.length === 1 && currentExpected.activeIndices.includes(selectedIndices[0]);
       if (!selectionIsCorrect) {
         setFeedback('incorrect');
-        setMistakes((m) => m + 1);
+        const nextMistakes = mistakes + 1;
+        setMistakes(nextMistakes);
+        updateProgress({ controlMistakes: nextMistakes });
+        onMistake?.();
         setAttemptedWrong(true);
         trackEvent('control_selection_mistake', { step: expectedStepIndex });
         setTimeout(() => setFeedback(null), 600);
@@ -244,7 +295,10 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
         }, 150);
       } else {
         setFeedback('incorrect');
-        setMistakes((m) => m + 1);
+        const nextMistakes = mistakes + 1;
+        setMistakes(nextMistakes);
+        updateProgress({ controlMistakes: nextMistakes });
+        onMistake?.();
         setAttemptedWrong(true);
         trackEvent('control_decision', { action, isCorrect: false, step: expectedStepIndex });
         setTimeout(() => setFeedback(null), 600);
@@ -258,6 +312,9 @@ export default function ControlVisualizer({ algorithmId }: ControlVisualizerProp
       attemptedWrong,
       selectedIndices,
       finishControl,
+      mistakes,
+      updateProgress,
+      onMistake,
     ],
   );
 

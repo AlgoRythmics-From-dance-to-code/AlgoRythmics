@@ -18,6 +18,7 @@ export interface AlgorithmProgress {
   aliveCompletedAt?: string | null;
   controlBestScore?: number;
   controlMistakes?: number;
+  createMistakes?: number;
   controlAttempts?: number;
   createHelpUsed?: boolean;
   createBlanksCorrectFirst?: number;
@@ -63,7 +64,91 @@ interface AlgorithmState {
     completedIds?: string[];
     visualizerProgress?: Record<string, { step: number; speed: number }>;
     algorithmProgress?: Record<string, AlgorithmProgress>;
+    courseProgress?: Record<
+      string,
+      {
+        activePhaseIndex: number;
+        completedPhases: string[];
+        lastConfidenceRating?: string;
+        phaseResults?: Record<string, 'success' | 'fail'>;
+        isCompleted?: boolean;
+      }
+    >;
   }) => void;
+
+  // Course progress
+  courseProgress: Record<
+    string,
+    {
+      activePhaseIndex: number;
+      completedPhases: string[];
+      lastConfidenceRating?: string;
+      phaseResults?: Record<string, 'success' | 'fail'>;
+      points?: number;
+      isCompleted?: boolean;
+      totalTimeMs?: number;
+      totalMistakes?: number;
+      mascotInteractionsTotal?: number;
+      confidenceResults?: Record<string, string>;
+      firstStartedAt?: string;
+      lastActivityAt?: string;
+      phasePoints?: Record<
+        string,
+        {
+          earned: number;
+          max: number;
+          helpUsed: boolean;
+          partial: boolean;
+        }
+      >;
+      detailedStats?: Record<
+        string,
+        {
+          timeSpentMs: number;
+          completed: boolean;
+          completedAt?: string | null;
+          result: 'success' | 'fail' | null;
+          helpUsed: boolean;
+          mascotHelpCount: number;
+          improvedAfterMascot: boolean;
+          attempts: number;
+          mistakes: number;
+          mascotIntentionallyDisabled?: boolean;
+        }
+      >;
+    }
+  >;
+  setCourseActivePhase: (courseId: string, activePhaseIndex: number) => void;
+  updateCoursePhaseStats: (
+    courseId: string,
+    phaseId: string,
+    updates: Partial<{
+      timeSpentMs: number;
+      completed: boolean;
+      result: 'success' | 'fail';
+      helpUsed: boolean;
+      mascotHelpCount: number;
+      improvedAfterMascot: boolean;
+      mistakes: number;
+      mascotIntentionallyDisabled?: boolean;
+    }>,
+  ) => void;
+  incrementCourseMascotInteraction: (courseId: string) => void;
+  updateCourseTotalTime: (courseId: string, timeToAddMs: number) => void;
+  incrementCourseMistakes: (courseId: string) => void;
+  markCoursePhaseComplete: (courseId: string, phaseId: string) => void;
+  markCourseCompleted: (courseId: string) => void;
+  resetCoursePhasesFrom: (courseId: string, phaseIndex: number, phaseIds: string[]) => void;
+  resetCourseProgress: (courseId: string) => void;
+  setCourseConfidenceRating: (courseId: string, phaseId: string, rating: string) => void;
+  setCoursePhaseResult: (courseId: string, phaseId: string, result: 'success' | 'fail') => void;
+  addCoursePoints: (courseId: string, points: number) => void;
+  setCoursePhasePoints: (
+    courseId: string,
+    phaseId: string,
+    data: { earned: number; max: number; helpUsed: boolean; partial: boolean },
+  ) => void;
+  syncProgress: () => Promise<void>;
 
   isInteractionLocked: boolean;
   setInteractionLocked: (locked: boolean) => void;
@@ -82,6 +167,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       completedIds: [],
       visualizerProgress: {},
       algorithmProgress: {},
+      courseProgress: {},
 
       // Actions
       setCategory: (category) => set({ activeCategory: category }),
@@ -139,7 +225,6 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             updates.animationCompletedAt = null;
             updates.animationTotalTimeMs = 0;
             updates.animationPlayCount = 0;
-            // Also reset visualizer step
             set({
               visualizerProgress: {
                 ...visualizerProgress,
@@ -154,7 +239,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             updates.controlAttempts = 0;
             updates.controlHintsUsed = 0;
             updates.controlTotalTimeMs = 0;
-            updates.controlCompletedAt = null;
+            updates.controlMistakes = 0;
             break;
           case 'create':
             updates.createCompleted = false;
@@ -163,6 +248,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             updates.createAttempts = 0;
             updates.createHelpUsed = false;
             updates.createTotalTimeMs = 0;
+            updates.createMistakes = 0;
             updates.createCompletedAt = null;
             break;
           case 'alive':
@@ -175,9 +261,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             break;
         }
 
-        // If any tab is reset, the whole algorithm is no longer "completed"
         const nextCompletedIds = completedIds.filter((item) => item !== id);
-
         set({
           completedIds: nextCompletedIds,
           algorithmProgress: {
@@ -193,7 +277,292 @@ export const useAlgorithmStore = create<AlgorithmState>()(
           completedIds: data.completedIds || state.completedIds,
           visualizerProgress: data.visualizerProgress || state.visualizerProgress,
           algorithmProgress: data.algorithmProgress || state.algorithmProgress,
+          courseProgress: data.courseProgress || state.courseProgress,
         }));
+      },
+
+      setCourseActivePhase: (courseId, activePhaseIndex) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: { ...current, activePhaseIndex },
+          },
+        });
+      },
+
+      updateCoursePhaseStats: (courseId, phaseId, updates) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const stats = current.detailedStats || {};
+        const old = stats[phaseId] || {
+          timeSpentMs: 0,
+          completed: false,
+          result: null,
+          helpUsed: false,
+          mascotHelpCount: 0,
+          improvedAfterMascot: false,
+          attempts: 0,
+          mistakes: 0,
+          mascotIntentionallyDisabled: false,
+        };
+
+        const now = new Date().toISOString();
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              firstStartedAt: current.firstStartedAt || now,
+              lastActivityAt: now,
+              detailedStats: {
+                ...stats,
+                [phaseId]: {
+                  ...old,
+                  ...updates,
+                  attempts: (old.attempts || 0) + 1,
+                  completedAt: updates.completed ? now : old.completedAt,
+                },
+              },
+            },
+          },
+        });
+      },
+
+      incrementCourseMascotInteraction: (courseId) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const interactions = (current.mascotInteractionsTotal || 0) + 1;
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              mascotInteractionsTotal: interactions,
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      updateCourseTotalTime: (courseId, timeToAddMs) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const total = (current.totalTimeMs || 0) + timeToAddMs;
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              totalTimeMs: total,
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      incrementCourseMistakes: (courseId) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const mistakesCount = (current.totalMistakes || 0) + 1;
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              totalMistakes: mistakesCount,
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      markCoursePhaseComplete: (courseId, phaseId) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        if (current.completedPhases?.includes(phaseId)) return;
+
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              completedPhases: [...(current.completedPhases || []), phaseId],
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      markCourseCompleted: (courseId: string) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              isCompleted: true,
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      resetCoursePhasesFrom: (courseId, phaseIndex, phaseIds) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const keptPhaseIds = phaseIds.slice(0, phaseIndex + 1);
+        const nextCompleted = (current.completedPhases || []).filter((id) =>
+          keptPhaseIds.includes(id),
+        );
+        const currentResults = current.phaseResults || {};
+        const nextResults: Record<string, 'success' | 'fail'> = {};
+        nextCompleted.forEach((id) => {
+          if (currentResults[id]) nextResults[id] = currentResults[id];
+        });
+        const nextPoints = nextCompleted.reduce((acc, id) => {
+          const phasePointData = current.phasePoints?.[id];
+          if (phasePointData) return acc + phasePointData.earned;
+          if (nextResults[id] === 'fail') return acc;
+          return acc + 10;
+        }, 0);
+
+        // Preserve phasePoints only for kept phases
+        const nextPhasePoints: Record<
+          string,
+          { earned: number; max: number; helpUsed: boolean; partial: boolean }
+        > = {};
+        nextCompleted.forEach((id) => {
+          if (current.phasePoints?.[id]) nextPhasePoints[id] = current.phasePoints[id];
+        });
+
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              activePhaseIndex: phaseIndex,
+              completedPhases: nextCompleted,
+              phaseResults: nextResults,
+              phasePoints: nextPhasePoints,
+              points: nextPoints,
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      resetCourseProgress: (courseId: string) => {
+        const { courseProgress } = get();
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              activePhaseIndex: 0,
+              completedPhases: [],
+              phaseResults: {},
+              confidenceResults: {},
+              lastConfidenceRating: undefined,
+              isCompleted: false,
+              points: 0,
+              totalTimeMs: 0,
+              totalMistakes: 0,
+              mascotInteractionsTotal: 0,
+              detailedStats: {},
+              phasePoints: {},
+              lastActivityAt: new Date().toISOString(),
+              firstStartedAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      syncProgress: async () => {
+        const { completedIds, visualizerProgress, algorithmProgress, courseProgress } = get();
+        try {
+          await fetch('/api/account/progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              completedIds,
+              visualizerProgress,
+              algorithmProgress,
+              courseProgress,
+            }),
+          });
+        } catch (err) {
+          console.error('[Store] Sync failed:', err);
+        }
+      },
+
+      setCourseConfidenceRating: (courseId, phaseId, rating) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const history = current.confidenceResults || {};
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              lastConfidenceRating: rating,
+              confidenceResults: { ...history, [phaseId]: rating },
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      setCoursePhaseResult: (courseId, phaseId, result) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const results = current.phaseResults || {};
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              phaseResults: { ...results, [phaseId]: result },
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      addCoursePoints: (courseId, pointsToAdd) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const currentPoints = current.points || 0;
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              points: currentPoints + pointsToAdd,
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      setCoursePhasePoints: (courseId, phaseId, data) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const existing = current.phasePoints || {};
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              phasePoints: {
+                ...existing,
+                [phaseId]: data,
+              },
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
       },
 
       isInteractionLocked: false,
@@ -205,13 +574,14 @@ export const useAlgorithmStore = create<AlgorithmState>()(
           completedIds: [],
           visualizerProgress: {},
           algorithmProgress: {},
+          courseProgress: {},
           activeCategory: 'all',
           searchQuery: '',
           isInteractionLocked: false,
         }),
     }),
     {
-      name: 'algorythmics-learning-storage', // Persistence key
+      name: 'algorythmics-learning-storage',
     },
   ),
 );

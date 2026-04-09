@@ -9,6 +9,8 @@ import sharp from 'sharp';
 import { Users } from './collections/Users';
 import { LearningEvents } from './collections/LearningEvents';
 import { AlgorithmProgress } from './collections/AlgorithmProgress';
+import { Courses } from './collections/Courses';
+import { CourseProgress } from './collections/CourseProgress';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -16,6 +18,18 @@ const dirname = path.dirname(filename);
 export default buildConfig({
   admin: {
     user: Users.slug,
+    components: {
+      afterNav: ['./app/components/Payload/RoleBodyClass#default'],
+    },
+  },
+  localization: {
+    locales: [
+      { label: 'Hungarian', code: 'hu' },
+      { label: 'English', code: 'en' },
+      { label: 'Romanian', code: 'ro' },
+    ],
+    defaultLocale: 'hu',
+    fallback: true,
   },
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
   csrf: [
@@ -24,7 +38,7 @@ export default buildConfig({
     'https://nextjs-frontend-three-eta.vercel.app',
   ].filter(Boolean),
   cookiePrefix: 'algorythmics-admin',
-  collections: [Users, LearningEvents, AlgorithmProgress],
+  collections: [Courses, Users, LearningEvents, AlgorithmProgress, CourseProgress],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'fallback-secret',
   typescript: {
@@ -32,7 +46,9 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URL || '',
+      connectionString: process.env.DATABASE_URL
+        ? process.env.DATABASE_URL.replace(/(sslmode=)(require|prefer|verify-ca)/, '$1verify-full')
+        : '',
     },
     migrationDir: path.resolve(dirname, 'migrations'),
   }),

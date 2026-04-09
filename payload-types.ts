@@ -67,9 +67,11 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    courses: Course;
     users: User;
     'learning-events': LearningEvent;
     'algorithm-progress': AlgorithmProgress;
+    'course-progress': CourseProgress;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -77,9 +79,11 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    courses: CoursesSelect<false> | CoursesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'learning-events': LearningEventsSelect<false> | LearningEventsSelect<true>;
     'algorithm-progress': AlgorithmProgressSelect<false> | AlgorithmProgressSelect<true>;
+    'course-progress': CourseProgressSelect<false> | CourseProgressSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -88,10 +92,10 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
-  fallbackLocale: null;
+  fallbackLocale: ('false' | 'none' | 'null') | false | null | ('hu' | 'en' | 'ro') | ('hu' | 'en' | 'ro')[];
   globals: {};
   globalsSelect: {};
-  locale: null;
+  locale: 'hu' | 'en' | 'ro';
   widgets: {
     collections: CollectionsWidget;
   };
@@ -120,6 +124,251 @@ export interface UserAuthOperations {
   };
 }
 /**
+ * Reusable course blueprints with phases, mascot behavior, confidence prompts, and complexity guidance.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses".
+ */
+export interface Course {
+  id: number;
+  /**
+   * A kurzus teljes neve (pl. Buborékrendezés alapjai).
+   */
+  title: string;
+  /**
+   * A kurzus azonosítója az URL-ben (pl. bubble-sort-basics).
+   */
+  slug: string;
+  /**
+   * Rövid összefoglaló szöveg, ami a kurzuslistában jelenik meg.
+   */
+  summary: string;
+  /**
+   * Egy rövid szlogen, ami a kurzus kezdőoldalának fejlécében látható.
+   */
+  heroTagline?: string | null;
+  /**
+   * Emoji vagy ikon kód a kurzus kártyájához.
+   */
+  icon?: string | null;
+  /**
+   * A kurzus gombjainak és UI elemeinek elsődleges színe.
+   */
+  accentColor?: string | null;
+  /**
+   * A kurzus fejlécében megjelenő illusztráció fájlneve.
+   */
+  illustrationAsset?: string | null;
+  /**
+   * A kurzus elvégzéséhez szükséges becsült idő percekben.
+   */
+  estimatedMinutes: number;
+  /**
+   * A kurzus nehézségi szintje.
+   */
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  /**
+   * Per-course mascot configuration and trigger copy.
+   */
+  mascot: {
+    /**
+     * Ki/Bekapcsolja a kabalát a teljes kurzusra.
+     */
+    enabled?: boolean | null;
+    /**
+     * A kabala neve (pl. Bubi). Ez jelenik meg a szövegbuborékok felett.
+     */
+    name: string;
+    /**
+     * A kabala vizuális megjelenése (választható illusztráció).
+     */
+    asset?: string | null;
+    /**
+     * A kabala szövegbuborékainak és UI elemeinek egyedi színe.
+     */
+    accentColor?: string | null;
+    /**
+     * Hány másodperc inaktivitás után szólaljon meg a kabala automatikusan.
+     */
+    idleTriggerSeconds?: number | null;
+    /**
+     * Hány egymást követő rossz válasz után ajánljon fel proaktív segítséget.
+     */
+    mistakeTriggerCount?: number | null;
+    /**
+     * A gomb felirata, amivel a kabalát bármikor manuálisan elő lehet hívni.
+     */
+    summonLabel?: string | null;
+    /**
+     * Rövid figyelemfelkeltő üzenet inaktivitás esetén (pl. "Segíthetek a következő lépésben?").
+     */
+    idlePrompt?: string | null;
+    /**
+     * Rövid üzenet gyanúsan sok hiba esetén, mielőtt megnyílna a tipp-felület.
+     */
+    mistakePrompt?: string | null;
+    /**
+     * Üdvözlő üzenetek a kurzus indításakor (véletlenszerűen választva).
+     */
+    welcomeMessages?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Üzenetek arra az esetre, ha a felhasználó magabiztos volt, de elrontotta a feladatot.
+     */
+    overconfidentMessages?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Dicsérő, bíztató üzenetek sikeres válaszsorozatok (streak) esetén.
+     */
+    streakMessages?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  /**
+   * Ordered course phases; these are the main building blocks of the course.
+   */
+  phases?:
+    | {
+        /**
+         * Egyedi technikai azonosító (pl. bubble-sort-intro). Használd a javaslat gombot!
+         */
+        phaseId: string;
+        /**
+         * A fázis címe a tanuló felé.
+         */
+        title: string;
+        /**
+         * Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).
+         */
+        sourceAlgorithmId: string;
+        /**
+         * Az interaktív felület típusa (videó, kvíz, animáció stb.).
+         */
+        sourceView:
+          | 'video'
+          | 'video-custom'
+          | 'animation'
+          | 'control'
+          | 'create'
+          | 'alive'
+          | 'quiz'
+          | 'match'
+          | 'order'
+          | 'debug'
+          | 'gap-fill'
+          | 'info'
+          | 'final-challenge';
+        /**
+         * Fázis leírása: miről szól ez a rész?
+         */
+        summary: string;
+        /**
+         * Opcionális: A kabala egyedi bátorító mondata.
+         */
+        mascotLine?: string | null;
+        /**
+         * Opcionális: Egyedi üzenet sok hiba esetén (pl. "Látom elakadtál ennél a résznél...").
+         */
+        mascotMistakeLine?: string | null;
+        /**
+         * A konkrét szakmai segítség/tipp a fázishoz.
+         */
+        hintCopy?: string | null;
+        /**
+         * Tipp vagy bátorítás, ha sokáig nem történik semmi a fázisban.
+         */
+        idleHelp?: string | null;
+        /**
+         * Legyen-e magabiztosság ellenőrzés (kérdőív) a fázis befejezése után?
+         */
+        askConfidence?: boolean | null;
+        /**
+         * A fázisért kapható maximális pontszám. A create/alive nézetben részleges pontot is kaphat a tanuló.
+         */
+        maxPoints?: number | null;
+        /**
+         * Információs szöveg (csak info nézetnél látszik).
+         */
+        infoContent?: string | null;
+        /**
+         * YouTube Video ID (pl. d995_u3q6mE). Csak egyéni videó esetén.
+         */
+        customVideoId?: string | null;
+        /**
+         * Kvíz kérdések (csak kvíz nézetnél látszik).
+         */
+        quiz?:
+          | {
+              question: string;
+              options?:
+                | {
+                    option: string;
+                    id?: string | null;
+                  }[]
+                | null;
+              correctIndex: number;
+              explanation: string;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * Párosító feladat (bal és jobb oldal összekötése).
+         */
+        matching?:
+          | {
+              left: string;
+              right: string;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * Sorrendbe rendezés feladat.
+         */
+        ordering?:
+          | {
+              text: string;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * A hibás kód, amit ki kell javítani.
+         */
+        debugCode?: string | null;
+        /**
+         * Az elvárt kód a javítás után.
+         */
+        expectedCode?: string | null;
+        /**
+         * A szöveg hiányzó részekkel (pl: "A buborékrendezés {{gap}} algoritmus").
+         */
+        gapFillContent?: string | null;
+        /**
+         * Választható szavak a hiányzó részekhez.
+         */
+        gapFillOptions?:
+          | {
+              option: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -127,12 +376,16 @@ export interface User {
   id: number;
   firstName?: string | null;
   lastName?: string | null;
-  role: 'admin' | 'user';
+  role: 'admin' | 'editor' | 'user';
   bio?: string | null;
   /**
    * Profile image URL (synced from social providers).
    */
   imageUrl?: string | null;
+  /**
+   * Engedélyezze vagy tiltsa le a segítő kabalaállat megjelenését.
+   */
+  mascotEnabled?: boolean | null;
   /**
    * Algorithms the user has already mastered.
    */
@@ -152,6 +405,10 @@ export interface User {
       )[]
     | null;
   /**
+   * Kurzusok, amiket a felhasználó már teljesített.
+   */
+  completedCourses?: (number | Course)[] | null;
+  /**
    * Persistent state of the algorithm visualizer for each algorithm.
    */
   visualizerProgress?:
@@ -170,6 +427,8 @@ export interface User {
     totalTimeSpentMs?: number | null;
     totalAlgorithmsStarted?: number | null;
     totalAlgorithmsCompleted?: number | null;
+    totalCoursesStarted?: number | null;
+    totalCoursesCompleted?: number | null;
     totalControlAttempts?: number | null;
     totalCreateAttempts?: number | null;
     totalAliveAttempts?: number | null;
@@ -265,6 +524,7 @@ export interface AlgorithmProgress {
   controlHintsUsed?: number | null;
   controlAttempts?: number | null;
   controlBestTimeMs?: number | null;
+  controlTotalTimeMs?: number | null;
   controlCompletedAt?: string | null;
   createCompleted?: boolean | null;
   /**
@@ -277,6 +537,7 @@ export interface AlgorithmProgress {
    */
   createBlanksCorrectFirst?: number | null;
   createBlanksTotal?: number | null;
+  createMistakes?: number | null;
   createTotalTimeMs?: number | null;
   createCompletedAt?: string | null;
   aliveCompleted?: boolean | null;
@@ -299,6 +560,72 @@ export interface AlgorithmProgress {
   totalTimeSpentMs?: number | null;
   lastActivityAt?: string | null;
   firstStartedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-progress".
+ */
+export interface CourseProgress {
+  id: number;
+  user: number | User;
+  courseId: string;
+  activePhaseIndex?: number | null;
+  completedPhases?: string[] | null;
+  lastConfidenceRating?: string | null;
+  phaseResults?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  points?: number | null;
+  isCompleted?: boolean | null;
+  totalTimeMs?: number | null;
+  totalMistakes?: number | null;
+  mascotInteractionsTotal?: number | null;
+  /**
+   * History of confidence ratings per phase
+   */
+  confidenceResults?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  firstStartedAt?: string | null;
+  lastActivityAt?: string | null;
+  /**
+   * Comprehensive per-phase telemetry (time, results, mistakes, mascot help, etc.)
+   */
+  detailedStats?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Per-phase scoring: { [phaseId]: { earned: number, max: number, helpUsed: boolean, partial: boolean } }
+   */
+  phasePoints?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -327,6 +654,10 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'courses';
+        value: number | Course;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
@@ -337,6 +668,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'algorithm-progress';
         value: number | AlgorithmProgress;
+      } | null)
+    | ({
+        relationTo: 'course-progress';
+        value: number | CourseProgress;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -382,6 +717,108 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses_select".
+ */
+export interface CoursesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  summary?: T;
+  heroTagline?: T;
+  icon?: T;
+  accentColor?: T;
+  illustrationAsset?: T;
+  estimatedMinutes?: T;
+  difficulty?: T;
+  mascot?:
+    | T
+    | {
+        enabled?: T;
+        name?: T;
+        asset?: T;
+        accentColor?: T;
+        idleTriggerSeconds?: T;
+        mistakeTriggerCount?: T;
+        summonLabel?: T;
+        idlePrompt?: T;
+        mistakePrompt?: T;
+        welcomeMessages?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        overconfidentMessages?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        streakMessages?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+      };
+  phases?:
+    | T
+    | {
+        phaseId?: T;
+        title?: T;
+        sourceAlgorithmId?: T;
+        sourceView?: T;
+        summary?: T;
+        mascotLine?: T;
+        mascotMistakeLine?: T;
+        hintCopy?: T;
+        idleHelp?: T;
+        askConfidence?: T;
+        maxPoints?: T;
+        infoContent?: T;
+        customVideoId?: T;
+        quiz?:
+          | T
+          | {
+              question?: T;
+              options?:
+                | T
+                | {
+                    option?: T;
+                    id?: T;
+                  };
+              correctIndex?: T;
+              explanation?: T;
+              id?: T;
+            };
+        matching?:
+          | T
+          | {
+              left?: T;
+              right?: T;
+              id?: T;
+            };
+        ordering?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        debugCode?: T;
+        expectedCode?: T;
+        gapFillContent?: T;
+        gapFillOptions?:
+          | T
+          | {
+              option?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
@@ -390,7 +827,9 @@ export interface UsersSelect<T extends boolean = true> {
   role?: T;
   bio?: T;
   imageUrl?: T;
+  mascotEnabled?: T;
   completedAlgorithms?: T;
+  completedCourses?: T;
   visualizerProgress?: T;
   learningStats?:
     | T
@@ -398,6 +837,8 @@ export interface UsersSelect<T extends boolean = true> {
         totalTimeSpentMs?: T;
         totalAlgorithmsStarted?: T;
         totalAlgorithmsCompleted?: T;
+        totalCoursesStarted?: T;
+        totalCoursesCompleted?: T;
         totalControlAttempts?: T;
         totalCreateAttempts?: T;
         totalAliveAttempts?: T;
@@ -466,12 +907,14 @@ export interface AlgorithmProgressSelect<T extends boolean = true> {
   controlHintsUsed?: T;
   controlAttempts?: T;
   controlBestTimeMs?: T;
+  controlTotalTimeMs?: T;
   controlCompletedAt?: T;
   createCompleted?: T;
   createHelpUsed?: T;
   createAttempts?: T;
   createBlanksCorrectFirst?: T;
   createBlanksTotal?: T;
+  createMistakes?: T;
   createTotalTimeMs?: T;
   createCompletedAt?: T;
   aliveCompleted?: T;
@@ -485,6 +928,30 @@ export interface AlgorithmProgressSelect<T extends boolean = true> {
   totalTimeSpentMs?: T;
   lastActivityAt?: T;
   firstStartedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-progress_select".
+ */
+export interface CourseProgressSelect<T extends boolean = true> {
+  user?: T;
+  courseId?: T;
+  activePhaseIndex?: T;
+  completedPhases?: T;
+  lastConfidenceRating?: T;
+  phaseResults?: T;
+  points?: T;
+  isCompleted?: T;
+  totalTimeMs?: T;
+  totalMistakes?: T;
+  mascotInteractionsTotal?: T;
+  confidenceResults?: T;
+  firstStartedAt?: T;
+  lastActivityAt?: T;
+  detailedStats?: T;
+  phasePoints?: T;
   updatedAt?: T;
   createdAt?: T;
 }

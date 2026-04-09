@@ -18,11 +18,12 @@ const EMPTY_PROGRESS: Readonly<Partial<AlgorithmProgress>> = Object.freeze({});
 
 interface AliveVisualizerProps {
   algorithmId: string;
+  onMistake?: () => void;
 }
 
 type Mode = 'code' | 'nodes';
 
-export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
+export default function AliveVisualizer({ algorithmId, onMistake }: AliveVisualizerProps) {
   const { t } = useLocale();
   const { trackEvent, updateProgress } = useAnalytics(algorithmId, 'alive');
   const { algorithmProgress, resetAlgorithmProgressTab } = useAlgorithmStore();
@@ -70,16 +71,20 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
     lastTickRef.current = Date.now();
   }, [algorithmId, resetAlgorithmProgressTab, trackEvent, updateProgress]);
 
+  const progressRef = useRef(progress);
+  React.useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
+
   // Track spent time on unmount
   React.useEffect(() => {
     return () => {
       const delta = Date.now() - lastTickRef.current;
-      const currentTotal = progress?.aliveTotalTimeMs || 0;
+      const currentTotal = progressRef.current?.aliveTotalTimeMs || 0;
       updateProgress({
         aliveTotalTimeMs: currentTotal + delta,
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [algorithmId, updateProgress]);
 
   return (
@@ -93,6 +98,7 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
           progress={progress}
           startTime={startTime.current}
           helpUsed={helpUsed}
+          onMistake={onMistake}
           onSwitchToNodes={() => {
             setMode('nodes');
             setHelpUsed(true);
@@ -108,6 +114,7 @@ export default function AliveVisualizer({ algorithmId }: AliveVisualizerProps) {
           handleReset={handleReset}
           startTime={startTime.current}
           t={t}
+          onMistake={onMistake}
         />
       )}
     </div>
@@ -126,6 +133,7 @@ interface CodeModeProps {
   helpUsed: boolean;
   onSwitchToNodes: () => void;
   t: (key: string) => string;
+  onMistake?: () => void;
 }
 
 function CodeMode({
@@ -138,6 +146,7 @@ function CodeMode({
   helpUsed,
   onSwitchToNodes,
   t,
+  onMistake,
 }: CodeModeProps) {
   const [code, setCode] = useState('');
   const [result, setResult] = useState<CodeAnalysisResult | null>(null);
@@ -175,10 +184,10 @@ function CodeMode({
         aliveCodeSubmissions: submissions + 1,
         aliveLastCode: code,
         aliveBestScore: bestScore,
-        aliveTotalTimeMs: Date.now() - startTime,
         aliveCompletedAt: new Date().toISOString(),
       });
     } else {
+      onMistake?.();
       trackEvent('alive_code_error', {
         missing: analysis.missing,
         score: analysis.score,
@@ -207,6 +216,7 @@ function CodeMode({
     updateProgress,
     result?.score,
     progress?.aliveCompleted,
+    onMistake,
   ]);
 
   const handleClear = () => {
@@ -398,6 +408,7 @@ interface NodeModeProps {
   handleReset: () => void;
   startTime: number;
   t: (key: string) => string;
+  onMistake?: () => void;
 }
 
 function NodeMode({
@@ -407,6 +418,7 @@ function NodeMode({
   handleReset,
   startTime,
   t,
+  onMistake,
 }: NodeModeProps) {
   const allNodes = useMemo(() => getAlgorithmNodes(algorithmId) || [], [algorithmId]);
 
@@ -557,10 +569,10 @@ function NodeMode({
         aliveHelpUsed: true,
         aliveCodeSubmissions: attempts + 1,
         aliveBestScore: 100,
-        aliveTotalTimeMs: Date.now() - startTime,
         aliveCompletedAt: new Date().toISOString(),
       });
     } else {
+      onMistake?.();
       setResult('incorrect');
       updateProgress({
         aliveLastActivityAt: new Date().toISOString(),

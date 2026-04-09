@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { ROLES } from '../lib/constants';
 
 /**
  * Immutable event log for every single user interaction with learning content.
@@ -15,18 +16,20 @@ export const LearningEvents: CollectionConfig = {
     create: ({ req: { user }, data }) => {
       // Must be authenticated to create learning events
       if (!user) return false;
+      // ADMIN and EDITOR can create anything
+      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       // Enforce data.user === req.user.id for non-admins
-      if (user.role !== 'admin' && data?.user !== user.id) return false;
+      if (data?.user !== user.id) return false;
       return true;
     },
     read: ({ req: { user } }) => {
       if (!user) return false;
-      if (user.role === 'admin') return true;
+      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { user: { equals: user.id } };
     },
     // Events are immutable — no updates allowed
     update: () => false,
-    delete: ({ req: { user } }) => user?.role === 'admin',
+    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
   },
   fields: [
     {

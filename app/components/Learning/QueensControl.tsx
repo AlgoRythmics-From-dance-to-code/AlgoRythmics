@@ -319,7 +319,9 @@ export default function QueensControl({ n, algorithmId }: QueensControlProps) {
               className="font-montserrat text-sm text-gray-500 dark:text-gray-400"
             >
               {t('control.select_next_queen')} —{' '}
-              <span className="font-bold text-[#269984]">{t('control.row', { row: currentRow })}</span>
+              <span className="font-bold text-[#269984]">
+                {t('control.row', { row: currentRow })}
+              </span>
             </motion.p>
           ) : null}
         </AnimatePresence>

@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useLocale, Locale } from '../i18n/LocaleProvider';
-import { useTheme } from 'next-themes';
 import ThemeToggle from './ThemeToggle';
 import { User as UserIcon } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
@@ -41,7 +40,6 @@ export default function Header({
   const initials = getInitials();
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
   const { locale, setLocale, t } = useLocale();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -192,6 +190,7 @@ export default function Header({
                     onClick={() => {
                       setLocale(lang.code);
                       setLangDropdownOpen(false);
+                      router.refresh();
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors ${
                       locale === lang.code
@@ -334,7 +333,7 @@ export default function Header({
                 </Link>
               </div>
             )}
-            
+
             <Link
               href="/contact"
               className={`font-montserrat text-xl ${pathname === '/contact' ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
@@ -344,7 +343,9 @@ export default function Header({
             </Link>
 
             <div className="pt-6 border-t border-white/10 mt-2">
-              <p className="text-white/50 text-[10px] uppercase tracking-widest font-montserrat font-bold mb-4">{t('nav.language')}</p>
+              <p className="text-white/50 text-[10px] uppercase tracking-widest font-montserrat font-bold mb-4">
+                {t('nav.language')}
+              </p>
               <div className="flex flex-wrap gap-3">
                 {languages.map((lang) => (
                   <button
@@ -352,6 +353,7 @@ export default function Header({
                     onClick={() => {
                       setLocale(lang.code);
                       setMenuOpen(false);
+                      router.refresh();
                     }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all active:scale-95 ${
                       locale === lang.code
@@ -373,9 +375,7 @@ export default function Header({
               </div>
             </div>
 
-            <div
-              className="pt-4 border-t border-white/10 mt-2 flex items-center justify-between w-full text-left transition-all outline-none"
-            >
+            <div className="pt-4 border-t border-white/10 mt-2 flex items-center justify-between w-full text-left transition-all outline-none">
               <div className="flex items-center gap-3 text-white">
                 <ThemeToggle />
                 <span className="font-montserrat text-sm font-medium">{t('nav.switch_theme')}</span>
@@ -423,8 +423,12 @@ export default function Header({
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-bold">{firstName} {lastName}</p>
-                    <p className="text-[10px] text-white/60 uppercase tracking-widest">{t('nav.profile')}</p>
+                    <p className="text-sm font-bold">
+                      {firstName} {lastName}
+                    </p>
+                    <p className="text-[10px] text-white/60 uppercase tracking-widest">
+                      {t('nav.profile')}
+                    </p>
                   </div>
                 </Link>
                 <button

@@ -12,6 +12,8 @@ import NextAuthProvider from '../components/NextAuthProvider';
 import { Toaster } from 'sonner';
 import UserProgressSync from '../components/Learning/UserProgressSync';
 
+import { cookies } from 'next/headers';
+
 const montserrat = Montserrat({
   variable: '--font-montserrat',
   subsets: ['latin'],
@@ -19,6 +21,8 @@ const montserrat = Montserrat({
 
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('locale')?.value || 'hu';
 
   // Use image from session if available
   const user = session?.user as { imageUrl?: string; image?: string | null } | undefined;
@@ -27,7 +31,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   const isAuthenticated = !!session;
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${montserrat.variable} antialiased min-h-screen flex flex-col`}>
         <NextAuthProvider session={session}>
           <ThemeProviderClient>
