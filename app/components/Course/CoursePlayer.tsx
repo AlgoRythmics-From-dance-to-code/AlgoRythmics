@@ -248,6 +248,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     resetCourseProgress,
     setCourseConfidenceRating,
     addCoursePoints,
+    setCoursePhasePoints,
     markCourseCompleted,
     updateCoursePhaseStats,
     incrementCourseMascotInteraction,
@@ -580,16 +581,58 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       }
     }
 
-    if (level) {
-      // Only award points if the phase was not already completed and it's not a failure
-      if (!isAlreadyCompleted && !isFailure) {
-        addCoursePoints(course.slug, 20);
+    // --- DYNAMIC SCORING ---
+    const maxPoints = activePhase.maxPoints ?? 10;
+
+    // Determine if help was used
+    const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
+    let helpUsed = false;
+    if (activePhase.sourceView === 'create') helpUsed = !!progress.createHelpUsed;
+    if (activePhase.sourceView === 'alive' || activePhase.sourceView === 'final-challenge') helpUsed = !!progress.aliveHelpUsed;
+    if (activePhase.sourceView === 'control') helpUsed = (progress.controlHintsUsed || 0) > 0;
+
+    let earnedPoints = 0;
+    let isPartial = false;
+
+    if (!isAlreadyCompleted && !isFailure) {
+      // Partial scoring for create & alive
+      if (activePhase.sourceView === 'create') {
+        const blanksCorrect = progress.createBlanksCorrectFirst || 0;
+        const blanksTotal = progress.createBlanksTotal || 1;
+        const ratio = blanksTotal > 0 ? blanksCorrect / blanksTotal : 0;
+        earnedPoints = Math.round(maxPoints * ratio);
+        isPartial = ratio < 1 && ratio > 0;
+      } else if (activePhase.sourceView === 'alive' || activePhase.sourceView === 'final-challenge') {
+        const bestScore = progress.aliveBestScore || 0;
+        const ratio = bestScore / 100; // aliveBestScore is a percentage 0-100
+        earnedPoints = Math.round(maxPoints * ratio);
+        isPartial = ratio < 1 && ratio > 0;
+      } else {
+        // Full points for other phase types (video, animation, control, quiz, info, match, order, etc.)
+        earnedPoints = maxPoints;
       }
-      setCourseConfidenceRating(course.slug, level);
+
+      addCoursePoints(course.slug, earnedPoints);
+      setCoursePhasePoints(course.slug, activePhase.phaseId, {
+        earned: earnedPoints,
+        max: maxPoints,
+        helpUsed,
+        partial: isPartial,
+      });
+    } else if (isAlreadyCompleted) {
+      // Phase was already completed — don't award points again
     } else {
-      if (!isAlreadyCompleted && !isFailure) {
-        addCoursePoints(course.slug, 20);
-      }
+      // Failure — record 0 points
+      setCoursePhasePoints(course.slug, activePhase.phaseId, {
+        earned: 0,
+        max: maxPoints,
+        helpUsed,
+        partial: false,
+      });
+    }
+
+    if (level) {
+      setCourseConfidenceRating(course.slug, level);
     }
 
     const elapsed = Date.now() - phaseStartTime.current;
@@ -602,13 +645,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
     // Track "improved after mascot"
     const improved = mascotHelpedCurrentPhase.current && isSuccess;
-
-    // Determine if help was used in the algorithm part
-    const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
-    let helpUsed = false;
-    if (activePhase.sourceView === 'create') helpUsed = !!progress.createHelpUsed;
-    if (activePhase.sourceView === 'alive' || activePhase.sourceView === 'final-challenge') helpUsed = !!progress.aliveHelpUsed;
-    if (activePhase.sourceView === 'control') helpUsed = (progress.controlHintsUsed || 0) > 0;
 
     updateCoursePhaseStats(course.slug, activePhase.phaseId, {
       timeSpentMs: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.timeSpentMs || 0) + elapsed,
@@ -690,9 +726,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             key="finish-screen"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 z-50 flex items-center justify-center rounded-[2.25rem] bg-white/90 p-8 backdrop-blur-md dark:bg-black/90"
+            className="absolute inset-0 z-50 flex items-center justify-center rounded-[2.25rem] bg-white/90 p-8 backdrop-blur-md dark:bg-black/90 overflow-y-auto"
           >
-            <div className="flex flex-col items-center text-center">
+            <div className="flex flex-col items-center text-center w-full max-w-2xl">
               <div className="relative mb-8">
                 <div className="absolute -inset-4 animate-pulse rounded-full bg-amber-400/20 blur-xl px-12" />
                 <motion.div
@@ -712,13 +748,16 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                 {t('course.completed_course', { title: course.title })}
               </p>
 
-              <div className="mb-10 grid grid-cols-2 gap-4">
+              <div className="mb-6 grid grid-cols-2 gap-4 w-full">
                 <div className="rounded-[1.5rem] border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-900/20 dark:bg-amber-900/10">
                   <div className="text-[10px] font-black uppercase tracking-tighter text-amber-600 dark:text-amber-500/70 mb-1">
                     {t('course.total_score')}
                   </div>
                   <div className="text-3xl font-black text-[#B45309] dark:text-amber-400 tabular-nums">
                     {courseProgress[course.slug]?.points || 0}
+                    <span className="text-lg text-amber-600/40 dark:text-amber-500/40">
+                      /{course.phases.reduce((sum, p) => sum + (p.maxPoints ?? 10), 0)}
+                    </span>
                   </div>
                 </div>
                 <div className="rounded-[1.5rem] border border-[#269984]/10 bg-[#f0fbf9]/50 p-4 dark:border-white/5 dark:bg-white/5">
@@ -728,6 +767,67 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   <div className="text-3xl font-black text-[#269984] dark:text-[#269984] tabular-nums">
                     {course.phases.length}
                   </div>
+                </div>
+              </div>
+
+              {/* --- Phase-by-phase score breakdown --- */}
+              <div className="w-full mb-8 rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden">
+                <div className="bg-gray-50 dark:bg-white/5 px-4 py-3 border-b border-gray-100 dark:border-white/10">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                    {t('course.phase')} részletezés
+                  </h4>
+                </div>
+                <div className="divide-y divide-gray-50 dark:divide-white/5">
+                  {course.phases.map((phase, idx) => {
+                    const pp = courseProgress[course.slug]?.phasePoints?.[phase.phaseId];
+                    const earned = pp?.earned ?? 0;
+                    const max = pp?.max ?? phase.maxPoints ?? 10;
+                    const helpUsed = pp?.helpUsed ?? false;
+                    const isPartial = pp?.partial ?? false;
+                    const pct = max > 0 ? Math.round((earned / max) * 100) : 0;
+
+                    return (
+                      <div key={phase.phaseId} className="flex items-center gap-3 px-4 py-3">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0 ${
+                          earned === max ? 'bg-[#269984]' : earned > 0 ? 'bg-amber-500' : 'bg-gray-300 dark:bg-white/20'
+                        }`}>
+                          {earned === max ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">
+                            {phase.title}
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`text-[10px] font-bold tabular-nums ${
+                              earned === max ? 'text-[#269984]' : earned > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'
+                            }`}>
+                              {earned}/{max} pt
+                            </span>
+                            {isPartial && (
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
+                                részleges
+                              </span>
+                            )}
+                            {helpUsed && (
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">
+                                segítség
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="w-16 h-2 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden shrink-0">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ delay: idx * 0.1, duration: 0.5 }}
+                            className={`h-full rounded-full ${
+                              earned === max ? 'bg-[#269984]' : earned > 0 ? 'bg-amber-500' : 'bg-gray-300'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -918,6 +1018,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                 className={`mt-1 font-bold ${phaseComplete ? 'text-green-600 dark:text-green-400' : 'text-[#269984]'}`}
               >
                 {phaseComplete ? 'Ready to continue' : 'Finish the embedded activity'}
+              </div>
+              <div className="mt-2 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg inline-block">
+                ★ {activePhase.maxPoints ?? 10} pt
               </div>
             </div>
           </div>

@@ -91,6 +91,15 @@ interface AlgorithmState {
       confidenceResults?: Record<string, string>;
       firstStartedAt?: string;
       lastActivityAt?: string;
+      phasePoints?: Record<
+        string,
+        {
+          earned: number;
+          max: number;
+          helpUsed: boolean;
+          partial: boolean;
+        }
+      >;
       detailedStats?: Record<
         string,
         {
@@ -133,6 +142,11 @@ interface AlgorithmState {
   setCourseConfidenceRating: (courseId: string, rating: string) => void;
   setCoursePhaseResult: (courseId: string, phaseId: string, result: 'success' | 'fail') => void;
   addCoursePoints: (courseId: string, points: number) => void;
+  setCoursePhasePoints: (
+    courseId: string,
+    phaseId: string,
+    data: { earned: number; max: number; helpUsed: boolean; partial: boolean },
+  ) => void;
   syncProgress: () => Promise<void>;
 
   isInteractionLocked: boolean;
@@ -407,9 +421,17 @@ export const useAlgorithmStore = create<AlgorithmState>()(
           if (currentResults[id]) nextResults[id] = currentResults[id];
         });
         const nextPoints = nextCompleted.reduce((acc, id) => {
+          const phasePointData = current.phasePoints?.[id];
+          if (phasePointData) return acc + phasePointData.earned;
           if (nextResults[id] === 'fail') return acc;
-          return acc + 20;
+          return acc + 10;
         }, 0);
+
+        // Preserve phasePoints only for kept phases
+        const nextPhasePoints: Record<string, any> = {};
+        nextCompleted.forEach((id) => {
+          if (current.phasePoints?.[id]) nextPhasePoints[id] = current.phasePoints[id];
+        });
 
         set({
           courseProgress: {
@@ -419,6 +441,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
               activePhaseIndex: phaseIndex,
               completedPhases: nextCompleted,
               phaseResults: nextResults,
+              phasePoints: nextPhasePoints,
               points: nextPoints,
               lastActivityAt: new Date().toISOString(),
             },
@@ -443,6 +466,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
               totalMistakes: 0,
               mascotInteractionsTotal: 0,
               detailedStats: {},
+              phasePoints: {},
               lastActivityAt: new Date().toISOString(),
               firstStartedAt: new Date().toISOString(),
             },
@@ -512,6 +536,25 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             [courseId]: {
               ...current,
               points: currentPoints + pointsToAdd,
+              lastActivityAt: new Date().toISOString(),
+            },
+          },
+        });
+      },
+
+      setCoursePhasePoints: (courseId, phaseId, data) => {
+        const { courseProgress } = get();
+        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const existing = current.phasePoints || {};
+        set({
+          courseProgress: {
+            ...courseProgress,
+            [courseId]: {
+              ...current,
+              phasePoints: {
+                ...existing,
+                [phaseId]: data,
+              },
               lastActivityAt: new Date().toISOString(),
             },
           },

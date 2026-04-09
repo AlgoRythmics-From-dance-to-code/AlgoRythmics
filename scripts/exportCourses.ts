@@ -1,5 +1,14 @@
-import { getPayload } from 'payload';
-import config from '../payload.config';
+/**
+ * Export courses from the running local dev server via REST API.
+ *
+ * Usage:
+ *   1. Make sure `npm run dev` is running
+ *   2. Run `npm run export`
+ *
+ * This fetches ALL locales of every course document and writes them to
+ * lib/courses/seed_data.json so they can be seeded on Vercel.
+ */
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,18 +16,20 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const BASE_URL = process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000';
+
 async function exportCourses() {
-  const payload = await getPayload({ config });
+  console.log(`Fetching courses from ${BASE_URL} ...`);
 
-  console.log('Fetching courses from local database...');
-
-  // Get all courses with depth 5 to catch all nested data (phases, mascot, etc.)
-  const courses = await payload.find({
-    collection: 'courses',
-    limit: 100,
-    depth: 5,
-    locale: 'all', // Export all localized data
+  const res = await fetch(`${BASE_URL}/api/courses?limit=100&depth=5&locale=all`, {
+    headers: { 'Content-Type': 'application/json' },
   });
+
+  if (!res.ok) {
+    throw new Error(`API responded with ${res.status}: ${await res.text()}`);
+  }
+
+  const json = (await res.json()) as { docs: unknown[] };
 
   const exportPath = path.resolve(__dirname, '../lib/courses/seed_data.json');
 
@@ -28,13 +39,13 @@ async function exportCourses() {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  fs.writeFileSync(exportPath, JSON.stringify(courses.docs, null, 2));
+  fs.writeFileSync(exportPath, JSON.stringify(json.docs, null, 2));
 
-  console.log(`Successfully exported ${courses.docs.length} courses to ${exportPath}`);
-  process.exit(0);
+  console.log(`✓ Exported ${json.docs.length} courses to ${exportPath}`);
+  console.log('  You can now commit this file and deploy to Vercel.');
 }
 
 exportCourses().catch((err) => {
-  console.error('Export failed:', err);
+  console.error('Export failed:', err.message || err);
   process.exit(1);
 });

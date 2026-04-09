@@ -361,6 +361,16 @@ export const Courses: CollectionConfig = {
                   },
                 },
                 {
+                  name: 'maxPoints',
+                  type: 'number',
+                  defaultValue: 10,
+                  min: 0,
+                  admin: {
+                    description:
+                      'A fázisért kapható maximális pontszám. A create/alive nézetben részleges pontot is kaphat a tanuló.',
+                  },
+                },
+                {
                   name: 'infoContent',
                   type: 'textarea',
                   localized: true,

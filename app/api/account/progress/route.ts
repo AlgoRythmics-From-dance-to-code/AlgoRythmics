@@ -56,6 +56,7 @@ export async function GET() {
         firstStartedAt?: string;
         lastActivityAt?: string;
         detailedStats?: Record<string, unknown>;
+        phasePoints?: Record<string, unknown>;
       };
       courseProgress[pDoc.courseId] = {
         activePhaseIndex: pDoc.activePhaseIndex,
@@ -71,6 +72,7 @@ export async function GET() {
         firstStartedAt: pDoc.firstStartedAt,
         lastActivityAt: pDoc.lastActivityAt,
         detailedStats: pDoc.detailedStats || {},
+        phasePoints: pDoc.phasePoints || {},
       };
     });
 

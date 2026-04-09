@@ -31,6 +31,7 @@ export type CoursePhase = {
   hintCopy: string;
   idleHelp?: string;
   askConfidence?: boolean;
+  maxPoints: number;
   quiz?: CourseQuizQuestion[];
   infoContent?: string;
   customVideoId?: string;
@@ -143,6 +144,7 @@ function toPhases(value: unknown): CoursePhase[] {
         hintCopy: (current.hintCopy as string) || '',
         idleHelp: (current.idleHelp as string) || '',
         askConfidence: !!current.askConfidence,
+        maxPoints: typeof current.maxPoints === 'number' ? current.maxPoints : 10,
         quiz,
         infoContent: current.infoContent as string,
         customVideoId: current.customVideoId as string,

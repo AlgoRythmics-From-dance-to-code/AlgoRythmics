@@ -104,5 +104,12 @@ export const CourseProgress: CollectionConfig = {
         description: 'Comprehensive per-phase telemetry (time, results, mistakes, mascot help, etc.)',
       },
     },
+    {
+      name: 'phasePoints',
+      type: 'json',
+      admin: {
+        description: 'Per-phase scoring: { [phaseId]: { earned: number, max: number, helpUsed: boolean, partial: boolean } }',
+      },
+    },
   ],
 };

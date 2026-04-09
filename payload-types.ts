@@ -294,6 +294,10 @@ export interface Course {
          */
         askConfidence?: boolean | null;
         /**
+         * A fázisért kapható maximális pontszám. A create/alive nézetben részleges pontot is kaphat a tanuló.
+         */
+        maxPoints?: number | null;
+        /**
          * Információs szöveg (csak info nézetnél látszik).
          */
         infoContent?: string | null;
@@ -606,6 +610,18 @@ export interface CourseProgress {
     | number
     | boolean
     | null;
+  /**
+   * Per-phase scoring: { [phaseId]: { earned: number, max: number, helpUsed: boolean, partial: boolean } }
+   */
+  phasePoints?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -753,6 +769,7 @@ export interface CoursesSelect<T extends boolean = true> {
         hintCopy?: T;
         idleHelp?: T;
         askConfidence?: T;
+        maxPoints?: T;
         infoContent?: T;
         customVideoId?: T;
         quiz?:
@@ -926,6 +943,7 @@ export interface CourseProgressSelect<T extends boolean = true> {
   firstStartedAt?: T;
   lastActivityAt?: T;
   detailedStats?: T;
+  phasePoints?: T;
   updatedAt?: T;
   createdAt?: T;
 }
