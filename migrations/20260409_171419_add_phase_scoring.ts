@@ -27,6 +27,15 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
       END IF;
     END $$;
   `)
+
+  // 3. Update foreign keys to CASCADE for user-related tables
+  await db.execute(sql`
+    ALTER TABLE "learning_events" DROP CONSTRAINT IF EXISTS "learning_events_user_id_users_id_fk";
+    ALTER TABLE "learning_events" ADD CONSTRAINT "learning_events_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade;
+
+    ALTER TABLE "course_progress" DROP CONSTRAINT IF EXISTS "course_progress_user_id_users_id_fk";
+    ALTER TABLE "course_progress" ADD CONSTRAINT "course_progress_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade;
+  `)
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {

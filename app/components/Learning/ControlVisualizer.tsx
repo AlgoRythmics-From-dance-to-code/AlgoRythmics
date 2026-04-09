@@ -156,8 +156,9 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
       setInteractionMode('decide');
     } else {
       setFeedback('incorrect');
-      setMistakes((m) => m + 1);
-      updateProgress({ controlMistakes: mistakes + 1 });
+      const nextMistakes = mistakes + 1;
+      setMistakes(nextMistakes);
+      updateProgress({ controlMistakes: nextMistakes });
       onMistake?.();
       setAttemptedWrong(true);
       trackEvent('control_mistake', {
@@ -204,8 +205,9 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
         }, 150);
       } else {
         setFeedback('incorrect');
-        setMistakes((m) => m + 1);
-        updateProgress({ controlMistakes: mistakes + 1 });
+        const nextMistakes = mistakes + 1;
+        setMistakes(nextMistakes);
+        updateProgress({ controlMistakes: nextMistakes });
         onMistake?.();
         setAttemptedWrong(true);
         trackEvent('control_decision', { action, isCorrect: false, step: expectedStepIndex });
@@ -225,8 +227,9 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
         selectedIndices.length === 1 && currentExpected.activeIndices.includes(selectedIndices[0]);
       if (!selectionIsCorrect) {
         setFeedback('incorrect');
-        setMistakes((m) => m + 1);
-        updateProgress({ controlMistakes: mistakes + 1 });
+        const nextMistakes = mistakes + 1;
+        setMistakes(nextMistakes);
+        updateProgress({ controlMistakes: nextMistakes });
         onMistake?.();
         setAttemptedWrong(true);
         trackEvent('control_selection_mistake', { step: expectedStepIndex });
@@ -269,8 +272,9 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
         }, 150);
       } else {
         setFeedback('incorrect');
-        setMistakes((m) => m + 1);
-        updateProgress({ controlMistakes: mistakes + 1 });
+        const nextMistakes = mistakes + 1;
+        setMistakes(nextMistakes);
+        updateProgress({ controlMistakes: nextMistakes });
         onMistake?.();
         setAttemptedWrong(true);
         trackEvent('control_decision', { action, isCorrect: false, step: expectedStepIndex });

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         firstName,
         lastName,
         bio,
-        mascotEnabled: Boolean(mascotEnabled),
+        ...(mascotEnabled !== undefined && { mascotEnabled: Boolean(mascotEnabled) }),
       },
       overrideAccess: true,
     });

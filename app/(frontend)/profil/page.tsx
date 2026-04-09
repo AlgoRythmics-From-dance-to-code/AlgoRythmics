@@ -163,7 +163,7 @@ export default function ProfilePage() {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [firstName, lastName, bio]);
+  }, [firstName, lastName, bio, mascotEnabled, status, lastSyncedEmail, session, handleUpdateProfile]);
 
   // Mascot toggle is immediate
   useEffect(() => {
@@ -173,7 +173,7 @@ export default function ProfilePage() {
     if (mascotEnabled === (u.mascotEnabled !== false)) return;
 
     handleUpdateProfile(true); // Keep toast for toggle
-  }, [mascotEnabled]);
+  }, [mascotEnabled, status, lastSyncedEmail, session, handleUpdateProfile]);
 
   if (status === 'loading' && !lastSyncedEmail) {
     return (

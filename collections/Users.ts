@@ -58,13 +58,17 @@ export const Users: CollectionConfig = {
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { id: { equals: user.id } };
     },
-    create: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    create: () => true,
     update: ({ req: { user } }) => {
       if (!user) return false;
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { id: { equals: user.id } };
     },
-    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    delete: ({ req: { user } }) => {
+      if (!user) return false;
+      if (user.role === ROLES.ADMIN) return true;
+      return { id: { equals: user.id } };
+    },
   },
   hooks: {
     beforeChange: [

@@ -46,7 +46,6 @@ export async function POST(req: Request) {
           sessionId: evt.sessionId,
           durationMs: evt.durationMs || 0,
         },
-        overrideAccess: true,
       }),
     );
 

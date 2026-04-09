@@ -73,7 +73,7 @@ export const Courses: CollectionConfig = {
               required: true,
               localized: true,
               admin: {
-                description: 'Rővid összefoglaló szöveg, ami a kurzuslistában jelenik meg.',
+                description: 'Rövid összefoglaló szöveg, ami a kurzuslistában jelenik meg.',
               },
             },
             {
@@ -97,7 +97,7 @@ export const Courses: CollectionConfig = {
               type: 'text',
               defaultValue: '#269984',
               admin: {
-                description: 'A kurzus gombjainak és UI elemeinek elsődleges szine.',
+                description: 'A kurzus gombjainak és UI elemeinek elsődleges színe.',
               },
             },
             {

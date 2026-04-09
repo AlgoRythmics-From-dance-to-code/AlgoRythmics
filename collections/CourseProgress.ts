@@ -14,7 +14,7 @@ export const CourseProgress: CollectionConfig = {
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { user: { equals: user.id } };
     },
-    create: () => true,
+    create: ({ req: { user } }) => !!user,
     update: ({ req: { user } }) => {
       if (!user) return false;
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;

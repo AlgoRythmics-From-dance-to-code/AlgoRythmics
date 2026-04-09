@@ -48,8 +48,14 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
     if (!selectedCourse) return;
     
     resetCourseProgress(selectedCourse.slug);
+    const allowedTabs = ['video', 'animation', 'control', 'create', 'alive'];
     selectedCourse.phases.forEach((p) => {
-      resetAlgorithmProgressTab(p.sourceAlgorithmId || selectedCourse.algorithmId, p.sourceView);
+      let tabToReset = p.sourceView;
+      if (tabToReset === 'video-custom') tabToReset = 'video';
+      
+      if (allowedTabs.includes(tabToReset)) {
+        resetAlgorithmProgressTab(p.sourceAlgorithmId || selectedCourse.algorithmId, tabToReset);
+      }
     });
     
     syncProgress();

@@ -75,7 +75,7 @@
     "register_error": "Regisztrációs hiba",
     "register_error_desc": "A regisztráció sikertelen. Kérjük, ellenőrizd az adataidat vagy próbáld meg később.",
     "profile_updated": "Profil frissítve",
-    "profile_updated_desc": "A módosítások automatikusan mentése kerülnek.",
+    "profile_updated_desc": "A módosítások automatikusan mentésre kerülnek.",
     "profile_update_error": "Hiba a mentésnél",
     "password_updated": "Jelszó módosítva",
     "password_updated_desc": "A jelszavad megváltozott.",
