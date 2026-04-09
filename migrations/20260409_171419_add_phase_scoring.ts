@@ -42,5 +42,11 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   await db.execute(sql`
     ALTER TABLE "courses_phases" DROP COLUMN IF EXISTS "max_points";
     ALTER TABLE "course_progress" DROP COLUMN IF EXISTS "phase_points";
+
+    ALTER TABLE "learning_events" DROP CONSTRAINT IF EXISTS "learning_events_user_id_users_id_fk";
+    ALTER TABLE "learning_events" ADD CONSTRAINT "learning_events_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id");
+
+    ALTER TABLE "course_progress" DROP CONSTRAINT IF EXISTS "course_progress_user_id_users_id_fk";
+    ALTER TABLE "course_progress" ADD CONSTRAINT "course_progress_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id");
   `)
 }

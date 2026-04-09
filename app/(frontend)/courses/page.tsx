@@ -29,7 +29,7 @@ export default async function CoursesPage() {
       <div className="mx-auto max-w-[1200px]">
         <div className="mb-14 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#f0fbf9] px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] text-[#269984] dark:bg-white/5">
-            Learning Paths
+            {t('courses.learning_paths')}
           </div>
           <h1 className="text-4xl font-black text-black dark:text-white sm:text-5xl lg:text-6xl tracking-tight">
             {t('courses.hero_title')}

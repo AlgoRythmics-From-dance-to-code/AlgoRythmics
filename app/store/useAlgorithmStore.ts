@@ -139,7 +139,7 @@ interface AlgorithmState {
   markCourseCompleted: (courseId: string) => void;
   resetCoursePhasesFrom: (courseId: string, phaseIndex: number, phaseIds: string[]) => void;
   resetCourseProgress: (courseId: string) => void;
-  setCourseConfidenceRating: (courseId: string, rating: string) => void;
+  setCourseConfidenceRating: (courseId: string, phaseId: string, rating: string) => void;
   setCoursePhaseResult: (courseId: string, phaseId: string, result: 'success' | 'fail') => void;
   addCoursePoints: (courseId: string, points: number) => void;
   setCoursePhasePoints: (
@@ -492,11 +492,10 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         }
       },
 
-      setCourseConfidenceRating: (courseId, rating) => {
+      setCourseConfidenceRating: (courseId, phaseId, rating) => {
         const { courseProgress } = get();
         const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
         const history = current.confidenceResults || {};
-        const phaseId = current.activePhaseIndex.toString(); // We should probably pass phaseId, but using activePhaseIndex for now
         set({
           courseProgress: {
             ...courseProgress,

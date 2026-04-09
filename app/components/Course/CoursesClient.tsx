@@ -140,10 +140,10 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
             <>
               <div className="hidden grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.35fr] gap-4 border-b border-gray-100 px-8 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 dark:border-white/10 md:grid">
                 <div>{t('courses.table.name')}</div>
-                <div>{t('features.summary') || 'Summary'}</div>
+                <div>{t('courses.table.summary')}</div>
                 <div>{t('courses.table.duration')}</div>
                 <div>{t('courses.table.level')}</div>
-                <div>{t('features.open') || 'Open'}</div>
+                <div>{t('courses.open')}</div>
               </div>
 
               <div className="divide-y divide-gray-100 dark:divide-white/10">
@@ -173,7 +173,7 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
                           </span>
                           <span className="text-gray-300 dark:text-gray-700">•</span>
                           <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                             {course.phases.length} Checkpoints
+                             {course.phases.length} {t('courses.checkpoints')}
                           </span>
                         </div>
                       </div>
@@ -195,7 +195,7 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
                     </div>
 
                     <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#269984] md:justify-end">
-                      <span>OPEN</span>
+                      <span>{t('courses.open')}</span>
                       <span className="transition-transform group-hover:translate-x-1">→</span>
                     </div>
                   </button>

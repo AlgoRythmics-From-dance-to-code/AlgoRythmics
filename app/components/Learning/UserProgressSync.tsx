@@ -187,19 +187,26 @@ export default function UserProgressSync() {
         currentAlgorithmProgress !== lastSynced.current.algorithm ||
         currentCourseProgress !== lastSynced.current.course
       ) {
+        const payload = JSON.stringify({
+          completedIds,
+          visualizerProgress,
+          algorithmProgress,
+          courseProgress,
+        });
+
+        let sent = false;
         if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-          const blob = new Blob(
-            [
-              JSON.stringify({
-                completedIds,
-                visualizerProgress,
-                algorithmProgress,
-                courseProgress,
-              }),
-            ],
-            { type: 'application/json' },
-          );
-          navigator.sendBeacon('/api/account/progress', blob);
+          const blob = new Blob([payload], { type: 'application/json' });
+          sent = navigator.sendBeacon('/api/account/progress', blob);
+        }
+
+        if (!sent) {
+          fetch('/api/account/progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true,
+          }).catch(() => {});
         }
       }
     };

@@ -2,7 +2,7 @@
 
 import { BaseUser } from '../../../lib/types/auth';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -120,7 +120,7 @@ export default function ProfilePage() {
     }
   }, [session, lastSyncedEmail]);
 
-  const handleUpdateProfile = async (showToast = true) => {
+  const handleUpdateProfile = useCallback(async (showToast = true) => {
     setIsSaving(true);
 
     try {
@@ -141,7 +141,7 @@ export default function ProfilePage() {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [firstName, lastName, bio, mascotEnabled, t, update]);
 
   // Autosave effect for text fields
   useEffect(() => {

@@ -214,7 +214,7 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
         setTimeout(() => setFeedback(null), 600);
       }
     },
-    [currentExpected, expectedStepIndex, steps, trackEvent, attemptedWrong, finishControl],
+    [currentExpected, expectedStepIndex, steps, trackEvent, attemptedWrong, finishControl, mistakes, updateProgress, onMistake],
   );
 
   // Search: Combined selection + decision
@@ -289,6 +289,9 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
       attemptedWrong,
       selectedIndices,
       finishControl,
+      mistakes,
+      updateProgress,
+      onMistake,
     ],
   );
 

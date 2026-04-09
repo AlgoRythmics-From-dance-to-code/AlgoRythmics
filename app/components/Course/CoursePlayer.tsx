@@ -632,7 +632,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     }
 
     if (level) {
-      setCourseConfidenceRating(course.slug, level);
+      setCourseConfidenceRating(course.slug, activePhase.phaseId, level);
     }
 
     const elapsed = Date.now() - phaseStartTime.current;
