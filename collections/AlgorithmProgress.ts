@@ -86,6 +86,7 @@ export const AlgorithmProgress: CollectionConfig = {
     { name: 'controlHintsUsed', type: 'number', defaultValue: 0 },
     { name: 'controlAttempts', type: 'number', defaultValue: 0 },
     { name: 'controlBestTimeMs', type: 'number', defaultValue: 0 },
+    { name: 'controlTotalTimeMs', type: 'number', defaultValue: 0 },
     {
       name: 'controlCompletedAt',
       type: 'date',
@@ -113,6 +114,7 @@ export const AlgorithmProgress: CollectionConfig = {
       admin: { description: 'Number of blanks answered correctly on first attempt.' },
     },
     { name: 'createBlanksTotal', type: 'number', defaultValue: 0 },
+    { name: 'createMistakes', type: 'number', defaultValue: 0 },
     { name: 'createTotalTimeMs', type: 'number', defaultValue: 0 },
     {
       name: 'createCompletedAt',

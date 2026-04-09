@@ -18,6 +18,7 @@ export interface AlgorithmProgress {
   aliveCompletedAt?: string | null;
   controlBestScore?: number;
   controlMistakes?: number;
+  createMistakes?: number;
   controlAttempts?: number;
   createHelpUsed?: boolean;
   createBlanksCorrectFirst?: number;
@@ -238,7 +239,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             updates.controlAttempts = 0;
             updates.controlHintsUsed = 0;
             updates.controlTotalTimeMs = 0;
-            updates.controlCompletedAt = null;
+            updates.controlMistakes = 0;
             break;
           case 'create':
             updates.createCompleted = false;
@@ -247,6 +248,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             updates.createAttempts = 0;
             updates.createHelpUsed = false;
             updates.createTotalTimeMs = 0;
+            updates.createMistakes = 0;
             updates.createCompletedAt = null;
             break;
           case 'alive':
@@ -428,7 +430,10 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         }, 0);
 
         // Preserve phasePoints only for kept phases
-        const nextPhasePoints: Record<string, unknown> = {};
+        const nextPhasePoints: Record<
+          string,
+          { earned: number; max: number; helpUsed: boolean; partial: boolean }
+        > = {};
         nextCompleted.forEach((id) => {
           if (current.phasePoints?.[id]) nextPhasePoints[id] = current.phasePoints[id];
         });

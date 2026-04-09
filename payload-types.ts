@@ -524,6 +524,7 @@ export interface AlgorithmProgress {
   controlHintsUsed?: number | null;
   controlAttempts?: number | null;
   controlBestTimeMs?: number | null;
+  controlTotalTimeMs?: number | null;
   controlCompletedAt?: string | null;
   createCompleted?: boolean | null;
   /**
@@ -536,6 +537,7 @@ export interface AlgorithmProgress {
    */
   createBlanksCorrectFirst?: number | null;
   createBlanksTotal?: number | null;
+  createMistakes?: number | null;
   createTotalTimeMs?: number | null;
   createCompletedAt?: string | null;
   aliveCompleted?: boolean | null;
@@ -905,12 +907,14 @@ export interface AlgorithmProgressSelect<T extends boolean = true> {
   controlHintsUsed?: T;
   controlAttempts?: T;
   controlBestTimeMs?: T;
+  controlTotalTimeMs?: T;
   controlCompletedAt?: T;
   createCompleted?: T;
   createHelpUsed?: T;
   createAttempts?: T;
   createBlanksCorrectFirst?: T;
   createBlanksTotal?: T;
+  createMistakes?: T;
   createTotalTimeMs?: T;
   createCompletedAt?: T;
   aliveCompleted?: T;
