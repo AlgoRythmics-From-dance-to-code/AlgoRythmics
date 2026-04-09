@@ -184,7 +184,7 @@ export async function POST(req: Request) {
             ((updates.controlTotalTimeMs as number) || 0) +
             ((updates.createTotalTimeMs as number) || 0) +
             ((updates.aliveTotalTimeMs as number) || 0);
-            
+
           let overall = 0;
           if (updates.videoWatched) overall += 20;
           if (updates.animationCompleted) overall += 20;
@@ -279,21 +279,27 @@ export async function POST(req: Request) {
     let totalControlAttempts = 0;
     let totalCreateAttempts = 0;
     let totalAliveAttempts = 0;
-    let totalAlgorithmsStarted = allAlgoDocs.docs.length;
+    const totalAlgorithmsStarted = allAlgoDocs.docs.length;
 
     allAlgoDocs.docs.forEach((doc: any) => {
-      totalTimeSpentMs += (doc.videoWatchTimeMs || 0) + (doc.animationTotalTimeMs || 0) + (doc.controlTotalTimeMs || 0) + (doc.createTotalTimeMs || 0) + (doc.aliveTotalTimeMs || 0);
+      totalTimeSpentMs +=
+        (doc.videoWatchTimeMs || 0) +
+        (doc.animationTotalTimeMs || 0) +
+        (doc.controlTotalTimeMs || 0) +
+        (doc.createTotalTimeMs || 0) +
+        (doc.aliveTotalTimeMs || 0);
       totalMistakes += (doc.controlMistakes || 0) + (doc.createMistakes || 0);
-      totalHintsUsed += (doc.controlHintsUsed || 0) + (doc.createHelpUsed ? 1 : 0) + (doc.aliveHelpUsed ? 1 : 0);
-      totalControlAttempts += (doc.controlAttempts || 0);
-      totalCreateAttempts += (doc.createAttempts || 0);
-      totalAliveAttempts += (doc.aliveCodeSubmissions || 0);
+      totalHintsUsed +=
+        (doc.controlHintsUsed || 0) + (doc.createHelpUsed ? 1 : 0) + (doc.aliveHelpUsed ? 1 : 0);
+      totalControlAttempts += doc.controlAttempts || 0;
+      totalCreateAttempts += doc.createAttempts || 0;
+      totalAliveAttempts += doc.aliveCodeSubmissions || 0;
     });
 
     allCourseDocs.docs.forEach((doc: any) => {
-      totalTimeSpentMs += (doc.totalTimeMs || 0);
-      totalMistakes += (doc.totalMistakes || 0);
-      totalHintsUsed += (doc.mascotInteractionsTotal || 0);
+      totalTimeSpentMs += doc.totalTimeMs || 0;
+      totalMistakes += doc.totalMistakes || 0;
+      totalHintsUsed += doc.mascotInteractionsTotal || 0;
     });
 
     // We do NOT completely overwrite learningStats to avoid destructive operations if only part of it was synced
@@ -302,9 +308,9 @@ export async function POST(req: Request) {
     const userDoc = await payload.findByID({ collection: 'users', id: userId, depth: 0 });
     const existingStats = (userDoc.learningStats || {}) as Record<string, unknown>;
 
-    let totalAlgorithmsCompleted = completedIds?.length || 0;
-    let totalCoursesCompleted = allCourseDocs.docs.filter((doc: any) => doc.isCompleted).length;
-    let totalCoursesStarted = allCourseDocs.docs.length;
+    const totalAlgorithmsCompleted = completedIds?.length || 0;
+    const totalCoursesCompleted = allCourseDocs.docs.filter((doc: any) => doc.isCompleted).length;
+    const totalCoursesStarted = allCourseDocs.docs.length;
 
     await payload.update({
       collection: 'users',

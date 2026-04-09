@@ -120,28 +120,31 @@ export default function ProfilePage() {
     }
   }, [session, lastSyncedEmail]);
 
-  const handleUpdateProfile = useCallback(async (showToast = true) => {
-    setIsSaving(true);
+  const handleUpdateProfile = useCallback(
+    async (showToast = true) => {
+      setIsSaving(true);
 
-    try {
-      await axios.post('/api/profile/update', { firstName, lastName, bio, mascotEnabled });
-      await update({ firstName, lastName, bio, mascotEnabled });
-      if (showToast) {
-        toast.success(t('toasts.profile_updated'), {
-          id: 'profile-update',
-          duration: 2000,
-        });
+      try {
+        await axios.post('/api/profile/update', { firstName, lastName, bio, mascotEnabled });
+        await update({ firstName, lastName, bio, mascotEnabled });
+        if (showToast) {
+          toast.success(t('toasts.profile_updated'), {
+            id: 'profile-update',
+            duration: 2000,
+          });
+        }
+      } catch (error) {
+        if (showToast) {
+          toast.error(t('toasts.profile_update_error'), {
+            id: 'profile-update-error',
+          });
+        }
+      } finally {
+        setIsSaving(false);
       }
-    } catch (error) {
-      if (showToast) {
-        toast.error(t('toasts.profile_update_error'), {
-          id: 'profile-update-error',
-        });
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  }, [firstName, lastName, bio, mascotEnabled, t, update]);
+    },
+    [firstName, lastName, bio, mascotEnabled, t, update],
+  );
 
   // Autosave effect for text fields
   useEffect(() => {
@@ -163,12 +166,21 @@ export default function ProfilePage() {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [firstName, lastName, bio, mascotEnabled, status, lastSyncedEmail, session, handleUpdateProfile]);
+  }, [
+    firstName,
+    lastName,
+    bio,
+    mascotEnabled,
+    status,
+    lastSyncedEmail,
+    session,
+    handleUpdateProfile,
+  ]);
 
   // Mascot toggle is immediate
   useEffect(() => {
     if (status !== 'authenticated' || !lastSyncedEmail) return;
-    
+
     const u = session?.user as any;
     if (mascotEnabled === (u.mascotEnabled !== false)) return;
 
@@ -201,7 +213,6 @@ export default function ProfilePage() {
   const initials = getInitials();
   const avatarUrl: string | undefined =
     (user as { imageUrl?: string }).imageUrl || user.image || undefined;
-
 
   const handleUpdatePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {

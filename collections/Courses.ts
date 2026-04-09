@@ -35,12 +35,9 @@ export const Courses: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: ({ req: { user } }) =>
-      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
-    update: ({ req: { user } }) =>
-      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
-    delete: ({ req: { user } }) =>
-      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    create: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    update: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
   },
   fields: [
     {
@@ -314,7 +311,6 @@ export const Courses: CollectionConfig = {
                   admin: { description: 'Fázis leírása: miről szól ez a rész?' },
                 },
 
-
                 {
                   name: 'mascotLine',
                   type: 'textarea',
@@ -329,7 +325,8 @@ export const Courses: CollectionConfig = {
                   type: 'textarea',
                   localized: true,
                   admin: {
-                    description: 'Opcionális: Egyedi üzenet sok hiba esetén (pl. "Látom elakadtál ennél a résznél...").',
+                    description:
+                      'Opcionális: Egyedi üzenet sok hiba esetén (pl. "Látom elakadtál ennél a résznél...").',
                     condition: (data) => data?.mascot?.enabled,
                   },
                 },

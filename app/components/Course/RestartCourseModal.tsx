@@ -47,9 +47,7 @@ export default function RestartCourseModal({
           <h3 className="text-2xl font-black text-black dark:text-white uppercase tracking-tight mb-4 text-balance">
             {title}
           </h3>
-          <p className="text-neutral-500 dark:text-neutral-400 mb-8 font-medium">
-            {message}
-          </p>
+          <p className="text-neutral-500 dark:text-neutral-400 mb-8 font-medium">{message}</p>
           <div className="flex flex-col gap-3 w-full">
             <button
               onClick={onConfirm}

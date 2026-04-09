@@ -31,8 +31,7 @@ export const AlgorithmProgress: CollectionConfig = {
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { user: { equals: user.id } };
     },
-    delete: ({ req: { user } }) =>
-      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
   },
   fields: [
     // ─── Identity ───────────────────────────────────────
@@ -69,7 +68,11 @@ export const AlgorithmProgress: CollectionConfig = {
     },
     { name: 'animationTotalTimeMs', type: 'number', defaultValue: 0 },
     { name: 'animationPlayCount', type: 'number', defaultValue: 0 },
-    { name: 'animationCompletedAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
+    {
+      name: 'animationCompletedAt',
+      type: 'date',
+      admin: { date: { pickerAppearance: 'dayAndTime' } },
+    },
 
     // ─── Control ────────────────────────────────────────
     {
@@ -83,7 +86,11 @@ export const AlgorithmProgress: CollectionConfig = {
     { name: 'controlHintsUsed', type: 'number', defaultValue: 0 },
     { name: 'controlAttempts', type: 'number', defaultValue: 0 },
     { name: 'controlBestTimeMs', type: 'number', defaultValue: 0 },
-    { name: 'controlCompletedAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
+    {
+      name: 'controlCompletedAt',
+      type: 'date',
+      admin: { date: { pickerAppearance: 'dayAndTime' } },
+    },
 
     // ─── Create (code fill-in) ──────────────────────────
     {
@@ -107,7 +114,11 @@ export const AlgorithmProgress: CollectionConfig = {
     },
     { name: 'createBlanksTotal', type: 'number', defaultValue: 0 },
     { name: 'createTotalTimeMs', type: 'number', defaultValue: 0 },
-    { name: 'createCompletedAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } },
+    {
+      name: 'createCompletedAt',
+      type: 'date',
+      admin: { date: { pickerAppearance: 'dayAndTime' } },
+    },
 
     // ─── Alive (free code / nodes) ──────────────────────
     {

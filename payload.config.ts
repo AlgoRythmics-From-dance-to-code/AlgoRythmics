@@ -19,9 +19,7 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     components: {
-      afterNav: [
-        './app/components/Payload/RoleBodyClass#default',
-      ],
+      afterNav: ['./app/components/Payload/RoleBodyClass#default'],
     },
   },
   localization: {
@@ -49,10 +47,7 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL
-        ? process.env.DATABASE_URL.replace(
-            /(sslmode=)(require|prefer|verify-ca)/,
-            '$1verify-full'
-          )
+        ? process.env.DATABASE_URL.replace(/(sslmode=)(require|prefer|verify-ca)/, '$1verify-full')
         : '',
     },
     migrationDir: path.resolve(dirname, 'migrations'),

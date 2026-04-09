@@ -29,8 +29,7 @@ export const LearningEvents: CollectionConfig = {
     },
     // Events are immutable — no updates allowed
     update: () => false,
-    delete: ({ req: { user } }) =>
-      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
   },
   fields: [
     {

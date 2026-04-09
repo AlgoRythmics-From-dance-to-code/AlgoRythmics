@@ -15,7 +15,8 @@ interface CoursesClientProps {
 export default function CoursesClient({ courses }: CoursesClientProps) {
   const { t } = useLocale();
   const router = useRouter();
-  const { courseProgress, resetCourseProgress, resetAlgorithmProgressTab, syncProgress } = useAlgorithmStore();
+  const { courseProgress, resetCourseProgress, resetAlgorithmProgressTab, syncProgress } =
+    useAlgorithmStore();
   const [activeTab, setActiveTab] = useState<'available' | 'completed'>('available');
   const [selectedCourse, setSelectedCourse] = useState<CourseBlueprint | null>(null);
   const [showRestartModal, setShowRestartModal] = useState(false);
@@ -46,20 +47,20 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
 
   const handleConfirmRestart = () => {
     if (!selectedCourse) return;
-    
+
     resetCourseProgress(selectedCourse.slug);
     const allowedTabs = ['video', 'animation', 'control', 'create', 'alive'];
     selectedCourse.phases.forEach((p) => {
       let tabToReset = p.sourceView;
       if (tabToReset === 'video-custom') tabToReset = 'video';
-      
+
       if (allowedTabs.includes(tabToReset)) {
         resetAlgorithmProgressTab(p.sourceAlgorithmId || selectedCourse.algorithmId, tabToReset);
       }
     });
-    
+
     syncProgress();
-    
+
     setShowRestartModal(false);
     router.push(`/courses/${selectedCourse.slug}`);
   };
@@ -72,7 +73,9 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
           <button
             onClick={() => setActiveTab('available')}
             className={`relative z-10 flex items-center gap-2 rounded-xl px-6 py-3 text-xs font-black uppercase tracking-widest transition-colors ${
-              activeTab === 'available' ? 'text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+              activeTab === 'available'
+                ? 'text-white'
+                : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
             }`}
           >
             {activeTab === 'available' && (
@@ -95,7 +98,9 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
           <button
             onClick={() => setActiveTab('completed')}
             className={`relative z-10 flex items-center gap-2 rounded-xl px-6 py-3 text-xs font-black uppercase tracking-widest transition-colors ${
-              activeTab === 'completed' ? 'text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+              activeTab === 'completed'
+                ? 'text-white'
+                : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
             }`}
           >
             {activeTab === 'completed' && (
@@ -127,12 +132,10 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
         >
           {filteredCourses.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="mb-4 text-4xl">
-                {activeTab === 'completed' ? '🏆' : '✨'}
-              </div>
+              <div className="mb-4 text-4xl">{activeTab === 'completed' ? '🏆' : '✨'}</div>
               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest leading-6">
-                {activeTab === 'completed' 
-                  ? 'Még nincsenek teljesített kurzusaid.\nKezdj el egyet még ma!' 
+                {activeTab === 'completed'
+                  ? 'Még nincsenek teljesített kurzusaid.\nKezdj el egyet még ma!'
                   : 'Minden kurzust teljesítettél!\nGratulálunk a hatalmas tudáshoz!'}
               </p>
             </div>
@@ -173,7 +176,7 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
                           </span>
                           <span className="text-gray-300 dark:text-gray-700">•</span>
                           <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                             {course.phases.length} {t('courses.checkpoints')}
+                            {course.phases.length} {t('courses.checkpoints')}
                           </span>
                         </div>
                       </div>
@@ -189,7 +192,7 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
                     </div>
 
                     <div className="flex">
-                       <span className="inline-flex rounded-full border border-[#269984]/20 bg-[#269984]/5 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#269984] shadow-sm">
+                      <span className="inline-flex rounded-full border border-[#269984]/20 bg-[#269984]/5 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#269984] shadow-sm">
                         {course.difficulty}
                       </span>
                     </div>

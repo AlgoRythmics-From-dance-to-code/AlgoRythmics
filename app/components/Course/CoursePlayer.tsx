@@ -81,7 +81,15 @@ function InfoComponent({ phase, courseId }: { phase: CoursePhase; courseId: stri
   );
 }
 
-function QuizComponent({ phase, courseId, onMistake }: { phase: CoursePhase; courseId: string, onMistake?: () => void }) {
+function QuizComponent({
+  phase,
+  courseId,
+  onMistake,
+}: {
+  phase: CoursePhase;
+  courseId: string;
+  onMistake?: () => void;
+}) {
   const { t } = useLocale();
   const { markCoursePhaseComplete, setCoursePhaseResult } = useAlgorithmStore();
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
@@ -175,13 +183,13 @@ function QuizComponent({ phase, courseId, onMistake }: { phase: CoursePhase; cou
   );
 }
 
-function PhaseBody({ 
-  phase, 
-  course, 
-  onMistake 
-}: { 
-  phase: CoursePhase; 
-  course: CourseBlueprint; 
+function PhaseBody({
+  phase,
+  course,
+  onMistake,
+}: {
+  phase: CoursePhase;
+  course: CourseBlueprint;
   onMistake?: () => void;
 }) {
   const { t } = useLocale();
@@ -218,10 +226,10 @@ function PhaseBody({
       return <DebugComponent phase={phase} courseId={course.slug} onMistake={onMistake} />;
     case 'video-custom':
       return (
-        <VideoPlayer 
-          youtubeId={phase.customVideoId || ''} 
-          algorithmId={algorithmId} 
-          title={phase.title} 
+        <VideoPlayer
+          youtubeId={phase.customVideoId || ''}
+          algorithmId={algorithmId}
+          title={phase.title}
         />
       );
     case 'final-challenge':
@@ -259,7 +267,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const { t } = useLocale();
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
-  
+
   // Enabled if still loading (on by default) or explicitly not false
   const mascotEnabled = sessionStatus === 'loading' ? true : session?.user?.mascotEnabled !== false;
 
@@ -435,7 +443,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const currentMistakeTriggered = useMemo(() => {
     if (!activePhase) return false;
     const thresh = course.mascot.mistakeTriggerCount || 2;
-    
+
     // Check algorithm-level control mistakes (persistent)
     const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
     const algoMistakes = progress.controlMistakes || 0;
@@ -445,12 +453,19 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       (activePhase.sourceView === 'control' && algoMistakes >= thresh) ||
       phaseMistakesCount >= thresh
     );
-  }, [activePhase, algorithmProgress, course.algorithmId, course.mascot.mistakeTriggerCount, phaseMistakesCount]);
+  }, [
+    activePhase,
+    algorithmProgress,
+    course.algorithmId,
+    course.mascot.mistakeTriggerCount,
+    phaseMistakesCount,
+  ]);
 
   useEffect(() => {
     if (currentMistakeTriggered) {
       setMascotMood('mistake');
-      const intro = activePhase.mascotMistakeLine || course.mascot.mistakePrompt || t('course.mistake_prompt');
+      const intro =
+        activePhase.mascotMistakeLine || course.mascot.mistakePrompt || t('course.mistake_prompt');
       const hint = activePhase.hintCopy;
       setMascotMessage(hint ? `${intro} ${hint}` : intro);
       if (mascotEnabled) setMascotVisible(true);
@@ -460,7 +475,15 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       mascotHelpedCurrentPhase.current = true;
       phaseMascotHelpCount.current += 1;
     }
-  }, [currentMistakeTriggered, activePhase.mascotMistakeLine, activePhase.hintCopy, course.mascot.mistakePrompt, course.slug, incrementCourseMascotInteraction, incrementCourseMistakes]);
+  }, [
+    currentMistakeTriggered,
+    activePhase.mascotMistakeLine,
+    activePhase.hintCopy,
+    course.mascot.mistakePrompt,
+    course.slug,
+    incrementCourseMascotInteraction,
+    incrementCourseMistakes,
+  ]);
 
   const activeProgress =
     algorithmProgress[activePhase?.sourceAlgorithmId || course.algorithmId] || {};
@@ -508,12 +531,12 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         mascotHelpedCurrentPhase.current = true;
       }
     }
-    
+
     phaseStartTime.current = Date.now();
     phaseMascotHelpCount.current = phaseAdvice ? 1 : 0;
     setPhaseMistakesCount(0);
     mascotHelpedCurrentPhase.current = !!phaseAdvice;
-    
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePhaseIndex, course.slug]);
 
@@ -588,7 +611,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
     let helpUsed = false;
     if (activePhase.sourceView === 'create') helpUsed = !!progress.createHelpUsed;
-    if (activePhase.sourceView === 'alive' || activePhase.sourceView === 'final-challenge') helpUsed = !!progress.aliveHelpUsed;
+    if (activePhase.sourceView === 'alive' || activePhase.sourceView === 'final-challenge')
+      helpUsed = !!progress.aliveHelpUsed;
     if (activePhase.sourceView === 'control') helpUsed = (progress.controlHintsUsed || 0) > 0;
 
     let earnedPoints = 0;
@@ -602,7 +626,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         const ratio = blanksTotal > 0 ? blanksCorrect / blanksTotal : 0;
         earnedPoints = Math.round(maxPoints * ratio);
         isPartial = ratio < 1 && ratio > 0;
-      } else if (activePhase.sourceView === 'alive' || activePhase.sourceView === 'final-challenge') {
+      } else if (
+        activePhase.sourceView === 'alive' ||
+        activePhase.sourceView === 'final-challenge'
+      ) {
         const bestScore = progress.aliveBestScore || 0;
         const ratio = bestScore / 100; // aliveBestScore is a percentage 0-100
         earnedPoints = Math.round(maxPoints * ratio);
@@ -636,7 +663,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     }
 
     const elapsed = Date.now() - phaseStartTime.current;
-    
+
     // Auto-success for info and video phases once completed
     const isAutoSuccess = activePhase.sourceView === 'info' || activePhase.sourceView === 'video';
     const storedResult = courseProgress[course.slug]?.phaseResults?.[activePhase.phaseId];
@@ -647,13 +674,19 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     const improved = mascotHelpedCurrentPhase.current && isSuccess;
 
     updateCoursePhaseStats(course.slug, activePhase.phaseId, {
-      timeSpentMs: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.timeSpentMs || 0) + elapsed,
+      timeSpentMs:
+        (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.timeSpentMs || 0) +
+        elapsed,
       completed: true,
       result: isSuccess ? 'success' : 'fail',
       helpUsed,
-      mascotHelpCount: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mascotHelpCount || 0) + phaseMascotHelpCount.current,
+      mascotHelpCount:
+        (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mascotHelpCount || 0) +
+        phaseMascotHelpCount.current,
       improvedAfterMascot: improved,
-      mistakes: (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mistakes || 0) + phaseMistakesCount,
+      mistakes:
+        (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mistakes || 0) +
+        phaseMistakesCount,
       mascotIntentionallyDisabled: !mascotEnabled,
     });
     updateCourseTotalTime(course.slug, elapsed);
@@ -712,12 +745,14 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
           title={modalMode === 'restart' ? t('course.restart_title') : t('course.checkpoint_title')}
           message={
             modalMode === 'restart'
-              ? (courseProgress[course.slug]?.isCompleted && !isInternalReset 
-                  ? t('course.restart_completed_message')
-                  : t('course.restart_message'))
+              ? courseProgress[course.slug]?.isCompleted && !isInternalReset
+                ? t('course.restart_completed_message')
+                : t('course.restart_message')
               : t('course.checkpoint_message')
           }
-          confirmLabel={modalMode === 'restart' ? t('course.restart_confirm') : t('course.checkpoint_confirm')}
+          confirmLabel={
+            modalMode === 'restart' ? t('course.restart_confirm') : t('course.checkpoint_confirm')
+          }
           cancelLabel={isInternalReset ? t('course.cancel_continue') : t('course.cancel_back')}
         />
 
@@ -788,9 +823,15 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
                     return (
                       <div key={phase.phaseId} className="flex items-center gap-3 px-4 py-3">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0 ${
-                          earned === max ? 'bg-[#269984]' : earned > 0 ? 'bg-amber-500' : 'bg-gray-300 dark:bg-white/20'
-                        }`}>
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0 ${
+                            earned === max
+                              ? 'bg-[#269984]'
+                              : earned > 0
+                                ? 'bg-amber-500'
+                                : 'bg-gray-300 dark:bg-white/20'
+                          }`}
+                        >
                           {earned === max ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : idx + 1}
                         </div>
                         <div className="flex-1 min-w-0 text-left">
@@ -798,9 +839,15 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                             {phase.title}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`text-[10px] font-bold tabular-nums ${
-                              earned === max ? 'text-[#269984]' : earned > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'
-                            }`}>
+                            <span
+                              className={`text-[10px] font-bold tabular-nums ${
+                                earned === max
+                                  ? 'text-[#269984]'
+                                  : earned > 0
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : 'text-gray-400'
+                              }`}
+                            >
                               {earned}/{max} pt
                             </span>
                             {isPartial && (
@@ -821,7 +868,11 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                             animate={{ width: `${pct}%` }}
                             transition={{ delay: idx * 0.1, duration: 0.5 }}
                             className={`h-full rounded-full ${
-                              earned === max ? 'bg-[#269984]' : earned > 0 ? 'bg-amber-500' : 'bg-gray-300'
+                              earned === max
+                                ? 'bg-[#269984]'
+                                : earned > 0
+                                  ? 'bg-amber-500'
+                                  : 'bg-gray-300'
                             }`}
                           />
                         </div>
@@ -1026,11 +1077,11 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
           </div>
 
           <div key={`${activePhase.phaseId}-${phaseKey}`} className="mt-6">
-            <PhaseBody 
-            phase={activePhase} 
-            course={course} 
-            onMistake={() => setPhaseMistakesCount(c => c + 1)} 
-          />
+            <PhaseBody
+              phase={activePhase}
+              course={course}
+              onMistake={() => setPhaseMistakesCount((c) => c + 1)}
+            />
           </div>
         </div>
 
@@ -1211,7 +1262,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                           onClick={() => {
                             setMascotMood('neutral');
                             const advice =
-                              activePhase.idleHelp || activePhase.hintCopy || activePhase.mascotLine || activePhase.summary;
+                              activePhase.idleHelp ||
+                              activePhase.hintCopy ||
+                              activePhase.mascotLine ||
+                              activePhase.summary;
                             setMascotMessage(advice);
                             setMascotActions(false);
                           }}

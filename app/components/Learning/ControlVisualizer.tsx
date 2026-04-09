@@ -126,7 +126,7 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
   // Sorting: Check the pair selection
   const handleCheck = useCallback(() => {
     if (!currentExpected || !isSorting) return;
-    
+
     // If fewer than selectionLimit are selected, it's a mistake in logic/understanding
     if (selectedIndices.length < selectionLimit) {
       setFeedback('incorrect');
@@ -134,7 +134,10 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
       updateProgress({ controlMistakes: mistakes + 1 });
       onMistake?.();
       setAttemptedWrong(true);
-      trackEvent('control_selection_incomplete', { selected: selectedIndices.length, required: selectionLimit });
+      trackEvent('control_selection_incomplete', {
+        selected: selectedIndices.length,
+        required: selectionLimit,
+      });
       setTimeout(() => setFeedback(null), 600);
       return;
     }
@@ -168,7 +171,17 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
       });
       setTimeout(() => setFeedback(null), 600);
     }
-  }, [selectedIndices, currentExpected, trackEvent, expectedStepIndex, isSorting, selectionLimit, onMistake, mistakes, updateProgress]);
+  }, [
+    selectedIndices,
+    currentExpected,
+    trackEvent,
+    expectedStepIndex,
+    isSorting,
+    selectionLimit,
+    onMistake,
+    mistakes,
+    updateProgress,
+  ]);
 
   // Sorting: Handle swap/stay decision
   const handleSortingDecision = useCallback(
@@ -214,7 +227,17 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
         setTimeout(() => setFeedback(null), 600);
       }
     },
-    [currentExpected, expectedStepIndex, steps, trackEvent, attemptedWrong, finishControl, mistakes, updateProgress, onMistake],
+    [
+      currentExpected,
+      expectedStepIndex,
+      steps,
+      trackEvent,
+      attemptedWrong,
+      finishControl,
+      mistakes,
+      updateProgress,
+      onMistake,
+    ],
   );
 
   // Search: Combined selection + decision

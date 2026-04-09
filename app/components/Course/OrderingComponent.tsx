@@ -18,12 +18,11 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
 
-  const initialItems = phase.ordering?.map((o, i) => ({ id: `O-${i}`, text: o.text, originalIndex: i })) || [];
-  
+  const initialItems =
+    phase.ordering?.map((o, i) => ({ id: `O-${i}`, text: o.text, originalIndex: i })) || [];
+
   // Shuffle for the challenge
-  const [items, setItems] = useState(() => 
-    [...initialItems].sort(() => Math.random() - 0.5)
-  );
+  const [items, setItems] = useState(() => [...initialItems].sort(() => Math.random() - 0.5));
 
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -31,11 +30,11 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
   const checkOrder = () => {
     // Correct if current text order matches initial order (which was 0, 1, 2...)
     const matchesOriginal = items.every((item, idx) => item.originalIndex === idx);
-    
+
     setIsCorrect(matchesOriginal);
     if (!matchesOriginal) onMistake?.();
     setShowFeedback(true);
-    
+
     setCoursePhaseResult(courseId, phase.phaseId, matchesOriginal ? 'success' : 'fail');
     markCoursePhaseComplete(courseId, phase.phaseId);
   };
@@ -44,7 +43,7 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
     <div className="flex flex-col items-center gap-8 p-4">
       <div className="w-full max-w-xl">
         <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6 text-center">
-           Húzd a helyes sorrendbe az elemeket
+          Húzd a helyes sorrendbe az elemeket
         </h4>
 
         <Reorder.Group
@@ -61,9 +60,9 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
               key={item.id}
               value={item}
               className={`flex items-center gap-4 p-5 rounded-2xl border-2 bg-white cursor-grab active:cursor-grabbing transition-all ${
-                showFeedback 
-                  ? isCorrect 
-                    ? 'border-green-500 bg-green-50' 
+                showFeedback
+                  ? isCorrect
+                    ? 'border-green-500 bg-green-50'
                     : 'border-red-200'
                   : 'border-gray-100 hover:border-[#269984]/30 shadow-sm hover:shadow-md'
               }`}
@@ -92,20 +91,24 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
             isCorrect ? 'border-green-500 bg-green-500/5' : 'border-red-500 bg-red-500/5'
           }`}
         >
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-            isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-          }`}>
-             {isCorrect ? <Check /> : <X />}
+          <div
+            className={`w-12 h-12 rounded-full flex items-center justify-center ${
+              isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`}
+          >
+            {isCorrect ? <Check /> : <X />}
           </div>
-          <h5 className={`font-black uppercase tracking-[0.2em] text-xs ${
-            isCorrect ? 'text-green-600' : 'text-red-600'
-          }`}>
+          <h5
+            className={`font-black uppercase tracking-[0.2em] text-xs ${
+              isCorrect ? 'text-green-600' : 'text-red-600'
+            }`}
+          >
             {isCorrect ? 'Tökéletes sorrend!' : 'Majdnem jó...'}
           </h5>
           <p className="text-sm font-medium text-gray-500">
-             {isCorrect 
-               ? 'Sikeresen felismerted az algoritmus lépéseit.' 
-               : 'Nézd át újra a folyamatot és próbáld meg kikövetkeztetni a helyes sorrendet!'}
+            {isCorrect
+              ? 'Sikeresen felismerted az algoritmus lépéseit.'
+              : 'Nézd át újra a folyamatot és próbáld meg kikövetkeztetni a helyes sorrendet!'}
           </p>
         </motion.div>
       )}

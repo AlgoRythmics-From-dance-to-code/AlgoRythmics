@@ -52,6 +52,6 @@ export const migrations = [
   {
     up: migration_20260409_171419_add_phase_scoring.up,
     down: migration_20260409_171419_add_phase_scoring.down,
-    name: '20260409_171419_add_phase_scoring'
+    name: '20260409_171419_add_phase_scoring',
   },
 ];

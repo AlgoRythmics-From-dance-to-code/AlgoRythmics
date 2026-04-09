@@ -20,8 +20,7 @@ export const CourseProgress: CollectionConfig = {
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { user: { equals: user.id } };
     },
-    delete: ({ req: { user } }) =>
-      user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
   },
   fields: [
     {
@@ -101,14 +100,16 @@ export const CourseProgress: CollectionConfig = {
       name: 'detailedStats',
       type: 'json',
       admin: {
-        description: 'Comprehensive per-phase telemetry (time, results, mistakes, mascot help, etc.)',
+        description:
+          'Comprehensive per-phase telemetry (time, results, mistakes, mascot help, etc.)',
       },
     },
     {
       name: 'phasePoints',
       type: 'json',
       admin: {
-        description: 'Per-phase scoring: { [phaseId]: { earned: number, max: number, helpUsed: boolean, partial: boolean } }',
+        description:
+          'Per-phase scoring: { [phaseId]: { earned: number, max: number, helpUsed: boolean, partial: boolean } }',
       },
     },
   ],

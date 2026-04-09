@@ -18,9 +18,9 @@ const clearAuthCookies = () => {
     const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
     // Clear next-auth, payload and any other auth related cookies
     if (name.includes('auth') || name.includes('token') || name.includes('session')) {
-       document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-       document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;`;
-       document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict;`;
+      document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+      document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;`;
+      document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict;`;
     }
   }
 };
@@ -46,10 +46,10 @@ export default function UserProgressSync() {
   const lastSynced = useRef({ ids: '', progress: '', algorithm: '', course: '' });
 
   // Do not sync on auth pages or while loading
-  const isAuthPage = 
-    pathname?.includes('/login') || 
-    pathname?.includes('/register') || 
-    pathname?.includes('/forgot-password') || 
+  const isAuthPage =
+    pathname?.includes('/login') ||
+    pathname?.includes('/register') ||
+    pathname?.includes('/forgot-password') ||
     pathname?.includes('/reset-password');
 
   // 0. Cleanup on Logout: Clear the store when the user logs out
@@ -69,7 +69,7 @@ export default function UserProgressSync() {
       isHydrating.current = true;
       try {
         const response = await fetch('/api/account/progress');
-        
+
         // Handle stale sessions silently - do not force redirect on auth pages or random background calls
         if (response.status === 401) {
           console.warn('[AlgoRythmics] Session stale. Clearing local session and progress data.');
@@ -154,7 +154,15 @@ export default function UserProgressSync() {
     } catch (err) {
       console.error('[AlgoRythmics] Failed to sync progress to cloud:', err);
     }
-  }, [completedIds, visualizerProgress, algorithmProgress, courseProgress, status, isAuthPage, clearStore]);
+  }, [
+    completedIds,
+    visualizerProgress,
+    algorithmProgress,
+    courseProgress,
+    status,
+    isAuthPage,
+    clearStore,
+  ]);
 
   // 3. Continuous Sync
   useEffect(() => {
@@ -169,7 +177,15 @@ export default function UserProgressSync() {
 
     const timer = setTimeout(syncProgress, APP_CONFIG.SYNC_INTERVAL_MS);
     return () => clearTimeout(timer);
-  }, [completedIds, visualizerProgress, algorithmProgress, courseProgress, status, syncProgress, isAuthPage]);
+  }, [
+    completedIds,
+    visualizerProgress,
+    algorithmProgress,
+    courseProgress,
+    status,
+    syncProgress,
+    isAuthPage,
+  ]);
 
   // 4. Lifecycle Sync: Immediate persistence on tab closure
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
+import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres';
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   // Idempotent migration: only adds new columns if they don't already exist.
@@ -14,7 +14,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
         ALTER TABLE "courses_phases" ADD COLUMN "max_points" numeric DEFAULT 10;
       END IF;
     END $$;
-  `)
+  `);
 
   // 2. Add phase_points to course_progress (if not already present)
   await db.execute(sql`
@@ -26,7 +26,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
         ALTER TABLE "course_progress" ADD COLUMN "phase_points" jsonb;
       END IF;
     END $$;
-  `)
+  `);
 
   // 3. Update foreign keys to CASCADE for user-related tables
   await db.execute(sql`
@@ -35,7 +35,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
 
     ALTER TABLE "course_progress" DROP CONSTRAINT IF EXISTS "course_progress_user_id_users_id_fk";
     ALTER TABLE "course_progress" ADD CONSTRAINT "course_progress_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade;
-  `)
+  `);
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
@@ -48,5 +48,5 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
 
     ALTER TABLE "course_progress" DROP CONSTRAINT IF EXISTS "course_progress_user_id_users_id_fk";
     ALTER TABLE "course_progress" ADD CONSTRAINT "course_progress_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id");
-  `)
+  `);
 }

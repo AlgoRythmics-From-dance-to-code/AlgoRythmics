@@ -174,20 +174,26 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
               : 'border-red-500 bg-red-500/5'
           }`}
         >
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-             matches.every((m) => m.isCorrect) ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-          }`}>
-             {matches.every((m) => m.isCorrect) ? <Check /> : <X />}
+          <div
+            className={`w-12 h-12 rounded-full flex items-center justify-center ${
+              matches.every((m) => m.isCorrect)
+                ? 'bg-green-500 text-white'
+                : 'bg-red-500 text-white'
+            }`}
+          >
+            {matches.every((m) => m.isCorrect) ? <Check /> : <X />}
           </div>
-          <h5 className={`font-black uppercase tracking-[0.2em] text-xs ${
-            matches.every((m) => m.isCorrect) ? 'text-green-600' : 'text-red-600'
-          }`}>
+          <h5
+            className={`font-black uppercase tracking-[0.2em] text-xs ${
+              matches.every((m) => m.isCorrect) ? 'text-green-600' : 'text-red-600'
+            }`}
+          >
             {matches.every((m) => m.isCorrect) ? 'Szuper munka!' : 'Valami nem stimmel...'}
           </h5>
           <p className="text-sm font-medium text-gray-500">
-             {matches.every((m) => m.isCorrect) 
-               ? 'Sikeresen párosítottad az összes elemet.' 
-               : 'Próbáld meg jobban megfigyelni az összefüggéseket legközelebb!'}
+            {matches.every((m) => m.isCorrect)
+              ? 'Sikeresen párosítottad az összes elemet.'
+              : 'Próbáld meg jobban megfigyelni az összefüggéseket legközelebb!'}
           </p>
         </motion.div>
       )}

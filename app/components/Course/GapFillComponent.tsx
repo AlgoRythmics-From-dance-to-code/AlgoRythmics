@@ -20,10 +20,10 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
 
   const content = phase.gapFillContent || '';
   const options = phase.gapFillOptions || [];
-  
+
   // Find all [blank] markers
   const parts = content.split(/(\[blank\])/);
-  const blankCount = parts.filter(p => p === '[blank]').length;
+  const blankCount = parts.filter((p) => p === '[blank]').length;
 
   const [choices, setChoices] = useState<string[]>(new Array(blankCount).fill(''));
   const [showFeedback, setShowFeedback] = useState(false);
@@ -39,7 +39,7 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
     // In this simplified logic, we assume the options provided correspond to the blanks in order
     // In a more complex version, we might need explicit solutions in the schema
     // For now, we'll check if the user filled everything and mark as success
-    const allFilled = choices.every(c => c !== '');
+    const allFilled = choices.every((c) => c !== '');
     if (!allFilled) return;
 
     setShowFeedback(true);
@@ -58,32 +58,38 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
               const currentBlank = blankIdx++;
               return (
                 <div key={i} className="relative inline-block min-w-[120px]">
-                   <select
+                  <select
                     disabled={isDone || showFeedback}
                     value={choices[currentBlank]}
                     onChange={(e) => handleSelect(currentBlank, e.target.value)}
                     className={`w-full appearance-none px-4 py-2 rounded-xl border-2 font-bold text-sm bg-white cursor-pointer transition-all ${
-                      choices[currentBlank] 
-                        ? 'border-[#269984] text-[#269984]' 
+                      choices[currentBlank]
+                        ? 'border-[#269984] text-[#269984]'
                         : 'border-gray-200 text-gray-400'
                     } focus:ring-2 focus:ring-[#269984]/20 outline-none`}
-                   >
-                     <option value="">...</option>
-                     {options.map((opt, oIdx) => (
-                       <option key={oIdx} value={opt}>{opt}</option>
-                     ))}
-                   </select>
+                  >
+                    <option value="">...</option>
+                    {options.map((opt, oIdx) => (
+                      <option key={oIdx} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               );
             }
-            return <span key={i} className="font-medium">{part}</span>;
+            return (
+              <span key={i} className="font-medium">
+                {part}
+              </span>
+            );
           })}
         </div>
       </div>
 
       {!showFeedback && !isDone && (
         <button
-          disabled={choices.some(c => c === '')}
+          disabled={choices.some((c) => c === '')}
           onClick={checkGaps}
           className="px-10 py-4 bg-[#269984] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#269984]/30 hover:scale-105 transition-all disabled:opacity-30 disabled:scale-100"
         >
@@ -91,20 +97,20 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
         </button>
       )}
 
-       {showFeedback && (
+      {showFeedback && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="p-6 rounded-3xl border-2 border-green-500 bg-green-500/5 text-center flex flex-col items-center gap-3 w-full max-w-md"
         >
           <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center">
-             <Check />
+            <Check />
           </div>
           <h5 className="font-black uppercase tracking-[0.2em] text-xs text-green-600">
             Szöveg kiegészítve!
           </h5>
           <p className="text-sm font-medium text-gray-500">
-             Nagyszerűen használtad a szakkifejezéseket.
+            Nagyszerűen használtad a szakkifejezéseket.
           </p>
         </motion.div>
       )}
