@@ -140,7 +140,7 @@ export interface Course {
    */
   slug: string;
   /**
-   * Rővid összefoglaló szöveg, ami a kurzuslistában jelenik meg.
+   * Rövid összefoglaló szöveg, ami a kurzuslistában jelenik meg.
    */
   summary: string;
   /**
@@ -152,7 +152,7 @@ export interface Course {
    */
   icon?: string | null;
   /**
-   * A kurzus gombjainak és UI elemeinek elsődleges szine.
+   * A kurzus gombjainak és UI elemeinek elsődleges színe.
    */
   accentColor?: string | null;
   /**
@@ -427,6 +427,8 @@ export interface User {
     totalTimeSpentMs?: number | null;
     totalAlgorithmsStarted?: number | null;
     totalAlgorithmsCompleted?: number | null;
+    totalCoursesStarted?: number | null;
+    totalCoursesCompleted?: number | null;
     totalControlAttempts?: number | null;
     totalCreateAttempts?: number | null;
     totalAliveAttempts?: number | null;
@@ -833,6 +835,8 @@ export interface UsersSelect<T extends boolean = true> {
         totalTimeSpentMs?: T;
         totalAlgorithmsStarted?: T;
         totalAlgorithmsCompleted?: T;
+        totalCoursesStarted?: T;
+        totalCoursesCompleted?: T;
         totalControlAttempts?: T;
         totalCreateAttempts?: T;
         totalAliveAttempts?: T;

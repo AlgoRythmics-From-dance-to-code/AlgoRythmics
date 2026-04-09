@@ -177,6 +177,24 @@ export async function POST(req: Request) {
           delete updates.createdAt;
           delete updates.updatedAt;
 
+          // Compute algorithm-specific aggregates
+          const totalTime =
+            ((updates.videoWatchTimeMs as number) || 0) +
+            ((updates.animationTotalTimeMs as number) || 0) +
+            ((updates.controlTotalTimeMs as number) || 0) +
+            ((updates.createTotalTimeMs as number) || 0) +
+            ((updates.aliveTotalTimeMs as number) || 0);
+            
+          let overall = 0;
+          if (updates.videoWatched) overall += 20;
+          if (updates.animationCompleted) overall += 20;
+          if (updates.controlCompleted) overall += 20;
+          if (updates.createCompleted) overall += 20;
+          if (updates.aliveCompleted) overall += 20;
+
+          updates.totalTimeSpentMs = totalTime;
+          updates.overallProgress = overall;
+
           if (existingDoc) {
             await payload.update({
               collection: 'algorithm-progress',
@@ -240,6 +258,74 @@ export async function POST(req: Request) {
         }
       }
     }
+
+    // 4. Update aggregated learningStats on User collection
+    const allAlgoDocs = await payload.find({
+      collection: 'algorithm-progress',
+      where: { user: { equals: userId } },
+      pagination: false,
+      depth: 0,
+    });
+    const allCourseDocs = await payload.find({
+      collection: 'course-progress',
+      where: { user: { equals: userId } },
+      pagination: false,
+      depth: 0,
+    });
+
+    let totalTimeSpentMs = 0;
+    let totalMistakes = 0;
+    let totalHintsUsed = 0;
+    let totalControlAttempts = 0;
+    let totalCreateAttempts = 0;
+    let totalAliveAttempts = 0;
+    let totalAlgorithmsStarted = allAlgoDocs.docs.length;
+
+    allAlgoDocs.docs.forEach((doc: any) => {
+      totalTimeSpentMs += (doc.videoWatchTimeMs || 0) + (doc.animationTotalTimeMs || 0) + (doc.controlTotalTimeMs || 0) + (doc.createTotalTimeMs || 0) + (doc.aliveTotalTimeMs || 0);
+      totalMistakes += (doc.controlMistakes || 0) + (doc.createMistakes || 0);
+      totalHintsUsed += (doc.controlHintsUsed || 0) + (doc.createHelpUsed ? 1 : 0) + (doc.aliveHelpUsed ? 1 : 0);
+      totalControlAttempts += (doc.controlAttempts || 0);
+      totalCreateAttempts += (doc.createAttempts || 0);
+      totalAliveAttempts += (doc.aliveCodeSubmissions || 0);
+    });
+
+    allCourseDocs.docs.forEach((doc: any) => {
+      totalTimeSpentMs += (doc.totalTimeMs || 0);
+      totalMistakes += (doc.totalMistakes || 0);
+      totalHintsUsed += (doc.mascotInteractionsTotal || 0);
+    });
+
+    // We do NOT completely overwrite learningStats to avoid destructive operations if only part of it was synced
+    // However, since we queried ALL docs, the aggregates computed here represent the total sum from DB.
+    // Fetch user to merge safely.
+    const userDoc = await payload.findByID({ collection: 'users', id: userId, depth: 0 });
+    const existingStats = (userDoc.learningStats || {}) as Record<string, unknown>;
+
+    let totalAlgorithmsCompleted = completedIds?.length || 0;
+    let totalCoursesCompleted = allCourseDocs.docs.filter((doc: any) => doc.isCompleted).length;
+    let totalCoursesStarted = allCourseDocs.docs.length;
+
+    await payload.update({
+      collection: 'users',
+      id: userId,
+      data: {
+        learningStats: {
+          ...existingStats,
+          totalTimeSpentMs,
+          totalMistakes,
+          totalHintsUsed,
+          totalControlAttempts,
+          totalCreateAttempts,
+          totalAliveAttempts,
+          totalAlgorithmsStarted,
+          totalAlgorithmsCompleted,
+          totalCoursesStarted,
+          totalCoursesCompleted,
+          lastActiveDate: new Date().toISOString(),
+        },
+      } as any,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

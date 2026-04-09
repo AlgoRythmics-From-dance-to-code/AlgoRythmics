@@ -588,6 +588,7 @@
   },
   "visualizer": {
     "initial": "Kezdeti állapot — rendezésre kész",
+    "search_initial": "Kezdeti állapot — keresésre kész",
     "comparing": "{a} és {b} összehasonlítása...",
     "swapping": "{a} ↔ {b} cseréje",
     "sorted_element": "{value} most már rendezett!",
@@ -600,7 +601,10 @@
     "legend_sorted": "Rendezett",
     "legend_pivot": "Pivot",
     "searching_for": "Keresett érték",
-    "sorted_complete": "A tömb rendezve!"
+    "sorted_complete": "A tömb rendezve!",
+    "bogosort_ready": "Készen áll a Bogosortra... sok szerencsét!",
+    "bogosort_attempt": "{attempts}. kísérlet: Teljes tömb megkeverve!",
+    "bogosort_found": "A Bogosort végre megtalálta a rendezett állapotot a(z) {attempts}. kísérletre!"
   },
   "control": {
     "select_pair": "Válassz ki két szomszédos elemet az összehasonlításhoz",

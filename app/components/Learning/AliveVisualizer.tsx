@@ -184,7 +184,6 @@ function CodeMode({
         aliveCodeSubmissions: submissions + 1,
         aliveLastCode: code,
         aliveBestScore: bestScore,
-        aliveTotalTimeMs: Date.now() - startTime,
         aliveCompletedAt: new Date().toISOString(),
       });
     } else {
@@ -569,7 +568,6 @@ function NodeMode({
         aliveHelpUsed: true,
         aliveCodeSubmissions: attempts + 1,
         aliveBestScore: 100,
-        aliveTotalTimeMs: Date.now() - startTime,
         aliveCompletedAt: new Date().toISOString(),
       });
     } else {

@@ -18,6 +18,7 @@ export function generateBogosortSteps(initialValues: number[]): SortStep[] {
       swapping: false,
       sortedIndices: [],
       description: 'Ready to start Bogosort... good luck!',
+      descriptionKey: 'visualizer.bogosort_ready',
       comparisons: 0,
       swapCount: 0,
       pass: 0,
@@ -52,6 +53,8 @@ export function generateBogosortSteps(initialValues: number[]): SortStep[] {
       swapping: true,
       sortedIndices: [],
       description: `Attempt ${attempts}: Shuffled the entire array!`,
+      descriptionKey: 'visualizer.bogosort_attempt',
+      descriptionParams: { attempts },
       comparisons: n - 1,
       swapCount: n,
       pass: attempts,
@@ -66,6 +69,8 @@ export function generateBogosortSteps(initialValues: number[]): SortStep[] {
     swapping: false,
     sortedIndices: sortedArr.map((_, i) => i),
     description: `Bogosort finally found the sorted state in ${attempts} attempts!`,
+    descriptionKey: 'visualizer.bogosort_found',
+    descriptionParams: { attempts },
     comparisons: n - 1,
     swapCount: 0,
     pass: attempts,
@@ -74,4 +79,4 @@ export function generateBogosortSteps(initialValues: number[]): SortStep[] {
   return result;
 }
 
-export const BOGOSORT_DEFAULT_ARRAY = [3, 1, 2];
+export const BOGOSORT_DEFAULT_ARRAY = [4, 2, 3, 1];

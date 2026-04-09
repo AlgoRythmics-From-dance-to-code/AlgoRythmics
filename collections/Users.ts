@@ -185,6 +185,8 @@ export const Users: CollectionConfig = {
         { name: 'totalTimeSpentMs', type: 'number', defaultValue: 0 },
         { name: 'totalAlgorithmsStarted', type: 'number', defaultValue: 0 },
         { name: 'totalAlgorithmsCompleted', type: 'number', defaultValue: 0 },
+        { name: 'totalCoursesStarted', type: 'number', defaultValue: 0 },
+        { name: 'totalCoursesCompleted', type: 'number', defaultValue: 0 },
         { name: 'totalControlAttempts', type: 'number', defaultValue: 0 },
         { name: 'totalCreateAttempts', type: 'number', defaultValue: 0 },
         { name: 'totalAliveAttempts', type: 'number', defaultValue: 0 },

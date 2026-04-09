@@ -589,6 +589,7 @@
   },
   "visualizer": {
     "initial": "Tablou inițial — gata de sortat",
+    "search_initial": "Tablou inițial — gata de căutare",
     "comparing": "Comparare {a} și {b}...",
     "swapping": "Interschimbare {a} ↔ {b}",
     "sorted_element": "{value} este acum sortat!",
@@ -601,7 +602,10 @@
     "legend_sorted": "Sortat",
     "legend_pivot": "Pivot",
     "searching_for": "Valoarea căutată",
-    "sorted_complete": "Vector sortat!"
+    "sorted_complete": "Vector sortat!",
+    "bogosort_ready": "Gata de început Bogosort... mult noroc!",
+    "bogosort_attempt": "Încercarea {attempts}: Tabloul a fost amestecat!",
+    "bogosort_found": "Bogosort a găsit starea sortată din {attempts} încercări!"
   },
   "control": {
     "select_pair": "Selectează două elemente adiacente pentru comparare",

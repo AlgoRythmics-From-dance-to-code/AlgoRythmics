@@ -127,7 +127,6 @@ export default function CodeExercise({ algorithmId }: CodeExerciseProps) {
           createHelpUsed: helpActive,
           createBlanksCorrectFirst: firstTryCorrect,
           createBlanksTotal: totalBlanks,
-          createTotalTimeMs: elapsed,
           createCompletedAt: new Date().toISOString(),
         });
       } else if (isCorrect) {

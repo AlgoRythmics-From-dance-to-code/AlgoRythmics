@@ -589,6 +589,7 @@
   },
   "visualizer": {
     "initial": "Initial array — ready to sort",
+    "search_initial": "Initial array — ready to search",
     "comparing": "Comparing {a} and {b}...",
     "swapping": "Swapping {a} ↔ {b}",
     "sorted_element": "{value} is now sorted!",
@@ -601,7 +602,10 @@
     "legend_sorted": "Sorted",
     "legend_pivot": "Pivot",
     "searching_for": "Searching for",
-    "sorted_complete": "Array sorted!"
+    "sorted_complete": "Array sorted!",
+    "bogosort_ready": "Ready to start Bogosort... good luck!",
+    "bogosort_attempt": "Attempt {attempts}: Shuffled the entire array!",
+    "bogosort_found": "Bogosort finally found the sorted state in {attempts} attempts!"
   },
   "control": {
     "select_pair": "Select two adjacent elements to compare",

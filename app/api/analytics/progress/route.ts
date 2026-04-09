@@ -81,10 +81,30 @@ export async function POST(req: Request) {
     });
 
     const now = new Date().toISOString();
+    
+    // Compute aggregates based on merged data
+    const existing = docs.length > 0 ? docs[0] : {};
+    const merged = { ...existing, ...updates };
+    
+    const totalTime =
+      ((merged.videoWatchTimeMs as number) || 0) +
+      ((merged.animationTotalTimeMs as number) || 0) +
+      ((merged.controlTotalTimeMs as number) || 0) +
+      ((merged.createTotalTimeMs as number) || 0) +
+      ((merged.aliveTotalTimeMs as number) || 0);
+      
+    let overall = 0;
+    if (merged.videoWatched) overall += 20;
+    if (merged.animationCompleted) overall += 20;
+    if (merged.controlCompleted) overall += 20;
+    if (merged.createCompleted) overall += 20;
+    if (merged.aliveCompleted) overall += 20;
+    
+    updates.totalTimeSpentMs = totalTime;
+    updates.overallProgress = overall;
 
     if (docs.length > 0) {
       // Update existing
-      const existing = docs[0];
       await payload.update({
         collection: 'algorithm-progress',
         id: existing.id,
