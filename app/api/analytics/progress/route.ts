@@ -83,8 +83,8 @@ export async function POST(req: Request) {
     const now = new Date().toISOString();
     
     // Compute aggregates based on merged data
-    const existing = docs.length > 0 ? docs[0] : {};
-    const merged = { ...existing, ...updates };
+    const existing = docs.length > 0 ? docs[0] : undefined;
+    const merged = { ...(existing || {}), ...updates };
     
     const totalTime =
       ((merged.videoWatchTimeMs as number) || 0) +
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
     updates.totalTimeSpentMs = totalTime;
     updates.overallProgress = overall;
 
-    if (docs.length > 0) {
+    if (existing) {
       // Update existing
       await payload.update({
         collection: 'algorithm-progress',
