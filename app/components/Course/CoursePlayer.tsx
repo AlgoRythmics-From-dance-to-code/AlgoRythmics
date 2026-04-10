@@ -295,6 +295,11 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     return index >= 0 ? index : course.phases.length;
   }, [completedPhaseStatuses, course.phases.length]);
 
+  // Snapshot courseProgress once per course slug to avoid including the live store in deps
+  // that would cause an infinite loop (effect → setCourseActivePhase → courseProgress changes → effect)
+  const courseProgressSnapshotRef = useRef(courseProgress);
+  const lastSnapshotSlugRef = useRef('');
+
   const initialPhaseIndex = useMemo(() => {
     const stored = courseProgress[course.slug]?.activePhaseIndex;
     if (typeof stored === 'number' && stored >= 0 && stored < course.phases.length) {
@@ -302,7 +307,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     }
 
     return Math.max(Math.min(firstIncompletePhaseIndex, course.phases.length - 1), 0);
-  }, [course.phases.length, course.slug, courseProgress, firstIncompletePhaseIndex]);
+    // NOTE: courseProgress intentionally excluded — we read it via snapshot ref in the effect
+    // to prevent the hydration effect from re-running on every store write.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course.phases.length, course.slug, firstIncompletePhaseIndex]);
 
   const [activePhaseIndex, setActivePhaseIndex] = useState(initialPhaseIndex);
   const [hasHydrated, setHasHydrated] = useState(false);
@@ -323,10 +331,18 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const [pendingPhaseIndex, setPendingPhaseIndex] = useState<number | null>(null);
   const promptShownRef = useRef(false);
 
-  // Resume from stored state after hydration
+  // Resume from stored state after hydration — runs ONCE per course slug.
+  // We intentionally do NOT include live `courseProgress` in the dep array because:
+  //   effect → setActivePhaseIndex → setCourseActivePhase (L536) → mutates courseProgress → effect re-runs → infinite loop
+  // Instead we snapshot courseProgress into a ref whenever the slug changes and read from the ref inside the effect.
   useEffect(() => {
+    // Refresh snapshot when slug changes
+    if (lastSnapshotSlugRef.current !== course.slug) {
+      courseProgressSnapshotRef.current = courseProgress;
+      lastSnapshotSlugRef.current = course.slug;
+    }
     setHasHydrated(true);
-    const storedProgress = courseProgress[course.slug];
+    const storedProgress = courseProgressSnapshotRef.current[course.slug];
     if (storedProgress) {
       if (typeof storedProgress.activePhaseIndex === 'number') {
         const resumeIndex = Math.min(storedProgress.activePhaseIndex, firstIncompletePhaseIndex);
@@ -336,17 +352,20 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         setIsFinished(true);
       }
     }
-  }, [course.slug, firstIncompletePhaseIndex, courseProgress]); // Run once on mount (course.slug check handles navigation)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course.slug, firstIncompletePhaseIndex]); // courseProgress intentionally omitted — see comment above
 
-  // Auto-prompt to restart if course was already completed on entry
+  // Auto-prompt to restart if course was already completed on entry.
+  // Uses snapshot ref to avoid adding live `courseProgress` to deps (would cause infinite loop).
   useEffect(() => {
-    if (courseProgress[course.slug]?.isCompleted && !promptShownRef.current) {
+    if (courseProgressSnapshotRef.current[course.slug]?.isCompleted && !promptShownRef.current) {
       promptShownRef.current = true;
       setIsInternalReset(false);
       setModalMode('restart');
       setShowRestartModal(true);
     }
-  }, [course.slug, courseProgress]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course.slug]); // courseProgress intentionally omitted — read via snapshot ref
 
   const handleConfirmRestart = () => {
     if (modalMode === 'restart') {
