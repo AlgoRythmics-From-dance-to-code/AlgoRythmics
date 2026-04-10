@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import { useField } from '@payloadcms/ui';
+import { useField, useFormFields } from '@payloadcms/ui';
 
 // Import algorithm registry (client-side safe if structured correctly)
 import { getAlgorithm } from '../../../lib/algorithms/registry';
@@ -170,8 +170,8 @@ export const PhaseIdSelect: React.FC<{
   const pathParts = path.split('.');
   const siblingPath = [...pathParts.slice(0, -1), 'sourceAlgorithmId'].join('.');
 
-  // In Payload 3, using the useField hook for a sibling path is often safer and simpler than useFormFields
-  const { value: algorithmId } = useField<string>({ path: siblingPath });
+  // In Payload 3, using the useFormFields hook is required to strictly read a sibling path, as useField can trigger ADD_FIELD registration conflicts resulting in infinite React update loops.
+  const algorithmId = useFormFields(([fields]) => fields[siblingPath]?.value as string);
   const algoDef = algorithmId ? getAlgorithm(algorithmId) : null;
   const suggestedPhases = algoDef?.suggestedPhases || [];
 

@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
-import { useField } from '@payloadcms/ui';
+import { useFormFields } from '@payloadcms/ui';
 
 const PreviewBase: React.FC<{ value: string | undefined }> = ({ value }) => {
   if (!value) {
@@ -59,11 +59,11 @@ const PreviewBase: React.FC<{ value: string | undefined }> = ({ value }) => {
 };
 
 export const IllustrationPreview: React.FC = () => {
-  const { value } = useField<string>({ path: 'illustrationAsset' });
+  const value = useFormFields(([fields]) => fields['illustrationAsset']?.value as string);
   return <PreviewBase value={value} />;
 };
 
 export const MascotPreview: React.FC = () => {
-  const { value } = useField<string>({ path: 'mascot.asset' });
+  const value = useFormFields(([fields]) => fields['mascot.asset']?.value as string);
   return <PreviewBase value={value} />;
 };
