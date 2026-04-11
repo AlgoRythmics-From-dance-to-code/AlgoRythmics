@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useField } from '@payloadcms/ui';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 const assetOptions = [
   { label: 'Algo Backtracking Icon', value: 'algo_backtracking_icon.svg' },
@@ -56,6 +57,7 @@ const VisualSelect: React.FC<{
   path: string;
   label?: string | { htmlFor: string };
 }> = ({ path, label: labelFromProps }) => {
+  const { t } = useLocale();
   const { value, setValue } = useField<string>({ path });
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -78,7 +80,7 @@ const VisualSelect: React.FC<{
   const labelText =
     typeof labelFromProps === 'string'
       ? labelFromProps
-      : labelFromProps?.htmlFor || 'Válassz képet';
+      : labelFromProps?.htmlFor || t('admin.choose_image');
 
   return (
     <div
@@ -149,7 +151,7 @@ const VisualSelect: React.FC<{
             </>
           ) : (
             <span style={{ color: 'var(--theme-elevation-400)', fontStyle: 'italic' }}>
-              Válassz egy képet a könyvtárból...
+              {t('admin.choose_image_library')}
             </span>
           )}
         </div>
@@ -272,12 +274,23 @@ const VisualSelect: React.FC<{
 export const IllustrationSelect: React.FC<{
   path?: string;
   label?: string | { htmlFor: string };
-}> = (props) => (
-  <VisualSelect
-    path={props.path || 'illustrationAsset'}
-    label={props.label || 'Kurzus Illusztrációja'}
-  />
-);
+}> = (props) => {
+  const { t } = useLocale();
+  return (
+    <VisualSelect
+      path={props.path || 'illustrationAsset'}
+      label={props.label || t('admin.course_illustration')}
+    />
+  );
+};
 export const MascotSelect: React.FC<{ path?: string; label?: string | { htmlFor: string } }> = (
   props,
-) => <VisualSelect path={props.path || 'mascot.asset'} label={props.label || 'Kabala Figurája'} />;
+) => {
+  const { t } = useLocale();
+  return (
+    <VisualSelect
+      path={props.path || 'mascot.asset'}
+      label={props.label || t('admin.mascot_asset')}
+    />
+  );
+};

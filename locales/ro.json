@@ -1,12 +1,25 @@
 {
   "brand": "AlgoRythmics",
+  "seo": {
+    "title": "AlgoRythmics - De la Dans la Cod",
+    "description": "Învață algoritmi prin dans și vizualizări interactive. AlgoRythmics face informatica accesibilă și distractivă.",
+    "keywords": "algoritmi, sortare, informatică, dans, educație, codare, vizualizator"
+  },
   "common": {
     "completed": "Finalizat",
     "all": "Toate",
     "cancel": "Anulează",
     "restart": "Repornește",
     "confirm": "Confirmă",
-    "min": "min"
+    "active": "Activ",
+    "locked": "Blocat",
+    "current": "Curent",
+    "custom": "Personalizat",
+    "min": "min",
+    "available": "Disponibil",
+    "admin": "ADMIN",
+    "not_available": "N/A",
+    "algorithm": "Algoritm"
   },
   "nav": {
     "home": "Acasă",
@@ -145,6 +158,7 @@
     "delete": {
       "warning": "Această acțiune este permanentă și nu poate fi anulată.",
       "confirm_text": "Pentru a confirma, introduceți „DELETE” mai jos:",
+      "placeholder": "DELETE",
       "delete_btn": "Șterge definitiv contul meu"
     }
   },
@@ -493,13 +507,22 @@
       "name": "Nume curs",
       "category": "Categorie",
       "duration": "Durată",
-      "level": "Nivel"
+      "level": "Nivel",
+      "points": "Puncte"
+    },
+    "summary": {
+      "earned": "Puncte câștigate",
+      "total_platform": "Puncte totale platformă",
+      "platform_progress": "Progres platformă",
+      "checkpoints": "Puncte de control"
     },
     "levels": {
       "beginner": "Începător",
       "intermediate": "Intermediar",
       "advanced": "Avansat"
     },
+    "empty_available": "Ai finalizat toate cursurile!\nFelicitări pentru cunoștințele uriașe!",
+    "empty_completed": "Nu ai încă niciun curs finalizat.\nÎncepe unul astăzi!",
     "categories_list": {
       "video": {
         "title": "Video",
@@ -562,8 +585,71 @@
     "reset_course": "Resetează cursul",
     "points": "Puncte",
     "phase": "Fază",
+    "phase_details": "detalii",
     "confidence_prompt": "Cum te simți în legătură cu ceea ce ai învățat până acum?",
-    "mistake_prompt": "Să revizuim regula încă o dată!"
+    "confidence_title": "Cum stăm cu cunoștințele?",
+    "confidence_desc": "Ne-ar plăcea să știm cât de bine înțelegi cursul până acum și dacă totul este clar pentru tine.",
+    "confidence_very_sure": "Foarte sigur",
+    "confidence_very_sure_desc": "Sunt foarte sigur!",
+    "confidence_sure_desc": "Cred că înțeleg totul.",
+    "confidence_unsure_desc": "Unele părți sunt încă neclare.",
+    "confidence_guess_desc": "Abia încep să mă familiarizez cu el.",
+    "confidence_later": "Voi răspunde mai târziu",
+    "mistake_prompt": "Să revizuim regula încă o dată!",
+    "advice": "Sfat",
+    "help_yes": "Da, ajută-mă!",
+    "help_no": "Nu, mulțumesc",
+    "how_are_we": "Cum stăm?",
+    "summary_title": "Rezumat",
+    "understand": "Am înțeles",
+    "score_partial": "parțial",
+    "score_help": "ajutor",
+    "phase_complete": "Fază finalizată",
+    "in_progress": "În curs",
+    "current_phase": "Faza curentă",
+    "completion": "Finalizare",
+    "ready_to_continue": "Gata de continuare",
+    "finish_activity": "Finalizează activitatea integrată",
+    "finish_course": "Finalizează cursul",
+    "next_phase": "Următoarea fază",
+    "rewards": "Recompense",
+    "grand_total": "Total general",
+    "currently_at": "În această parte: {title}",
+    "quiz_explanation": "Explicație",
+    "quiz": {
+      "ordering_title": "Trageți elementele în ordinea corectă",
+      "check": "Verificare",
+      "correct": "Corect!",
+      "incorrect": "Nu chiar — încearcă din nou!",
+      "ordering_success": "Ordine perfectă!",
+      "ordering_fail": "Aproape...",
+      "ordering_success_desc": "Ai identificat cu succes pașii algoritmului.",
+      "ordering_fail_desc": "Revizuiește procesul din nou și încearcă să deduci ordinea corectă!",
+      "matching_categories": "Categorii",
+      "matching_options": "Opțiuni",
+      "matching_success_desc": "Ai asociat cu succes toate elementele.",
+      "matching_fail_desc": "Încearcă să observi mai bine relațiile data viitoare!",
+      "gapfill_success": "Text completat!",
+      "gapfill_success_desc": "Ai folosit perfect termenii tehnici.",
+      "debug_instructions": "Faceți clic pe linia care conține eroarea!",
+      "debug_title": "Repară Eroarea",
+      "debug_success": "Ai găsit eroarea!",
+      "debug_fail": "Eroarea nu este acolo...",
+      "debug_success_desc": "Ai identificat cu precizie greșeala logică din cod.",
+      "debug_fail_desc": "Revizuiește cu atenție buclele și condițiile din nou!"
+    }
+  },
+  "admin": {
+    "algorithm_type": "Tip Algoritm",
+    "choose_algorithm": "Alege algoritmul...",
+    "phase_id": "ID Fază",
+    "suggestion": "SUGESTIE",
+    "choose_image": "Alege Imaginea",
+    "choose_image_library": "Alege o imagine din bibliotecă...",
+    "course_illustration": "Ilustrație Curs",
+    "mascot_asset": "Activ Mascotă",
+    "no_image_selected": "Nicio imagine selectată",
+    "preview": "Previzualizare:"
   },
   "videos": {
     "hero_title": "Videoclipuri",
@@ -585,7 +671,9 @@
       "linear-search": "Căutare liniară",
       "binary-search": "Căutare binară",
       "n-queens": "Problema N-regine"
-    }
+    },
+    "placeholder_title": "Video Placeholder",
+    "placeholder_desc": "Videoclipul YouTube pentru {title} nu este încă conectat. Odată ce adresa URL este adăugată la constante, acesta va apărea aici."
   },
   "visualizer": {
     "initial": "Tablou inițial — gata de sortat",
@@ -658,7 +746,12 @@
     "used_help": "Completat cu ajutorul blocurilor",
     "available_blocks": "Blocuri disponibile",
     "your_program": "Programul tău",
-    "reference": "Elemente necesare"
+    "reference": "Elemente necesare",
+    "all_placed": "Toate blocurile au fost plasate!",
+    "first_try": "Din prima încercare!",
+    "attempts": "{count} încercări",
+    "test_execution": "Execuția testului",
+    "passed": "Reușit (Tabloul a fost sortat corect)"
   },
   "terms_page": {
     "title": "Termeni și Condiții",
@@ -678,7 +771,20 @@
     "limitations_text": "În niciun caz AlgoRythmics sau furnizorii săi nu vor fi răspunzători pentru orice daune (inclusiv, fără limitare, daune pentru pierderea de date sau profit, sau din cauza întreruperii activității) rezultate din utilizarea sau incapacitatea de a utiliza materialele de pe site-ul AlgoRythmics.",
     "law_title": "5. Legea Aplicabilă",
     "law_text": "Acești termeni și condiții sunt guvernați de și interpretați în conformitate cu legile și vă supuneți irevocabil jurisdicției exclusive a instanțelor din acel stat sau locație.",
-    "back_home": "Înapoi la Acasă"
+    "back_home": "Înapoi la Acasă",
+    "controls": {
+      "reset": "Resetare",
+      "reset_aria": "Resetare vizualizator",
+      "step_forward": "Pas înainte",
+      "step_forward_aria": "Pasul următor",
+      "step_backward": "Pas înapoi",
+      "step_backward_aria": "Pasul anterior",
+      "toggle_dark_mode": "Comută modul întunecat",
+      "play": "Redare",
+      "pause": "Pauză",
+      "restart": "Repornire",
+      "speed": "Viteza de redare {speed}x"
+    }
   },
   "privacy_page": {
     "title": "Politica de Confidențialitate",

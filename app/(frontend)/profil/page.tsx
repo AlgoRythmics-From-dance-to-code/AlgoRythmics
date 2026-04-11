@@ -23,8 +23,8 @@ import { toast } from 'sonner';
 import { useLocale, Locale } from '../../i18n/LocaleProvider';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 
-const formatDate = (dateString: string, locale: Locale) => {
-  if (!dateString) return 'N/A';
+const formatDate = (dateString: string, locale: Locale, t: (key: string) => string) => {
+  if (!dateString) return t('common.not_available');
   const date = new Date(dateString);
 
   if (locale === 'hu') {
@@ -78,6 +78,7 @@ export default function ProfilePage() {
   const { t, locale } = useLocale();
   const { data: session, status, update } = useSession();
   const router = useRouter();
+  const { courseProgress } = useAlgorithmStore();
 
   const [activeTab, setActiveTab] = useState('public');
   const [isSaving, setIsSaving] = useState(false);
@@ -370,7 +371,7 @@ export default function ProfilePage() {
                   {/* Role Badge on the Avatar - Only for Admins */}
                   {(user as BaseUser).role === 'admin' && (
                     <div className="absolute -top-1.5 -left-1.5 bg-[#269984] text-white px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg border-2 border-white dark:border-[#111] z-20">
-                      ADMIN
+                      {t('common.admin')}
                     </div>
                   )}
                 </div>
@@ -413,7 +414,7 @@ export default function ProfilePage() {
                               <CheckCircle2 size={20} />
                             </div>
                             <p className="font-montserrat text-base font-bold text-gray-800 dark:text-gray-200">
-                              {formatDate((user as BaseUser).createdAt || '', locale)}
+                              {formatDate((user as BaseUser).createdAt || '', locale, t)}
                             </p>
                           </div>
                         </div>
@@ -438,7 +439,7 @@ export default function ProfilePage() {
                               {t('profile.public.provider')}
                             </span>
                             <span className="text-xs font-black uppercase bg-white dark:bg-neutral-800 px-2 py-1 rounded shadow-sm">
-                              {(user as BaseUser).authProvider || 'Email'}
+                              {(user as BaseUser).authProvider || t('login.email_label')}
                             </span>
                           </div>
                           <div className="flex justify-between items-center py-2">
@@ -452,17 +453,39 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="p-6 rounded-3xl bg-neutral-900 text-white flex items-center justify-between">
-                          <div>
-                            <p className="text-xs font-black uppercase opacity-50 tracking-tighter">
+                          <div className="flex-1">
+                            <p className="text-[10px] font-black uppercase opacity-50 tracking-[0.2em] mb-1">
                               {t('profile.public.progress_title')}
                             </p>
-                            <p className="text-lg font-black mt-1">
-                              {t('profile.public.progress_subtitle')}
-                            </p>
+                            <div className="flex items-center gap-6 mt-2">
+                              <div>
+                                <p className="text-3xl font-black text-[#269984]">
+                                  {Object.values(courseProgress).reduce(
+                                    (acc, curr) => acc + (curr.points || 0),
+                                    0,
+                                  )}
+                                </p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400">
+                                  {t('courses.table.points')}
+                                </p>
+                              </div>
+                              <div className="h-10 w-px bg-white/10" />
+                              <div>
+                                <p className="text-3xl font-black text-white">
+                                  {
+                                    Object.values(courseProgress).filter((p) => p.isCompleted)
+                                      .length
+                                  }
+                                </p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400">
+                                  {t('courses.summary.checkpoints')}
+                                </p>
+                              </div>
+                            </div>
                           </div>
                           <button
                             onClick={() => router.push('/courses')}
-                            className="p-3 bg-[#269984] hover:bg-[#36D6BA] transition-colors rounded-2xl"
+                            className="p-4 bg-[#269984] hover:bg-[#36D6BA] transition-all rounded-2xl shadow-lg shadow-[#269984]/20 hover:scale-105 active:scale-95"
                           >
                             <ExternalLink size={20} />
                           </button>
@@ -651,7 +674,7 @@ export default function ProfilePage() {
                             setIsDeleteConfirmed(e.target.value === 'DELETE');
                           }}
                           className="w-full font-montserrat h-16 border-2 border-gray-100 dark:border-neutral-800 bg-white dark:bg-[#1a1a1a] dark:text-white rounded-3xl px-6 text-xl text-center font-black outline-none focus:border-red-500 transition-all uppercase placeholder:opacity-20 translate-x-0"
-                          placeholder="DELETE"
+                          placeholder={t('profile.delete.placeholder')}
                         />
                       </div>
 

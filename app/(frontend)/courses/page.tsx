@@ -3,6 +3,13 @@ import { getPayloadInstance } from '../../../lib/payload';
 import { getServerLocale, getT } from '../../../lib/i18n-server';
 import CoursesClient from '../../components/Course/CoursesClient';
 
+export async function generateMetadata() {
+  const t = await getT();
+  return {
+    title: t('nav.courses'),
+  };
+}
+
 export default async function CoursesPage() {
   const locale = await getServerLocale();
   const t = await getT();

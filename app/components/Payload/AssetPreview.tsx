@@ -2,8 +2,10 @@
 import React from 'react';
 import Image from 'next/image';
 import { useFormFields } from '@payloadcms/ui';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 const PreviewBase: React.FC<{ value: string | undefined }> = ({ value }) => {
+  const { t } = useLocale();
   if (!value) {
     return (
       <div
@@ -17,7 +19,7 @@ const PreviewBase: React.FC<{ value: string | undefined }> = ({ value }) => {
           fontSize: '12px',
         }}
       >
-        Nincs kiválasztott kép
+        {t('admin.no_image_selected')}
       </div>
     );
   }
@@ -39,7 +41,7 @@ const PreviewBase: React.FC<{ value: string | undefined }> = ({ value }) => {
       <span
         style={{ fontSize: '10px', color: '#666', fontWeight: 'bold', textTransform: 'uppercase' }}
       >
-        Előnézet:
+        {t('admin.preview')}
       </span>
       <Image
         src={`/assets/${value}`}

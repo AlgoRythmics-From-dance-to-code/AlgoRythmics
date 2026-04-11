@@ -41,6 +41,7 @@ export type CoursePhase = {
   expectedCode?: string;
   gapFillContent?: string;
   gapFillOptions?: string[];
+  gapFillSolutions?: string[];
 };
 
 export type CourseMascot = {
@@ -164,6 +165,9 @@ function toPhases(value: unknown): CoursePhase[] {
         gapFillContent: current.gapFillContent as string,
         gapFillOptions: Array.isArray(current.gapFillOptions)
           ? current.gapFillOptions.map((o: Record<string, unknown>) => o.option as string)
+          : undefined,
+        gapFillSolutions: Array.isArray(current.gapFillSolutions)
+          ? current.gapFillSolutions.map((s: Record<string, unknown>) => s.solution as string)
           : undefined,
       };
     })

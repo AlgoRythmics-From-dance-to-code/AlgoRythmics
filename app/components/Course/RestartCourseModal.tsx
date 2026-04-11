@@ -1,8 +1,7 @@
-'use client';
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw } from 'lucide-react';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 interface RestartCourseModalProps {
   isOpen: boolean;
@@ -18,11 +17,17 @@ export default function RestartCourseModal({
   isOpen,
   onClose,
   onConfirm,
-  title = 'Újrakezded a kurzust?',
-  message = 'Ha újra elkezded, az eddigi haladásod és pontjaid törlődnek ebből a kurzusból.',
-  confirmLabel = 'Igen, tiszta lappal!',
-  cancelLabel = 'Mégse, folytassuk',
+  title,
+  message,
+  confirmLabel,
+  cancelLabel,
 }: RestartCourseModalProps) {
+  const { t } = useLocale();
+  const displayTitle = title || t('course.restart_title');
+  const displayMessage = message || t('course.restart_message');
+  const displayConfirmLabel = confirmLabel || t('course.restart_confirm');
+  const displayCancelLabel = cancelLabel || t('course.cancel_continue');
+
   if (!isOpen) return null;
 
   return (
@@ -45,21 +50,23 @@ export default function RestartCourseModal({
             <RotateCcw className="h-10 w-10 text-amber-500" />
           </div>
           <h3 className="text-2xl font-black text-black dark:text-white uppercase tracking-tight mb-4 text-balance">
-            {title}
+            {displayTitle}
           </h3>
-          <p className="text-neutral-500 dark:text-neutral-400 mb-8 font-medium">{message}</p>
+          <p className="text-neutral-500 dark:text-neutral-400 mb-8 font-medium">
+            {displayMessage}
+          </p>
           <div className="flex flex-col gap-3 w-full">
             <button
               onClick={onConfirm}
               className="w-full py-4 bg-[#269984] hover:bg-[#1f7a6a] text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg active:scale-95"
             >
-              {confirmLabel}
+              {displayConfirmLabel}
             </button>
             <button
               onClick={onClose}
               className="w-full py-4 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300 rounded-2xl font-bold uppercase tracking-widest transition-all"
             >
-              {cancelLabel}
+              {displayCancelLabel}
             </button>
           </div>
         </div>

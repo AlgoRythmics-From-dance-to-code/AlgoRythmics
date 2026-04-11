@@ -345,7 +345,10 @@ function CodeMode({
                     {t('alive.success')}
                   </h4>
                   <p className="font-montserrat text-sm text-green-600/70 dark:text-green-400/70 mt-1">
-                    🎉 {submissions === 1 ? 'First try!' : `${submissions} attempts`}
+                    🎉{' '}
+                    {submissions === 1
+                      ? t('alive.first_try')
+                      : t('alive.attempts').replace('{count}', String(submissions))}
                   </p>
                 </div>
               </div>
@@ -373,14 +376,12 @@ function CodeMode({
                 {result.executionPassed !== undefined && (
                   <div className="mt-2 pt-3 border-t border-red-500/10 dark:border-red-500/20">
                     <h5 className="font-montserrat font-bold text-xs text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
-                      Test Execution
+                      {t('alive.test_execution')}
                     </h5>
                     {result.executionPassed ? (
                       <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                         <CheckCircle className="w-4 h-4" />
-                        <span className="text-xs font-bold">
-                          Passed (Array was sorted correctly)
-                        </span>
+                        <span className="text-xs font-bold">{t('alive.passed')}</span>
                       </div>
                     ) : (
                       <div className="flex items-start gap-2 text-red-600 dark:text-red-400 bg-red-500/5 p-2 rounded-lg border border-red-500/10">
@@ -609,7 +610,7 @@ function NodeMode({
           <div className="space-y-2 min-h-[200px] p-4 rounded-2xl bg-gray-50/50 dark:bg-white/5 border-2 border-dashed border-gray-200 dark:border-white/10">
             {palette.length === 0 && (
               <p className="text-center text-gray-400 font-montserrat text-sm py-8">
-                All blocks placed!
+                {t('alive.all_placed')}
               </p>
             )}
             {palette.map((node) => (

@@ -1,12 +1,25 @@
 {
   "brand": "AlgoRythmics",
+  "seo": {
+    "title": "AlgoRythmics - From Dance to Code",
+    "description": "Learn algorithms through dance and interactive visualizations. AlgoRythmics makes computer science accessible and fun.",
+    "keywords": "algorithms, sorting, computer science, dance, education, coding, visualizer"
+  },
   "common": {
     "completed": "Completed",
     "all": "All",
     "cancel": "Cancel",
     "restart": "Restart",
     "confirm": "Confirm",
-    "min": "min"
+    "min": "min",
+    "available": "Available",
+    "active": "Active",
+    "locked": "Locked",
+    "current": "Current",
+    "custom": "Custom",
+    "admin": "Admin",
+    "not_available": "N/A",
+    "algorithm": "Algorithm"
   },
   "nav": {
     "home": "Home",
@@ -145,6 +158,7 @@
     "delete": {
       "warning": "This action is permanent and cannot be undone.",
       "confirm_text": "To confirm, please type \"DELETE\" below:",
+      "placeholder": "DELETE",
       "delete_btn": "Permanently Delete My Account"
     }
   },
@@ -493,13 +507,22 @@
       "name": "Course Name",
       "category": "Category",
       "duration": "Duration",
-      "level": "Level"
+      "level": "Level",
+      "points": "Points"
+    },
+    "summary": {
+      "earned": "Earned Points",
+      "total_platform": "Total Platform Points",
+      "platform_progress": "Platform Progress",
+      "checkpoints": "Checkpoints"
     },
     "levels": {
       "beginner": "Beginner",
       "intermediate": "Intermediate",
       "advanced": "Advanced"
     },
+    "empty_available": "You've completed all courses!\nCongratulations on the great knowledge!",
+    "empty_completed": "You don't have any completed courses yet.\nStart one today!",
     "categories_list": {
       "video": {
         "title": "Video",
@@ -562,8 +585,73 @@
     "reset_course": "Reset Course",
     "points": "Points",
     "phase": "Phase",
+    "phase_details": "details",
     "confidence_prompt": "How do you feel about what you've learned so far?",
-    "mistake_prompt": "Let's review the rule one more time!"
+    "confidence_title": "How's the knowledge?",
+    "confidence_desc": "We'd like to know how well you understand the course so far, and if everything is clear to you.",
+    "confidence_very_sure": "Very sure",
+    "confidence_very_sure_desc": "I am very sure about it!",
+    "confidence_sure": "I think I understand it all.",
+    "confidence_sure_desc": "I think I understand everything.",
+    "confidence_unsure": "Some parts are still fuzzy.",
+    "confidence_unsure_desc": "Some parts are still unclear.",
+    "confidence_guess": "I'm just getting started with it.",
+    "confidence_guess_desc": "I'm just getting started with it.",
+    "confidence_later": "I'll answer later",
+    "mistake_prompt": "Let's review the rule once more!",
+    "advice": "Advice",
+    "help_yes": "Yes, help me!",
+    "help_no": "No thanks",
+    "how_are_we": "How are we doing?",
+    "summary_title": "Summary",
+    "understand": "I understand",
+    "score_partial": "partial",
+    "score_help": "help",
+    "phase_complete": "Phase complete",
+    "in_progress": "In Progress",
+    "current_phase": "Current phase",
+    "completion": "Completion",
+    "ready_to_continue": "Ready to continue",
+    "finish_activity": "Finish the embedded activity",
+    "finish_course": "Finish course",
+    "next_phase": "Next phase",
+    "rewards": "Rewards",
+    "grand_total": "Grand Total",
+    "currently_at": "In this part: {title}",
+    "quiz": {
+      "ordering_title": "Drag elements into the correct order",
+      "check": "Check",
+      "correct": "Correct!",
+      "incorrect": "Not quite — try again!",
+      "ordering_success": "Perfect order!",
+      "ordering_fail": "Almost there...",
+      "ordering_success_desc": "You have successfully identified the algorithm steps.",
+      "ordering_fail_desc": "Review the process again and try to deduce the correct order!",
+      "matching_categories": "Categories",
+      "matching_options": "Options",
+      "matching_success_desc": "You have successfully matched all elements.",
+      "matching_fail_desc": "Try to observe the relationships better next time!",
+      "gapfill_success": "Text completed!",
+      "gapfill_success_desc": "You used the technical terms perfectly.",
+      "debug_instructions": "Click on the line that contains the error!",
+      "debug_title": "Fix the Error",
+      "debug_success": "You found the error!",
+      "debug_fail": "The error is not there...",
+      "debug_success_desc": "You precisely identified the logical mistake in the code.",
+      "debug_fail_desc": "Carefully review the loops and conditions again!"
+    }
+  },
+  "admin": {
+    "algorithm_type": "Algorithm Type",
+    "choose_algorithm": "Choose algorithm...",
+    "phase_id": "Phase ID",
+    "suggestion": "SUGGESTION",
+    "choose_image": "Choose Image",
+    "choose_image_library": "Choose an image from the library...",
+    "course_illustration": "Course Illustration",
+    "mascot_asset": "Mascot Asset",
+    "no_image_selected": "No image selected",
+    "preview": "Preview:"
   },
   "videos": {
     "hero_title": "Videos",
@@ -585,7 +673,9 @@
       "linear-search": "Linear Search",
       "binary-search": "Binary Search",
       "n-queens": "N-Queens Problem"
-    }
+    },
+    "placeholder_title": "Video Placeholder",
+    "placeholder_desc": "The YouTube video for {title} is not yet linked. Once the URL is added to the constants, it will appear here."
   },
   "visualizer": {
     "initial": "Initial array — ready to sort",
@@ -605,7 +695,20 @@
     "sorted_complete": "Array sorted!",
     "bogosort_ready": "Ready to start Bogosort... good luck!",
     "bogosort_attempt": "Attempt {attempts}: Shuffled the entire array!",
-    "bogosort_found": "Bogosort finally found the sorted state in {attempts} attempts!"
+    "bogosort_found": "Bogosort finally found the sorted state in {attempts} attempts!",
+    "controls": {
+      "reset": "Reset",
+      "reset_aria": "Reset visualizer",
+      "step_forward": "Step Forward",
+      "step_forward_aria": "Step forward",
+      "step_backward": "Step Backward",
+      "step_backward_aria": "Step backward",
+      "toggle_dark_mode": "Toggle Dark Mode",
+      "play": "Play",
+      "pause": "Pause",
+      "restart": "Restart",
+      "speed": "Playback speed {speed}x"
+    }
   },
   "control": {
     "select_pair": "Select two adjacent elements to compare",
@@ -662,7 +765,12 @@
     "used_help": "Completed with block help",
     "available_blocks": "Available Blocks",
     "your_program": "Your Program",
-    "reference": "Required elements"
+    "reference": "Required elements",
+    "all_placed": "All blocks placed!",
+    "first_try": "First try!",
+    "attempts": "{count} attempts",
+    "test_execution": "Test Execution",
+    "passed": "Passed (Array was sorted correctly)"
   },
   "terms_page": {
     "title": "Terms of Service",

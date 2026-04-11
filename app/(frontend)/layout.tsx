@@ -19,6 +19,54 @@ const montserrat = Montserrat({
   subsets: ['latin'],
 });
 
+export async function generateMetadata() {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('locale')?.value || 'hu';
+  const locales = {
+    en: (await import('../../locales/en.json')).default,
+    hu: (await import('../../locales/hu.json')).default,
+    ro: (await import('../../locales/ro.json')).default,
+  };
+  const t = locales[locale as keyof typeof locales].seo;
+
+  return {
+    title: {
+      default: t.title,
+      template: `%s | ${t.title}`,
+    },
+    description: t.description,
+    keywords: t.keywords,
+    metadataBase: new URL('https://algorythmics.com'), // Replace with actual URL if known,
+    openGraph: {
+      title: t.title,
+      description: t.description,
+      siteName: 'AlgoRythmics',
+      locale: locale,
+      type: 'website',
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: t.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t.title,
+      description: t.description,
+      images: ['/og-image.png'],
+    },
+  };
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const cookieStore = await cookies();

@@ -283,7 +283,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
       setCourseActivePhase: (courseId, activePhaseIndex) => {
         const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
         set({
           courseProgress: {
             ...courseProgress,
@@ -294,7 +298,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
       updateCoursePhaseStats: (courseId, phaseId, updates) => {
         const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
         const stats = current.detailedStats || {};
         const old = stats[phaseId] || {
           timeSpentMs: 0,
@@ -313,7 +321,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         const nextCompleted = old.completed ? true : (updates.completed ?? old.completed);
         const nextResult = old.result === 'success' ? 'success' : (updates.result ?? old.result);
         // Only increment attempts when this is a real completion, not a partial save
-        const nextAttempts = updates.completed ? (old.attempts || 0) + 1 : (old.attempts || 0);
+        const nextAttempts = updates.completed ? (old.attempts || 0) + 1 : old.attempts || 0;
         set({
           courseProgress: {
             ...courseProgress,
@@ -339,7 +347,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
       incrementCourseMascotInteraction: (courseId) => {
         const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
         const interactions = (current.mascotInteractionsTotal || 0) + 1;
         set({
           courseProgress: {
@@ -355,7 +367,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
       updateCourseTotalTime: (courseId, timeToAddMs) => {
         const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
         const total = (current.totalTimeMs || 0) + timeToAddMs;
         set({
           courseProgress: {
@@ -371,7 +387,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
       incrementCourseMistakes: (courseId) => {
         const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
         const mistakesCount = (current.totalMistakes || 0) + 1;
         set({
           courseProgress: {
@@ -387,7 +407,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
       markCoursePhaseComplete: (courseId, phaseId) => {
         const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
         if (current.completedPhases?.includes(phaseId)) return;
 
         set({
@@ -404,7 +428,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
       markCourseCompleted: (courseId: string) => {
         const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
         set({
           courseProgress: {
             ...courseProgress,
@@ -419,30 +447,45 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
       resetCoursePhasesFrom: (courseId, phaseIndex, phaseIds) => {
         const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
-        const keptPhaseIds = phaseIds.slice(0, phaseIndex + 1);
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
+
+        // Standard checkpoint logic:
+        // Keep everything strictly BEFORE the target phase as completed.
+        const keptPhaseIds = phaseIds.slice(0, phaseIndex);
         const nextCompleted = (current.completedPhases || []).filter((id) =>
           keptPhaseIds.includes(id),
         );
+
         const currentResults = current.phaseResults || {};
         const nextResults: Record<string, 'success' | 'fail'> = {};
         nextCompleted.forEach((id) => {
           if (currentResults[id]) nextResults[id] = currentResults[id];
         });
-        // Preserve phasePoints only for kept phases
-        const nextPhasePoints: Record<
-          string,
-          { earned: number; max: number; helpUsed: boolean; partial: boolean }
-        > = {};
-        nextCompleted.forEach((id) => {
-          if (current.phasePoints?.[id]) nextPhasePoints[id] = current.phasePoints[id];
+
+        // Smart points subtraction:
+        // Instead of re-summing everything (which breaks legacy points missing from map),
+        // we identify exactly which phases are being removed and subtract their points.
+        const removedIds = (current.completedPhases || []).filter(
+          (id) => !nextCompleted.includes(id),
+        );
+
+        let pointsToRemove = 0;
+        removedIds.forEach((id) => {
+          // Subtract either the recorded points or 10 if missing (legacy baseline)
+          pointsToRemove += current.phasePoints?.[id]?.earned ?? 10;
         });
 
-        // Recompute points from the kept phasePoints entries only
-        const nextPoints = Object.entries(nextPhasePoints).reduce(
-          (acc, [, pp]) => acc + (pp?.earned ?? 0),
-          0,
-        );
+        const nextPoints = Math.max(0, (current.points || 0) - pointsToRemove);
+
+        // Update the phasePoints map by removing entries for the removed phases
+        const nextPhasePoints = { ...(current.phasePoints || {}) };
+        removedIds.forEach((id) => {
+          delete nextPhasePoints[id];
+        });
 
         set({
           courseProgress: {
@@ -454,6 +497,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
               phaseResults: nextResults,
               phasePoints: nextPhasePoints,
               points: nextPoints,
+              isCompleted: false,
               lastActivityAt: new Date().toISOString(),
             },
           },
@@ -505,7 +549,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
       setCourseConfidenceRating: (courseId, phaseId, rating) => {
         const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
         const history = current.confidenceResults || {};
         set({
           courseProgress: {
@@ -522,7 +570,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
       setCoursePhaseResult: (courseId, phaseId, result) => {
         const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
         const results = current.phaseResults || {};
         set({
           courseProgress: {
@@ -542,26 +594,36 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       },
 
       setCoursePhasePoints: (courseId, phaseId, data) => {
-        const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
-        const existing = current.phasePoints || {};
-        const nextPhasePoints = { ...existing, [phaseId]: data };
-        // Recompute total points from the full phasePoints map to avoid double-counting
-        const totalPoints = Object.values(nextPhasePoints).reduce(
-          (sum, pp) => sum + (pp?.earned ?? 0),
-          0,
-        );
+        const { courseProgress, syncProgress } = get();
+        const current = courseProgress[courseId] || {
+          activePhaseIndex: 0,
+          completedPhases: [],
+          points: 0,
+        };
+        const existingMap = current.phasePoints || {};
+        const oldEarned = existingMap[phaseId]?.earned || 0;
+
+        // If it was already completed but missing from map, we assume it contributed 0 to our total
+        // OR we treat it as new points. Since we want to be smart:
+        const nextPhasePoints = { ...existingMap, [phaseId]: data };
+
+        // Smart addition: Only add the DIFFERENCE to the total
+        const diff = data.earned - oldEarned;
+        const nextPoints = Math.max(0, (current.points || 0) + diff);
+
         set({
           courseProgress: {
             ...courseProgress,
             [courseId]: {
               ...current,
               phasePoints: nextPhasePoints,
-              points: totalPoints,
+              points: nextPoints,
               lastActivityAt: new Date().toISOString(),
             },
           },
         });
+        // Autosave
+        setTimeout(() => syncProgress(), 0);
       },
 
       isInteractionLocked: false,

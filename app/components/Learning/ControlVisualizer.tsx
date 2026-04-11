@@ -566,7 +566,7 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
         <button
           onClick={handleReset}
           className="p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400 transition-all active:scale-90"
-          title="Reset"
+          title={t('visualizer.controls.reset')}
         >
           <RotateCcw className="w-5 h-5" />
         </button>

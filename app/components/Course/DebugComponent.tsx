@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, X, Bug } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import { useLocale } from '../../i18n/LocaleProvider';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
 
 interface DebugComponentProps {
@@ -13,7 +14,9 @@ interface DebugComponentProps {
 }
 
 export default function DebugComponent({ phase, courseId, onMistake }: DebugComponentProps) {
-  const { markCoursePhaseComplete, setCoursePhaseResult } = useAlgorithmStore();
+  const { t } = useLocale();
+  const { markCoursePhaseComplete, setCoursePhaseResult, setCoursePhasePoints, syncProgress } =
+    useAlgorithmStore();
   const isDone = useAlgorithmStore((state) =>
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
@@ -39,10 +42,22 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
     const correct = selectedIndex === bugLineIndex;
     setIsCorrect(correct);
     if (!correct) onMistake?.();
+
+    // Set points immediately (100% or 0%)
+    setCoursePhasePoints(courseId, phase.phaseId, {
+      earned: correct ? (phase.maxPoints ?? 10) : 0,
+      max: phase.maxPoints ?? 10,
+      helpUsed: false,
+      partial: false,
+    });
+
     setShowFeedback(true);
 
     setCoursePhaseResult(courseId, phase.phaseId, correct ? 'success' : 'fail');
     markCoursePhaseComplete(courseId, phase.phaseId);
+
+    // Sync to backend immediately
+    setTimeout(() => syncProgress(), 0);
   };
 
   return (
@@ -90,7 +105,7 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
 
       <div className="text-center space-y-2">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-          Kattints arra a sorra, ahol a hiba van!
+          {t('course.quiz.debug_instructions')}
         </p>
       </div>
 
@@ -100,7 +115,7 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
           onClick={checkBug}
           className="px-10 py-4 bg-[#269984] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#269984]/30 hover:scale-105 transition-all disabled:opacity-30 disabled:scale-100"
         >
-          Hiba javítása
+          {t('course.quiz.debug_title')}
         </button>
       )}
 
@@ -124,12 +139,10 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
               isCorrect ? 'text-green-600' : 'text-red-600'
             }`}
           >
-            {isCorrect ? 'Megtaláltad a hibát!' : 'Nem ott van a hiba...'}
+            {isCorrect ? t('course.quiz.debug_success') : t('course.quiz.debug_fail')}
           </h5>
           <p className="text-sm font-medium text-gray-500">
-            {isCorrect
-              ? 'Pontosan felismerted a logikai tévedést a kódban.'
-              : 'Nézd át újra figyelmesen a ciklusokat és a feltételeket!'}
+            {isCorrect ? t('course.quiz.debug_success_desc') : t('course.quiz.debug_fail_desc')}
           </p>
         </motion.div>
       )}

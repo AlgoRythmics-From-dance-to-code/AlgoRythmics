@@ -62,8 +62,12 @@
           "name": "courses_mascot_welcome_messages_parent_id_fk",
           "tableFrom": "courses_mascot_welcome_messages",
           "tableTo": "courses",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -132,8 +136,12 @@
           "name": "courses_mascot_welcome_messages_locales_parent_id_fk",
           "tableFrom": "courses_mascot_welcome_messages_locales",
           "tableTo": "courses_mascot_welcome_messages",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -204,8 +212,12 @@
           "name": "courses_mascot_overconfident_messages_parent_id_fk",
           "tableFrom": "courses_mascot_overconfident_messages",
           "tableTo": "courses",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -274,8 +286,12 @@
           "name": "courses_mascot_overconfident_messages_locales_parent_id_fk",
           "tableFrom": "courses_mascot_overconfident_messages_locales",
           "tableTo": "courses_mascot_overconfident_messages",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -346,8 +362,12 @@
           "name": "courses_mascot_streak_messages_parent_id_fk",
           "tableFrom": "courses_mascot_streak_messages",
           "tableTo": "courses",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -416,8 +436,12 @@
           "name": "courses_mascot_streak_messages_locales_parent_id_fk",
           "tableFrom": "courses_mascot_streak_messages_locales",
           "tableTo": "courses_mascot_streak_messages",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -488,8 +512,12 @@
           "name": "courses_phases_quiz_options_parent_id_fk",
           "tableFrom": "courses_phases_quiz_options",
           "tableTo": "courses_phases_quiz",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -558,8 +586,12 @@
           "name": "courses_phases_quiz_options_locales_parent_id_fk",
           "tableFrom": "courses_phases_quiz_options_locales",
           "tableTo": "courses_phases_quiz_options",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -636,8 +668,12 @@
           "name": "courses_phases_quiz_parent_id_fk",
           "tableFrom": "courses_phases_quiz",
           "tableTo": "courses_phases",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -712,8 +748,12 @@
           "name": "courses_phases_quiz_locales_parent_id_fk",
           "tableFrom": "courses_phases_quiz_locales",
           "tableTo": "courses_phases_quiz",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -784,8 +824,12 @@
           "name": "courses_phases_matching_parent_id_fk",
           "tableFrom": "courses_phases_matching",
           "tableTo": "courses_phases",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -860,8 +904,12 @@
           "name": "courses_phases_matching_locales_parent_id_fk",
           "tableFrom": "courses_phases_matching_locales",
           "tableTo": "courses_phases_matching",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -932,8 +980,12 @@
           "name": "courses_phases_ordering_parent_id_fk",
           "tableFrom": "courses_phases_ordering",
           "tableTo": "courses_phases",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1002,8 +1054,12 @@
           "name": "courses_phases_ordering_locales_parent_id_fk",
           "tableFrom": "courses_phases_ordering_locales",
           "tableTo": "courses_phases_ordering",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1074,8 +1130,12 @@
           "name": "courses_phases_gap_fill_options_parent_id_fk",
           "tableFrom": "courses_phases_gap_fill_options",
           "tableTo": "courses_phases",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1144,8 +1204,162 @@
           "name": "courses_phases_gap_fill_options_locales_parent_id_fk",
           "tableFrom": "courses_phases_gap_fill_options_locales",
           "tableTo": "courses_phases_gap_fill_options",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.courses_phases_gap_fill_solutions": {
+      "name": "courses_phases_gap_fill_solutions",
+      "schema": "",
+      "columns": {
+        "_order": {
+          "name": "_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "_parent_id": {
+          "name": "_parent_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "courses_phases_gap_fill_solutions_order_idx": {
+          "name": "courses_phases_gap_fill_solutions_order_idx",
+          "columns": [
+            {
+              "expression": "_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "courses_phases_gap_fill_solutions_parent_id_idx": {
+          "name": "courses_phases_gap_fill_solutions_parent_id_idx",
+          "columns": [
+            {
+              "expression": "_parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "courses_phases_gap_fill_solutions_parent_id_fk": {
+          "name": "courses_phases_gap_fill_solutions_parent_id_fk",
+          "tableFrom": "courses_phases_gap_fill_solutions",
+          "tableTo": "courses_phases",
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.courses_phases_gap_fill_solutions_locales": {
+      "name": "courses_phases_gap_fill_solutions_locales",
+      "schema": "",
+      "columns": {
+        "solution": {
+          "name": "solution",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "_locale": {
+          "name": "_locale",
+          "type": "_locales",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "_parent_id": {
+          "name": "_parent_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "courses_phases_gap_fill_solutions_locales_locale_parent_id_u": {
+          "name": "courses_phases_gap_fill_solutions_locales_locale_parent_id_u",
+          "columns": [
+            {
+              "expression": "_locale",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "_parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "courses_phases_gap_fill_solutions_locales_parent_id_fk": {
+          "name": "courses_phases_gap_fill_solutions_locales_parent_id_fk",
+          "tableFrom": "courses_phases_gap_fill_solutions_locales",
+          "tableTo": "courses_phases_gap_fill_solutions",
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1267,8 +1481,12 @@
           "name": "courses_phases_parent_id_fk",
           "tableFrom": "courses_phases",
           "tableTo": "courses",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1379,8 +1597,12 @@
           "name": "courses_phases_locales_parent_id_fk",
           "tableFrom": "courses_phases_locales",
           "tableTo": "courses_phases",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1663,8 +1885,12 @@
           "name": "courses_locales_parent_id_fk",
           "tableFrom": "courses_locales",
           "tableTo": "courses",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1742,8 +1968,12 @@
           "name": "users_completed_algorithms_parent_fk",
           "tableFrom": "users_completed_algorithms",
           "tableTo": "users",
-          "columnsFrom": ["parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1826,8 +2056,12 @@
           "name": "users_sessions_parent_id_fk",
           "tableFrom": "users_sessions",
           "tableTo": "users",
-          "columnsFrom": ["_parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1895,6 +2129,13 @@
         },
         "learning_stats_total_time_spent_ms": {
           "name": "learning_stats_total_time_spent_ms",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "learning_stats_total_points": {
+          "name": "learning_stats_total_points",
           "type": "numeric",
           "primaryKey": false,
           "notNull": false,
@@ -2242,8 +2483,12 @@
           "name": "users_rels_parent_fk",
           "tableFrom": "users_rels",
           "tableTo": "users",
-          "columnsFrom": ["parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2251,8 +2496,12 @@
           "name": "users_rels_courses_fk",
           "tableFrom": "users_rels",
           "tableTo": "courses",
-          "columnsFrom": ["courses_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "courses_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2428,8 +2677,12 @@
           "name": "learning_events_user_id_users_id_fk",
           "tableFrom": "learning_events",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2774,8 +3027,12 @@
           "name": "algorithm_progress_user_id_users_id_fk",
           "tableFrom": "algorithm_progress",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2974,8 +3231,12 @@
           "name": "course_progress_user_id_users_id_fk",
           "tableFrom": "course_progress",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3049,8 +3310,12 @@
           "name": "course_progress_texts_parent_fk",
           "tableFrom": "course_progress_texts",
           "tableTo": "course_progress",
-          "columnsFrom": ["parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3379,8 +3644,12 @@
           "name": "payload_locked_documents_rels_parent_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "payload_locked_documents",
-          "columnsFrom": ["parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3388,8 +3657,12 @@
           "name": "payload_locked_documents_rels_courses_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "courses",
-          "columnsFrom": ["courses_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "courses_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3397,8 +3670,12 @@
           "name": "payload_locked_documents_rels_users_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "users",
-          "columnsFrom": ["users_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "users_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3406,8 +3683,12 @@
           "name": "payload_locked_documents_rels_learning_events_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "learning_events",
-          "columnsFrom": ["learning_events_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "learning_events_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3415,8 +3696,12 @@
           "name": "payload_locked_documents_rels_algorithm_progress_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "algorithm_progress",
-          "columnsFrom": ["algorithm_progress_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "algorithm_progress_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3424,8 +3709,12 @@
           "name": "payload_locked_documents_rels_course_progress_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "course_progress",
-          "columnsFrom": ["course_progress_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "course_progress_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3629,8 +3918,12 @@
           "name": "payload_preferences_rels_parent_fk",
           "tableFrom": "payload_preferences_rels",
           "tableTo": "payload_preferences",
-          "columnsFrom": ["parent_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3638,8 +3931,12 @@
           "name": "payload_preferences_rels_users_fk",
           "tableFrom": "payload_preferences_rels",
           "tableTo": "users",
-          "columnsFrom": ["users_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "users_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3731,7 +4028,11 @@
     "public._locales": {
       "name": "_locales",
       "schema": "public",
-      "values": ["hu", "en", "ro"]
+      "values": [
+        "hu",
+        "en",
+        "ro"
+      ]
     },
     "public.enum_courses_phases_source_view": {
       "name": "enum_courses_phases_source_view",
@@ -3755,7 +4056,11 @@
     "public.enum_courses_difficulty": {
       "name": "enum_courses_difficulty",
       "schema": "public",
-      "values": ["Beginner", "Intermediate", "Advanced"]
+      "values": [
+        "Beginner",
+        "Intermediate",
+        "Advanced"
+      ]
     },
     "public.enum_users_completed_algorithms": {
       "name": "enum_users_completed_algorithms",
@@ -3777,17 +4082,33 @@
     "public.enum_users_role": {
       "name": "enum_users_role",
       "schema": "public",
-      "values": ["admin", "editor", "user"]
+      "values": [
+        "admin",
+        "editor",
+        "user"
+      ]
     },
     "public.enum_users_auth_provider": {
       "name": "enum_users_auth_provider",
       "schema": "public",
-      "values": ["email", "google", "facebook", "discord", "github"]
+      "values": [
+        "email",
+        "google",
+        "facebook",
+        "discord",
+        "github"
+      ]
     },
     "public.enum_learning_events_tab": {
       "name": "enum_learning_events_tab",
       "schema": "public",
-      "values": ["video", "animation", "control", "create", "alive"]
+      "values": [
+        "video",
+        "animation",
+        "control",
+        "create",
+        "alive"
+      ]
     }
   },
   "schemas": {},
@@ -3800,6 +4121,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "f77678c0-ccac-45e6-9fe0-abafc8bab5a1",
+  "id": "b0183550-544b-4ceb-9c69-f4acfddc3b8f",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

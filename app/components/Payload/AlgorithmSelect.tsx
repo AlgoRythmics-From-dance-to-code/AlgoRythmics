@@ -1,13 +1,14 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { useField, useFormFields } from '@payloadcms/ui';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 // Import algorithm registry (client-side safe if structured correctly)
 import { getAlgorithm } from '../../../lib/algorithms/registry';
 
 // Static list of algo IDs for the main selector (we could also extract this from registry keys)
-const algorithmOptions = [
-  { label: 'Nincs / Egyéni', value: '' },
+const algorithmOptions = (t: (key: string) => string) => [
+  { label: `${t('common.not_available')} / ${t('common.custom')}`, value: '' },
   { label: 'Bubble Sort', value: 'bubble-sort' },
   { label: 'Insertion Sort', value: 'insertion-sort' },
   { label: 'Selection Sort', value: 'selection-sort' },
@@ -25,6 +26,7 @@ export const AlgorithmIdSelect: React.FC<{
   path: string;
   label?: string | { htmlFor: string };
 }> = ({ path, label: labelFromProps }) => {
+  const { t } = useLocale();
   const { value, setValue } = useField<string>({ path });
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -43,11 +45,12 @@ export const AlgorithmIdSelect: React.FC<{
 
   if (!isMounted) return null;
 
-  const selectedOption = algorithmOptions.find((opt) => opt.value === value) || {
+  const options = algorithmOptions(t);
+  const selectedOption = options.find((opt) => opt.value === value) || {
     label: value,
     value,
   };
-  const labelText = typeof labelFromProps === 'string' ? labelFromProps : 'Algoritmus Típusa';
+  const labelText = typeof labelFromProps === 'string' ? labelFromProps : t('admin.algorithm_type');
 
   return (
     <div
@@ -92,7 +95,7 @@ export const AlgorithmIdSelect: React.FC<{
             fontWeight: '500',
           }}
         >
-          {selectedOption.label || 'Válassz algoritmust...'}
+          {selectedOption.label || t('admin.choose_algorithm')}
         </span>
         <span
           style={{
@@ -121,7 +124,7 @@ export const AlgorithmIdSelect: React.FC<{
             overflowY: 'auto',
           }}
         >
-          {algorithmOptions.map((option) => (
+          {options.map((option) => (
             <div
               key={option.value}
               onClick={() => {
@@ -144,7 +147,9 @@ export const AlgorithmIdSelect: React.FC<{
               }
             >
               {option.label}{' '}
-              <span style={{ fontSize: '10px', opacity: 0.5 }}>({option.value || 'custom'})</span>
+              <span style={{ fontSize: '10px', opacity: 0.5 }}>
+                ({option.value || t('common.not_available')})
+              </span>
             </div>
           ))}
         </div>
@@ -157,6 +162,7 @@ export const PhaseIdSelect: React.FC<{
   path: string;
   label?: string | { htmlFor: string };
 }> = ({ path, label: labelFromProps }) => {
+  const { t } = useLocale();
   const { value, setValue } = useField<string>({ path });
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -187,8 +193,7 @@ export const PhaseIdSelect: React.FC<{
 
   if (!isMounted) return null;
 
-  const labelText =
-    typeof labelFromProps === 'string' ? labelFromProps : 'Fázis Azonosító (Phase ID)';
+  const labelText = typeof labelFromProps === 'string' ? labelFromProps : t('admin.phase_id');
 
   return (
     <div
@@ -238,7 +243,7 @@ export const PhaseIdSelect: React.FC<{
               fontWeight: 'bold',
             }}
           >
-            JAVASLAT ▼
+            {t('admin.suggestion')} ▼
           </button>
         )}
       </div>
