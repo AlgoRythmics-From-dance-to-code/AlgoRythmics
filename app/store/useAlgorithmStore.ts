@@ -309,6 +309,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         };
 
         const now = new Date().toISOString();
+        // Never downgrade a previously completed phase to incomplete (partial saves use completed: false)
+        const nextCompleted = old.completed ? true : (updates.completed ?? old.completed);
+        const nextResult = old.result === 'success' ? 'success' : (updates.result ?? old.result);
+        // Only increment attempts when this is a real completion, not a partial save
+        const nextAttempts = updates.completed ? (old.attempts || 0) + 1 : (old.attempts || 0);
         set({
           courseProgress: {
             ...courseProgress,
@@ -321,7 +326,9 @@ export const useAlgorithmStore = create<AlgorithmState>()(
                 [phaseId]: {
                   ...old,
                   ...updates,
-                  attempts: (old.attempts || 0) + 1,
+                  completed: nextCompleted,
+                  result: nextResult,
+                  attempts: nextAttempts,
                   completedAt: updates.completed ? now : old.completedAt,
                 },
               },
@@ -422,13 +429,6 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         nextCompleted.forEach((id) => {
           if (currentResults[id]) nextResults[id] = currentResults[id];
         });
-        const nextPoints = nextCompleted.reduce((acc, id) => {
-          const phasePointData = current.phasePoints?.[id];
-          if (phasePointData) return acc + phasePointData.earned;
-          if (nextResults[id] === 'fail') return acc;
-          return acc + 10;
-        }, 0);
-
         // Preserve phasePoints only for kept phases
         const nextPhasePoints: Record<
           string,
@@ -437,6 +437,12 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         nextCompleted.forEach((id) => {
           if (current.phasePoints?.[id]) nextPhasePoints[id] = current.phasePoints[id];
         });
+
+        // Recompute points from the kept phasePoints entries only
+        const nextPoints = Object.entries(nextPhasePoints).reduce(
+          (acc, [, pp]) => acc + (pp?.earned ?? 0),
+          0,
+        );
 
         set({
           courseProgress: {
@@ -530,35 +536,28 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         });
       },
 
-      addCoursePoints: (courseId, pointsToAdd) => {
-        const { courseProgress } = get();
-        const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
-        const currentPoints = current.points || 0;
-        set({
-          courseProgress: {
-            ...courseProgress,
-            [courseId]: {
-              ...current,
-              points: currentPoints + pointsToAdd,
-              lastActivityAt: new Date().toISOString(),
-            },
-          },
-        });
+      addCoursePoints: (_courseId, _pointsToAdd) => {
+        // Points are now always derived from phasePoints map in setCoursePhasePoints.
+        // This stub is kept for API compatibility — actual update happens there.
       },
 
       setCoursePhasePoints: (courseId, phaseId, data) => {
         const { courseProgress } = get();
         const current = courseProgress[courseId] || { activePhaseIndex: 0, completedPhases: [] };
         const existing = current.phasePoints || {};
+        const nextPhasePoints = { ...existing, [phaseId]: data };
+        // Recompute total points from the full phasePoints map to avoid double-counting
+        const totalPoints = Object.values(nextPhasePoints).reduce(
+          (sum, pp) => sum + (pp?.earned ?? 0),
+          0,
+        );
         set({
           courseProgress: {
             ...courseProgress,
             [courseId]: {
               ...current,
-              phasePoints: {
-                ...existing,
-                [phaseId]: data,
-              },
+              phasePoints: nextPhasePoints,
+              points: totalPoints,
               lastActivityAt: new Date().toISOString(),
             },
           },

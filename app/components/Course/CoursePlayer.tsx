@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -712,6 +712,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     }
 
     setPendingAdvance(null);
+    // Persist after every phase completion (not just at the end)
+    setTimeout(() => syncProgress(), 0);
   };
 
   const handleContinue = () => {
@@ -744,6 +746,79 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     setModalMode('restart');
     setShowRestartModal(true);
   };
+
+  // Save partial phase time when the user leaves mid-phase (tab hidden, page closed, etc.)
+  const savePartialPhaseProgress = useCallback(() => {
+    if (!activePhase) return;
+    const elapsed = Date.now() - phaseStartTime.current;
+    if (elapsed < 500) return; // Skip trivially small intervals
+
+    const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
+    let helpUsed = false;
+    if (activePhase.sourceView === 'create') helpUsed = !!progress.createHelpUsed;
+    if (activePhase.sourceView === 'alive' || activePhase.sourceView === 'final-challenge')
+      helpUsed = !!progress.aliveHelpUsed;
+    if (activePhase.sourceView === 'control') helpUsed = (progress.controlHintsUsed || 0) > 0;
+
+    updateCoursePhaseStats(course.slug, activePhase.phaseId, {
+      timeSpentMs:
+        (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.timeSpentMs || 0) +
+        elapsed,
+      helpUsed,
+      mascotHelpCount:
+        (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mascotHelpCount || 0) +
+        phaseMascotHelpCount.current,
+      mistakes:
+        (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mistakes || 0) +
+        phaseMistakesCount,
+      mascotIntentionallyDisabled: !mascotEnabled,
+    });
+    updateCourseTotalTime(course.slug, elapsed);
+    // Reset phase timer so accumulated time isn't double-counted if the tab comes back
+    phaseStartTime.current = Date.now();
+    phaseMistakesCount; // read, but reset happens via state
+    setPhaseMistakesCount(0);
+    phaseMascotHelpCount.current = 0;
+  }, [
+    activePhase,
+    algorithmProgress,
+    course.algorithmId,
+    course.slug,
+    courseProgress,
+    mascotEnabled,
+    phaseMistakesCount,
+    updateCoursePhaseStats,
+    updateCourseTotalTime,
+  ]);
+
+  // Persist to server on page-hide / tab-switch (best-effort)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        savePartialPhaseProgress();
+        syncProgress();
+      }
+    };
+    const handleBeforeUnload = () => {
+      savePartialPhaseProgress();
+      // Use a synchronous beacon so it fires even when the page is being closed
+      const { completedIds, visualizerProgress, algorithmProgress: ap, courseProgress: cp } =
+        useAlgorithmStore.getState();
+      navigator.sendBeacon(
+        '/api/account/progress',
+        new Blob(
+          [JSON.stringify({ completedIds, visualizerProgress, algorithmProgress: ap, courseProgress: cp })],
+          { type: 'application/json' },
+        ),
+      );
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [savePartialPhaseProgress, syncProgress]);
 
   if (!activePhase) return null;
 
