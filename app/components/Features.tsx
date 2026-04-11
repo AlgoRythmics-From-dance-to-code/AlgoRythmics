@@ -76,7 +76,7 @@ export default function Features() {
         </h2>
 
         <div
-          className="grid grid-cols-2 sm:grid-cols-3 mx-auto"
+          className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 mx-auto"
           style={{ gap: '30px', maxWidth: '1000px' }}
         >
           {features.map((feature) => (

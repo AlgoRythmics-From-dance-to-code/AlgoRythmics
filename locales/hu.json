@@ -1,12 +1,25 @@
 {
   "brand": "AlgoRythmics",
+  "seo": {
+    "title": "AlgoRythmics - Tánctól a kódig",
+    "description": "Tanulj algoritmusokat táncon és interaktív vizualizációkon keresztül. Az AlgoRythmics elérhetővé és szórakoztatóvá teszi a számítástechnikát.",
+    "keywords": "algoritmusok, rendezés, számítástechnika, tánc, oktatás, kódolás, vizualizáció"
+  },
   "common": {
-    "completed": "Teljesítve",
+    "completed": "Befejezve",
     "all": "Összes",
     "cancel": "Mégse",
     "restart": "Újrakezdés",
     "confirm": "Megerősítés",
-    "min": "perc"
+    "min": "perc",
+    "available": "Elérhető",
+    "admin": "Admin",
+    "not_available": "N/A",
+    "algorithm": "Algoritmus",
+    "active": "Aktív",
+    "locked": "Zárolva",
+    "current": "Jelenlegi",
+    "custom": "Egyéni"
   },
   "nav": {
     "home": "Kezdőlap",
@@ -145,6 +158,7 @@
     "delete": {
       "warning": "Ez a művelet végleges és nem vonható vissza.",
       "confirm_text": "A megerősítéshez írd be a \"DELETE\" szót alább:",
+      "placeholder": "DELETE",
       "delete_btn": "Fiókom végleges törlése"
     }
   },
@@ -493,13 +507,22 @@
       "name": "Kurzus neve",
       "category": "Kategória",
       "duration": "Időtartam",
-      "level": "Szint"
+      "level": "Szint",
+      "points": "Pontok"
+    },
+    "summary": {
+      "earned": "Szerzett pontok",
+      "total_platform": "Összes platform pont",
+      "platform_progress": "Platform haladás",
+      "checkpoints": "Ellenőrzőpontok"
     },
     "levels": {
       "beginner": "Kezdő",
       "intermediate": "Középhaladó",
       "advanced": "Haladó"
     },
+    "empty_available": "Minden kurzust teljesítettél!\nGratulálunk a hatalmas tudáshoz!",
+    "empty_completed": "Még nincsenek teljesített kurzusaid.\nKezdj el egyet még ma!",
     "categories_list": {
       "video": {
         "title": "Videó",
@@ -561,8 +584,76 @@
     "reset_course": "Kurzus Resetelése",
     "points": "Pontok",
     "phase": "Fázis",
+    "phase_details": "részletezés",
     "confidence_prompt": "Hogy érzed, mennyire sikerült eddig elsajátítani a látottakat?",
-    "mistake_prompt": "Vegyük át még egyszer a szabályt!"
+    "confidence_title": "Hogy állunk a tudással?",
+    "confidence_desc": "Szeretnénk tudni, hogy eddig mennyire érted a kurzust, és minden világos-e számodra.",
+    "confidence_very_sure": "Nagyon biztos vagyok",
+    "confidence_very_sure_desc": "Nagyon biztos vagyok benne!",
+    "confidence_sure": "Biztos vagyok",
+    "confidence_sure_desc": "Azt hiszem, értem az egészet.",
+    "confidence_unsure": "Bizonytalan vagyok",
+    "confidence_unsure_desc": "Vannak még homályos részek.",
+    "confidence_guess": "Csak találgatok",
+    "confidence_guess_desc": "Még csak barátkozom vele.",
+    "confidence_later": "Később válaszolok",
+    "mistake_prompt": "Nézzük át a szabályt még egyszer!",
+    "advice": "Tanács",
+    "help_yes": "Igen, segíts!",
+    "help_no": "Nem köszi",
+    "how_are_we": "Hogy állunk?",
+    "summary_title": "Összegzés",
+    "understand": "Értem",
+    "score_partial": "részleges",
+    "score_help": "segítség",
+    "phase_complete": "Fázis kész",
+    "in_progress": "Folyamatban",
+    "current_phase": "Jelenlegi fázis",
+    "completion": "Befejezés",
+    "ready_to_continue": "Folytatásra kész",
+    "finish_activity": "Fejezd be az aktuális feladatot",
+    "finish_course": "Kurzus befejezése",
+    "next_phase": "Következő fázis",
+    "rewards": "Jutalmak",
+    "grand_total": "Mindösszesen",
+    "currently_at": "Ebben a részben épp: {title}",
+    "quiz_explanation": "Magyarázat",
+    "quiz": {
+      "ordering_title": "Húzd a helyes sorrendbe az elemeket",
+      "check": "Ellenőrzés",
+      "correct": "Helyes!",
+      "incorrect": "Nem egészen!",
+      "ordering_success": "Tökéletes sorrend!",
+      "ordering_fail": "Majdnem jó...",
+      "ordering_success_desc": "Sikeresen felismerted az algoritmus lépéseit.",
+      "ordering_fail_desc": "Nézd át újra a folyamatot és próbáld meg kikövetkeztetni a helyes sorrendet!",
+      "matching_categories": "Kategóriák",
+      "matching_options": "Válaszlehetőségek",
+      "matching_success_desc": "Sikeresen párosítottad az összes elemet.",
+      "matching_fail_desc": "Próbáld meg jobban megfigyelni az összefüggéseket legközelebb!",
+      "gapfill_success": "Szöveg kiegészítve!",
+      "gapfill_success_desc": "Nagyszerűen használtad a szakkifejezéseket.",
+      "gapfill_fail": "Próbáld újra!",
+      "gapfill_fail_desc": "Néhány szakkifejezés nem a megfelelő helyre került.",
+      "debug_instructions": "Kattints arra a sorra, ahol a hiba van!",
+      "debug_title": "Hiba javítása",
+      "debug_success": "Megtaláltad a hibát!",
+      "debug_fail": "Nem ott van a hiba...",
+      "debug_success_desc": "Pontosan felismerted a logikai tévedést a kódban.",
+      "debug_fail_desc": "Nézd át újra figyelmesen a ciklusokat és a feltételeket!"
+    }
+  },
+  "admin": {
+    "algorithm_type": "Algoritmus Típusa",
+    "choose_algorithm": "Válassz algoritmust...",
+    "phase_id": "Fázis Azonosító (Phase ID)",
+    "suggestion": "JAVASLAT",
+    "choose_image": "Válassz képet",
+    "choose_image_library": "Válassz egy képet a könyvtárból...",
+    "course_illustration": "Kurzus Illusztrációja",
+    "mascot_asset": "Kabala Figurája",
+    "no_image_selected": "Nincs kiválasztott kép",
+    "preview": "Előnézet:"
   },
   "videos": {
     "hero_title": "Videók",
@@ -574,17 +665,19 @@
     },
     "views": "megtekintés",
     "list": {
-      "bubble-sort": "Buborékrendezés",
-      "insertion-sort": "Beszúró rendezés",
-      "selection-sort": "Kiválasztó rendezés",
-      "merge-sort": "Összefuttatásos rendezés",
-      "quick-sort": "Gyorsrendezés",
-      "heap-sort": "Kupacrendezés",
-      "shell-sort": "Shell-rendezés",
-      "linear-search": "Lineáris keresés",
-      "binary-search": "Bináris keresés",
-      "n-queens": "N-királynő probléma"
-    }
+      "bubble-sort": "Bubble Sort",
+      "insertion-sort": "Insertion Sort",
+      "selection-sort": "Selection Sort",
+      "merge-sort": "Merge Sort",
+      "quick-sort": "Quick Sort",
+      "heap-sort": "Heap Sort",
+      "shell-sort": "Shell Sort",
+      "linear-search": "Linear Search",
+      "binary-search": "Binary Search",
+      "n-queens": "N-Queens Problem"
+    },
+    "placeholder_title": "Videó helyőrző",
+    "placeholder_desc": "A(z) {title} YouTube videója még nincs összekapcsolva. Amint hozzáadjuk a kiszolgálóhoz, itt fog megjelenni."
   },
   "visualizer": {
     "initial": "Kezdeti állapot — rendezésre kész",
@@ -604,12 +697,25 @@
     "sorted_complete": "A tömb rendezve!",
     "bogosort_ready": "Készen áll a Bogosortra... sok szerencsét!",
     "bogosort_attempt": "{attempts}. kísérlet: Teljes tömb megkeverve!",
-    "bogosort_found": "A Bogosort végre megtalálta a rendezett állapotot a(z) {attempts}. kísérletre!"
+    "bogosort_found": "A Bogosort végre megtalálta a rendezett állapotot a(z) {attempts}. kísérletre!",
+    "controls": {
+      "reset": "Újrakezdés",
+      "reset_aria": "Vizualizáció alaphelyzetbe állítása",
+      "step_forward": "Lépés előre",
+      "step_forward_aria": "Következő lépés",
+      "step_backward": "Lépés hátra",
+      "step_backward_aria": "Előző lépés",
+      "toggle_dark_mode": "Sötét mód váltása",
+      "play": "Lejátszás",
+      "pause": "Szünet",
+      "restart": "Újrakezdés",
+      "speed": "Lejátszási sebesség: {speed}x"
+    }
   },
   "control": {
     "select_pair": "Válassz ki két szomszédos elemet az összehasonlításhoz",
     "correct": "Helyes!",
-    "incorrect": "Nem egészen — próbáld újra!",
+    "incorrect": "Nem egészen!",
     "hint": "Tipp",
     "mistakes": "Hibák",
     "summary": "{total} lépésből {correct}-et találtál el elsőre!",
@@ -661,7 +767,12 @@
     "used_help": "Blokk segítséggel befejezve",
     "available_blocks": "Elérhető blokkok",
     "your_program": "A programod",
-    "reference": "Szükséges elemek"
+    "reference": "Szükséges elemek",
+    "all_placed": "Minden blokk elhelyezve!",
+    "first_try": "Első próbálkozásra!",
+    "attempts": "{count} próbálkozás",
+    "test_execution": "Teszt futtatása",
+    "passed": "Sikeres (A tömb helyesen lett rendezve)"
   },
   "terms_page": {
     "title": "Felhasználási feltételek",

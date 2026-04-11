@@ -65,7 +65,10 @@ export default function SortingVisualizer({
         {visualState.activeIndices.length === 2 && (
           <div className="absolute top-3 left-0 right-0 flex items-end justify-center gap-1.5 sm:gap-3 px-6 sm:px-8 pointer-events-none">
             {visualState.array.map((_, idx) => (
-              <div key={idx} className="w-8 sm:w-14 flex items-center justify-center">
+              <div
+                key={idx}
+                className="flex-1 min-w-[12px] sm:min-w-[20px] max-w-[60px] flex items-center justify-center"
+              >
                 {visualState.activeIndices.includes(idx) && (
                   <motion.span
                     initial={{ opacity: 0, y: -5 }}
@@ -116,7 +119,7 @@ export default function SortingVisualizer({
                   layout: { duration: 0.3 / speed },
                 }}
                 onClick={onBarClick && !disabled ? () => onBarClick(idx) : undefined}
-                className={`w-8 sm:w-14 min-h-[20px] rounded-t-xl relative group shadow-sm ${
+                className={`flex-1 min-w-[12px] sm:min-w-[20px] max-w-[60px] min-h-[20px] rounded-t-xl relative group shadow-sm ${
                   onBarClick && !disabled ? 'cursor-pointer hover:brightness-110' : ''
                 } ${!isActive && !isSorted && !isSelected && !isDiscarded ? 'dark:bg-white/10' : ''}`}
                 style={{ height: `${(item.val / maxVal) * 80}%` }}

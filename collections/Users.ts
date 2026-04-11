@@ -183,6 +183,7 @@ export const Users: CollectionConfig = {
       admin: { description: 'Aggregated learning statistics across all algorithms.' },
       fields: [
         { name: 'totalTimeSpentMs', type: 'number', defaultValue: 0 },
+        { name: 'totalPoints', type: 'number', defaultValue: 0 },
         { name: 'totalAlgorithmsStarted', type: 'number', defaultValue: 0 },
         { name: 'totalAlgorithmsCompleted', type: 'number', defaultValue: 0 },
         { name: 'totalCoursesStarted', type: 'number', defaultValue: 0 },

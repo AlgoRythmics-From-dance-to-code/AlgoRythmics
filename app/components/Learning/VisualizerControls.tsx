@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 interface VisualizerControlsProps {
   onPlayPause: () => void;
@@ -28,6 +29,7 @@ export default function VisualizerControls({
   progress,
   speedOptions,
 }: VisualizerControlsProps) {
+  const { t } = useLocale();
   const speeds = speedOptions ?? [0.5, 1, 2];
   return (
     <div className="w-full max-w-3xl mx-auto mt-6 md:mt-10 p-4 sm:p-6 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm">
@@ -47,8 +49,8 @@ export default function VisualizerControls({
               type="button"
               onClick={onReset}
               className="p-3 sm:p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 transition-all active:scale-90"
-              title="Reset"
-              aria-label="Reset visualizer"
+              title={t('visualizer.controls.reset')}
+              aria-label={t('visualizer.controls.reset_aria')}
             >
               <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
@@ -57,8 +59,8 @@ export default function VisualizerControls({
               type="button"
               onClick={onStepBackward}
               className="p-3 sm:p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 transition-all active:scale-90"
-              title="Step Backward"
-              aria-label="Step backward"
+              title={t('visualizer.controls.step_backward')}
+              aria-label={t('visualizer.controls.step_backward_aria')}
             >
               <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
@@ -73,8 +75,20 @@ export default function VisualizerControls({
                     ? 'bg-orange-500 text-white shadow-orange-500/30'
                     : 'bg-[#269984] text-white shadow-[#269984]/30'
               }`}
-              title={isFinished ? 'Restart' : isPlaying ? 'Pause' : 'Play'}
-              aria-label={isFinished ? 'Restart' : isPlaying ? 'Pause' : 'Play'}
+              title={
+                isFinished
+                  ? t('visualizer.controls.restart')
+                  : isPlaying
+                    ? t('visualizer.controls.pause')
+                    : t('visualizer.controls.play')
+              }
+              aria-label={
+                isFinished
+                  ? t('visualizer.controls.restart')
+                  : isPlaying
+                    ? t('visualizer.controls.pause')
+                    : t('visualizer.controls.play')
+              }
             >
               {isFinished ? (
                 <RotateCcw className="w-6 h-6" />
@@ -92,8 +106,8 @@ export default function VisualizerControls({
               className={`p-3 sm:p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400 dark:text-gray-500 transition-all active:scale-90 ${
                 isFinished ? 'opacity-30 cursor-not-allowed' : ''
               }`}
-              title="Step Forward"
-              aria-label="Step forward"
+              title={t('visualizer.controls.step_forward')}
+              aria-label={t('visualizer.controls.step_forward_aria')}
             >
               <SkipForward className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
@@ -111,7 +125,7 @@ export default function VisualizerControls({
                     ? 'bg-white dark:bg-white/10 text-[#269984] shadow-md scale-105'
                     : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                 }`}
-                aria-label={`Playback speed ${s}x`}
+                aria-label={t('visualizer.controls.speed').replace('{speed}', String(s))}
               >
                 {s}x
               </button>

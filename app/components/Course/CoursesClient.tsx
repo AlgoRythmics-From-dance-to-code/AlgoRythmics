@@ -85,7 +85,7 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
                 transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
               />
             )}
-            <span>Elérhető</span>
+            <span>{t('common.available')}</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] ${
                 activeTab === 'available' ? 'bg-white/20' : 'bg-gray-200 dark:bg-white/10'
@@ -110,7 +110,7 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
                 transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
               />
             )}
-            <span>Teljesített</span>
+            <span>{t('common.completed')}</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] ${
                 activeTab === 'completed' ? 'bg-white/20' : 'bg-gray-200 dark:bg-white/10'
@@ -135,74 +135,96 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
               <div className="mb-4 text-4xl">{activeTab === 'completed' ? '🏆' : '✨'}</div>
               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest leading-6">
                 {activeTab === 'completed'
-                  ? 'Még nincsenek teljesített kurzusaid.\nKezdj el egyet még ma!'
-                  : 'Minden kurzust teljesítettél!\nGratulálunk a hatalmas tudáshoz!'}
+                  ? t('courses.empty_completed')
+                  : t('courses.empty_available')}
               </p>
             </div>
           ) : (
             <>
-              <div className="hidden grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.35fr] gap-4 border-b border-gray-100 px-8 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 dark:border-white/10 md:grid">
+              <div className="hidden grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.55fr_0.35fr] gap-4 border-b border-gray-100 px-8 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 dark:border-white/10 md:grid">
                 <div>{t('courses.table.name')}</div>
                 <div>{t('courses.table.summary')}</div>
                 <div>{t('courses.table.duration')}</div>
                 <div>{t('courses.table.level')}</div>
-                <div>{t('courses.open')}</div>
+                <div>{t('courses.table.points')}</div>
+                <div className="text-right">{t('courses.open')}</div>
               </div>
 
               <div className="divide-y divide-gray-100 dark:divide-white/10">
-                {filteredCourses.map((course) => (
-                  <button
-                    key={course.slug}
-                    onClick={() => handleCourseClick(course)}
-                    className="w-full text-left grid grid-cols-1 gap-6 px-8 py-8 transition-all hover:bg-gray-50/80 dark:hover:bg-white/[0.03] md:grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.35fr] md:items-center group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-5 min-w-0">
-                      <div
-                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.25rem] text-3xl shadow-lg transition-transform group-hover:scale-110"
-                        style={{
-                          backgroundColor: `${course.accentColor}15`,
-                          color: course.accentColor,
-                        }}
-                      >
-                        {course.icon}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xl font-bold text-black dark:text-white tracking-tight">
-                          {course.title}
+                {filteredCourses.map((course) => {
+                  const current = courseProgress[course.slug] || {
+                    activePhaseIndex: 0,
+                    completedPhases: [],
+                    points: 0,
+                  };
+                  const totalCourseMax = course.phases.reduce(
+                    (acc, p) => acc + (p.maxPoints ?? 10),
+                    0,
+                  );
+
+                  return (
+                    <button
+                      key={course.slug}
+                      onClick={() => handleCourseClick(course)}
+                      className="w-full text-left grid grid-cols-1 gap-4 px-5 py-6 transition-all hover:bg-gray-50/80 dark:hover:bg-white/[0.03] md:grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.55fr_0.35fr] md:items-center md:gap-6 md:px-8 md:py-8 group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-5 min-w-0">
+                        <div
+                          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.25rem] text-3xl shadow-lg transition-transform group-hover:scale-110"
+                          style={{
+                            backgroundColor: `${course.accentColor}15`,
+                            color: course.accentColor,
+                          }}
+                        >
+                          {course.icon}
                         </div>
-                        <div className="mt-1 flex items-center gap-2">
-                          <span className="truncate text-[10px] font-black uppercase tracking-widest text-[#269984]">
-                            {course.mascot.name}
-                          </span>
-                          <span className="text-gray-300 dark:text-gray-700">•</span>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                            {course.phases.length} {t('courses.checkpoints')}
-                          </span>
+                        <div className="min-w-0">
+                          <div className="text-xl font-bold text-black dark:text-white tracking-tight">
+                            {course.title}
+                          </div>
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className="truncate text-[10px] font-black uppercase tracking-widest text-[#269984]">
+                              {course.mascot.name}
+                            </span>
+                            <span className="text-gray-300 dark:text-gray-700">•</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                              {course.phases.length} {t('courses.checkpoints')}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="text-sm leading-relaxed text-gray-500 dark:text-gray-400 font-medium line-clamp-2">
-                      {course.summary}
-                    </div>
+                      <div className="text-sm leading-relaxed text-gray-500 dark:text-gray-400 font-medium line-clamp-2">
+                        {course.summary}
+                      </div>
 
-                    <div className="flex shrink-0 items-center gap-2 text-sm font-bold text-black dark:text-white">
-                      <span className="opacity-30">~</span>
-                      {course.estimatedMinutes} min
-                    </div>
+                      <div className="flex shrink-0 items-center gap-2 text-sm font-bold text-black dark:text-white">
+                        <span className="opacity-30">~</span>
+                        {course.estimatedMinutes} {t('common.min')}
+                      </div>
 
-                    <div className="flex">
-                      <span className="inline-flex rounded-full border border-[#269984]/20 bg-[#269984]/5 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#269984] shadow-sm">
-                        {course.difficulty}
-                      </span>
-                    </div>
+                      <div className="flex">
+                        <span className="inline-flex rounded-full border border-[#269984]/20 bg-[#269984]/5 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#269984] shadow-sm">
+                          {course.difficulty}
+                        </span>
+                      </div>
 
-                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#269984] md:justify-end">
-                      <span>{t('courses.open')}</span>
-                      <span className="transition-transform group-hover:translate-x-1">→</span>
-                    </div>
-                  </button>
-                ))}
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-black text-[#269984]">
+                          {current.points || 0}
+                        </span>
+                        <span className="text-[10px] font-bold text-gray-300">
+                          / {totalCourseMax}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#269984] md:justify-end">
+                        <span className="hidden lg:inline">{t('courses.open')}</span>
+                        <span className="transition-transform group-hover:translate-x-1">→</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
@@ -213,8 +235,10 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
         isOpen={showRestartModal}
         onClose={() => setShowRestartModal(false)}
         onConfirm={handleConfirmRestart}
-        message="Ezt a kurzust már sikeresen teljesítetted. Ha újra elkezded, az eddigi haladásod és pontjaid törlődnek ebből a kurzusból."
-        cancelLabel="Vissza a listához"
+        title={t('course.restart_title')}
+        message={t('course.restart_completed_message')}
+        confirmLabel={t('course.restart_confirm')}
+        cancelLabel={t('course.cancel_back')}
       />
     </div>
   );

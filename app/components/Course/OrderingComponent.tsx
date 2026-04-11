@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
 import { Check, X, GripVertical } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import { useLocale } from '../../i18n/LocaleProvider';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
 
 interface OrderingComponentProps {
@@ -13,7 +14,9 @@ interface OrderingComponentProps {
 }
 
 export default function OrderingComponent({ phase, courseId, onMistake }: OrderingComponentProps) {
-  const { markCoursePhaseComplete, setCoursePhaseResult } = useAlgorithmStore();
+  const { t } = useLocale();
+  const { markCoursePhaseComplete, setCoursePhaseResult, setCoursePhasePoints, syncProgress } =
+    useAlgorithmStore();
   const isDone = useAlgorithmStore((state) =>
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
@@ -29,21 +32,39 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
 
   const checkOrder = () => {
     // Correct if current text order matches initial order (which was 0, 1, 2...)
-    const matchesOriginal = items.every((item, idx) => item.originalIndex === idx);
+    const correctCount = items.filter((item, idx) => item.originalIndex === idx).length;
+    const totalCount = items.length;
+    const matchesOriginal = correctCount === totalCount;
 
     setIsCorrect(matchesOriginal);
     if (!matchesOriginal) onMistake?.();
+
+    // Scale points to phase maxPoints
+    const maxPoints = phase.maxPoints ?? 10;
+    const earnedPoints = totalCount === 0 ? 0 : Math.round((correctCount / totalCount) * maxPoints);
+
+    // Set points immediately
+    setCoursePhasePoints(courseId, phase.phaseId, {
+      earned: earnedPoints,
+      max: maxPoints,
+      helpUsed: false,
+      partial: correctCount > 0 && correctCount < totalCount,
+    });
+
     setShowFeedback(true);
 
     setCoursePhaseResult(courseId, phase.phaseId, matchesOriginal ? 'success' : 'fail');
     markCoursePhaseComplete(courseId, phase.phaseId);
+
+    // Sync to backend immediately
+    setTimeout(() => syncProgress(), 0);
   };
 
   return (
     <div className="flex flex-col items-center gap-8 p-4">
       <div className="w-full max-w-xl">
         <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6 text-center">
-          Húzd a helyes sorrendbe az elemeket
+          {t('course.quiz.ordering_title')}
         </h4>
 
         <Reorder.Group
@@ -79,7 +100,7 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
           onClick={checkOrder}
           className="px-10 py-4 bg-[#269984] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#269984]/30 hover:scale-105 transition-all"
         >
-          Ellenőrzés
+          {t('course.quiz.check')}
         </button>
       )}
 
@@ -103,12 +124,12 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
               isCorrect ? 'text-green-600' : 'text-red-600'
             }`}
           >
-            {isCorrect ? 'Tökéletes sorrend!' : 'Majdnem jó...'}
+            {isCorrect ? t('course.quiz.ordering_success') : t('course.quiz.ordering_fail')}
           </h5>
           <p className="text-sm font-medium text-gray-500">
             {isCorrect
-              ? 'Sikeresen felismerted az algoritmus lépéseit.'
-              : 'Nézd át újra a folyamatot és próbáld meg kikövetkeztetni a helyes sorrendet!'}
+              ? t('course.quiz.ordering_success_desc')
+              : t('course.quiz.ordering_fail_desc')}
           </p>
         </motion.div>
       )}

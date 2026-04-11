@@ -354,11 +354,20 @@ export interface Course {
          */
         gapFillContent?: string | null;
         /**
-         * Választható szavak a hiányzó részekhez.
+         * Választható szavak (minden szó, beleértve a zavarókat is).
          */
         gapFillOptions?:
           | {
               option: string;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * A helyes megoldások a fenti szavakból, a kihagyások sorrendjében.
+         */
+        gapFillSolutions?:
+          | {
+              solution: string;
               id?: string | null;
             }[]
           | null;
@@ -425,6 +434,7 @@ export interface User {
    */
   learningStats?: {
     totalTimeSpentMs?: number | null;
+    totalPoints?: number | null;
     totalAlgorithmsStarted?: number | null;
     totalAlgorithmsCompleted?: number | null;
     totalCoursesStarted?: number | null;
@@ -812,6 +822,12 @@ export interface CoursesSelect<T extends boolean = true> {
               option?: T;
               id?: T;
             };
+        gapFillSolutions?:
+          | T
+          | {
+              solution?: T;
+              id?: T;
+            };
         id?: T;
       };
   updatedAt?: T;
@@ -835,6 +851,7 @@ export interface UsersSelect<T extends boolean = true> {
     | T
     | {
         totalTimeSpentMs?: T;
+        totalPoints?: T;
         totalAlgorithmsStarted?: T;
         totalAlgorithmsCompleted?: T;
         totalCoursesStarted?: T;

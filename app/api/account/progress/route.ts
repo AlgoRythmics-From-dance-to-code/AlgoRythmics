@@ -276,6 +276,7 @@ export async function POST(req: Request) {
     let totalTimeSpentMs = 0;
     let totalMistakes = 0;
     let totalHintsUsed = 0;
+    let totalPoints = 0;
     let totalControlAttempts = 0;
     let totalCreateAttempts = 0;
     let totalAliveAttempts = 0;
@@ -302,10 +303,12 @@ export async function POST(req: Request) {
         totalTimeMs?: number;
         totalMistakes?: number;
         mascotInteractionsTotal?: number;
+        points?: number;
       };
       totalTimeSpentMs += cDoc.totalTimeMs || 0;
       totalMistakes += cDoc.totalMistakes || 0;
       totalHintsUsed += cDoc.mascotInteractionsTotal || 0;
+      totalPoints += cDoc.points || 0;
     });
 
     // We do NOT completely overwrite learningStats to avoid destructive operations if only part of it was synced
@@ -329,6 +332,7 @@ export async function POST(req: Request) {
           totalTimeSpentMs,
           totalMistakes,
           totalHintsUsed,
+          totalPoints,
           totalControlAttempts,
           totalCreateAttempts,
           totalAliveAttempts,

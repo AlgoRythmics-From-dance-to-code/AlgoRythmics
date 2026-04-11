@@ -474,10 +474,20 @@ export const Courses: CollectionConfig = {
                   name: 'gapFillOptions',
                   type: 'array',
                   admin: {
-                    description: 'Választható szavak a hiányzó részekhez.',
+                    description: 'Választható szavak (minden szó, beleértve a zavarókat is).',
                     condition: (data, siblingData) => siblingData?.sourceView === 'gap-fill',
                   },
                   fields: [{ name: 'option', type: 'text', required: true, localized: true }],
+                },
+                {
+                  name: 'gapFillSolutions',
+                  type: 'array',
+                  admin: {
+                    description:
+                      'A helyes megoldások a fenti szavakból, a kihagyások sorrendjében.',
+                    condition: (data, siblingData) => siblingData?.sourceView === 'gap-fill',
+                  },
+                  fields: [{ name: 'solution', type: 'text', required: true, localized: true }],
                 },
               ],
             },

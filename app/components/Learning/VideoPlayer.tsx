@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 interface VideoPlayerProps {
   youtubeId: string;
@@ -11,6 +12,7 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlayerProps) {
+  const { t } = useLocale();
   const [isLoading, setIsLoading] = useState(true);
   const { updateProgress } = useAnalytics(algorithmId, 'video');
   const { algorithmProgress } = useAlgorithmStore();
@@ -59,11 +61,11 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
               <polygon points="5,3 19,12 5,21" />
             </svg>
           </div>
-          <h3 className="font-montserrat font-bold text-xl mb-2">Video Placeholder</h3>
+          <h3 className="font-montserrat font-bold text-xl mb-2">
+            {t('videos.placeholder_title')}
+          </h3>
           <p className="font-montserrat text-gray-400 text-sm max-w-md">
-            The YouTube video for{' '}
-            <span className="text-[#269984] font-bold">{title || 'this algorithm'}</span> is not yet
-            linked. Once the URL is added to the constants, it will appear here.
+            {t('videos.placeholder_desc').replace('{title}', title || t('common.algorithm'))}
           </p>
           <div className="mt-4 text-xs text-[#269984] font-mono p-2 bg-black/30 rounded">
             ID: {youtubeId}

@@ -1156,6 +1156,148 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.courses_phases_gap_fill_solutions": {
+      "name": "courses_phases_gap_fill_solutions",
+      "schema": "",
+      "columns": {
+        "_order": {
+          "name": "_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "_parent_id": {
+          "name": "_parent_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "courses_phases_gap_fill_solutions_order_idx": {
+          "name": "courses_phases_gap_fill_solutions_order_idx",
+          "columns": [
+            {
+              "expression": "_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "courses_phases_gap_fill_solutions_parent_id_idx": {
+          "name": "courses_phases_gap_fill_solutions_parent_id_idx",
+          "columns": [
+            {
+              "expression": "_parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "courses_phases_gap_fill_solutions_parent_id_fk": {
+          "name": "courses_phases_gap_fill_solutions_parent_id_fk",
+          "tableFrom": "courses_phases_gap_fill_solutions",
+          "tableTo": "courses_phases",
+          "columnsFrom": ["_parent_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.courses_phases_gap_fill_solutions_locales": {
+      "name": "courses_phases_gap_fill_solutions_locales",
+      "schema": "",
+      "columns": {
+        "solution": {
+          "name": "solution",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "_locale": {
+          "name": "_locale",
+          "type": "_locales",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "_parent_id": {
+          "name": "_parent_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "courses_phases_gap_fill_solutions_locales_locale_parent_id_u": {
+          "name": "courses_phases_gap_fill_solutions_locales_locale_parent_id_u",
+          "columns": [
+            {
+              "expression": "_locale",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "_parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "courses_phases_gap_fill_solutions_locales_parent_id_fk": {
+          "name": "courses_phases_gap_fill_solutions_locales_parent_id_fk",
+          "tableFrom": "courses_phases_gap_fill_solutions_locales",
+          "tableTo": "courses_phases_gap_fill_solutions",
+          "columnsFrom": ["_parent_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.courses_phases": {
       "name": "courses_phases",
       "schema": "",
@@ -1895,6 +2037,13 @@
         },
         "learning_stats_total_time_spent_ms": {
           "name": "learning_stats_total_time_spent_ms",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "learning_stats_total_points": {
+          "name": "learning_stats_total_points",
           "type": "numeric",
           "primaryKey": false,
           "notNull": false,
@@ -3800,6 +3949,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "f77678c0-ccac-45e6-9fe0-abafc8bab5a1",
+  "id": "b0183550-544b-4ceb-9c69-f4acfddc3b8f",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

@@ -106,6 +106,7 @@ export default function Hero() {
           alt=""
           width={2454}
           height={632}
+          priority
           sizes="100vw"
           aria-hidden={true}
           className="w-full h-auto pointer-events-none select-none dark:invert dark:hue-rotate-180"

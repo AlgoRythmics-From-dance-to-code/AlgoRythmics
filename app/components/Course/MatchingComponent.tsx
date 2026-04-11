@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, ArrowRight } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import { useLocale } from '../../i18n/LocaleProvider';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
 
 interface MatchingComponentProps {
@@ -19,7 +20,9 @@ type MatchPair = {
 };
 
 export default function MatchingComponent({ phase, courseId, onMistake }: MatchingComponentProps) {
-  const { markCoursePhaseComplete, setCoursePhaseResult } = useAlgorithmStore();
+  const { t } = useLocale();
+  const { markCoursePhaseComplete, setCoursePhaseResult, setCoursePhasePoints, syncProgress } =
+    useAlgorithmStore();
   const isDone = useAlgorithmStore((state) =>
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
@@ -70,10 +73,29 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
     setMatches(results);
     setShowFeedback(true);
 
-    const allCorrect = results.every((r) => r.isCorrect);
+    const correctCount = results.filter((r) => r.isCorrect).length;
+    const totalCount = results.length;
+    const allCorrect = correctCount === totalCount;
+
     if (!allCorrect) onMistake?.();
+
+    // Scale points to phase maxPoints
+    const maxPoints = phase.maxPoints ?? 10;
+    const earnedPoints = totalCount === 0 ? 0 : Math.round((correctCount / totalCount) * maxPoints);
+
+    // Set points immediately for custom components
+    setCoursePhasePoints(courseId, phase.phaseId, {
+      earned: earnedPoints,
+      max: maxPoints,
+      helpUsed: false,
+      partial: correctCount > 0 && correctCount < totalCount,
+    });
+
     setCoursePhaseResult(courseId, phase.phaseId, allCorrect ? 'success' : 'fail');
     markCoursePhaseComplete(courseId, phase.phaseId);
+
+    // Sync to backend immediately
+    setTimeout(() => syncProgress(), 0);
   };
 
   return (
@@ -82,7 +104,7 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
         {/* Left Side (Labels) */}
         <div className="space-y-4">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">
-            Kategóriák
+            {t('course.quiz.matching_categories')}
           </h4>
           {initialLeft.map((item) => {
             const match = matches.find((m) => m.leftId === item.id);
@@ -128,7 +150,7 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
         {/* Right Side (Options) */}
         <div className="space-y-4">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">
-            Válaszlehetőségek
+            {t('course.quiz.matching_options')}
           </h4>
           <div className="grid grid-cols-1 gap-3">
             {shuffledRight.map((item) => {
@@ -158,7 +180,7 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
           onClick={checkMatches}
           className="self-center mt-8 px-10 py-4 bg-[#269984] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#269984]/30 hover:scale-105 transition-all disabled:opacity-30 disabled:scale-100"
         >
-          Ellenőrzés
+          {t('course.quiz.check')}
         </button>
       )}
 
@@ -186,12 +208,14 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
               matches.every((m) => m.isCorrect) ? 'text-green-600' : 'text-red-600'
             }`}
           >
-            {matches.every((m) => m.isCorrect) ? 'Szuper munka!' : 'Valami nem stimmel...'}
+            {matches.every((m) => m.isCorrect)
+              ? t('course.quiz.correct')
+              : t('course.quiz.incorrect')}
           </h5>
           <p className="text-sm font-medium text-gray-500">
             {matches.every((m) => m.isCorrect)
-              ? 'Sikeresen párosítottad az összes elemet.'
-              : 'Próbáld meg jobban megfigyelni az összefüggéseket legközelebb!'}
+              ? t('course.quiz.matching_success_desc')
+              : t('course.quiz.matching_fail_desc')}
           </p>
         </motion.div>
       )}

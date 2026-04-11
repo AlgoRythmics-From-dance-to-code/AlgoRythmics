@@ -8,6 +8,7 @@ import * as migration_20260401_124057_mig6_learning from './20260401_124057_mig6
 import * as migration_20260402_102906_mig8 from './20260402_102906_mig8';
 import * as migration_20260409_171419_add_phase_scoring from './20260409_171419_add_phase_scoring';
 import * as migration_20260409_200859 from './20260409_200859';
+import * as migration_20260411_122606 from './20260411_122606';
 
 export const migrations = [
   {
@@ -58,6 +59,11 @@ export const migrations = [
   {
     up: migration_20260409_200859.up,
     down: migration_20260409_200859.down,
-    name: '20260409_200859'
+    name: '20260409_200859',
+  },
+  {
+    up: migration_20260411_122606.up,
+    down: migration_20260411_122606.down,
+    name: '20260411_122606',
   },
 ];
