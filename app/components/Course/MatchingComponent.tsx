@@ -81,7 +81,7 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
 
     // Scale points to phase maxPoints
     const maxPoints = phase.maxPoints ?? 10;
-    const earnedPoints = Math.round((correctCount / totalCount) * maxPoints);
+    const earnedPoints = totalCount === 0 ? 0 : Math.round((correctCount / totalCount) * maxPoints);
 
     // Set points immediately for custom components
     setCoursePhasePoints(courseId, phase.phaseId, {

@@ -594,7 +594,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       },
 
       setCoursePhasePoints: (courseId, phaseId, data) => {
-        const { courseProgress, syncProgress } = get();
+        const { courseProgress } = get();
         const current = courseProgress[courseId] || {
           activePhaseIndex: 0,
           completedPhases: [],
@@ -622,8 +622,6 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             },
           },
         });
-        // Autosave
-        setTimeout(() => syncProgress(), 0);
       },
 
       isInteractionLocked: false,

@@ -633,6 +633,8 @@
       "matching_fail_desc": "Try to observe the relationships better next time!",
       "gapfill_success": "Text completed!",
       "gapfill_success_desc": "You used the technical terms perfectly.",
+      "gapfill_fail": "Try again!",
+      "gapfill_fail_desc": "Some technical terms are not in the right place.",
       "debug_instructions": "Click on the line that contains the error!",
       "debug_title": "Fix the Error",
       "debug_success": "You found the error!",

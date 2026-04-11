@@ -591,8 +591,11 @@
     "confidence_desc": "Ne-ar plăcea să știm cât de bine înțelegi cursul până acum și dacă totul este clar pentru tine.",
     "confidence_very_sure": "Foarte sigur",
     "confidence_very_sure_desc": "Sunt foarte sigur!",
+    "confidence_sure": "Sunt sigur",
     "confidence_sure_desc": "Cred că înțeleg totul.",
+    "confidence_unsure": "Sunt nesigur",
     "confidence_unsure_desc": "Unele părți sunt încă neclare.",
+    "confidence_guess": "Doar ghicesc",
     "confidence_guess_desc": "Abia încep să mă familiarizez cu el.",
     "confidence_later": "Voi răspunde mai târziu",
     "mistake_prompt": "Să revizuim regula încă o dată!",
@@ -631,6 +634,8 @@
       "matching_fail_desc": "Încearcă să observi mai bine relațiile data viitoare!",
       "gapfill_success": "Text completat!",
       "gapfill_success_desc": "Ai folosit perfect termenii tehnici.",
+      "gapfill_fail": "Încearcă din nou!",
+      "gapfill_fail_desc": "Unii termeni tehnici nu sunt la locul potrivit.",
       "debug_instructions": "Faceți clic pe linia care conține eroarea!",
       "debug_title": "Repară Eroarea",
       "debug_success": "Ai găsit eroarea!",
@@ -693,7 +698,20 @@
     "sorted_complete": "Vector sortat!",
     "bogosort_ready": "Gata de început Bogosort... mult noroc!",
     "bogosort_attempt": "Încercarea {attempts}: Tabloul a fost amestecat!",
-    "bogosort_found": "Bogosort a găsit starea sortată din {attempts} încercări!"
+    "bogosort_found": "Bogosort a găsit starea sortată din {attempts} încercări!",
+    "controls": {
+      "reset": "Resetare",
+      "reset_aria": "Resetare vizualizator",
+      "step_forward": "Pas înainte",
+      "step_forward_aria": "Pasul următor",
+      "step_backward": "Pas înapoi",
+      "step_backward_aria": "Pasul anterior",
+      "toggle_dark_mode": "Comută modul întunecat",
+      "play": "Redare",
+      "pause": "Pauză",
+      "restart": "Repornire",
+      "speed": "Viteza de redare {speed}x"
+    }
   },
   "control": {
     "select_pair": "Selectează două elemente adiacente pentru comparare",
@@ -771,20 +789,7 @@
     "limitations_text": "În niciun caz AlgoRythmics sau furnizorii săi nu vor fi răspunzători pentru orice daune (inclusiv, fără limitare, daune pentru pierderea de date sau profit, sau din cauza întreruperii activității) rezultate din utilizarea sau incapacitatea de a utiliza materialele de pe site-ul AlgoRythmics.",
     "law_title": "5. Legea Aplicabilă",
     "law_text": "Acești termeni și condiții sunt guvernați de și interpretați în conformitate cu legile și vă supuneți irevocabil jurisdicției exclusive a instanțelor din acel stat sau locație.",
-    "back_home": "Înapoi la Acasă",
-    "controls": {
-      "reset": "Resetare",
-      "reset_aria": "Resetare vizualizator",
-      "step_forward": "Pas înainte",
-      "step_forward_aria": "Pasul următor",
-      "step_backward": "Pas înapoi",
-      "step_backward_aria": "Pasul anterior",
-      "toggle_dark_mode": "Comută modul întunecat",
-      "play": "Redare",
-      "pause": "Pauză",
-      "restart": "Repornire",
-      "speed": "Viteza de redare {speed}x"
-    }
+    "back_home": "Înapoi la Acasă"
   },
   "privacy_page": {
     "title": "Politica de Confidențialitate",

@@ -41,7 +41,7 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
 
     // Scale points to phase maxPoints
     const maxPoints = phase.maxPoints ?? 10;
-    const earnedPoints = Math.round((correctCount / totalCount) * maxPoints);
+    const earnedPoints = totalCount === 0 ? 0 : Math.round((correctCount / totalCount) * maxPoints);
 
     // Set points immediately
     setCoursePhasePoints(courseId, phase.phaseId, {

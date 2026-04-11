@@ -7,7 +7,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Base routes
   const routes = ['', '/courses', '/algorithms', '/videos', '/about', '/contact'].map((route) => ({
     url: `${baseUrl}${route}`,
-    lastModified: new Date(),
+    lastModified: new Date('2024-04-11'),
     changeFrequency: 'weekly' as const,
     priority: route === '' ? 1 : 0.8,
   }));
@@ -29,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const algorithmRoutes = algorithmIds.map((id) => ({
     url: `${baseUrl}/algorithms/${id}`,
-    lastModified: new Date(),
+    lastModified: new Date('2024-04-11'),
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }));

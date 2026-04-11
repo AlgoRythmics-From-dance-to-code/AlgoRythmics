@@ -21,7 +21,9 @@ const montserrat = Montserrat({
 
 export async function generateMetadata() {
   const cookieStore = await cookies();
-  const locale = cookieStore.get('locale')?.value || 'hu';
+  const rawLocale = cookieStore.get('locale')?.value || 'hu';
+  const locale = ['en', 'hu', 'ro'].includes(rawLocale) ? rawLocale : 'hu';
+
   const locales = {
     en: (await import('../../locales/en.json')).default,
     hu: (await import('../../locales/hu.json')).default,

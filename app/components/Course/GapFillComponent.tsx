@@ -65,7 +65,7 @@ export default function GapFillComponent({
 
     // Scale points to phase maxPoints
     const maxPoints = phase.maxPoints ?? 10;
-    const earnedPoints = Math.round((correct / blankCount) * maxPoints);
+    const earnedPoints = blankCount === 0 ? 0 : Math.round((correct / blankCount) * maxPoints);
 
     // Set points immediately
     setCoursePhasePoints(courseId, phase.phaseId, {
