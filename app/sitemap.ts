@@ -4,15 +4,20 @@ import { getPayloadInstance } from '../lib/payload';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://algorythmics.com';
 
-  // Base routes
-  const routes = ['', '/courses', '/algorithms', '/videos', '/about', '/contact'].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date('2024-04-11'),
-    changeFrequency: 'weekly' as const,
-    priority: route === '' ? 1 : 0.8,
-  }));
+  const locales = ['en', 'hu', 'ro'];
 
-  // Dynamic Algorithms
+  // Base routes - localized
+  const baseRoutes = ['', '/courses', '/algorithms', '/videos', '/about', '/contact'];
+  const routes = locales.flatMap((locale) =>
+    baseRoutes.map((route) => ({
+      url: `${baseUrl}/${locale}${route}`,
+      lastModified: new Date('2024-04-11'),
+      changeFrequency: 'weekly' as const,
+      priority: route === '' ? 1 : 0.8,
+    })),
+  );
+
+  // Dynamic Algorithms - localized
   const algorithmIds = [
     'bubble-sort',
     'insertion-sort',
@@ -27,14 +32,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'n-queens',
   ];
 
-  const algorithmRoutes = algorithmIds.map((id) => ({
-    url: `${baseUrl}/algorithms/${id}`,
-    lastModified: new Date('2024-04-11'),
-    changeFrequency: 'monthly' as const,
-    priority: 0.7,
-  }));
+  const algorithmRoutes = locales.flatMap((locale) =>
+    algorithmIds.map((id) => ({
+      url: `${baseUrl}/${locale}/algorithms/${id}`,
+      lastModified: new Date('2024-04-11'),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+  );
 
-  // Dynamic Courses from Payload
+  // Dynamic Courses from Payload - localized
   let courseRoutes: MetadataRoute.Sitemap = [];
   try {
     const payload = await getPayloadInstance();
@@ -48,12 +55,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     });
 
-    courseRoutes = result.docs.map((doc: { slug: string; updatedAt: string }) => ({
-      url: `${baseUrl}/courses/${doc.slug}`,
-      lastModified: new Date(doc.updatedAt),
-      changeFrequency: 'monthly' as const,
-      priority: 0.9,
-    }));
+    courseRoutes = locales.flatMap((locale) =>
+      result.docs.map((doc: { slug: string; updatedAt: string }) => ({
+        url: `${baseUrl}/${locale}/courses/${doc.slug}`,
+        lastModified: new Date(doc.updatedAt),
+        changeFrequency: 'monthly' as const,
+        priority: 0.9,
+      })),
+    );
   } catch (err) {
     console.error('Sitemap course fetch error:', err);
   }

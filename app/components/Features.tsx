@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useLocale } from '../i18n/LocaleProvider';
 
 export default function Features() {
-  const { t } = useLocale();
+  const { t, getLocalePath } = useLocale();
 
   const features = [
     {
@@ -80,7 +80,7 @@ export default function Features() {
           style={{ gap: '30px', maxWidth: '1000px' }}
         >
           {features.map((feature) => (
-            <Link key={feature.id} href="/algorithms">
+            <Link key={feature.id} href={getLocalePath('/algorithms')}>
               <FeatureCard
                 src={feature.src}
                 gifSrc={feature.gifSrc}

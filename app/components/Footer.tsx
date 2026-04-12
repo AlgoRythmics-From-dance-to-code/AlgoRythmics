@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useLocale } from '../i18n/LocaleProvider';
 
 export default function Footer() {
-  const { t } = useLocale();
+  const { t, getLocalePath } = useLocale();
   return (
     <footer className="w-full" style={{ backgroundColor: '#269984' }}>
       <div
@@ -66,15 +66,15 @@ export default function Footer() {
         {/* Copyright */}
         <p className="font-montserrat text-center text-xs sm:text-sm" style={{ color: '#ffffff' }}>
           © {new Date().getFullYear()} | algorythmics.com |{' '}
-          <Link href="/about" className="hover:underline">
+          <Link href={getLocalePath('/about')} className="hover:underline">
             {t('nav.about')}
           </Link>{' '}
           |{' '}
-          <Link href="/terms" className="hover:underline">
+          <Link href={getLocalePath('/terms')} className="hover:underline">
             {t('nav.terms')}
           </Link>{' '}
           |{' '}
-          <Link href="/privacy" className="hover:underline">
+          <Link href={getLocalePath('/privacy')} className="hover:underline">
             {t('nav.privacy')}
           </Link>
         </p>

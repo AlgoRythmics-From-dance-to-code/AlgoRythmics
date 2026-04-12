@@ -18,24 +18,31 @@ const LocaleContext = createContext<{
   setLocale: (l: Locale) => void;
   t: (path: string, vars?: Record<string, string | number>) => string;
   getRaw: (path: string) => unknown;
+  getLocalePath: (path: string) => string;
 }>({
   locale: 'hu',
   setLocale: () => {},
   t: () => '',
   getRaw: () => undefined,
+  getLocalePath: (path) => path,
 });
 
 export function useLocale() {
   return useContext(LocaleContext);
 }
 
-export default function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('hu');
+export default function LocaleProvider({
+  children,
+  initialLocale,
+}: {
+  children: React.ReactNode;
+  initialLocale: Locale;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   useEffect(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('locale') : null;
-    if (saved === 'en' || saved === 'hu' || saved === 'ro') setLocaleState(saved);
-  }, []);
+    setLocaleState(initialLocale);
+  }, [initialLocale]);
 
   function setLocale(l: Locale) {
     setLocaleState(l);
@@ -43,6 +50,12 @@ export default function LocaleProvider({ children }: { children: React.ReactNode
       localStorage.setItem('locale', l);
       document.cookie = `locale=${l};path=/;max-age=31536000;SameSite=Lax`;
     } catch {}
+  }
+
+  function getLocalePath(path: string) {
+    if (path.startsWith('http')) return path;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `/${locale}${normalizedPath === '/' ? '' : normalizedPath}`;
   }
 
   function t(path: string, vars?: Record<string, string | number>) {
@@ -72,7 +85,7 @@ export default function LocaleProvider({ children }: { children: React.ReactNode
   }
 
   return (
-    <LocaleContext.Provider value={{ locale, setLocale, t, getRaw }}>
+    <LocaleContext.Provider value={{ locale, setLocale, t, getRaw, getLocalePath }}>
       {children}
     </LocaleContext.Provider>
   );

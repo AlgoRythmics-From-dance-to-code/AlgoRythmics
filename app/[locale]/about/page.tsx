@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useLocale } from '../../i18n/LocaleProvider';
 
 export default function AboutPage() {
@@ -132,13 +133,13 @@ export default function AboutPage() {
         <p className="font-montserrat text-center text-base sm:text-lg mb-8 max-w-xl text-white/80">
           {t('about.cta_subtitle')}
         </p>
-        <a
+        <Link
           href="/register"
           className="font-montserrat font-bold text-white px-10 py-4 rounded-lg text-lg sm:text-xl hover:opacity-90 transition-all bg-[#36D6BA]"
           style={{ textDecoration: 'none' }}
         >
           {t('about.cta_btn')}
-        </a>
+        </Link>
       </div>
     </div>
   );

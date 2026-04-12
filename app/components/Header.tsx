@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useTransition } from 'react';
 import axios from 'axios';
 import { useLocale, Locale } from '../i18n/LocaleProvider';
 import ThemeToggle from './ThemeToggle';
@@ -46,6 +46,7 @@ export default function Header({
   const { clearStore } = useAlgorithmStore();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -91,7 +92,10 @@ export default function Header({
           ))}
         </div>
         {/* Logo */}
-        <Link href={ROUTES.HOME} className="flex-shrink-0">
+        <Link
+          href={`/${locale}${ROUTES.HOME === '/' ? '' : ROUTES.HOME}`}
+          className="flex-shrink-0"
+        >
           <Image
             src="/assets/logowhite.svg"
             alt="AlgoRythmics Logo - Dance to Code"
@@ -110,17 +114,24 @@ export default function Header({
         <nav className="hidden md:flex items-center gap-5 lg:gap-8">
           {isAuthenticated && (
             <>
-              <NavLink href={ROUTES.HOME} label={t('nav.home')} active={pathname === ROUTES.HOME} />
               <NavLink
-                href={ROUTES.ALGORITHMS}
+                href={`/${locale}${ROUTES.HOME === '/' ? '' : ROUTES.HOME}`}
+                label={t('nav.home')}
+                active={
+                  pathname === `/${locale}${ROUTES.HOME === '/' ? '' : ROUTES.HOME}` ||
+                  pathname === `/${locale}`
+                }
+              />
+              <NavLink
+                href={`/${locale}${ROUTES.ALGORITHMS}`}
                 label={t('nav.algorithms')}
-                active={pathname?.startsWith(ROUTES.ALGORITHMS) ?? false}
+                active={pathname?.includes(ROUTES.ALGORITHMS) ?? false}
                 prefetch={true}
               />
               <NavLink
-                href={ROUTES.COURSES}
+                href={`/${locale}${ROUTES.COURSES}`}
                 label={t('nav.courses')}
-                active={pathname === ROUTES.COURSES}
+                active={pathname?.includes(ROUTES.COURSES) ?? false}
                 prefetch={true}
               />
             </>
@@ -132,13 +143,13 @@ export default function Header({
           {!isAuthenticated && (
             <>
               <button
-                onClick={() => router.push(ROUTES.REGISTER)}
+                onClick={() => router.push(`/${locale}${ROUTES.REGISTER}`)}
                 className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base"
               >
                 {t('nav.register')}
               </button>
               <button
-                onClick={() => router.push(ROUTES.LOGIN)}
+                onClick={() => router.push(`/${locale}${ROUTES.LOGIN}`)}
                 className="font-montserrat text-white hover:text-white/80 transition-colors text-sm lg:text-base"
               >
                 {t('nav.login')}
@@ -151,7 +162,7 @@ export default function Header({
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity p-2"
+              className={`flex items-center gap-2 transition-all p-2 ${isPending ? 'opacity-50 cursor-wait' : 'hover:opacity-80'}`}
               aria-label={t('nav.language')}
             >
               <Image
@@ -188,9 +199,12 @@ export default function Header({
                   <button
                     key={lang.code}
                     onClick={() => {
+                      const newPath = pathname.replace(`/${locale}`, `/${lang.code}`);
                       setLocale(lang.code);
                       setLangDropdownOpen(false);
-                      router.refresh();
+                      startTransition(() => {
+                        router.push(newPath || `/${lang.code}`);
+                      });
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors ${
                       locale === lang.code
@@ -239,7 +253,7 @@ export default function Header({
               {profileDropdownOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl overflow-hidden py-2 border border-blue-50/50 transform origin-top-right transition-all animate-in fade-in zoom-in duration-200">
                   <Link
-                    href={ROUTES.PROFILE}
+                    href={`/${locale}${ROUTES.PROFILE}`}
                     onClick={() => setProfileDropdownOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50/50 transition-colors group"
                   >
@@ -311,22 +325,22 @@ export default function Header({
             {isAuthenticated && (
               <div className="flex flex-col gap-5">
                 <Link
-                  href={ROUTES.HOME}
-                  className={`font-montserrat text-xl ${pathname === ROUTES.HOME ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
+                  href={`/${locale}${ROUTES.HOME === '/' ? '' : ROUTES.HOME}`}
+                  className={`font-montserrat text-xl ${pathname === `/${locale}${ROUTES.HOME === '/' ? '' : ROUTES.HOME}` || pathname === `/${locale}` ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.home')}
                 </Link>
                 <Link
-                  href={ROUTES.ALGORITHMS}
-                  className={`font-montserrat text-xl ${pathname?.startsWith(ROUTES.ALGORITHMS) ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
+                  href={`/${locale}${ROUTES.ALGORITHMS}`}
+                  className={`font-montserrat text-xl ${pathname?.includes(ROUTES.ALGORITHMS) ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.algorithms')}
                 </Link>
                 <Link
-                  href={ROUTES.COURSES}
-                  className={`font-montserrat text-xl ${pathname === ROUTES.COURSES ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
+                  href={`/${locale}${ROUTES.COURSES}`}
+                  className={`font-montserrat text-xl ${pathname?.includes(ROUTES.COURSES) ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.courses')}
@@ -335,8 +349,8 @@ export default function Header({
             )}
 
             <Link
-              href="/contact"
-              className={`font-montserrat text-xl ${pathname === '/contact' ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
+              href={`/${locale}/contact`}
+              className={`font-montserrat text-xl ${pathname === `/${locale}/contact` ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
               onClick={() => setMenuOpen(false)}
             >
               {t('nav.contact')}
@@ -351,15 +365,18 @@ export default function Header({
                   <button
                     key={lang.code}
                     onClick={() => {
+                      const newPath = pathname.replace(`/${locale}`, `/${lang.code}`);
                       setLocale(lang.code);
                       setMenuOpen(false);
-                      router.refresh();
+                      startTransition(() => {
+                        router.push(newPath || `/${lang.code}`);
+                      });
                     }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all active:scale-95 ${
                       locale === lang.code
                         ? 'bg-white text-[#269984] shadow-lg'
                         : 'bg-white/10 text-white border border-white/10'
-                    }`}
+                    } ${isPending ? 'opacity-50 cursor-wait' : ''}`}
                   >
                     <Image
                       src={lang.flag}
@@ -385,14 +402,14 @@ export default function Header({
             {!isAuthenticated ? (
               <div className="grid grid-cols-2 gap-4 mt-4 pt-6 border-t border-white/10">
                 <Link
-                  href={ROUTES.REGISTER}
+                  href={`/${locale}${ROUTES.REGISTER}`}
                   className="font-montserrat bg-white text-[#269984] py-3 rounded-xl text-center font-bold text-sm"
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.register')}
                 </Link>
                 <Link
-                  href={ROUTES.LOGIN}
+                  href={`/${locale}${ROUTES.LOGIN}`}
                   className="font-montserrat border border-white/30 text-white py-3 rounded-xl text-center font-bold text-sm"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -402,7 +419,7 @@ export default function Header({
             ) : (
               <div className="mt-4 pt-6 border-t border-white/10 flex flex-col gap-4">
                 <Link
-                  href={ROUTES.PROFILE}
+                  href={`/${locale}${ROUTES.PROFILE}`}
                   className="flex items-center gap-4 font-montserrat text-white"
                   onClick={() => setMenuOpen(false)}
                 >

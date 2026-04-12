@@ -161,7 +161,6 @@ interface AlgorithmState {
   clearStore: () => void;
 }
 
-
 export const useAlgorithmStore = create<AlgorithmState>()(
   persist(
     (set, get) => ({
@@ -654,4 +653,3 @@ export const useAlgorithmStore = create<AlgorithmState>()(
     },
   ),
 );
-

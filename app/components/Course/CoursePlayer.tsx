@@ -331,8 +331,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     return Math.max(Math.min(firstIncompletePhaseIndex, course.phases.length - 1), 0);
   }, [course.phases.length, course.slug, firstIncompletePhaseIndex, courseProgress]);
 
-
-
   const [activePhaseIndex, setActivePhaseIndex] = useState(initialPhaseIndex);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [mascotVisible, setMascotVisible] = useState(false);
@@ -376,7 +374,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRehydrated, course.slug]); // courseProgress omitted to avoid loops; isRehydrated ensures we run after hydration
-
 
   // Auto-prompt to restart if course was already completed on entry.
   // Uses snapshot ref to avoid adding live `courseProgress` to deps (would cause infinite loop).
@@ -541,7 +538,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   // Remove the automatic hiding of the mascot on phase change to fulfill "ne resetelődjön amikor válaszol"
 
   // Note: Redundant slug-navigation jump effect removed as it is now handled by the resume effect above.
-
 
   // Handle mascot message when phase changes (triggered by user or slug change)
   useEffect(() => {
