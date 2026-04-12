@@ -109,7 +109,10 @@
     "install_desc": "Doriți să descărcați aplicația pe telefon?",
     "install_btn": "Descărcare",
     "dismiss_btn": "Nu acum",
-    "profile_install_btn": "Descarcă Aplicația"
+    "profile_install_btn": "Descarcă Aplicația",
+    "confirm_dismiss_title": "O poți instala oricând mai târziu!",
+    "confirm_dismiss_desc": "Dacă te răzgândești, butonul de descărcare va fi mereu disponibil în meniul profilului tău.",
+    "confirm_dismiss_btn": "Am înțeles"
   },
   "errors": {
     "unauthorized": "Neautorizat",

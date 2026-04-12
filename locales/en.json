@@ -109,7 +109,10 @@
     "install_desc": "Would you like to download the app to your phone?",
     "install_btn": "Download",
     "dismiss_btn": "Not now",
-    "profile_install_btn": "Download App"
+    "profile_install_btn": "Download App",
+    "confirm_dismiss_title": "You can install it later!",
+    "confirm_dismiss_desc": "If you change your mind, you can find the download button anytime in your profile menu.",
+    "confirm_dismiss_btn": "Got it"
   },
   "errors": {
     "unauthorized": "Unauthorized",

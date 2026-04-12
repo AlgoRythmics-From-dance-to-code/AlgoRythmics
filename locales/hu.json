@@ -109,7 +109,10 @@
     "install_desc": "Szeretnéd letölteni az alkalmazást a telefonodra?",
     "install_btn": "Letöltés",
     "dismiss_btn": "Most nem",
-    "profile_install_btn": "Alkalmazás letöltése"
+    "profile_install_btn": "Alkalmazás letöltése",
+    "confirm_dismiss_title": "Később bármikor telepítheted!",
+    "confirm_dismiss_desc": "Az alkalmazást megtalálod a profilod menüjében, ha később mégis szeretnéd letölteni.",
+    "confirm_dismiss_btn": "Értem"
   },
   "errors": {
     "unauthorized": "Nincs jogosultság",
