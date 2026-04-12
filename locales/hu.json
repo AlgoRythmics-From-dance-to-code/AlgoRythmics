@@ -107,12 +107,13 @@
   "pwa": {
     "install_title": "AlgoRythmics Alkalmazás",
     "install_desc": "Szeretnéd letölteni az alkalmazást a telefonodra?",
-    "install_btn": "Letöltés",
+    "install_btn": "Telepítés",
     "dismiss_btn": "Most nem",
     "profile_install_btn": "Alkalmazás letöltése",
-    "confirm_dismiss_title": "Később bármikor telepítheted!",
-    "confirm_dismiss_desc": "Az alkalmazást megtalálod a profilod menüjében, ha később mégis szeretnéd letölteni.",
-    "confirm_dismiss_btn": "Értem"
+    "confirm_title": "Biztosan bezárod?",
+    "confirm_desc": "Ha most elutasítod, az üzenet többet nem fog automatikusan megjelenni. Később a profilodban bármikor telepítheted.",
+    "confirm_btn": "Igen, bezárom",
+    "cancel_btn": "Mégse"
   },
   "errors": {
     "unauthorized": "Nincs jogosultság",

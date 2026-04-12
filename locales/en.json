@@ -107,12 +107,13 @@
   "pwa": {
     "install_title": "AlgoRythmics App",
     "install_desc": "Would you like to download the app to your phone?",
-    "install_btn": "Download",
+    "install_btn": "Install",
     "dismiss_btn": "Not now",
     "profile_install_btn": "Download App",
-    "confirm_dismiss_title": "You can install it later!",
-    "confirm_dismiss_desc": "If you change your mind, you can find the download button anytime in your profile menu.",
-    "confirm_dismiss_btn": "Got it"
+    "confirm_title": "Are you sure?",
+    "confirm_desc": "If you dismiss this, it won't show again automatically. You can always install it from your profile.",
+    "confirm_btn": "Yes, dismiss",
+    "cancel_btn": "Cancel"
   },
   "errors": {
     "unauthorized": "Unauthorized",

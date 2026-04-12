@@ -498,23 +498,23 @@ export default function ProfilePage() {
 
                       {/* PWA Download Section */}
                       {canInstall && !isStandalone && (
-                        <div className="md:col-span-2 p-8 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20 rounded-[2.5rem] border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div className="md:col-span-2 p-8 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20 rounded-[2.5rem] border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-6 font-montserrat antialiased">
                           <div className="flex items-center gap-5">
                             <div className="bg-white dark:bg-emerald-500/20 p-4 rounded-[1.5rem] shadow-sm flex items-center justify-center">
                               <Smartphone className="w-8 h-8 text-emerald-500" />
                             </div>
                             <div>
-                              <h3 className="font-montserrat font-black text-slate-900 dark:text-white text-lg">
+                              <h3 className="font-montserrat font-black text-slate-900 dark:text-white text-lg leading-tight uppercase tracking-tight">
                                 {t('pwa.install_title')}
                               </h3>
-                              <p className="text-slate-600 dark:text-slate-400 text-sm max-w-sm">
+                              <p className="font-montserrat font-medium text-slate-600 dark:text-slate-400 text-sm max-w-sm mt-1">
                                 {t('pwa.install_desc')}
                               </p>
                             </div>
                           </div>
                           <button
                             onClick={install}
-                            className="w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 group"
+                            className="w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 group uppercase tracking-wider text-xs"
                           >
                             <Download className="w-5 h-5 group-hover:animate-bounce" />
                             {t('pwa.profile_install_btn')}

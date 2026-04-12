@@ -3,23 +3,21 @@
 import { useState, useEffect } from 'react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { useLocale } from '../i18n/LocaleProvider';
-import { Download, X, Smartphone, Info } from 'lucide-react';
+import { Download, X, Smartphone, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PWAInstallPrompt() {
   const { install, canInstall, isIOS, isStandalone } = usePWAInstall();
   const [isVisible, setIsVisible] = useState(false);
-  const [view, setView] = useState<'prompt' | 'confirm_dismiss'>('prompt');
+  const [isConfirming, setIsConfirming] = useState(false);
   const { t } = useLocale();
 
   useEffect(() => {
-    // Small delay to let the page load
     const timer = setTimeout(() => {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const dismissed = localStorage.getItem('pwa_dismissed');
       const alreadyInstalled = localStorage.getItem('pwa_installed') === 'true';
 
-      // Show if we can install, it's a mobile device, not dismissed and not already installed
       if (canInstall && isMobile && !dismissed && !alreadyInstalled && !isStandalone) {
         setIsVisible(true);
       }
@@ -28,11 +26,7 @@ export default function PWAInstallPrompt() {
     return () => clearTimeout(timer);
   }, [canInstall, isStandalone, t]);
 
-  const initiateDismiss = () => {
-    setView('confirm_dismiss');
-  };
-
-  const finalDismiss = () => {
+  const handleDismiss = () => {
     localStorage.setItem('pwa_dismissed', 'true');
     setIsVisible(false);
   };
@@ -47,79 +41,101 @@ export default function PWAInstallPrompt() {
   if (!canInstall && !isIOS) return null;
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       {isVisible && (
         <motion.div
-          key={view}
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-md"
+           layout
+           initial={{ y: 100, opacity: 0 }}
+           animate={{ y: 0, opacity: 1 }}
+           exit={{ y: 100, opacity: 0 }}
+           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-md antialiased"
         >
-          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col gap-5">
-            {view === 'prompt' ? (
-              <>
+          <div className="font-montserrat bg-white/95 dark:bg-slate-900 shadow-2xl rounded-[2rem] border border-white/20 dark:border-slate-800 p-6 flex flex-col gap-5 overflow-hidden backdrop-blur-md">
+            
+            {!isConfirming ? (
+              <motion.div 
+                key="prompt"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col gap-6"
+              >
                 <div className="flex items-start gap-4">
-                  <div className="bg-emerald-500/10 p-4 rounded-2xl flex-shrink-0">
-                    <Smartphone className="w-7 h-7 text-emerald-500" />
+                  <div className="bg-emerald-500/10 p-3.5 rounded-2xl flex-shrink-0">
+                    <Smartphone className="w-6 h-6 text-emerald-500" />
                   </div>
-                  <div className="flex-1 pt-1">
-                    <h3 className="font-montserrat font-black text-slate-900 dark:text-white text-xl leading-tight">
+                  <div className="flex-1 pr-4">
+                    <h3 className="font-montserrat font-black text-[#0f172a] dark:text-white text-lg leading-tight uppercase tracking-tight opacity-100">
                       {t('pwa.install_title')}
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-400 text-base font-medium mt-1">
+                    <p className="font-montserrat font-medium text-slate-600 dark:text-slate-400 text-sm mt-1.5 leading-relaxed opacity-100">
                       {t('pwa.install_desc')}
                     </p>
                   </div>
                   <button 
-                    onClick={initiateDismiss}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-                    aria-label={t('common.cancel')}
+                    onClick={() => setIsConfirming(true)}
+                    className="p-1 -mt-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors group"
                   >
-                    <X className="w-6 h-6 text-slate-400" />
+                    <X className="w-5 h-5 text-slate-400 group-hover:text-slate-600" />
                   </button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex gap-3">
                   <button
-                    onClick={initiateDismiss}
-                    className="flex-1 px-6 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold text-base hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-[0.98]"
+                    onClick={() => setIsConfirming(true)}
+                    className="flex-1 px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-black text-xs hover:bg-slate-50 transition-all uppercase tracking-wider"
                   >
                     {t('pwa.dismiss_btn')}
                   </button>
                   <button
                     onClick={handleInstall}
-                    className="flex-1 px-6 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-base flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/30 active:scale-[0.98]"
+                    className="flex-[2] px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98] uppercase tracking-wider"
                   >
                     <Download className="w-5 h-5" />
                     {t('pwa.install_btn')}
                   </button>
                 </div>
-              </>
+              </motion.div>
             ) : (
-              <>
+              <motion.div 
+                key="confirm"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col gap-6"
+              >
                 <div className="flex items-start gap-4">
-                  <div className="bg-blue-500/10 p-4 rounded-2xl flex-shrink-0">
-                    <Info className="w-7 h-7 text-blue-500" />
+                  <div className="bg-amber-500/10 p-3.5 rounded-2xl flex-shrink-0">
+                    <AlertTriangle className="w-6 h-6 text-amber-500" />
                   </div>
-                  <div className="flex-1 pt-1">
-                    <h3 className="font-montserrat font-black text-slate-900 dark:text-white text-xl leading-tight">
-                      {t('pwa.confirm_dismiss_title')}
+                  <div className="flex-1">
+                    <h3 className="font-montserrat font-black text-[#0f172a] dark:text-white text-lg leading-tight uppercase tracking-tight">
+                      {t('pwa.confirm_title')}
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-400 text-sm font-medium mt-1">
-                      {t('pwa.confirm_dismiss_desc')}
+                    <p className="font-montserrat font-medium text-slate-600 dark:text-slate-400 text-sm mt-1.5 leading-relaxed">
+                      {t('pwa.confirm_desc')}
                     </p>
                   </div>
                 </div>
 
-                <button
-                  onClick={finalDismiss}
-                  className="w-full px-6 py-4 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-base transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-black/10"
-                >
-                  {t('pwa.confirm_dismiss_btn')}
-                </button>
-              </>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsConfirming(false)}
+                    className="flex-1 px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-black text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    {t('pwa.cancel_btn')}
+                  </button>
+                  <button
+                    onClick={handleDismiss}
+                    className="flex-1 px-4 py-3.5 rounded-2xl bg-slate-900 dark:bg-slate-700 text-white font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-black/10 active:scale-[0.98] uppercase tracking-wider"
+                  >
+                    {t('pwa.confirm_btn')}
+                  </button>
+                </div>
+              </motion.div>
             )}
+            
           </div>
         </motion.div>
       )}
