@@ -28,7 +28,7 @@ const serverFunction = async function (args: ServerFunctionArgs) {
 export default function Layout({ children }: Args) {
   return (
     <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
-      <LocaleProvider>{children}</LocaleProvider>
+      <LocaleProvider initialLocale="hu">{children}</LocaleProvider>
     </RootLayout>
   );
 }
