@@ -101,13 +101,13 @@ export default async function FrontendLayout({ children }: { children: React.Rea
               <Header isAuthenticated={isAuthenticated} userImage={userImage} />
               <main className="flex-1 pt-[var(--header-height)]">{children}</main>
               <Footer />
+              <Toaster position="bottom-left" richColors />
+              <PWAInstallPrompt />
             </LocaleProvider>
           </ThemeProviderClient>
         </NextAuthProvider>
         <SpeedInsights />
         <Analytics />
-        <Toaster position="bottom-left" richColors />
-        <PWAInstallPrompt />
       </body>
     </html>
   );
