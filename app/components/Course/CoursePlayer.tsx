@@ -282,8 +282,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     incrementCourseMascotInteraction,
     incrementCourseMistakes,
     updateCourseTotalTime,
+    isRehydrated,
     syncProgress,
   } = useAlgorithmStore();
+
   const { t } = useLocale();
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
@@ -327,10 +329,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     }
 
     return Math.max(Math.min(firstIncompletePhaseIndex, course.phases.length - 1), 0);
-    // NOTE: courseProgress intentionally excluded — we read it via snapshot ref in the effect
-    // to prevent the hydration effect from re-running on every store write.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [course.phases.length, course.slug, firstIncompletePhaseIndex]);
+  }, [course.phases.length, course.slug, firstIncompletePhaseIndex, courseProgress]);
+
+
 
   const [activePhaseIndex, setActivePhaseIndex] = useState(initialPhaseIndex);
   const [hasHydrated, setHasHydrated] = useState(false);
@@ -351,18 +352,19 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const [pendingPhaseIndex, setPendingPhaseIndex] = useState<number | null>(null);
   const promptShownRef = useRef(false);
 
-  // Resume from stored state after hydration — runs ONCE per course slug.
-  // We intentionally do NOT include live `courseProgress` in the dep array because:
-  //   effect → setActivePhaseIndex → setCourseActivePhase (L536) → mutates courseProgress → effect re-runs → infinite loop
-  // Instead we snapshot courseProgress into a ref whenever the slug changes and read from the ref inside the effect.
+  // Resume from stored state after hydration — runs once when store rehydrates or slug changes.
   useEffect(() => {
+    if (!isRehydrated) return;
+
     // Refresh snapshot when slug changes
     if (lastSnapshotSlugRef.current !== course.slug) {
       courseProgressSnapshotRef.current = courseProgress;
       lastSnapshotSlugRef.current = course.slug;
     }
+
     setHasHydrated(true);
-    const storedProgress = courseProgressSnapshotRef.current[course.slug];
+
+    const storedProgress = courseProgress[course.slug];
     if (storedProgress) {
       if (typeof storedProgress.activePhaseIndex === 'number') {
         const resumeIndex = Math.min(storedProgress.activePhaseIndex, firstIncompletePhaseIndex);
@@ -373,7 +375,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [course.slug]); // courseProgress and firstIncompletePhaseIndex intentionally omitted — see comment above
+  }, [isRehydrated, course.slug]); // courseProgress omitted to avoid loops; isRehydrated ensures we run after hydration
+
 
   // Auto-prompt to restart if course was already completed on entry.
   // Uses snapshot ref to avoid adding live `courseProgress` to deps (would cause infinite loop).
@@ -537,14 +540,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
   // Remove the automatic hiding of the mascot on phase change to fulfill "ne resetelődjön amikor válaszol"
 
-  // Only jump index when the course slug changes (mount or navigation)
-  const lastSlug = useRef(course.slug);
-  useEffect(() => {
-    if (lastSlug.current !== course.slug) {
-      setActivePhaseIndex(initialPhaseIndex);
-      lastSlug.current = course.slug;
-    }
-  }, [course.slug, initialPhaseIndex]);
+  // Note: Redundant slug-navigation jump effect removed as it is now handled by the resume effect above.
+
 
   // Handle mascot message when phase changes (triggered by user or slug change)
   useEffect(() => {

@@ -153,10 +153,14 @@ interface AlgorithmState {
   isInteractionLocked: boolean;
   setInteractionLocked: (locked: boolean) => void;
 
+  isRehydrated: boolean;
+  setHasRehydrated: (val: boolean) => void;
+
   // Reset
   resetFilters: () => void;
   clearStore: () => void;
 }
+
 
 export const useAlgorithmStore = create<AlgorithmState>()(
   persist(
@@ -168,9 +172,12 @@ export const useAlgorithmStore = create<AlgorithmState>()(
       visualizerProgress: {},
       algorithmProgress: {},
       courseProgress: {},
+      isRehydrated: false,
 
       // Actions
+      setHasRehydrated: (val) => set({ isRehydrated: val }),
       setCategory: (category) => set({ activeCategory: category }),
+
       setSearchQuery: (query) => set({ searchQuery: query }),
 
       toggleCompleted: (id) => {
@@ -641,6 +648,10 @@ export const useAlgorithmStore = create<AlgorithmState>()(
     }),
     {
       name: 'algorythmics-learning-storage',
+      onRehydrateStorage: () => (state) => {
+        state?.setHasRehydrated(true);
+      },
     },
   ),
 );
+
