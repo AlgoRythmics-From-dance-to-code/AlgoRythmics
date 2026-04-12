@@ -60,10 +60,20 @@ export async function generateMetadata() {
       description: t.description,
       images: ['/og-image.png'],
     },
+    manifest: '/manifest.json',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'AlgoRythmics',
+    },
+    formatDetection: {
+      telephone: false,
+    },
   };
 }
 
 export const viewport = {
+  themeColor: '#269984',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
