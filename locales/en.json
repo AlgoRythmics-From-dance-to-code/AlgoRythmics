@@ -104,6 +104,13 @@
     "verify_error": "Verification failed",
     "verify_error_desc": "The link is invalid or expired."
   },
+  "pwa": {
+    "install_title": "AlgoRythmics App",
+    "install_desc": "Would you like to download the app to your phone?",
+    "install_btn": "Download",
+    "dismiss_btn": "Not now",
+    "profile_install_btn": "Download App"
+  },
   "errors": {
     "unauthorized": "Unauthorized",
     "user_not_found": "User not found",

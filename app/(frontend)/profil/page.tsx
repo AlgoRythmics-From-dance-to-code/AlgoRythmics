@@ -18,10 +18,13 @@ import {
   CheckCircle2,
   ShieldCheck,
   ExternalLink,
+  Download,
+  Smartphone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocale, Locale } from '../../i18n/LocaleProvider';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 const formatDate = (dateString: string, locale: Locale, t: (key: string) => string) => {
   if (!dateString) return t('common.not_available');
@@ -79,6 +82,7 @@ export default function ProfilePage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
   const { courseProgress } = useAlgorithmStore();
+  const { install, canInstall, isStandalone } = usePWAInstall();
 
   const [activeTab, setActiveTab] = useState('public');
   const [isSaving, setIsSaving] = useState(false);
@@ -491,6 +495,32 @@ export default function ProfilePage() {
                           </button>
                         </div>
                       </div>
+
+                      {/* PWA Download Section */}
+                      {canInstall && !isStandalone && (
+                        <div className="md:col-span-2 p-8 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20 rounded-[2.5rem] border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-6">
+                          <div className="flex items-center gap-5">
+                            <div className="bg-white dark:bg-emerald-500/20 p-4 rounded-[1.5rem] shadow-sm flex items-center justify-center">
+                              <Smartphone className="w-8 h-8 text-emerald-500" />
+                            </div>
+                            <div>
+                              <h3 className="font-montserrat font-black text-slate-900 dark:text-white text-lg">
+                                {t('pwa.install_title')}
+                              </h3>
+                              <p className="text-slate-600 dark:text-slate-400 text-sm max-w-sm">
+                                {t('pwa.install_desc')}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={install}
+                            className="w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 group"
+                          >
+                            <Download className="w-5 h-5 group-hover:animate-bounce" />
+                            {t('pwa.profile_install_btn')}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

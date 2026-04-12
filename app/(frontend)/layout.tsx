@@ -11,6 +11,7 @@ import { auth } from '../../auth';
 import NextAuthProvider from '../components/NextAuthProvider';
 import { Toaster } from 'sonner';
 import UserProgressSync from '../components/Learning/UserProgressSync';
+import PWAInstallPrompt from '../components/PWAInstallPrompt';
 
 import { cookies } from 'next/headers';
 
@@ -106,6 +107,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
         <SpeedInsights />
         <Analytics />
         <Toaster position="bottom-left" richColors />
+        <PWAInstallPrompt />
       </body>
     </html>
   );

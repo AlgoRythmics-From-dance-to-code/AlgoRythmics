@@ -104,6 +104,13 @@
     "verify_error": "Megerősítés sikertelen",
     "verify_error_desc": "A link érvénytelen vagy már lejárt."
   },
+  "pwa": {
+    "install_title": "AlgoRythmics Alkalmazás",
+    "install_desc": "Szeretnéd letölteni az alkalmazást a telefonodra?",
+    "install_btn": "Letöltés",
+    "dismiss_btn": "Most nem",
+    "profile_install_btn": "Alkalmazás letöltése"
+  },
   "errors": {
     "unauthorized": "Nincs jogosultság",
     "user_not_found": "Felhasználó nem található",

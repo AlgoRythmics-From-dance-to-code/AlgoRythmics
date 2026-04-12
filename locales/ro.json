@@ -104,6 +104,13 @@
     "verify_error": "Verificare eșuată",
     "verify_error_desc": "Link-ul este invalid sau a expirat."
   },
+  "pwa": {
+    "install_title": "Aplicația AlgoRythmics",
+    "install_desc": "Doriți să descărcați aplicația pe telefon?",
+    "install_btn": "Descărcare",
+    "dismiss_btn": "Nu acum",
+    "profile_install_btn": "Descarcă Aplicația"
+  },
   "errors": {
     "unauthorized": "Neautorizat",
     "user_not_found": "Utilizator negăsit",
