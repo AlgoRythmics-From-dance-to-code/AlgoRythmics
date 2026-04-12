@@ -75,7 +75,7 @@ export default function Header({
   const currentLang = languages.find((l) => l.code === locale) || languages[0];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-[var(--header-height)] bg-[#269984]">
+    <header className="fixed top-0 left-0 right-0 z-[100] h-[var(--header-height)] bg-[#269984]">
       <div className="max-w-[1400px] mx-auto h-full flex items-center justify-between px-6 lg:px-12">
         {/* Hidden preloader for all flags to ensure they are ready when dropdown opens */}
         <div className="hidden" aria-hidden="true">
@@ -306,8 +306,8 @@ export default function Header({
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden absolute top-[var(--header-height)] left-0 right-0 bg-[#269984] shadow-2xl border-t border-white/10 overflow-hidden animate-in slide-in-from-top-2 duration-300">
-          <nav className="flex flex-col p-8 gap-6">
+        <div className="md:hidden fixed top-[var(--header-height)] left-0 right-0 bottom-0 z-[101] bg-[#269984] shadow-2xl border-t border-white/10 overflow-y-auto animate-in slide-in-from-top-2 duration-300">
+          <nav className="flex flex-col p-8 pb-20 gap-6">
             {isAuthenticated && (
               <div className="flex flex-col gap-5">
                 <Link
