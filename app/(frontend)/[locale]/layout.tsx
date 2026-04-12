@@ -6,13 +6,17 @@ import UserProgressSync from '../../components/Learning/UserProgressSync';
 
 import { Locale } from '../../i18n/LocaleProvider';
 
+import { APP_CONFIG } from '../../../lib/constants';
+
 export async function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'hu' }, { locale: 'ro' }];
+  return APP_CONFIG.LOCALES.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: rawLocale } = await params;
-  const locale = (['en', 'hu', 'ro'].includes(rawLocale) ? rawLocale : 'hu') as Locale;
+  const locale = (
+    APP_CONFIG.LOCALES.includes(rawLocale as (typeof APP_CONFIG.LOCALES)[number]) ? rawLocale : APP_CONFIG.DEFAULT_LOCALE
+  ) as Locale;
 
   const locales = {
     en: (await import('../../../locales/en.json')).default,
@@ -67,7 +71,9 @@ export default async function FrontendLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale: rawLocale } = await params;
-  const locale = (['en', 'hu', 'ro'].includes(rawLocale) ? rawLocale : 'hu') as Locale;
+  const locale = (
+    APP_CONFIG.LOCALES.includes(rawLocale as (typeof APP_CONFIG.LOCALES)[number]) ? rawLocale : APP_CONFIG.DEFAULT_LOCALE
+  ) as Locale;
   const session = await auth();
 
   // Use image from session if available
