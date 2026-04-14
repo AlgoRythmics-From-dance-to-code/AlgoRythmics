@@ -42,3 +42,46 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function GET(req: Request) {
+  const t = await getT();
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get('token');
+
+  if (!token) {
+    return NextResponse.json({ error: t('login.errors.reset_token_invalid') }, { status: 400 });
+  }
+
+  try {
+    const payload = await getPayload({ config: configPromise });
+
+    // Look for user with this token
+    // Payload stores these in internal fields
+    const users = await payload.find({
+      collection: 'users',
+      where: {
+        _resetPasswordToken: {
+          equals: token,
+        },
+      },
+      overrideAccess: true,
+    });
+
+    if (!users.docs.length) {
+      return NextResponse.json({ error: t('login.errors.reset_token_invalid') }, { status: 400 });
+    }
+
+    const user = users.docs[0] as any;
+    const expiration = new Date(user._resetPasswordExpiration).getTime();
+    const now = Date.now();
+
+    if (now > expiration) {
+      return NextResponse.json({ error: t('login.errors.reset_token_invalid') }, { status: 400 });
+    }
+
+    return NextResponse.json({ valid: true });
+  } catch (error) {
+    logger.error({ error }, 'Validate reset token error');
+    return NextResponse.json({ error: t('toasts.unexpected_error') }, { status: 500 });
+  }
+}

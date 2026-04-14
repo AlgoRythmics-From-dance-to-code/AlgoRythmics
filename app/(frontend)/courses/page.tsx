@@ -3,6 +3,8 @@ import { getPayloadInstance } from '../../../lib/payload';
 import { getServerLocale, getT } from '../../../lib/i18n-server';
 import CoursesClient from '../../components/Course/CoursesClient';
 
+export const revalidate = 600; // Cache for 10 minutes
+
 export async function generateMetadata() {
   const t = await getT();
   return {

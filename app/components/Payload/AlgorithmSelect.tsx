@@ -218,7 +218,7 @@ export const PhaseIdSelect: React.FC<{
           type="text"
           value={value || ''}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="pl. bubble-sort-motivation"
+          placeholder={t('admin.placeholder_example')}
           style={{
             flex: 1,
             padding: '8px 12px',

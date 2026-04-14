@@ -1,39 +1,78 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
 import type { CourseBlueprint } from '../../../lib/courses/courseCatalog';
+import { Search, ChevronDown, Filter, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import RestartCourseModal from './RestartCourseModal';
 
 interface CoursesClientProps {
   courses: CourseBlueprint[];
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function CoursesClient({ courses }: CoursesClientProps) {
   const { t } = useLocale();
   const router = useRouter();
   const { courseProgress, resetCourseProgress, resetAlgorithmProgressTab, syncProgress } =
     useAlgorithmStore();
+
   const [activeTab, setActiveTab] = useState<'available' | 'completed'>('available');
   const [selectedCourse, setSelectedCourse] = useState<CourseBlueprint | null>(null);
   const [showRestartModal, setShowRestartModal] = useState(false);
 
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+
   const filteredCourses = useMemo(() => {
-    return courses.filter((course) => {
-      const isCompleted = !!courseProgress[course.slug]?.isCompleted;
-      if (activeTab === 'completed') return isCompleted;
-      return !isCompleted;
-    });
-  }, [courses, courseProgress, activeTab]);
+    return courses
+      .filter((course) => {
+        // Tab filter
+        const isCompleted = !!courseProgress[course.slug]?.isCompleted;
+        if (activeTab === 'completed' && !isCompleted) return false;
+        if (activeTab === 'available' && isCompleted) return false;
+
+        // Search filter
+        if (
+          searchQuery &&
+          !course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          !course.summary.toLowerCase().includes(searchQuery.toLowerCase())
+        ) {
+          return false;
+        }
+
+        // Difficulty filter
+        if (difficultyFilter !== 'all' && course.difficulty !== difficultyFilter) {
+          return false;
+        }
+
+        return true;
+      });
+  }, [courses, courseProgress, activeTab, searchQuery, difficultyFilter]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
+  const paginatedCourses = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredCourses.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredCourses, currentPage]);
 
   const completedCount = useMemo(() => {
     return courses.filter((c) => !!courseProgress[c.slug]?.isCompleted).length;
   }, [courses, courseProgress]);
 
   const availableCount = courses.length - completedCount;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, difficultyFilter, activeTab]);
 
   const handleCourseClick = (course: CourseBlueprint) => {
     const isCompleted = !!courseProgress[course.slug]?.isCompleted;
@@ -68,7 +107,7 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
   return (
     <div className="w-full">
       {/* Tab Switcher */}
-      <div className="mb-10 flex items-center justify-center">
+      <div className="mb-10 flex flex-col items-center justify-center gap-8">
         <div className="relative flex rounded-2xl bg-gray-100 p-1.5 dark:bg-white/5">
           <button
             onClick={() => setActiveTab('available')}
@@ -120,24 +159,75 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
             </span>
           </button>
         </div>
+
+        {/* Search and Filters Bar */}
+        <div className="w-full grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4 items-center bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm">
+          {/* Search */}
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#269984] transition-colors" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('common.search')}
+              className="w-full pl-11 pr-10 py-3 bg-gray-50 dark:bg-black/20 border-2 border-transparent focus:border-[#269984]/30 rounded-2xl outline-none font-montserrat text-sm transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex gap-4">
+            {/* Difficulty Filter */}
+            <div className="relative">
+              <select
+                value={difficultyFilter}
+                onChange={(e) => setDifficultyFilter(e.target.value)}
+                className="appearance-none pl-4 pr-10 py-3 bg-gray-50 dark:bg-black/20 border-2 border-transparent focus:border-[#269984]/30 rounded-2xl outline-none font-montserrat text-xs font-black uppercase tracking-widest text-[#269984] cursor-pointer"
+              >
+                <option value="all">{t('common.all_difficulties')}</option>
+                <option value="Beginner">{t('courses.levels.beginner').toUpperCase()}</option>
+                <option value="Intermediate">{t('courses.levels.intermediate').toUpperCase()}</option>
+                <option value="Advanced">{t('courses.levels.advanced').toUpperCase()}</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#269984] pointer-events-none" />
+            </div>
+          </div>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={activeTab}
+          key={`${activeTab}-${searchQuery}-${difficultyFilter}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.04)] dark:border-white/10 dark:bg-white/5"
         >
-          {filteredCourses.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="mb-4 text-4xl">{activeTab === 'completed' ? '🏆' : '✨'}</div>
-              <p className="text-sm font-bold text-gray-400 uppercase tracking-widest leading-6">
-                {activeTab === 'completed'
-                  ? t('courses.empty_completed')
-                  : t('courses.empty_available')}
+          {paginatedCourses.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="mb-6 w-20 h-20 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center">
+                <Filter className="w-8 h-8 text-gray-300" />
+              </div>
+              <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.2em] leading-6">
+                {t('courses.no_matches')}
               </p>
+              {(searchQuery || difficultyFilter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setDifficultyFilter('all');
+                  }}
+                  className="mt-6 text-[#269984] font-bold text-sm hover:underline"
+                >
+                  {t('common.clear_all')}
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -151,7 +241,7 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
               </div>
 
               <div className="divide-y divide-gray-100 dark:divide-white/10">
-                {filteredCourses.map((course) => {
+                {paginatedCourses.map((course) => {
                   const current = courseProgress[course.slug] || {
                     activePhaseIndex: 0,
                     completedPhases: [],
@@ -205,7 +295,11 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
 
                       <div className="flex">
                         <span className="inline-flex rounded-full border border-[#269984]/20 bg-[#269984]/5 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#269984] shadow-sm">
-                          {course.difficulty}
+                          {course.difficulty === 'Beginner' 
+                            ? t('courses.levels.beginner') 
+                            : course.difficulty === 'Intermediate' 
+                              ? t('courses.levels.intermediate') 
+                              : t('courses.levels.advanced')}
                         </span>
                       </div>
 
@@ -226,6 +320,43 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
                   );
                 })}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 py-8 border-t border-gray-100 dark:border-white/10">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-xl border border-gray-100 dark:border-white/10 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  </button>
+                  
+                  <div className="flex items-center gap-2">
+                    {[...Array(totalPages)].map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`w-10 h-10 rounded-xl font-bold text-sm transition-all active:scale-95 ${
+                          currentPage === i + 1
+                            ? 'bg-[#269984] text-white shadow-lg shadow-[#269984]/20'
+                            : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-xl border border-gray-100 dark:border-white/10 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-white/5 transition-all active:scale-95"
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  </button>
+                </div>
+              )}
             </>
           )}
         </motion.div>

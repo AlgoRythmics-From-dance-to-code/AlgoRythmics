@@ -16,13 +16,33 @@ function ResetPasswordForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isValidating, setIsValidating] = useState(!!token);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token) {
-      setError(t('login.errors.reset_token_invalid'));
-    }
+    const validateToken = async () => {
+      if (!token) {
+        setError(t('login.errors.reset_token_invalid'));
+        setIsValidating(false);
+        return;
+      }
+
+      setIsValidating(true);
+      try {
+        const response = await fetch(`${API_ROUTES.AUTH.RESET_PASSWORD}?token=${token}`);
+        if (!response.ok) {
+          const data = await response.json();
+          setError(data.error || t('login.errors.reset_token_invalid'));
+        }
+      } catch {
+        setError(t('toasts.unexpected_error_desc'));
+      } finally {
+        setIsValidating(false);
+      }
+    };
+
+    validateToken();
   }, [token, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,13 +86,33 @@ function ResetPasswordForm() {
     }
   };
 
-  if (!token && !isSubmitted) {
+  if (isValidating) {
     return (
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-red-500 mb-4">
-          {t('login.errors.reset_token_invalid')}
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="w-12 h-12 border-4 border-[#269984] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="font-montserrat text-gray-500">{t('verify.loading')}</p>
+      </div>
+    );
+  }
+
+  if ((!token || error) && !isSubmitted) {
+    return (
+      <div className="text-center w-full max-w-[400px]">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full mb-6">
+          <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+        <h1 className="font-montserrat font-bold text-2xl text-black dark:text-white mb-4">
+          {error || t('login.errors.reset_token_invalid')}
         </h1>
-        <Link href={ROUTES.LOGIN} className="text-[#269984] hover:underline">
+        <p className="font-montserrat text-gray-500 mb-8">
+          {t('login.reset_password_subtitle')}
+        </p>
+        <Link 
+          href={ROUTES.LOGIN} 
+          className="inline-block font-montserrat font-bold text-white bg-[#269984] px-8 py-3 rounded-lg hover:opacity-90 transition-all"
+        >
           {t('login.forgot_password_back_to_login')}
         </Link>
       </div>

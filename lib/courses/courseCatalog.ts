@@ -72,6 +72,7 @@ export type CourseBlueprint = {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   mascot: CourseMascot;
   phases: CoursePhase[];
+  category?: string;
 };
 
 export type CourseCollectionDoc = Partial<CourseBlueprint> & {
@@ -212,6 +213,7 @@ export function normalizeCourse(doc: Record<string, unknown>): CourseBlueprint {
       streakMessages: toStringArray(mascot.streakMessages),
     },
     phases: toPhases(phases),
+    category: doc.category as string,
   };
 }
 

@@ -13,18 +13,17 @@ export default function PWAInstallPrompt() {
   const { t } = useLocale();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const dismissed = localStorage.getItem('pwa_dismissed');
-      const alreadyInstalled = localStorage.getItem('pwa_installed') === 'true';
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const dismissed = localStorage.getItem('pwa_dismissed') === 'true';
+    const alreadyInstalled = localStorage.getItem('pwa_installed') === 'true';
 
-      if (canInstall && isMobile && !dismissed && !alreadyInstalled && !isStandalone) {
-        setIsVisible(true);
-      }
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [canInstall, isStandalone, t]);
+    // Show immediately when on mobile, canInstall is true (or iOS), and conditions are met
+    if (isMobile && (canInstall || isIOS) && !dismissed && !alreadyInstalled && !isStandalone) {
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+  }, [canInstall, isStandalone, isIOS, t]);
 
   const handleDismiss = () => {
     localStorage.setItem('pwa_dismissed', 'true');

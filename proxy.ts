@@ -48,12 +48,6 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 6. Guest Guard (redirect away from /login if already authenticated)
-  if (token && isAuthPage) {
-    // If we have any form of token, we shouldn't be on the login page
-    return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
-  }
-
   return NextResponse.next();
 }
 

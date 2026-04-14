@@ -9,6 +9,7 @@ import { ROUTES, API_ROUTES } from '../../../lib/constants';
 import { toast } from 'sonner';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 /**
  * Helper to clear all authentication related cookies manually
@@ -39,6 +40,7 @@ export default function LoginPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [systemError, setSystemError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function LoginPage() {
   }, [searchParams, t, clearStore]);
 
   const socialLogin = (provider: string) => {
+    setIsRedirecting(true);
     // Store remember preference in a cookie for the callback route
     document.cookie = `auth_remember_me=${remember}; path=/; max-age=3600; sameSite=lax`; // 1 hour is enough for the flow
     signIn(provider, { callbackUrl: API_ROUTES.AUTH.SOCIAL_CALLBACK });
@@ -112,6 +115,7 @@ export default function LoginPage() {
 
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a] min-h-[calc(100vh-85px)]">
+      <LoadingOverlay isVisible={isLoading || isRedirecting} message={t('login.logging_in')} />
       <div className="flex flex-col lg:flex-row min-h-[calc(100vh-85px)]">
         {/* Left Side: Illustration */}
         <div className="hidden lg:flex flex-col items-center justify-center relative overflow-hidden lg:w-[40%] xl:w-[45%] bg-[#F0FBF9] dark:bg-[#112220]">

@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { useLocale, Locale } from '../../i18n/LocaleProvider';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 const formatDate = (dateString: string, locale: Locale, t: (key: string) => string) => {
   if (!dateString) return t('common.not_available');
@@ -82,7 +83,7 @@ export default function ProfilePage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
   const { courseProgress } = useAlgorithmStore();
-  const { install, canInstall, isStandalone } = usePWAInstall();
+  const { install, canInstall, isStandalone, isIOS } = usePWAInstall();
 
   const [activeTab, setActiveTab] = useState('public');
   const [isSaving, setIsSaving] = useState(false);
@@ -193,16 +194,7 @@ export default function ProfilePage() {
   }, [mascotEnabled, status, lastSyncedEmail, session, handleUpdateProfile]);
 
   if (status === 'loading' && !lastSyncedEmail) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-85px)] dark:bg-[#0a0a0a]">
-        <div className="relative">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#269984]"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-2 w-2 bg-[#269984] rounded-full animate-ping"></div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingOverlay isVisible={true} message={t('common.loading')} />;
   }
 
   if (!session?.user) return null;
@@ -496,8 +488,8 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      {/* PWA Download Section */}
-                      {canInstall && !isStandalone && (
+                      {/* PWA Download Section - Persistent on Mobile */}
+                      {!isStandalone && (
                         <div className="md:col-span-2 p-8 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20 rounded-[2.5rem] border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-6 font-montserrat antialiased">
                           <div className="flex items-center gap-5">
                             <div className="bg-white dark:bg-emerald-500/20 p-4 rounded-[1.5rem] shadow-sm flex items-center justify-center">
@@ -508,17 +500,28 @@ export default function ProfilePage() {
                                 {t('pwa.install_title')}
                               </h3>
                               <p className="font-montserrat font-medium text-slate-600 dark:text-slate-400 text-sm max-w-sm mt-1">
-                                {t('pwa.install_desc')}
+                                {isIOS ? t('pwa.ios_instructions') : t('pwa.install_desc')}
                               </p>
                             </div>
                           </div>
-                          <button
-                            onClick={install}
-                            className="w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 group uppercase tracking-wider text-xs"
-                          >
-                            <Download className="w-5 h-5 group-hover:animate-bounce" />
-                            {t('pwa.profile_install_btn')}
-                          </button>
+                          
+                          {/* Different action based on platform/browser status */}
+                          <div className="w-full sm:w-auto">
+                            {!isIOS ? (
+                              <button
+                                onClick={install}
+                                disabled={!canInstall}
+                                className={`w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 group uppercase tracking-wider text-xs ${!canInstall ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                              >
+                                <Download className={`w-5 h-5 ${canInstall ? 'group-hover:animate-bounce' : ''}`} />
+                                {canInstall ? t('pwa.profile_install_btn') : t('pwa.already_installed_check')}
+                              </button>
+                            ) : (
+                              <div className="px-6 py-3 bg-white/50 dark:bg-black/20 rounded-2xl border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider text-center">
+                                {t('pwa.ios_instructions')}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
