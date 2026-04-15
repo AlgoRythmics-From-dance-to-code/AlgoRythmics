@@ -213,7 +213,7 @@ export function normalizeCourse(doc: Record<string, unknown>): CourseBlueprint {
       streakMessages: toStringArray(mascot.streakMessages),
     },
     phases: toPhases(phases),
-    category: doc.category as string,
+    category: typeof doc.category === 'string' ? doc.category : undefined,
   };
 }
 

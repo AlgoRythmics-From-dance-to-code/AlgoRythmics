@@ -28,12 +28,15 @@ function ResetPasswordForm() {
         return;
       }
 
+      setError(null);
       setIsValidating(true);
       try {
         const response = await fetch(`${API_ROUTES.AUTH.RESET_PASSWORD}?token=${token}`);
         if (!response.ok) {
           const data = await response.json();
           setError(data.error || t('login.errors.reset_token_invalid'));
+        } else {
+          setError(null);
         }
       } catch {
         setError(t('toasts.unexpected_error_desc'));

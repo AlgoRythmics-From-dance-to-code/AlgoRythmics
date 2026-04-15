@@ -64,6 +64,8 @@ export async function GET(req: Request) {
           equals: token,
         },
       },
+      limit: 1,
+      depth: 0,
       overrideAccess: true,
     });
 
@@ -72,14 +74,25 @@ export async function GET(req: Request) {
     }
 
     const user = users.docs[0] as any;
-    const expiration = new Date(user._resetPasswordExpiration).getTime();
+    const expiration = user._resetPasswordExpiration ? new Date(user._resetPasswordExpiration).getTime() : 0;
     const now = Date.now();
 
-    if (now > expiration) {
-      return NextResponse.json({ error: t('login.errors.reset_token_invalid') }, { status: 400 });
+    if (!expiration || now > expiration) {
+      return NextResponse.json(
+        { error: t('login.errors.reset_token_invalid') },
+        {
+          status: 400,
+          headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+        },
+      );
     }
 
-    return NextResponse.json({ valid: true });
+    return NextResponse.json(
+      { valid: true },
+      {
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+      },
+    );
   } catch (error) {
     logger.error({ error }, 'Validate reset token error');
     return NextResponse.json({ error: t('toasts.unexpected_error') }, { status: 500 });

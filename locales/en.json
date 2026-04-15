@@ -23,7 +23,8 @@
     "search": "Search",
     "all_categories": "All Categories",
     "all_difficulties": "All Difficulties",
-    "clear_all": "Clear All"
+    "clear_all": "Clear All",
+    "loading": "Loading..."
   },
   "nav": {
     "home": "Home",

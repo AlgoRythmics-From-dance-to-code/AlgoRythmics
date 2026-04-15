@@ -23,7 +23,8 @@
     "search": "Keresés",
     "all_categories": "Összes kategória",
     "all_difficulties": "Minden nehézség",
-    "clear_all": "Szűrők törlése"
+    "clear_all": "Szűrők törlése",
+    "loading": "Betöltés..."
   },
   "nav": {
     "home": "Kezdőlap",

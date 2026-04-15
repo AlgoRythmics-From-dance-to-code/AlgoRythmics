@@ -69,7 +69,13 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
 
   const availableCount = courses.length - completedCount;
 
-  // Reset page when filters change
+  // Reset page when filters change or clamp when list shrinks
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, difficultyFilter, activeTab]);

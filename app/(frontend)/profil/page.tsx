@@ -489,7 +489,7 @@ export default function ProfilePage() {
                       </div>
 
                       {/* PWA Download Section - Persistent on Mobile */}
-                      {!isStandalone && (
+                      {!isStandalone && (canInstall || isIOS) && (
                         <div className="md:col-span-2 p-8 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20 rounded-[2.5rem] border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-6 font-montserrat antialiased">
                           <div className="flex items-center gap-5">
                             <div className="bg-white dark:bg-emerald-500/20 p-4 rounded-[1.5rem] shadow-sm flex items-center justify-center">
