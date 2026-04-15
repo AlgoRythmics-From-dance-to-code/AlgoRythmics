@@ -579,7 +579,8 @@
     "open": "Deschide",
     "checkpoints": "puncte de control",
     "back_to_courses": "Înapoi la cursuri",
-    "confidence_check": "Verificarea încrederii"
+    "confidence_check": "Verificarea încrederii",
+    "no_matches": "Niciun curs nu corespunde căutării"
   },
   "course": {
     "info_understand": "Am înțeles, să mergem mai departe!",
@@ -668,6 +669,7 @@
     "choose_algorithm": "Alege algoritmul...",
     "phase_id": "ID Fază",
     "suggestion": "SUGESTIE",
+    "placeholder_example": "ex: bubble-sort-motivație",
     "choose_image": "Alege Imaginea",
     "choose_image_library": "Alege o imagine din bibliotecă...",
     "course_illustration": "Ilustrație Curs",

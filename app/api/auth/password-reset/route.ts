@@ -49,7 +49,13 @@ export async function GET(req: Request) {
   const token = searchParams.get('token');
 
   if (!token) {
-    return NextResponse.json({ error: t('login.errors.reset_token_invalid') }, { status: 400 });
+    return NextResponse.json(
+      { error: t('login.errors.reset_token_invalid') },
+      {
+        status: 400,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+      },
+    );
   }
 
   try {
@@ -95,6 +101,12 @@ export async function GET(req: Request) {
     );
   } catch (error) {
     logger.error({ error }, 'Validate reset token error');
-    return NextResponse.json({ error: t('toasts.unexpected_error') }, { status: 500 });
+    return NextResponse.json(
+      { error: t('toasts.unexpected_error') },
+      {
+        status: 500,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+      },
+    );
   }
 }

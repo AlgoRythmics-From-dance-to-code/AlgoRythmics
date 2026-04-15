@@ -14,7 +14,7 @@ export default function CoursesSkeleton() {
   const shimmerTransition = {
     repeat: Infinity,
     duration: 1.5,
-    ease: "linear" as const,
+    ease: 'linear' as const,
   };
 
   const SkeletonBlock = ({ className }: { className: string }) => (

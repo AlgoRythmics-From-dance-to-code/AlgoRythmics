@@ -9,7 +9,8 @@ import { useLocale } from '../../i18n/LocaleProvider';
 import LoadingOverlay from '../../components/LoadingOverlay';
 
 /**
- * Helper to clear all authentication related cookies manually
+ * Helper to clear non-HttpOnly authentication related cookies manually.
+ * Note: HttpOnly session cookies (like NextAuth) cannot be cleared from the client.
  */
 const clearAuthCookies = () => {
   if (typeof document === 'undefined') return;
