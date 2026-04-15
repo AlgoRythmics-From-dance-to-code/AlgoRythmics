@@ -19,7 +19,12 @@
     "active": "Aktív",
     "locked": "Zárolva",
     "current": "Jelenlegi",
-    "custom": "Egyéni"
+    "custom": "Egyéni",
+    "search": "Keresés",
+    "all_categories": "Összes kategória",
+    "all_difficulties": "Minden nehézség",
+    "clear_all": "Szűrők törlése",
+    "loading": "Betöltés..."
   },
   "nav": {
     "home": "Kezdőlap",
@@ -113,7 +118,10 @@
     "confirm_title": "Biztosan bezárod?",
     "confirm_desc": "Ha most elutasítod, az üzenet többet nem fog automatikusan megjelenni. Később a profilodban bármikor telepítheted.",
     "confirm_btn": "Igen, bezárom",
-    "cancel_btn": "Mégse"
+    "cancel_btn": "Mégse",
+    "already_installed_check": "Várakozás...",
+    "ios_instructions": "Kattints a Megosztás gombra, majd a 'Hozzáadás a kezdőképernyőhöz' opcióra.",
+    "profile_install_btn": "Alkalmazás Telepítése"
   },
   "errors": {
     "unauthorized": "Nincs jogosultság",
@@ -570,7 +578,8 @@
     },
     "open": "Megnyitás",
     "checkpoints": "ellenőrzőpont",
-    "back_to_courses": "Vissza a tanfolyamokhoz"
+    "back_to_courses": "Vissza a tanfolyamokhoz",
+    "no_matches": "Nincs a keresésnek megfelelő kurzus"
   },
   "course": {
     "info_understand": "Értem, mehetünk tovább!",
@@ -659,6 +668,7 @@
     "choose_algorithm": "Válassz algoritmust...",
     "phase_id": "Fázis Azonosító (Phase ID)",
     "suggestion": "JAVASLAT",
+    "placeholder_example": "pl. bubble-sort-motivation",
     "choose_image": "Válassz képet",
     "choose_image_library": "Válassz egy képet a könyvtárból...",
     "course_illustration": "Kurzus Illusztrációja",

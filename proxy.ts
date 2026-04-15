@@ -41,17 +41,16 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 5. Frontend Protected Routes Guard
+  // 5. Guest Guard: Redirect authenticated users away from login/register
+  if (token && isAuthPage) {
+    return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
+  }
+
+  // 6. Frontend Protected Routes Guard
   if (!token && isProtectedRoute) {
     const url = new URL(ROUTES.LOGIN, request.url);
     url.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(url);
-  }
-
-  // 6. Guest Guard (redirect away from /login if already authenticated)
-  if (token && isAuthPage) {
-    // If we have any form of token, we shouldn't be on the login page
-    return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
   }
 
   return NextResponse.next();

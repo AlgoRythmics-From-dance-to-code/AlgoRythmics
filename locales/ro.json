@@ -19,7 +19,12 @@
     "available": "Disponibil",
     "admin": "ADMIN",
     "not_available": "N/A",
-    "algorithm": "Algoritm"
+    "algorithm": "Algoritm",
+    "search": "Caută",
+    "all_categories": "Toate categoriile",
+    "all_difficulties": "Toate dificultățile",
+    "clear_all": "Șterge tot",
+    "loading": "Se încarcă..."
   },
   "nav": {
     "home": "Acasă",
@@ -113,7 +118,10 @@
     "confirm_title": "Ești sigur?",
     "confirm_desc": "Dacă închizi acest mesaj, nu va mai apărea automat. Poți instala oricând din profilul tău.",
     "confirm_btn": "Da, închide",
-    "cancel_btn": "Anulează"
+    "cancel_btn": "Anulează",
+    "already_installed_check": "Se verifică...",
+    "ios_instructions": "Apasă butonul Share și apoi 'Adaugă la ecranul de pornire'.",
+    "profile_install_btn": "Instalează Aplicația"
   },
   "errors": {
     "unauthorized": "Neautorizat",
@@ -571,7 +579,8 @@
     "open": "Deschide",
     "checkpoints": "puncte de control",
     "back_to_courses": "Înapoi la cursuri",
-    "confidence_check": "Verificarea încrederii"
+    "confidence_check": "Verificarea încrederii",
+    "no_matches": "Niciun curs nu corespunde căutării"
   },
   "course": {
     "info_understand": "Am înțeles, să mergem mai departe!",
@@ -660,6 +669,7 @@
     "choose_algorithm": "Alege algoritmul...",
     "phase_id": "ID Fază",
     "suggestion": "SUGESTIE",
+    "placeholder_example": "ex: bubble-sort-motivație",
     "choose_image": "Alege Imaginea",
     "choose_image_library": "Alege o imagine din bibliotecă...",
     "course_illustration": "Ilustrație Curs",

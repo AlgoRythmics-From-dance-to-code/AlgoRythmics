@@ -19,7 +19,12 @@
     "custom": "Custom",
     "admin": "Admin",
     "not_available": "N/A",
-    "algorithm": "Algorithm"
+    "algorithm": "Algorithm",
+    "search": "Search",
+    "all_categories": "All Categories",
+    "all_difficulties": "All Difficulties",
+    "clear_all": "Clear All",
+    "loading": "Loading..."
   },
   "nav": {
     "home": "Home",
@@ -113,7 +118,10 @@
     "confirm_title": "Are you sure?",
     "confirm_desc": "If you dismiss this, it won't show again automatically. You can always install it from your profile.",
     "confirm_btn": "Yes, dismiss",
-    "cancel_btn": "Cancel"
+    "cancel_btn": "Cancel",
+    "already_installed_check": "Pending...",
+    "ios_instructions": "Tap the Share button and then 'Add to Home Screen'.",
+    "profile_install_btn": "Install Application"
   },
   "errors": {
     "unauthorized": "Unauthorized",
@@ -571,7 +579,8 @@
     "open": "Open",
     "checkpoints": "checkpoints",
     "back_to_courses": "Back to courses",
-    "confidence_check": "Confidence check"
+    "confidence_check": "Confidence check",
+    "no_matches": "No courses match your search"
   },
   "course": {
     "info_understand": "I understand, let's move on!",
@@ -659,6 +668,7 @@
     "choose_algorithm": "Choose algorithm...",
     "phase_id": "Phase ID",
     "suggestion": "SUGGESTION",
+    "placeholder_example": "e.g. bubble-sort-motivation",
     "choose_image": "Choose Image",
     "choose_image_library": "Choose an image from the library...",
     "course_illustration": "Course Illustration",

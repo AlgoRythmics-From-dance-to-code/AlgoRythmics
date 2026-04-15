@@ -42,3 +42,71 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function GET(req: Request) {
+  const t = await getT();
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get('token');
+
+  if (!token) {
+    return NextResponse.json(
+      { error: t('login.errors.reset_token_invalid') },
+      {
+        status: 400,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+      },
+    );
+  }
+
+  try {
+    const payload = await getPayload({ config: configPromise });
+
+    // Look for user with this token
+    // Payload stores these in internal fields
+    const users = await payload.find({
+      collection: 'users',
+      where: {
+        _resetPasswordToken: {
+          equals: token,
+        },
+      },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    });
+
+    if (!users.docs.length) {
+      return NextResponse.json({ error: t('login.errors.reset_token_invalid') }, { status: 400 });
+    }
+
+    const user = users.docs[0] as any;
+    const expiration = user._resetPasswordExpiration ? new Date(user._resetPasswordExpiration).getTime() : 0;
+    const now = Date.now();
+
+    if (!expiration || now > expiration) {
+      return NextResponse.json(
+        { error: t('login.errors.reset_token_invalid') },
+        {
+          status: 400,
+          headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+        },
+      );
+    }
+
+    return NextResponse.json(
+      { valid: true },
+      {
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+      },
+    );
+  } catch (error) {
+    logger.error({ error }, 'Validate reset token error');
+    return NextResponse.json(
+      { error: t('toasts.unexpected_error') },
+      {
+        status: 500,
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+      },
+    );
+  }
+}

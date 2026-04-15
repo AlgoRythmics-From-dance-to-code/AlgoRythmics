@@ -1,14 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useLocale } from '../../i18n/LocaleProvider';
+import LoadingOverlay from '../../components/LoadingOverlay';
+
+/**
+ * Helper to clear non-HttpOnly authentication related cookies manually.
+ * Note: HttpOnly session cookies (like NextAuth) cannot be cleared from the client.
+ */
+const clearAuthCookies = () => {
+  if (typeof document === 'undefined') return;
+  const cookies = document.cookie.split(';');
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i];
+    const eqPos = cookie.indexOf('=');
+    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+    if (name.includes('auth') || name.includes('token') || name.includes('session')) {
+      document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+      document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;`;
+      document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict;`;
+    }
+  }
+};
 
 export default function RegisterPage() {
   const { t } = useLocale();
+
+  useEffect(() => {
+    // Proactively clear stale state when arrival at register page
+    clearAuthCookies();
+  }, []);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -75,6 +100,7 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full bg-white dark:bg-[#0a0a0a] min-h-[calc(100vh-85px)]">
+      <LoadingOverlay isVisible={isLoading} message={t('register.registering')} />
       <div className="flex flex-col lg:flex-row min-h-[calc(100vh-85px)]">
         {/* Left Side: Illustration */}
         <div className="hidden lg:flex flex-col items-center justify-center relative overflow-hidden lg:w-[40%] xl:w-[45%] bg-[#F0FBF9] dark:bg-[#112220]">

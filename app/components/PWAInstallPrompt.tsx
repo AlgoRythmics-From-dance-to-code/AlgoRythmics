@@ -13,18 +13,17 @@ export default function PWAInstallPrompt() {
   const { t } = useLocale();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const dismissed = localStorage.getItem('pwa_dismissed');
-      const alreadyInstalled = localStorage.getItem('pwa_installed') === 'true';
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const dismissed = localStorage.getItem('pwa_dismissed') === 'true';
+    const alreadyInstalled = localStorage.getItem('pwa_installed') === 'true';
 
-      if (canInstall && isMobile && !dismissed && !alreadyInstalled && !isStandalone) {
-        setIsVisible(true);
-      }
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [canInstall, isStandalone, t]);
+    // Show immediately when on mobile, canInstall is true (or iOS), and conditions are met
+    if (isMobile && (canInstall || isIOS) && !dismissed && !alreadyInstalled && !isStandalone) {
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+  }, [canInstall, isStandalone, isIOS, t]);
 
   const handleDismiss = () => {
     localStorage.setItem('pwa_dismissed', 'true');
@@ -69,7 +68,7 @@ export default function PWAInstallPrompt() {
                       {t('pwa.install_title')}
                     </h3>
                     <p className="font-montserrat font-medium text-slate-600 dark:text-slate-400 text-sm mt-1.5 leading-relaxed opacity-100">
-                      {t('pwa.install_desc')}
+                      {isIOS ? t('pwa.ios_instructions') : t('pwa.install_desc')}
                     </p>
                   </div>
                   <button 
@@ -87,13 +86,19 @@ export default function PWAInstallPrompt() {
                   >
                     {t('pwa.dismiss_btn')}
                   </button>
-                  <button
-                    onClick={handleInstall}
-                    className="flex-[2] px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98] uppercase tracking-wider"
-                  >
-                    <Download className="w-5 h-5" />
-                    {t('pwa.install_btn')}
-                  </button>
+                  {!isIOS ? (
+                    <button
+                      onClick={handleInstall}
+                      className="flex-[2] px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98] uppercase tracking-wider"
+                    >
+                      <Download className="w-5 h-5" />
+                      {t('pwa.install_btn')}
+                    </button>
+                  ) : (
+                    <div className="flex-[2] px-6 py-3.5 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black text-[10px] flex items-center justify-center text-center uppercase tracking-widest leading-tight">
+                      {t('pwa.ios_instructions')}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ) : (
