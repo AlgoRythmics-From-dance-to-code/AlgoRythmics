@@ -75,6 +75,16 @@ const formatDate = (dateString: string, locale: Locale, t: (key: string) => stri
   return `${month} ${day}${suffix(day)} ${year}, ${time}`;
 };
 
+const formatLearningTime = (timeSpentMs: number, locale: Locale) => {
+  const minutes = Math.round((timeSpentMs || 0) / 60000);
+  return new Intl.NumberFormat(locale, {
+    style: 'unit',
+    unit: 'minute',
+    unitDisplay: 'short',
+    maximumFractionDigits: 0,
+  }).format(minutes);
+};
+
 const sidebarLinks = [
   { key: 'public', icon: User },
   { key: 'edit', icon: Settings },
@@ -490,7 +500,7 @@ export default function ProfilePage() {
                               <div className="flex items-center gap-2 mb-4">
                                 <Flame size={20} className="text-orange-500" />
                                 <span className="text-[10px] font-black uppercase text-orange-600 tracking-wider">
-                                  Streak
+                                  {t('profile.public.streak')}
                                 </span>
                               </div>
                               <div className="flex justify-between items-end">
@@ -499,7 +509,7 @@ export default function ProfilePage() {
                                     {((user as BaseUser).learningStats?.currentStreak as number) || 0}
                                   </p>
                                   <p className="text-[10px] uppercase font-bold text-gray-500">
-                                    Current
+                                    {t('profile.public.current')}
                                   </p>
                                 </div>
                                 <div className="text-right">
@@ -507,7 +517,7 @@ export default function ProfilePage() {
                                     {((user as BaseUser).learningStats?.longestStreak as number) || 0}
                                   </p>
                                   <p className="text-[10px] uppercase font-bold text-gray-500">
-                                    Best
+                                    {t('profile.public.best')}
                                   </p>
                                 </div>
                               </div>
@@ -521,10 +531,10 @@ export default function ProfilePage() {
                                 </div>
                                 <div>
                                   <p className="text-sm font-bold text-gray-600 dark:text-gray-300">
-                                    {Math.round((((user as BaseUser).learningStats?.totalTimeSpentMs as number) || 0) / 60000)} mins
+                                    {formatLearningTime(((user as BaseUser).learningStats?.totalTimeSpentMs as number) || 0, locale)}
                                   </p>
                                   <p className="text-[10px] uppercase font-bold text-gray-400">
-                                    Learning Time
+                                    {t('profile.public.learning_time')}
                                   </p>
                                 </div>
                               </div>
@@ -534,7 +544,7 @@ export default function ProfilePage() {
                                   {((user as BaseUser).learningStats?.averageScore as number) || 0}%
                                 </p>
                                 <p className="text-[10px] uppercase font-bold text-gray-400">
-                                  Avg Score
+                                  {t('profile.public.avg_score')}
                                 </p>
                               </div>
                             </div>

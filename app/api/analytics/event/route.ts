@@ -3,8 +3,9 @@ import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
 
 interface LearningEventInput {
-  algorithmId: string;
-  tab: string;
+  algorithmId?: string;
+  courseId?: string;
+  tab?: string;
   eventType: string;
   eventData?: Record<string, unknown>;
   sessionId: string;
@@ -40,7 +41,8 @@ export async function POST(req: Request) {
         data: {
           user: userId,
           algorithmId: evt.algorithmId,
-          tab: evt.tab as 'video' | 'animation' | 'control' | 'create' | 'alive',
+          courseId: evt.courseId,
+          tab: evt.tab as any, // Cast to any to allow newly added tabs before types regenerate
           eventType: evt.eventType,
           eventData: evt.eventData || {},
           sessionId: evt.sessionId,

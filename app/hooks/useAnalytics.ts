@@ -115,6 +115,24 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
     }
   }, [isAuth, algorithmId, flushEvents, flushProgress]);
 
+  const summarizeProgressSnapshot = useCallback((progress: any) => {
+    if (!progress) return undefined;
+    // Return a subset of fields to keep payload small
+    return {
+      completed: !!progress.videoCompletedAt || !!progress.animationCompletedAt || !!progress.controlCompletedAt,
+      watchTime: progress.videoWatchTimeMs,
+      bestScore: Math.max(progress.controlBestScore || 0, progress.aliveBestScore || 0),
+      isFinished: progress.isFinished,
+    };
+  }, []);
+
+  const getCoarseUserAgent = useCallback((ua: string) => {
+    if (!ua) return 'unknown';
+    if (ua.includes('Mobi')) return 'mobile';
+    if (ua.includes('Tablet')) return 'tablet';
+    return 'desktop';
+  }, []);
+
   /**
    * Track a single event. Call this from components.
    */
@@ -123,25 +141,25 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
       if (!isAuth) return;
 
       const now = Date.now();
-      // Capture a snapshot of the current algorithm progress at the time of the event
       const storeState = useAlgorithmStore.getState();
-      const currentProgress = algorithmId 
-        ? storeState.algorithmProgress[algorithmId] 
-        : undefined;
-      const currentCourseProgress = courseId
-        ? storeState.courseProgress[courseId]
-        : undefined;
+      
+      const rawProgress = algorithmId ? storeState.algorithmProgress[algorithmId] : undefined;
+      const rawCourseProgress = courseId ? storeState.courseProgress[courseId] : undefined;
 
-      // Auto-enrich eventData with environmental context & progress snapshots
+      // Auto-enrich eventData with MINIMIZED environmental context
       const enrichedData = {
         ...eventData,
-        currentProgress, // Massive improvement: Every event now knows the exact algorithm state!
-        currentCourseProgress, // Knows the exact state of the guided course!
-        url: typeof window !== 'undefined' ? window.location.href : undefined,
+        // Include summary snapshots instead of full objects to save DB space
+        currentProgress: summarizeProgressSnapshot(rawProgress),
+        currentCourseProgress: rawCourseProgress ? {
+          completedCount: rawCourseProgress.completedPhases?.length || 0,
+          activePhase: rawCourseProgress.activePhaseIndex,
+        } : undefined,
+        path: typeof window !== 'undefined' ? window.location.pathname : undefined,
         viewport: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : undefined,
         language: typeof navigator !== 'undefined' ? navigator.language : undefined,
         theme: typeof document !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light',
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+        device: typeof navigator !== 'undefined' ? getCoarseUserAgent(navigator.userAgent) : undefined,
       };
 
       const event: LearningEvent = {
@@ -158,7 +176,7 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
 
       scheduleEventFlush();
     },
-    [algorithmId, courseId, tab, isAuth, scheduleEventFlush],
+    [algorithmId, courseId, tab, isAuth, scheduleEventFlush, summarizeProgressSnapshot, getCoarseUserAgent],
   );
 
   /**

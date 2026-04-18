@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../../../../auth';
 import { getPayloadInstance } from '../../../../lib/payload';
-import type { AlgorithmProgress } from '../../../../payload-types';
 
 export async function POST(req: NextRequest) {
   try {

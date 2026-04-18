@@ -274,7 +274,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.createdAt = u.createdAt;
           token.completedAlgorithms = u.completedAlgorithms || [];
           token.mascotEnabled = u.mascotEnabled !== false;
-          token.learningStats = (u as any).learningStats;
+          token.learningStats = u.learningStats;
         }
       }
 

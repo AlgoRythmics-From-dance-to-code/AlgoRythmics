@@ -150,7 +150,12 @@
       "status": "Állapot",
       "progress_title": "Haladásod",
       "progress_subtitle": "Készen állsz a következő leckére?",
-      "verified_status": "Ellenőrzött fiók"
+      "verified_status": "Ellenőrzött fiók",
+      "streak": "Széria",
+      "current": "Jelenlegi",
+      "best": "Legjobb",
+      "learning_time": "Tanulási idő",
+      "avg_score": "Átlagos pontszám"
     },
     "edit": {
       "title": "Profil szerkesztése",

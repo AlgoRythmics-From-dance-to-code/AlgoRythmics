@@ -63,6 +63,10 @@ export const LearningEvents: CollectionConfig = {
         { label: 'Control', value: 'control' },
         { label: 'Create', value: 'create' },
         { label: 'Alive', value: 'alive' },
+        { label: 'Order', value: 'order' },
+        { label: 'Match', value: 'match' },
+        { label: 'Gap Fill', value: 'gap-fill' },
+        { label: 'Debug', value: 'debug' },
       ],
     },
     {
