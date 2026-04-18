@@ -332,12 +332,6 @@ export async function POST(req: Request) {
             existing.mascotInteractionsTotal || 0,
             (updates.mascotInteractionsTotal as number) || 0,
           );
-          if (updates.totalTimeMs !== undefined) {
-            updates.totalTimeMs = Math.max(
-              existing.totalTimeMs || 0,
-              (updates.totalTimeMs as number) || 0,
-            );
-          }
 
           await payload.update({
             collection: 'course-progress',

@@ -14,17 +14,22 @@ export async function POST(req: NextRequest) {
     const userId = Number(session.user.id);
 
     const body = await req.json();
+    const MAX_QUERY_LENGTH = 256;
+    const MAX_CATEGORY_LENGTH = 128;
+    const MAX_RESULTS_COUNT = 10000;
+
     const rawQuery = typeof body?.query === 'string' ? body.query : '';
-    const query = rawQuery.trim().slice(0, 256);
+    const query = rawQuery.trim().slice(0, MAX_QUERY_LENGTH);
     const resultsCount = Number(body?.resultsCount);
     const language = typeof body?.language === 'string' ? body.language : '';
-    const category = typeof body?.category === 'string' ? body.category : undefined;
+    const rawCategory = typeof body?.category === 'string' ? body.category : undefined;
+    const category = rawCategory?.trim().slice(0, MAX_CATEGORY_LENGTH) || undefined;
 
     if (!query) {
       return NextResponse.json({ error: 'Missing or empty query' }, { status: 400 });
     }
 
-    if (!Number.isFinite(resultsCount)) {
+    if (!Number.isFinite(resultsCount) || resultsCount < 0 || resultsCount > MAX_RESULTS_COUNT) {
       return NextResponse.json({ error: 'Invalid resultsCount' }, { status: 400 });
     }
 

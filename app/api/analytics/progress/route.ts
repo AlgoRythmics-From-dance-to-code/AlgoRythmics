@@ -3,6 +3,42 @@ import { auth } from '../../../../auth';
 import { getPayloadInstance } from '../../../../lib/payload';
 import type { AlgorithmProgress } from '../../../../payload-types';
 
+function normalizeMonotonicTimeFields(
+  existing: AlgorithmProgress | null | undefined,
+  updates: Partial<AlgorithmProgress>,
+) {
+  if (!existing) return;
+  const existingRecord = existing as Record<string, unknown>;
+  const updateRecord = updates as Record<string, unknown>;
+
+  for (const [key, value] of Object.entries(updateRecord)) {
+    if (key === 'totalTimeSpentMs' || !key.endsWith('TimeMs') || typeof value !== 'number') {
+      continue;
+    }
+    const existingValue = existingRecord[key];
+    updateRecord[key] = Math.max(typeof existingValue === 'number' ? existingValue : 0, value);
+  }
+}
+
+function computeTotalTimeSpentMs(
+  existing: AlgorithmProgress | null | undefined,
+  updates: Partial<AlgorithmProgress>,
+) {
+  const mergedRecord = {
+    ...((existing as Record<string, unknown> | null | undefined) || {}),
+    ...(updates as Record<string, unknown>),
+  };
+
+  let total = 0;
+  for (const [key, value] of Object.entries(mergedRecord)) {
+    if (key === 'totalTimeSpentMs' || !key.endsWith('TimeMs') || typeof value !== 'number') {
+      continue;
+    }
+    total += value;
+  }
+  return total;
+}
+
 /**
  * GET /api/analytics/progress?algorithmId=bubble-sort
  * Returns the AlgorithmProgress record for the authenticated user.
@@ -101,8 +137,9 @@ export async function POST(req: Request) {
     if (merged.createCompleted) overall += 20;
     if (merged.aliveCompleted) overall += 20;
 
-    // Use Math.max for counts and scores to protect against stale client data
+    // Use Math.max for counts, scores, and cumulative time fields to protect against stale client data
     if (existing) {
+      normalizeMonotonicTimeFields(existing, updates);
       if (updates.controlBestScore !== undefined)
         updates.controlBestScore = Math.max(
           existing.controlBestScore || 0,
@@ -126,7 +163,7 @@ export async function POST(req: Request) {
         );
     }
 
-    updates.totalTimeSpentMs = totalTime;
+    updates.totalTimeSpentMs = computeTotalTimeSpentMs(existing, updates);
     updates.overallProgress = overall;
 
     if (existing) {

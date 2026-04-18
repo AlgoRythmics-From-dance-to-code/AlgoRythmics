@@ -80,13 +80,19 @@ export default function AlgorithmsClient() {
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Track search queries (using useDebounce)
   useEffect(() => {
-    if (!debouncedSearchQuery || debouncedSearchQuery === lastTrackedQuery.current) return;
+    const currentSearchQuery = searchQuery.trim();
+    if (
+      !debouncedSearchQuery ||
+      debouncedSearchQuery !== currentSearchQuery ||
+      debouncedSearchQuery === lastTrackedQuery.current
+    ) {
+      return;
+    }
 
     trackSearch(debouncedSearchQuery, filteredAlgorithms.length, locale, activeCategory);
     lastTrackedQuery.current = debouncedSearchQuery;
-  }, [debouncedSearchQuery, filteredAlgorithms.length, locale, activeCategory, trackSearch]);
+  }, [debouncedSearchQuery, searchQuery, filteredAlgorithms.length, locale, activeCategory, trackSearch]);
 
   // Track category changes
   const handleCategoryChange = (cat: Category) => {

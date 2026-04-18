@@ -19,6 +19,11 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
 
   const lastTickRef = useRef(Date.now());
   const isWatched = algorithmProgress[algorithmId]?.videoWatched || false;
+  const isWatchedRef = useRef(isWatched);
+
+  useEffect(() => {
+    isWatchedRef.current = isWatched;
+  }, [isWatched]);
 
   const progressRef = useRef(algorithmProgress[algorithmId]);
   useEffect(() => {
@@ -29,11 +34,11 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
   useEffect(() => {
     // Reset the last tick at the start of the effect
     lastTickRef.current = Date.now();
-    trackEvent('video_enter', { youtubeId, isWatched });
+    trackEvent('video_enter', { youtubeId, isWatched: isWatchedRef.current });
 
     const timer = setTimeout(() => {
       trackEvent('video_watched_10s', { youtubeId });
-      if (!isWatched) {
+      if (!isWatchedRef.current) {
         updateProgress({
           videoWatched: true,
           videoCompletedAt: new Date().toISOString(),
@@ -50,7 +55,7 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
         videoWatchTimeMs: currentTotal + delta,
       });
     };
-  }, [algorithmId, updateProgress, trackEvent, isWatched, youtubeId]);
+  }, [algorithmId, updateProgress, trackEvent, youtubeId]);
 
   // If youtubeId is a placeholder, show a message instead of a broken iframe
   const isPlaceholder = youtubeId.startsWith('placeholder_');

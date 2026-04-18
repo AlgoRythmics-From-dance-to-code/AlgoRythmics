@@ -1,7 +1,7 @@
 import { auth } from '../../../../auth';
 import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
-import { LearningEvent } from '../../../../payload-types';
+import type { LearningEvent } from '../../../../payload-types';
 
 interface LearningEventInput {
   algorithmId?: string;
