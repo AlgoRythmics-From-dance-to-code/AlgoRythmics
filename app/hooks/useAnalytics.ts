@@ -115,14 +115,17 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
     }
   }, [isAuth, algorithmId, flushEvents, flushProgress]);
 
-  const summarizeProgressSnapshot = useCallback((progress: any) => {
+  const summarizeProgressSnapshot = useCallback((progress: AlgorithmProgress | undefined) => {
     if (!progress) return undefined;
     // Return a subset of fields to keep payload small
     return {
-      completed: !!progress.videoCompletedAt || !!progress.animationCompletedAt || !!progress.controlCompletedAt,
+      completed:
+        !!progress.videoCompletedAt ||
+        !!progress.animationCompletedAt ||
+        !!progress.controlCompletedAt,
       watchTime: progress.videoWatchTimeMs,
       bestScore: Math.max(progress.controlBestScore || 0, progress.aliveBestScore || 0),
-      isFinished: progress.isFinished,
+      isFinished: progress.overallProgress === 100,
     };
   }, []);
 
@@ -142,7 +145,7 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
 
       const now = Date.now();
       const storeState = useAlgorithmStore.getState();
-      
+
       const rawProgress = algorithmId ? storeState.algorithmProgress[algorithmId] : undefined;
       const rawCourseProgress = courseId ? storeState.courseProgress[courseId] : undefined;
 
@@ -151,15 +154,22 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
         ...eventData,
         // Include summary snapshots instead of full objects to save DB space
         currentProgress: summarizeProgressSnapshot(rawProgress),
-        currentCourseProgress: rawCourseProgress ? {
-          completedCount: rawCourseProgress.completedPhases?.length || 0,
-          activePhase: rawCourseProgress.activePhaseIndex,
-        } : undefined,
+        currentCourseProgress: rawCourseProgress
+          ? {
+              completedCount: rawCourseProgress.completedPhases?.length || 0,
+              activePhase: rawCourseProgress.activePhaseIndex,
+            }
+          : undefined,
         path: typeof window !== 'undefined' ? window.location.pathname : undefined,
-        viewport: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : undefined,
+        viewport:
+          typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : undefined,
         language: typeof navigator !== 'undefined' ? navigator.language : undefined,
-        theme: typeof document !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light',
-        device: typeof navigator !== 'undefined' ? getCoarseUserAgent(navigator.userAgent) : undefined,
+        theme:
+          typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+            ? 'dark'
+            : 'light',
+        device:
+          typeof navigator !== 'undefined' ? getCoarseUserAgent(navigator.userAgent) : undefined,
       };
 
       const event: LearningEvent = {
@@ -176,7 +186,15 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
 
       scheduleEventFlush();
     },
-    [algorithmId, courseId, tab, isAuth, scheduleEventFlush, summarizeProgressSnapshot, getCoarseUserAgent],
+    [
+      algorithmId,
+      courseId,
+      tab,
+      isAuth,
+      scheduleEventFlush,
+      summarizeProgressSnapshot,
+      getCoarseUserAgent,
+    ],
   );
 
   /**

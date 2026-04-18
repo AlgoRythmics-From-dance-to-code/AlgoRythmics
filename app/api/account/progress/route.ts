@@ -215,6 +215,31 @@ export async function POST(req: Request) {
                 existingDoc.aliveCodeSubmissions || 0,
                 updates.aliveCodeSubmissions as number,
               );
+            if (updates.animationTotalTimeMs !== undefined)
+              updates.animationTotalTimeMs = Math.max(
+                existingDoc.animationTotalTimeMs || 0,
+                updates.animationTotalTimeMs as number,
+              );
+            if (updates.videoWatchTimeMs !== undefined)
+              updates.videoWatchTimeMs = Math.max(
+                existingDoc.videoWatchTimeMs || 0,
+                updates.videoWatchTimeMs as number,
+              );
+            if (updates.controlTotalTimeMs !== undefined)
+              updates.controlTotalTimeMs = Math.max(
+                existingDoc.controlTotalTimeMs || 0,
+                updates.controlTotalTimeMs as number,
+              );
+            if (updates.createTotalTimeMs !== undefined)
+              updates.createTotalTimeMs = Math.max(
+                existingDoc.createTotalTimeMs || 0,
+                updates.createTotalTimeMs as number,
+              );
+            if (updates.aliveTotalTimeMs !== undefined)
+              updates.aliveTotalTimeMs = Math.max(
+                existingDoc.aliveTotalTimeMs || 0,
+                updates.aliveTotalTimeMs as number,
+              );
           }
 
           // Compute algorithm-specific aggregates based on FULL merged state
@@ -307,6 +332,12 @@ export async function POST(req: Request) {
             existing.mascotInteractionsTotal || 0,
             (updates.mascotInteractionsTotal as number) || 0,
           );
+          if (updates.totalTimeMs !== undefined) {
+            updates.totalTimeMs = Math.max(
+              existing.totalTimeMs || 0,
+              (updates.totalTimeMs as number) || 0,
+            );
+          }
 
           await payload.update({
             collection: 'course-progress',
@@ -420,11 +451,19 @@ export async function POST(req: Request) {
     let scoreCount = 0;
     allAlgoDocs.docs.forEach((doc) => {
       const aDoc = doc as unknown as AlgorithmProgress;
-      if (aDoc.controlBestScore !== undefined && aDoc.controlBestScore !== null && aDoc.controlBestScore > 0) {
+      if (
+        aDoc.controlBestScore !== undefined &&
+        aDoc.controlBestScore !== null &&
+        aDoc.controlBestScore > 0
+      ) {
         totalScoreSum += aDoc.controlBestScore;
         scoreCount++;
       }
-      if (aDoc.aliveBestScore !== undefined && aDoc.aliveBestScore !== null && aDoc.aliveBestScore > 0) {
+      if (
+        aDoc.aliveBestScore !== undefined &&
+        aDoc.aliveBestScore !== null &&
+        aDoc.aliveBestScore > 0
+      ) {
         totalScoreSum += aDoc.aliveBestScore;
         scoreCount++;
       }

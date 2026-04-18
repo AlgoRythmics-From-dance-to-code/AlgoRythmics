@@ -483,10 +483,11 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="flex items-end gap-2">
                                   <p className="text-3xl font-black text-[#269984]">
-                                    {((user as BaseUser).learningStats?.totalPoints as number) || Object.values(courseProgress).reduce(
-                                      (acc, curr) => acc + (curr.points || 0),
-                                      0,
-                                    )}
+                                    {((user as BaseUser).learningStats?.totalPoints as number) ||
+                                      Object.values(courseProgress).reduce(
+                                        (acc, curr) => acc + (curr.points || 0),
+                                        0,
+                                      )}
                                   </p>
                                   <p className="text-[10px] uppercase font-bold text-gray-400 mb-1.5">
                                     {t('courses.table.points')}
@@ -506,7 +507,8 @@ export default function ProfilePage() {
                               <div className="flex justify-between items-end">
                                 <div>
                                   <p className="text-3xl font-black text-orange-500">
-                                    {((user as BaseUser).learningStats?.currentStreak as number) || 0}
+                                    {((user as BaseUser).learningStats?.currentStreak as number) ||
+                                      0}
                                   </p>
                                   <p className="text-[10px] uppercase font-bold text-gray-500">
                                     {t('profile.public.current')}
@@ -514,7 +516,8 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="text-right">
                                   <p className="text-xl font-bold text-orange-400/70">
-                                    {((user as BaseUser).learningStats?.longestStreak as number) || 0}
+                                    {((user as BaseUser).learningStats?.longestStreak as number) ||
+                                      0}
                                   </p>
                                   <p className="text-[10px] uppercase font-bold text-gray-500">
                                     {t('profile.public.best')}
@@ -531,7 +534,11 @@ export default function ProfilePage() {
                                 </div>
                                 <div>
                                   <p className="text-sm font-bold text-gray-600 dark:text-gray-300">
-                                    {formatLearningTime(((user as BaseUser).learningStats?.totalTimeSpentMs as number) || 0, locale)}
+                                    {formatLearningTime(
+                                      ((user as BaseUser).learningStats
+                                        ?.totalTimeSpentMs as number) || 0,
+                                      locale,
+                                    )}
                                   </p>
                                   <p className="text-[10px] uppercase font-bold text-gray-400">
                                     {t('profile.public.learning_time')}

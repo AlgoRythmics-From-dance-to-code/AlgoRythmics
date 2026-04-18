@@ -51,18 +51,25 @@ function getCompletionFlag(
   const isCompletedAfterCourseStart = (completionTimeStr?: string | null) => {
     if (!completionTimeStr) return false;
     // Allow a small 5-second buffer for timestamp skewing between calls
-    return new Date(completionTimeStr).getTime() >= (courseStartTime - 5000);
+    return new Date(completionTimeStr).getTime() >= courseStartTime - 5000;
   };
 
   switch (phase.sourceView) {
     case 'video':
       return !!progress?.videoWatched && isCompletedAfterCourseStart(progress?.videoCompletedAt);
     case 'animation':
-      return !!progress?.animationCompleted && isCompletedAfterCourseStart(progress?.animationCompletedAt);
+      return (
+        !!progress?.animationCompleted &&
+        isCompletedAfterCourseStart(progress?.animationCompletedAt)
+      );
     case 'control':
-      return !!progress?.controlCompleted && isCompletedAfterCourseStart(progress?.controlCompletedAt);
+      return (
+        !!progress?.controlCompleted && isCompletedAfterCourseStart(progress?.controlCompletedAt)
+      );
     case 'create':
-      return !!progress?.createCompleted && isCompletedAfterCourseStart(progress?.createCompletedAt);
+      return (
+        !!progress?.createCompleted && isCompletedAfterCourseStart(progress?.createCompletedAt)
+      );
     case 'alive':
     case 'final-challenge':
       return !!progress?.aliveCompleted && isCompletedAfterCourseStart(progress?.aliveCompletedAt);
@@ -437,7 +444,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const handleConfirmRestart = () => {
     if (modalMode === 'restart') {
       resetCourseProgress(course.slug);
-      // We no longer call resetAlgorithmProgressTab here! 
+      // We no longer call resetAlgorithmProgressTab here!
       // getCompletionFlag now correctly ignores old completions based on course.firstStartedAt,
       // so we don't need to destructively wipe global algorithm progress when restarting a course.
       setActivePhaseIndex(0);

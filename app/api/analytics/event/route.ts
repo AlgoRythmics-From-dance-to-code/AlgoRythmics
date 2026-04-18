@@ -42,6 +42,7 @@ export async function POST(req: Request) {
           user: userId,
           algorithmId: evt.algorithmId,
           courseId: evt.courseId,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           tab: evt.tab as any, // Cast to any to allow newly added tabs before types regenerate
           eventType: evt.eventType,
           eventData: evt.eventData || {},

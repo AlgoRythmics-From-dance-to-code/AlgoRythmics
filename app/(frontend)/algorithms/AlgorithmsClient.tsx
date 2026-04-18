@@ -190,7 +190,7 @@ export default function AlgorithmsClient() {
                     ref={(el) => {
                       buttonRefs.current[cat.id] = el;
                     }}
-                    onClick={() => setCategory(cat.id as Category)}
+                    onClick={() => handleCategoryChange(cat.id as Category)}
                     className={`relative px-4 sm:px-5 py-2 rounded-xl font-montserrat font-bold text-[11px] sm:text-xs lg:text-sm transition-colors duration-300 whitespace-nowrap cursor-pointer z-10 ${
                       isActive
                         ? 'text-white'

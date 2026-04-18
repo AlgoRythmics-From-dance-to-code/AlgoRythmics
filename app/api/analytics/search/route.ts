@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     await payload.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       collection: 'search-analytics' as any,
       data: {
         query,
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[SearchAnalytics] Error recording search:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

@@ -161,6 +161,8 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
       updateProgress,
       template,
       onMistake,
+      algorithmId,
+      mistakes,
     ],
   );
 

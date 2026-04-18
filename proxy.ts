@@ -23,7 +23,6 @@ export default function middleware(request: NextRequest) {
   const isApiOrStatic =
     pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname.includes('.');
   const isAdmin = pathname.startsWith('/admin');
-  const isAuthPage = pathname.startsWith(ROUTES.LOGIN) || pathname.startsWith(ROUTES.REGISTER);
   const isProtectedRoute =
     pathname.startsWith(ROUTES.ALGORITHMS) ||
     pathname.startsWith(ROUTES.COURSES) ||

@@ -37,6 +37,8 @@ export interface AlgorithmProgress {
   aliveTotalTimeMs?: number;
   controlTotalTimeMs?: number;
   aliveLastActivityAt?: string;
+  isFinished?: boolean;
+  overallProgress?: number;
 }
 
 interface AlgorithmState {
@@ -298,10 +300,10 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         set({
           courseProgress: {
             ...courseProgress,
-            [courseId]: { 
-              ...current, 
+            [courseId]: {
+              ...current,
               activePhaseIndex,
-              firstStartedAt: current.firstStartedAt || new Date().toISOString()
+              firstStartedAt: current.firstStartedAt || new Date().toISOString(),
             },
           },
         });
