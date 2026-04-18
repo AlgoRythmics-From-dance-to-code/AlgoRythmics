@@ -13,20 +13,33 @@ export async function POST(req: NextRequest) {
 
     const userId = Number(session.user.id);
 
-    const { query, resultsCount, language, category } = await req.json();
+    const body = await req.json();
+    const rawQuery = typeof body?.query === 'string' ? body.query : '';
+    const query = rawQuery.trim().slice(0, 256);
+    const resultsCount = Number(body?.resultsCount);
+    const language = typeof body?.language === 'string' ? body.language : '';
+    const category = typeof body?.category === 'string' ? body.category : undefined;
 
     if (!query) {
-      return NextResponse.json({ error: 'Missing query' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing or empty query' }, { status: 400 });
+    }
+
+    if (!Number.isFinite(resultsCount)) {
+      return NextResponse.json({ error: 'Invalid resultsCount' }, { status: 400 });
+    }
+
+    const SUPPORTED_LANGUAGES = ['en', 'hu', 'ro'];
+    if (!SUPPORTED_LANGUAGES.includes(language as any)) {
+      return NextResponse.json({ error: 'Invalid language' }, { status: 400 });
     }
 
     await payload.create({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      collection: 'search-analytics' as any,
+      collection: 'search-analytics',
       data: {
         query,
         user: userId,
         resultsCount,
-        language,
+        language: language as 'en' | 'hu' | 'ro',
         category,
       },
     });

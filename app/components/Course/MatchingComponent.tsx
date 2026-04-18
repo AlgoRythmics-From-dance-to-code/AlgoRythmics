@@ -52,12 +52,13 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
   const handleRightSelect = (id: string) => {
     if (isDone || showFeedback || !selectedLeft) return;
 
+    const leftText = initialLeft.find((l) => l.id === selectedLeft)?.text;
+    const rightText = shuffledRight.find((r) => r.id === id)?.text;
+    trackEvent('matching_pair_selected', { left: leftText, right: rightText });
+
     setMatches((prev) =>
       prev.map((m) => {
         if (m.leftId === selectedLeft) {
-          const leftText = initialLeft.find((l) => l.id === selectedLeft)?.text;
-          const rightText = shuffledRight.find((r) => r.id === id)?.text;
-          trackEvent('matching_pair_selected', { left: leftText, right: rightText });
           return { ...m, rightId: id };
         }
         // If this rightId was already used elsewhere, clear that one

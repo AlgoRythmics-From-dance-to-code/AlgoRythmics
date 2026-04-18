@@ -1,6 +1,7 @@
 import { auth } from '../../../../auth';
 import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
+import { LearningEvent } from '../../../../payload-types';
 
 interface LearningEventInput {
   algorithmId?: string;
@@ -42,8 +43,7 @@ export async function POST(req: Request) {
           user: userId,
           algorithmId: evt.algorithmId,
           courseId: evt.courseId,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          tab: evt.tab as any, // Cast to any to allow newly added tabs before types regenerate
+          tab: evt.tab as LearningEvent['tab'],
           eventType: evt.eventType,
           eventData: evt.eventData || {},
           sessionId: evt.sessionId,

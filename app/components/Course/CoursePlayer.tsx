@@ -624,7 +624,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePhaseIndex, course.slug]);
+  }, [activePhaseIndex, course.slug, trackEvent]);
 
   useEffect(() => {
     if (!hasHydrated) return;

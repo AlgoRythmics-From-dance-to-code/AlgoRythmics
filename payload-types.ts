@@ -491,7 +491,7 @@ export interface LearningEvent {
    * e.g. intro-to-algorithms
    */
   courseId?: string | null;
-  tab?: ('video' | 'animation' | 'control' | 'create' | 'alive') | null;
+  tab?: ('video' | 'animation' | 'control' | 'create' | 'alive' | 'order' | 'match' | 'gap-fill' | 'debug') | null;
   /**
    * e.g. tab_enter, animation_play, control_compare, create_blank_attempt, alive_code_submit
    */
