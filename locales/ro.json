@@ -150,7 +150,12 @@
       "status": "Stare",
       "progress_title": "Progresul tău",
       "progress_subtitle": "Ești gata pentru următoarea lecție?",
-      "verified_status": "Cont verificat"
+      "verified_status": "Cont verificat",
+      "streak": "Serie",
+      "current": "Curent",
+      "best": "Cel mai bun",
+      "learning_time": "Timp de învățare",
+      "avg_score": "Scor mediu"
     },
     "edit": {
       "title": "Editează profilul",
@@ -519,6 +524,7 @@
   },
   "courses": {
     "hero_title": "Cursuri",
+    "learning_paths": "Rute de învățare",
     "hero_description": "Explorează categoriile noastre de cursuri și învață algoritmi prin diferite metode interactive",
     "all_courses": "Toate cursurile",
     "lessons": "lecții",

@@ -6,8 +6,9 @@ import { useAlgorithmStore, type AlgorithmProgress } from '../store/useAlgorithm
 import { APP_CONFIG } from '../../lib/constants';
 
 interface LearningEvent {
-  algorithmId: string;
-  tab: string;
+  algorithmId?: string;
+  courseId?: string;
+  tab?: string;
   eventType: string;
   eventData?: Record<string, unknown>;
   sessionId: string;
@@ -23,7 +24,7 @@ function generateId(): string {
  * Batches events and progress updates to minimize network requests.
  * Uses navigator.sendBeacon on visibilitychange/unload to prevent data loss.
  */
-export function useAnalytics(algorithmId: string, tab: string) {
+export function useAnalytics(algorithmId?: string, tab?: string, courseId?: string) {
   const { status } = useSession();
   const isAuth = status === 'authenticated';
   const { updateAlgorithmProgress } = useAlgorithmStore();
@@ -114,6 +115,27 @@ export function useAnalytics(algorithmId: string, tab: string) {
     }
   }, [isAuth, algorithmId, flushEvents, flushProgress]);
 
+  const summarizeProgressSnapshot = useCallback((progress: AlgorithmProgress | undefined) => {
+    if (!progress) return undefined;
+    // Return a subset of fields to keep payload small
+    return {
+      completed:
+        !!progress.videoCompletedAt ||
+        !!progress.animationCompletedAt ||
+        !!progress.controlCompletedAt,
+      watchTime: progress.videoWatchTimeMs,
+      bestScore: Math.max(progress.controlBestScore || 0, progress.aliveBestScore || 0),
+      isFinished: progress.overallProgress === 100,
+    };
+  }, []);
+
+  const getCoarseUserAgent = useCallback((ua: string) => {
+    if (!ua) return 'unknown';
+    if (ua.includes('Mobi')) return 'mobile';
+    if (ua.includes('Tablet')) return 'tablet';
+    return 'desktop';
+  }, []);
+
   /**
    * Track a single event. Call this from components.
    */
@@ -122,11 +144,40 @@ export function useAnalytics(algorithmId: string, tab: string) {
       if (!isAuth) return;
 
       const now = Date.now();
+      const storeState = useAlgorithmStore.getState();
+
+      const rawProgress = algorithmId ? storeState.algorithmProgress[algorithmId] : undefined;
+      const rawCourseProgress = courseId ? storeState.courseProgress[courseId] : undefined;
+
+      // Auto-enrich eventData with MINIMIZED environmental context
+      const enrichedData = {
+        ...eventData,
+        // Include summary snapshots instead of full objects to save DB space
+        currentProgress: summarizeProgressSnapshot(rawProgress),
+        currentCourseProgress: rawCourseProgress
+          ? {
+              completedCount: rawCourseProgress.completedPhases?.length || 0,
+              activePhase: rawCourseProgress.activePhaseIndex,
+            }
+          : undefined,
+        path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+        viewport:
+          typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : undefined,
+        language: typeof navigator !== 'undefined' ? navigator.language : undefined,
+        theme:
+          typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+            ? 'dark'
+            : 'light',
+        device:
+          typeof navigator !== 'undefined' ? getCoarseUserAgent(navigator.userAgent) : undefined,
+      };
+
       const event: LearningEvent = {
         algorithmId,
+        courseId,
         tab,
         eventType,
-        eventData,
+        eventData: enrichedData,
         sessionId: sessionId.current,
         durationMs: now - lastEventTime.current,
       };
@@ -135,7 +186,15 @@ export function useAnalytics(algorithmId: string, tab: string) {
 
       scheduleEventFlush();
     },
-    [algorithmId, tab, isAuth, scheduleEventFlush],
+    [
+      algorithmId,
+      courseId,
+      tab,
+      isAuth,
+      scheduleEventFlush,
+      summarizeProgressSnapshot,
+      getCoarseUserAgent,
+    ],
   );
 
   /**
@@ -144,6 +203,7 @@ export function useAnalytics(algorithmId: string, tab: string) {
    */
   const updateProgress = useCallback(
     (updates: Partial<AlgorithmProgress>, syncNow: boolean = false) => {
+      if (!algorithmId) return; // Progress updates require an algorithmId
       // Optimistically update frontend state immediately
       updateAlgorithmProgress(algorithmId, updates);
 

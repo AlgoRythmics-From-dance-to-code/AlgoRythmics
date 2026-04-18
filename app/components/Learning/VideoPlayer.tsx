@@ -14,11 +14,16 @@ interface VideoPlayerProps {
 export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlayerProps) {
   const { t } = useLocale();
   const [isLoading, setIsLoading] = useState(true);
-  const { updateProgress } = useAnalytics(algorithmId, 'video');
+  const { updateProgress, trackEvent } = useAnalytics(algorithmId, 'video');
   const { algorithmProgress } = useAlgorithmStore();
 
   const lastTickRef = useRef(Date.now());
   const isWatched = algorithmProgress[algorithmId]?.videoWatched || false;
+  const isWatchedRef = useRef(isWatched);
+
+  useEffect(() => {
+    isWatchedRef.current = isWatched;
+  }, [isWatched]);
 
   const progressRef = useRef(algorithmProgress[algorithmId]);
   useEffect(() => {
@@ -29,9 +34,11 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
   useEffect(() => {
     // Reset the last tick at the start of the effect
     lastTickRef.current = Date.now();
+    trackEvent('video_enter', { youtubeId, isWatched: isWatchedRef.current });
 
     const timer = setTimeout(() => {
-      if (!isWatched) {
+      trackEvent('video_watched_10s', { youtubeId });
+      if (!isWatchedRef.current) {
         updateProgress({
           videoWatched: true,
           videoCompletedAt: new Date().toISOString(),
@@ -42,12 +49,13 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
     return () => {
       clearTimeout(timer);
       const delta = Date.now() - lastTickRef.current;
+      trackEvent('video_exit', { youtubeId, durationWatched: delta });
       const currentTotal = progressRef.current?.videoWatchTimeMs || 0;
       updateProgress({
         videoWatchTimeMs: currentTotal + delta,
       });
     };
-  }, [algorithmId, updateProgress, isWatched]);
+  }, [algorithmId, updateProgress, trackEvent, youtubeId]);
 
   // If youtubeId is a placeholder, show a message instead of a broken iframe
   const isPlaceholder = youtubeId.startsWith('placeholder_');

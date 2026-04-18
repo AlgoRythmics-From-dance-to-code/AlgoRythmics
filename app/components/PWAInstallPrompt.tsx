@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { useLocale } from '../i18n/LocaleProvider';
+import { useGlobalAnalytics } from '../hooks/useGlobalAnalytics';
 import { Download, X, Smartphone, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -10,29 +11,35 @@ export default function PWAInstallPrompt() {
   const { install, canInstall, isIOS, isStandalone } = usePWAInstall();
   const [isVisible, setIsVisible] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const { trackGlobalEvent } = useGlobalAnalytics();
   const { t } = useLocale();
 
   useEffect(() => {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent,
+    );
     const dismissed = localStorage.getItem('pwa_dismissed') === 'true';
     const alreadyInstalled = localStorage.getItem('pwa_installed') === 'true';
 
     // Show immediately when on mobile, canInstall is true (or iOS), and conditions are met
     if (isMobile && (canInstall || isIOS) && !dismissed && !alreadyInstalled && !isStandalone) {
+      if (!isVisible) trackGlobalEvent('pwa_prompt_shown');
       setIsVisible(true);
     } else {
       setIsVisible(false);
     }
-  }, [canInstall, isStandalone, isIOS, t]);
+  }, [canInstall, isStandalone, isIOS, isVisible, trackGlobalEvent]);
 
   const handleDismiss = () => {
     localStorage.setItem('pwa_dismissed', 'true');
+    trackGlobalEvent('pwa_prompt_dismissed');
     setIsVisible(false);
   };
 
   const handleInstall = async () => {
     const outcome = await install();
     if (outcome === 'accepted') {
+      trackGlobalEvent('pwa_installed');
       setIsVisible(false);
     }
   };
@@ -43,16 +50,15 @@ export default function PWAInstallPrompt() {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-           layout
-           initial={{ y: 100, opacity: 0 }}
-           animate={{ y: 0, opacity: 1 }}
-           exit={{ y: 100, opacity: 0 }}
-           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-md antialiased"
+          layout
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-md antialiased"
         >
           <div className="font-montserrat bg-white/95 dark:bg-slate-900 shadow-2xl rounded-[2rem] border border-white/20 dark:border-slate-800 p-6 flex flex-col gap-5 overflow-hidden backdrop-blur-md">
-            
             {!isConfirming ? (
-              <motion.div 
+              <motion.div
                 key="prompt"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -71,7 +77,7 @@ export default function PWAInstallPrompt() {
                       {isIOS ? t('pwa.ios_instructions') : t('pwa.install_desc')}
                     </p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setIsConfirming(true)}
                     className="p-1 -mt-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors group"
                   >
@@ -102,7 +108,7 @@ export default function PWAInstallPrompt() {
                 </div>
               </motion.div>
             ) : (
-              <motion.div 
+              <motion.div
                 key="confirm"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -140,7 +146,6 @@ export default function PWAInstallPrompt() {
                 </div>
               </motion.div>
             )}
-            
           </div>
         </motion.div>
       )}

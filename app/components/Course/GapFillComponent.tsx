@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
+import { useAnalytics } from '../../hooks/useAnalytics';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
 
 interface GapFillComponentProps {
@@ -25,6 +26,8 @@ export default function GapFillComponent({
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
 
+  const { trackEvent } = useAnalytics(undefined, 'gap-fill', courseId);
+
   const content = phase.gapFillContent || '';
   const options = phase.gapFillOptions || [];
   const solutions = phase.gapFillSolutions || [];
@@ -42,6 +45,7 @@ export default function GapFillComponent({
     const newChoices = [...choices];
     newChoices[blankIdx] = val;
     setChoices(newChoices);
+    trackEvent('gap_fill_selected', { blankIndex: blankIdx, value: val });
   };
 
   const checkGaps = () => {
@@ -62,6 +66,18 @@ export default function GapFillComponent({
     setShowFeedback(true);
 
     const allCorrect = correct === blankCount;
+
+    trackEvent('gap_fill_checked', {
+      phaseId: phase.phaseId,
+      allCorrect,
+      correctCount: correct,
+      totalCount: blankCount,
+      choices: choices.map((c, i) => ({
+        index: i,
+        value: c,
+        isCorrect: solutions.length > 0 ? c === solutions[i] : true,
+      })),
+    });
 
     // Scale points to phase maxPoints
     const maxPoints = phase.maxPoints ?? 10;

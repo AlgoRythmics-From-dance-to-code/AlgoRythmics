@@ -31,29 +31,28 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const filteredCourses = useMemo(() => {
-    return courses
-      .filter((course) => {
-        // Tab filter
-        const isCompleted = !!courseProgress[course.slug]?.isCompleted;
-        if (activeTab === 'completed' && !isCompleted) return false;
-        if (activeTab === 'available' && isCompleted) return false;
+    return courses.filter((course) => {
+      // Tab filter
+      const isCompleted = !!courseProgress[course.slug]?.isCompleted;
+      if (activeTab === 'completed' && !isCompleted) return false;
+      if (activeTab === 'available' && isCompleted) return false;
 
-        // Search filter
-        if (
-          searchQuery &&
-          !course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          !course.summary.toLowerCase().includes(searchQuery.toLowerCase())
-        ) {
-          return false;
-        }
+      // Search filter
+      if (
+        searchQuery &&
+        !course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !course.summary.toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
+        return false;
+      }
 
-        // Difficulty filter
-        if (difficultyFilter !== 'all' && course.difficulty !== difficultyFilter) {
-          return false;
-        }
+      // Difficulty filter
+      if (difficultyFilter !== 'all' && course.difficulty !== difficultyFilter) {
+        return false;
+      }
 
-        return true;
-      });
+      return true;
+    });
   }, [courses, courseProgress, activeTab, searchQuery, difficultyFilter]);
 
   // Pagination logic
@@ -198,7 +197,9 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
               >
                 <option value="all">{t('common.all_difficulties')}</option>
                 <option value="Beginner">{t('courses.levels.beginner').toUpperCase()}</option>
-                <option value="Intermediate">{t('courses.levels.intermediate').toUpperCase()}</option>
+                <option value="Intermediate">
+                  {t('courses.levels.intermediate').toUpperCase()}
+                </option>
                 <option value="Advanced">{t('courses.levels.advanced').toUpperCase()}</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#269984] pointer-events-none" />
@@ -301,10 +302,10 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
 
                       <div className="flex">
                         <span className="inline-flex rounded-full border border-[#269984]/20 bg-[#269984]/5 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#269984] shadow-sm">
-                          {course.difficulty === 'Beginner' 
-                            ? t('courses.levels.beginner') 
-                            : course.difficulty === 'Intermediate' 
-                              ? t('courses.levels.intermediate') 
+                          {course.difficulty === 'Beginner'
+                            ? t('courses.levels.beginner')
+                            : course.difficulty === 'Intermediate'
+                              ? t('courses.levels.intermediate')
                               : t('courses.levels.advanced')}
                         </span>
                       </div>
@@ -337,7 +338,7 @@ export default function CoursesClient({ courses }: CoursesClientProps) {
                   >
                     <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   </button>
-                  
+
                   <div className="flex items-center gap-2">
                     {[...Array(totalPages)].map((_, i) => (
                       <button

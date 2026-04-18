@@ -150,7 +150,12 @@
       "status": "Status",
       "progress_title": "Your progress",
       "progress_subtitle": "Ready for next lesson?",
-      "verified_status": "Verified Account"
+      "verified_status": "Verified Account",
+      "streak": "Streak",
+      "current": "Current",
+      "best": "Best",
+      "learning_time": "Learning Time",
+      "avg_score": "Avg Score"
     },
     "edit": {
       "title": "Edit Profile",
@@ -519,6 +524,7 @@
   },
   "courses": {
     "hero_title": "Courses",
+    "learning_paths": "Learning Paths",
     "hero_description": "Explore our course categories and learn algorithms through different interactive methods",
     "all_courses": "All Courses",
     "lessons": "lessons",

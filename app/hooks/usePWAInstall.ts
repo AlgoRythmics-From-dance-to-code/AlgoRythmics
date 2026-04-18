@@ -12,6 +12,14 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+interface ExtendedWindow extends Window {
+  MSStream?: unknown;
+}
+
+interface ExtendedNavigator extends Navigator {
+  standalone?: boolean;
+}
+
 export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [canInstall, setCanInstall] = useState(false);
@@ -20,7 +28,8 @@ export function usePWAInstall() {
 
   useEffect(() => {
     // Check if it's iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isIOSDevice =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as ExtendedWindow).MSStream;
     setIsIOS(isIOSDevice);
 
     const handler = (e: Event) => {
@@ -43,9 +52,12 @@ export function usePWAInstall() {
     window.addEventListener('appinstalled', onAppInstalled);
 
     // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-       setCanInstall(false);
-       setIsStandalone(true);
+    if (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as ExtendedNavigator).standalone
+    ) {
+      setCanInstall(false);
+      setIsStandalone(true);
     }
 
     return () => {
@@ -62,7 +74,7 @@ export function usePWAInstall() {
 
     // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
-    
+
     // We've used the prompt, and can't use it again, throw it away
     setDeferredPrompt(null);
     setCanInstall(false);

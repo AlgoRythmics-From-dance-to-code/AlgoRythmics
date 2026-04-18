@@ -18,6 +18,7 @@ import { cookies } from 'next/headers';
 const montserrat = Montserrat({
   variable: '--font-montserrat',
   subsets: ['latin'],
+  display: 'swap',
 });
 
 export async function generateMetadata() {

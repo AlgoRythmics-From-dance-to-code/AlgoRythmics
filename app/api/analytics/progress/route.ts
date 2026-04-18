@@ -1,6 +1,43 @@
+import { NextResponse } from 'next/server';
 import { auth } from '../../../../auth';
 import { getPayloadInstance } from '../../../../lib/payload';
-import { NextResponse } from 'next/server';
+import type { AlgorithmProgress } from '../../../../payload-types';
+
+function normalizeMonotonicTimeFields(
+  existing: AlgorithmProgress | null | undefined,
+  updates: Partial<AlgorithmProgress>,
+) {
+  if (!existing) return;
+  const existingRecord = existing as unknown as Record<string, unknown>;
+  const updateRecord = updates as unknown as Record<string, unknown>;
+
+  for (const [key, value] of Object.entries(updateRecord)) {
+    if (key === 'totalTimeSpentMs' || !key.endsWith('TimeMs') || typeof value !== 'number') {
+      continue;
+    }
+    const existingValue = existingRecord[key];
+    updateRecord[key] = Math.max(typeof existingValue === 'number' ? existingValue : 0, value);
+  }
+}
+
+function computeTotalTimeSpentMs(
+  existing: AlgorithmProgress | null | undefined,
+  updates: Partial<AlgorithmProgress>,
+) {
+  const mergedRecord = {
+    ...((existing as unknown as Record<string, unknown> | null | undefined) || {}),
+    ...(updates as unknown as Record<string, unknown>),
+  };
+
+  let total = 0;
+  for (const [key, value] of Object.entries(mergedRecord)) {
+    if (key === 'totalTimeSpentMs' || !key.endsWith('TimeMs') || typeof value !== 'number') {
+      continue;
+    }
+    total += value;
+  }
+  return total;
+}
 
 /**
  * GET /api/analytics/progress?algorithmId=bubble-sort
@@ -83,15 +120,8 @@ export async function POST(req: Request) {
     const now = new Date().toISOString();
 
     // Compute aggregates based on merged data
-    const existing = docs.length > 0 ? docs[0] : undefined;
+    const existing = docs.length > 0 ? (docs[0] as AlgorithmProgress) : undefined;
     const merged = { ...(existing || {}), ...updates };
-
-    const totalTime =
-      ((merged.videoWatchTimeMs as number) || 0) +
-      ((merged.animationTotalTimeMs as number) || 0) +
-      ((merged.controlTotalTimeMs as number) || 0) +
-      ((merged.createTotalTimeMs as number) || 0) +
-      ((merged.aliveTotalTimeMs as number) || 0);
 
     let overall = 0;
     if (merged.videoWatched) overall += 20;
@@ -100,7 +130,33 @@ export async function POST(req: Request) {
     if (merged.createCompleted) overall += 20;
     if (merged.aliveCompleted) overall += 20;
 
-    updates.totalTimeSpentMs = totalTime;
+    // Use Math.max for counts, scores, and cumulative time fields to protect against stale client data
+    if (existing) {
+      normalizeMonotonicTimeFields(existing, updates);
+      if (updates.controlBestScore !== undefined)
+        updates.controlBestScore = Math.max(
+          existing.controlBestScore || 0,
+          updates.controlBestScore,
+        );
+      if (updates.controlAttempts !== undefined)
+        updates.controlAttempts = Math.max(existing.controlAttempts || 0, updates.controlAttempts);
+      if (updates.createAttempts !== undefined)
+        updates.createAttempts = Math.max(existing.createAttempts || 0, updates.createAttempts);
+      if (updates.createBlanksCorrectFirst !== undefined)
+        updates.createBlanksCorrectFirst = Math.max(
+          existing.createBlanksCorrectFirst || 0,
+          updates.createBlanksCorrectFirst,
+        );
+      if (updates.aliveBestScore !== undefined)
+        updates.aliveBestScore = Math.max(existing.aliveBestScore || 0, updates.aliveBestScore);
+      if (updates.aliveCodeSubmissions !== undefined)
+        updates.aliveCodeSubmissions = Math.max(
+          existing.aliveCodeSubmissions || 0,
+          updates.aliveCodeSubmissions,
+        );
+    }
+
+    updates.totalTimeSpentMs = computeTotalTimeSpentMs(existing, updates);
     updates.overallProgress = overall;
 
     if (existing) {

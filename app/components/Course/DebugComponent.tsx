@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Check, X, Bug } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
+import { useAnalytics } from '../../hooks/useAnalytics';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
 
 interface DebugComponentProps {
@@ -21,6 +22,8 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
 
+  const { trackEvent } = useAnalytics(undefined, 'debug', courseId);
+
   const debugLines = phase.debugCode?.split('\n') || [];
   const expectedLines = phase.expectedCode?.split('\n') || [];
 
@@ -34,6 +37,7 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
   const handleLineClick = (idx: number) => {
     if (isDone || showFeedback) return;
     setSelectedIndex(idx);
+    trackEvent('debug_line_click', { lineIndex: idx, lineText: debugLines[idx] });
   };
 
   const checkBug = () => {
@@ -42,6 +46,14 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
     const correct = selectedIndex === bugLineIndex;
     setIsCorrect(correct);
     if (!correct) onMistake?.();
+
+    trackEvent('debug_checked', {
+      phaseId: phase.phaseId,
+      correct,
+      selectedIndex,
+      bugLineIndex,
+      selectedLineText: debugLines[selectedIndex],
+    });
 
     // Set points immediately (100% or 0%)
     setCoursePhasePoints(courseId, phase.phaseId, {
