@@ -165,7 +165,6 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
       template,
       onMistake,
       algorithmId,
-      mistakes,
     ],
   );
 

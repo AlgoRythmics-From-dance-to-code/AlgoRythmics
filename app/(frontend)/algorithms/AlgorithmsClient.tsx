@@ -92,7 +92,14 @@ export default function AlgorithmsClient() {
 
     trackSearch(debouncedSearchQuery, filteredAlgorithms.length, locale, activeCategory);
     lastTrackedQuery.current = debouncedSearchQuery;
-  }, [debouncedSearchQuery, searchQuery, filteredAlgorithms.length, locale, activeCategory, trackSearch]);
+  }, [
+    debouncedSearchQuery,
+    searchQuery,
+    filteredAlgorithms.length,
+    locale,
+    activeCategory,
+    trackSearch,
+  ]);
 
   // Track category changes
   const handleCategoryChange = (cat: Category) => {

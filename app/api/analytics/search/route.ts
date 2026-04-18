@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid resultsCount' }, { status: 400 });
     }
 
-    const SUPPORTED_LANGUAGES = ['en', 'hu', 'ro'];
-    if (!SUPPORTED_LANGUAGES.includes(language as any)) {
+    const SUPPORTED_LANGUAGES = ['en', 'hu', 'ro'] as const;
+    if (!SUPPORTED_LANGUAGES.includes(language as (typeof SUPPORTED_LANGUAGES)[number])) {
       return NextResponse.json({ error: 'Invalid language' }, { status: 400 });
     }
 

@@ -8,8 +8,8 @@ function normalizeMonotonicTimeFields(
   updates: Partial<AlgorithmProgress>,
 ) {
   if (!existing) return;
-  const existingRecord = existing as Record<string, unknown>;
-  const updateRecord = updates as Record<string, unknown>;
+  const existingRecord = existing as unknown as Record<string, unknown>;
+  const updateRecord = updates as unknown as Record<string, unknown>;
 
   for (const [key, value] of Object.entries(updateRecord)) {
     if (key === 'totalTimeSpentMs' || !key.endsWith('TimeMs') || typeof value !== 'number') {
@@ -25,8 +25,8 @@ function computeTotalTimeSpentMs(
   updates: Partial<AlgorithmProgress>,
 ) {
   const mergedRecord = {
-    ...((existing as Record<string, unknown> | null | undefined) || {}),
-    ...(updates as Record<string, unknown>),
+    ...((existing as unknown as Record<string, unknown> | null | undefined) || {}),
+    ...(updates as unknown as Record<string, unknown>),
   };
 
   let total = 0;
@@ -122,13 +122,6 @@ export async function POST(req: Request) {
     // Compute aggregates based on merged data
     const existing = docs.length > 0 ? (docs[0] as AlgorithmProgress) : undefined;
     const merged = { ...(existing || {}), ...updates };
-
-    const totalTime =
-      ((merged.videoWatchTimeMs as number) || 0) +
-      ((merged.animationTotalTimeMs as number) || 0) +
-      ((merged.controlTotalTimeMs as number) || 0) +
-      ((merged.createTotalTimeMs as number) || 0) +
-      ((merged.aliveTotalTimeMs as number) || 0);
 
     let overall = 0;
     if (merged.videoWatched) overall += 20;
