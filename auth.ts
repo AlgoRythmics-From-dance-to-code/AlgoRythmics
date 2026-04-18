@@ -274,6 +274,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.createdAt = u.createdAt;
           token.completedAlgorithms = u.completedAlgorithms || [];
           token.mascotEnabled = u.mascotEnabled !== false;
+          token.learningStats = (u as any).learningStats;
         }
       }
 
@@ -309,6 +310,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.createdAt = dbUser.createdAt;
             token.completedAlgorithms = dbUser.completedAlgorithms || [];
             token.mascotEnabled = dbUser.mascotEnabled !== false;
+            token.learningStats = dbUser.learningStats;
           }
         } catch (error) {
           logger.error({ error }, 'JWT callback profile sync error');
@@ -340,6 +342,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.createdAt = String(token.createdAt || '');
         session.user.completedAlgorithms = token.completedAlgorithms;
         session.user.mascotEnabled = token.mascotEnabled !== false;
+        session.user.learningStats = token.learningStats as Record<string, unknown> | undefined;
       }
       return session;
     },

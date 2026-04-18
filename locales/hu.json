@@ -519,6 +519,7 @@
   },
   "courses": {
     "hero_title": "Kurzusok",
+    "learning_paths": "Tanulási útvonalak",
     "hero_description": "Fedezd fel kurzuskategóriáinkat és tanuld meg az algoritmusokat különböző interaktív módszerekkel",
     "all_courses": "Minden kurzus",
     "lessons": "lecke",

@@ -20,6 +20,10 @@ import {
   ExternalLink,
   Download,
   Smartphone,
+  Flame,
+  Clock,
+  Trophy,
+  Target,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocale, Locale } from '../../i18n/LocaleProvider';
@@ -448,43 +452,93 @@ export default function ProfilePage() {
                           </div>
                         </div>
 
-                        <div className="p-6 rounded-3xl bg-neutral-900 text-white flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="text-[10px] font-black uppercase opacity-50 tracking-[0.2em] mb-1">
-                              {t('profile.public.progress_title')}
-                            </p>
-                            <div className="flex items-center gap-6 mt-2">
-                              <div>
-                                <p className="text-3xl font-black text-[#269984]">
-                                  {Object.values(courseProgress).reduce(
-                                    (acc, curr) => acc + (curr.points || 0),
-                                    0,
-                                  )}
-                                </p>
-                                <p className="text-[10px] uppercase font-bold text-gray-400">
-                                  {t('courses.table.points')}
-                                </p>
+                        <div className="space-y-4">
+                          <label className="flex items-center gap-2 font-montserrat font-black text-[#269984] mb-3 text-xs uppercase tracking-[0.2em]">
+                            <Target size={14} className="opacity-70" />
+                            {t('profile.public.progress_title')}
+                          </label>
+                          <div className="grid grid-cols-2 gap-4">
+                            {/* Points & Checkpoints Card */}
+                            <div className="p-5 rounded-[2rem] bg-neutral-900 text-white flex flex-col justify-between shadow-lg relative overflow-hidden group">
+                              <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-[#269984]/20 transition-all duration-500"></div>
+                              <div className="relative z-10">
+                                <div className="flex items-center justify-between mb-4">
+                                  <Trophy size={20} className="text-[#269984]" />
+                                  <button
+                                    onClick={() => router.push('/courses')}
+                                    className="p-2 bg-white/10 hover:bg-[#269984] transition-all rounded-xl shadow-lg hover:scale-105 active:scale-95"
+                                  >
+                                    <ExternalLink size={14} />
+                                  </button>
+                                </div>
+                                <div className="flex items-end gap-2">
+                                  <p className="text-3xl font-black text-[#269984]">
+                                    {((user as BaseUser).learningStats?.totalPoints as number) || Object.values(courseProgress).reduce(
+                                      (acc, curr) => acc + (curr.points || 0),
+                                      0,
+                                    )}
+                                  </p>
+                                  <p className="text-[10px] uppercase font-bold text-gray-400 mb-1.5">
+                                    {t('courses.table.points')}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="h-10 w-px bg-white/10" />
-                              <div>
-                                <p className="text-3xl font-black text-white">
-                                  {
-                                    Object.values(courseProgress).filter((p) => p.isCompleted)
-                                      .length
-                                  }
+                            </div>
+
+                            {/* Streaks Card */}
+                            <div className="p-5 rounded-[2rem] bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 flex flex-col justify-between">
+                              <div className="flex items-center gap-2 mb-4">
+                                <Flame size={20} className="text-orange-500" />
+                                <span className="text-[10px] font-black uppercase text-orange-600 tracking-wider">
+                                  Streak
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-end">
+                                <div>
+                                  <p className="text-3xl font-black text-orange-500">
+                                    {((user as BaseUser).learningStats?.currentStreak as number) || 0}
+                                  </p>
+                                  <p className="text-[10px] uppercase font-bold text-gray-500">
+                                    Current
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-xl font-bold text-orange-400/70">
+                                    {((user as BaseUser).learningStats?.longestStreak as number) || 0}
+                                  </p>
+                                  <p className="text-[10px] uppercase font-bold text-gray-500">
+                                    Best
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Time & Average Score Card */}
+                            <div className="col-span-2 p-5 rounded-[2rem] bg-blue-500/5 border border-blue-500/10 flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500">
+                                  <Clock size={24} />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold text-gray-600 dark:text-gray-300">
+                                    {Math.round((((user as BaseUser).learningStats?.totalTimeSpentMs as number) || 0) / 60000)} mins
+                                  </p>
+                                  <p className="text-[10px] uppercase font-bold text-gray-400">
+                                    Learning Time
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="h-10 w-px bg-blue-500/10"></div>
+                              <div className="text-right pr-2">
+                                <p className="text-lg font-black text-blue-500">
+                                  {((user as BaseUser).learningStats?.averageScore as number) || 0}%
                                 </p>
                                 <p className="text-[10px] uppercase font-bold text-gray-400">
-                                  {t('courses.summary.checkpoints')}
+                                  Avg Score
                                 </p>
                               </div>
                             </div>
                           </div>
-                          <button
-                            onClick={() => router.push('/courses')}
-                            className="p-4 bg-[#269984] hover:bg-[#36D6BA] transition-all rounded-2xl shadow-lg shadow-[#269984]/20 hover:scale-105 active:scale-95"
-                          >
-                            <ExternalLink size={20} />
-                          </button>
                         </div>
                       </div>
 
@@ -504,7 +558,7 @@ export default function ProfilePage() {
                               </p>
                             </div>
                           </div>
-                          
+
                           {/* Different action based on platform/browser status */}
                           <div className="w-full sm:w-auto">
                             {!isIOS ? (
@@ -513,8 +567,12 @@ export default function ProfilePage() {
                                 disabled={!canInstall}
                                 className={`w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 group uppercase tracking-wider text-xs ${!canInstall ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                               >
-                                <Download className={`w-5 h-5 ${canInstall ? 'group-hover:animate-bounce' : ''}`} />
-                                {canInstall ? t('pwa.profile_install_btn') : t('pwa.already_installed_check')}
+                                <Download
+                                  className={`w-5 h-5 ${canInstall ? 'group-hover:animate-bounce' : ''}`}
+                                />
+                                {canInstall
+                                  ? t('pwa.profile_install_btn')
+                                  : t('pwa.already_installed_check')}
                               </button>
                             ) : (
                               <div className="px-6 py-3 bg-white/50 dark:bg-black/20 rounded-2xl border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider text-center">

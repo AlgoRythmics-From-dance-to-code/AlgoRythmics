@@ -7,6 +7,8 @@ import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
 
+import { useAnalytics } from '../../hooks/useAnalytics';
+
 interface MatchingComponentProps {
   phase: CoursePhase;
   courseId: string;
@@ -26,6 +28,8 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
   const isDone = useAlgorithmStore((state) =>
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
+
+  const { trackEvent } = useAnalytics(undefined, 'match', courseId);
 
   const initialLeft = phase.matching?.map((m, i) => ({ id: `L-${i}`, text: m.left })) || [];
   const initialRight = phase.matching?.map((m, i) => ({ id: `R-${i}`, text: m.right })) || [];
@@ -51,6 +55,9 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
     setMatches((prev) =>
       prev.map((m) => {
         if (m.leftId === selectedLeft) {
+          const leftText = initialLeft.find((l) => l.id === selectedLeft)?.text;
+          const rightText = shuffledRight.find((r) => r.id === id)?.text;
+          trackEvent('matching_pair_selected', { left: leftText, right: rightText });
           return { ...m, rightId: id };
         }
         // If this rightId was already used elsewhere, clear that one
@@ -76,6 +83,18 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
     const correctCount = results.filter((r) => r.isCorrect).length;
     const totalCount = results.length;
     const allCorrect = correctCount === totalCount;
+
+    trackEvent('matching_checked', {
+      phaseId: phase.phaseId,
+      correctCount,
+      totalCount,
+      allCorrect,
+      matrix: results.map((r) => ({
+        left: initialLeft.find((l) => l.id === r.leftId)?.text,
+        right: shuffledRight.find((right) => right.id === r.rightId)?.text,
+        isCorrect: r.isCorrect,
+      })),
+    });
 
     if (!allCorrect) onMistake?.();
 

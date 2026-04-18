@@ -82,11 +82,17 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
     const score = totalCorrect > 0 ? Math.round((correctFirstTry / totalCorrect) * 100) : 100;
 
     trackEvent('control_complete', { score, mistakes, timeMs: elapsed });
+
+    // Determine if this is a new best time
+    const existingBestTime = progressRef.current?.controlBestTimeMs || 0;
+    const isNewBestTime = elapsed > 0 && (existingBestTime === 0 || elapsed < existingBestTime);
+
     updateProgress(
       {
         controlCompleted: true,
         controlBestScore: score,
         controlMistakes: mistakes,
+        controlBestTimeMs: isNewBestTime ? elapsed : existingBestTime,
         controlCompletedAt: new Date().toISOString(),
       },
       true,

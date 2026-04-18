@@ -42,14 +42,21 @@ export const LearningEvents: CollectionConfig = {
     {
       name: 'algorithmId',
       type: 'text',
-      required: true,
+      required: false,
       index: true,
       admin: { description: 'e.g. bubble-sort, insertion-sort' },
     },
     {
+      name: 'courseId',
+      type: 'text',
+      required: false,
+      index: true,
+      admin: { description: 'e.g. intro-to-algorithms' },
+    },
+    {
       name: 'tab',
       type: 'select',
-      required: true,
+      required: false,
       options: [
         { label: 'Video', value: 'video' },
         { label: 'Animation', value: 'animation' },

@@ -1,6 +1,7 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../../../../auth';
 import { getPayloadInstance } from '../../../../lib/payload';
-import { NextResponse } from 'next/server';
+import type { AlgorithmProgress } from '../../../../payload-types';
 
 /**
  * GET /api/analytics/progress?algorithmId=bubble-sort
@@ -83,7 +84,7 @@ export async function POST(req: Request) {
     const now = new Date().toISOString();
 
     // Compute aggregates based on merged data
-    const existing = docs.length > 0 ? docs[0] : undefined;
+    const existing = docs.length > 0 ? (docs[0] as AlgorithmProgress) : undefined;
     const merged = { ...(existing || {}), ...updates };
 
     const totalTime =
@@ -99,6 +100,31 @@ export async function POST(req: Request) {
     if (merged.controlCompleted) overall += 20;
     if (merged.createCompleted) overall += 20;
     if (merged.aliveCompleted) overall += 20;
+
+    // Use Math.max for counts and scores to protect against stale client data
+    if (existing) {
+      if (updates.controlBestScore !== undefined)
+        updates.controlBestScore = Math.max(
+          existing.controlBestScore || 0,
+          updates.controlBestScore,
+        );
+      if (updates.controlAttempts !== undefined)
+        updates.controlAttempts = Math.max(existing.controlAttempts || 0, updates.controlAttempts);
+      if (updates.createAttempts !== undefined)
+        updates.createAttempts = Math.max(existing.createAttempts || 0, updates.createAttempts);
+      if (updates.createBlanksCorrectFirst !== undefined)
+        updates.createBlanksCorrectFirst = Math.max(
+          existing.createBlanksCorrectFirst || 0,
+          updates.createBlanksCorrectFirst,
+        );
+      if (updates.aliveBestScore !== undefined)
+        updates.aliveBestScore = Math.max(existing.aliveBestScore || 0, updates.aliveBestScore);
+      if (updates.aliveCodeSubmissions !== undefined)
+        updates.aliveCodeSubmissions = Math.max(
+          existing.aliveCodeSubmissions || 0,
+          updates.aliveCodeSubmissions,
+        );
+    }
 
     updates.totalTimeSpentMs = totalTime;
     updates.overallProgress = overall;

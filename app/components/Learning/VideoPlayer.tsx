@@ -14,7 +14,7 @@ interface VideoPlayerProps {
 export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlayerProps) {
   const { t } = useLocale();
   const [isLoading, setIsLoading] = useState(true);
-  const { updateProgress } = useAnalytics(algorithmId, 'video');
+  const { updateProgress, trackEvent } = useAnalytics(algorithmId, 'video');
   const { algorithmProgress } = useAlgorithmStore();
 
   const lastTickRef = useRef(Date.now());
@@ -29,8 +29,10 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
   useEffect(() => {
     // Reset the last tick at the start of the effect
     lastTickRef.current = Date.now();
+    trackEvent('video_enter', { youtubeId, isWatched });
 
     const timer = setTimeout(() => {
+      trackEvent('video_watched_10s', { youtubeId });
       if (!isWatched) {
         updateProgress({
           videoWatched: true,
@@ -42,12 +44,13 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
     return () => {
       clearTimeout(timer);
       const delta = Date.now() - lastTickRef.current;
+      trackEvent('video_exit', { youtubeId, durationWatched: delta });
       const currentTotal = progressRef.current?.videoWatchTimeMs || 0;
       updateProgress({
         videoWatchTimeMs: currentTotal + delta,
       });
     };
-  }, [algorithmId, updateProgress, isWatched]);
+  }, [algorithmId, updateProgress, trackEvent, isWatched, youtubeId]);
 
   // If youtubeId is a placeholder, show a message instead of a broken iframe
   const isPlaceholder = youtubeId.startsWith('placeholder_');

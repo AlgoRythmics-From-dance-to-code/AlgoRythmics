@@ -17,6 +17,7 @@ export interface AlgorithmProgress {
   createCompletedAt?: string | null;
   aliveCompletedAt?: string | null;
   controlBestScore?: number;
+  controlBestTimeMs?: number;
   controlMistakes?: number;
   createMistakes?: number;
   controlAttempts?: number;
@@ -161,7 +162,6 @@ interface AlgorithmState {
   clearStore: () => void;
 }
 
-
 export const useAlgorithmStore = create<AlgorithmState>()(
   persist(
     (set, get) => ({
@@ -298,7 +298,11 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         set({
           courseProgress: {
             ...courseProgress,
-            [courseId]: { ...current, activePhaseIndex },
+            [courseId]: { 
+              ...current, 
+              activePhaseIndex,
+              firstStartedAt: current.firstStartedAt || new Date().toISOString()
+            },
           },
         });
       },
@@ -654,4 +658,3 @@ export const useAlgorithmStore = create<AlgorithmState>()(
     },
   ),
 );
-

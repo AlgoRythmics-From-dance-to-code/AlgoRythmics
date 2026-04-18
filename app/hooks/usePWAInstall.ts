@@ -43,9 +43,12 @@ export function usePWAInstall() {
     window.addEventListener('appinstalled', onAppInstalled);
 
     // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-       setCanInstall(false);
-       setIsStandalone(true);
+    if (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone
+    ) {
+      setCanInstall(false);
+      setIsStandalone(true);
     }
 
     return () => {
@@ -62,7 +65,7 @@ export function usePWAInstall() {
 
     // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
-    
+
     // We've used the prompt, and can't use it again, throw it away
     setDeferredPrompt(null);
     setCanInstall(false);

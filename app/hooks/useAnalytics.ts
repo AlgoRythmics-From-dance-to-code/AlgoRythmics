@@ -6,8 +6,9 @@ import { useAlgorithmStore, type AlgorithmProgress } from '../store/useAlgorithm
 import { APP_CONFIG } from '../../lib/constants';
 
 interface LearningEvent {
-  algorithmId: string;
-  tab: string;
+  algorithmId?: string;
+  courseId?: string;
+  tab?: string;
   eventType: string;
   eventData?: Record<string, unknown>;
   sessionId: string;
@@ -23,7 +24,7 @@ function generateId(): string {
  * Batches events and progress updates to minimize network requests.
  * Uses navigator.sendBeacon on visibilitychange/unload to prevent data loss.
  */
-export function useAnalytics(algorithmId: string, tab: string) {
+export function useAnalytics(algorithmId?: string, tab?: string, courseId?: string) {
   const { status } = useSession();
   const isAuth = status === 'authenticated';
   const { updateAlgorithmProgress } = useAlgorithmStore();
@@ -122,11 +123,33 @@ export function useAnalytics(algorithmId: string, tab: string) {
       if (!isAuth) return;
 
       const now = Date.now();
+      // Capture a snapshot of the current algorithm progress at the time of the event
+      const storeState = useAlgorithmStore.getState();
+      const currentProgress = algorithmId 
+        ? storeState.algorithmProgress[algorithmId] 
+        : undefined;
+      const currentCourseProgress = courseId
+        ? storeState.courseProgress[courseId]
+        : undefined;
+
+      // Auto-enrich eventData with environmental context & progress snapshots
+      const enrichedData = {
+        ...eventData,
+        currentProgress, // Massive improvement: Every event now knows the exact algorithm state!
+        currentCourseProgress, // Knows the exact state of the guided course!
+        url: typeof window !== 'undefined' ? window.location.href : undefined,
+        viewport: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : undefined,
+        language: typeof navigator !== 'undefined' ? navigator.language : undefined,
+        theme: typeof document !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+      };
+
       const event: LearningEvent = {
         algorithmId,
+        courseId,
         tab,
         eventType,
-        eventData,
+        eventData: enrichedData,
         sessionId: sessionId.current,
         durationMs: now - lastEventTime.current,
       };
@@ -135,7 +158,7 @@ export function useAnalytics(algorithmId: string, tab: string) {
 
       scheduleEventFlush();
     },
-    [algorithmId, tab, isAuth, scheduleEventFlush],
+    [algorithmId, courseId, tab, isAuth, scheduleEventFlush],
   );
 
   /**
@@ -144,6 +167,7 @@ export function useAnalytics(algorithmId: string, tab: string) {
    */
   const updateProgress = useCallback(
     (updates: Partial<AlgorithmProgress>, syncNow: boolean = false) => {
+      if (!algorithmId) return; // Progress updates require an algorithmId
       // Optimistically update frontend state immediately
       updateAlgorithmProgress(algorithmId, updates);
 

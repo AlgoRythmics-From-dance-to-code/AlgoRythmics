@@ -6,14 +6,28 @@ import { Search, Grid2X2, X, BarChart3, Activity, ArrowRight, Smile } from 'luci
 import { useLocale } from '../../i18n/LocaleProvider';
 import { ALGORITHMS } from '../../../lib/constants';
 import AlgorithmCard from '../../components/AlgorithmCard';
+import { useShallow } from 'zustand/react/shallow';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import { useGlobalAnalytics } from '../../hooks/useGlobalAnalytics';
+import { useDebounce } from '../../hooks/useDebounce';
 
 type Category = 'all' | 'sorting' | 'searching' | 'backtracking' | 'fun';
 
 export default function AlgorithmsClient() {
-  const { t } = useLocale();
   const { activeCategory, setCategory, searchQuery, setSearchQuery, completedIds } =
-    useAlgorithmStore();
+    useAlgorithmStore(
+      useShallow((state) => ({
+        activeCategory: state.activeCategory,
+        setCategory: state.setCategory,
+        searchQuery: state.searchQuery,
+        setSearchQuery: state.setSearchQuery,
+        completedIds: state.completedIds,
+      })),
+    );
+  const { t, locale } = useLocale();
+  const { trackSearch, trackGlobalEvent } = useGlobalAnalytics();
+  const debouncedSearchQuery = useDebounce(searchQuery.trim(), 1000);
+  const lastTrackedQuery = useRef('');
 
   // Categories helper
   const categories = [
@@ -66,12 +80,24 @@ export default function AlgorithmsClient() {
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const heroRef = useRef<HTMLDivElement>(null);
 
+  // Track search queries (using useDebounce)
+  useEffect(() => {
+    if (!debouncedSearchQuery || debouncedSearchQuery === lastTrackedQuery.current) return;
+
+    trackSearch(debouncedSearchQuery, filteredAlgorithms.length, locale, activeCategory);
+    lastTrackedQuery.current = debouncedSearchQuery;
+  }, [debouncedSearchQuery, filteredAlgorithms.length, locale, activeCategory, trackSearch]);
+
+  // Track category changes
+  const handleCategoryChange = (cat: Category) => {
+    setCategory(cat);
+    trackGlobalEvent('category_changed', { category: cat });
+  };
+
   // Accurate scroll detection for sticky "contact" moment
   useEffect(() => {
     const handleScroll = () => {
       if (heroRef.current) {
-        // Trigger right when the bottom of the hero (which is the top of the filter bar)
-        // hits the bottom of the fixed site header.
         setIsScrolled(window.scrollY >= heroRef.current.offsetHeight - 2);
       }
     };

@@ -45,6 +45,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
   const [activeBlank, setActiveBlank] = useState<string | null>(null);
   const [activeWrongOptions, setActiveWrongOptions] = useState<Record<string, Set<string>>>({});
   const [isComplete, setIsComplete] = useState(false);
+  const [mistakes, setMistakes] = useState(0);
   const startTime = useRef(Date.now());
   const lastTickRef = useRef(Date.now());
   const { resetAlgorithmProgressTab } = useAlgorithmStore();
@@ -128,6 +129,9 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
           createHelpUsed: helpActive,
           createBlanksCorrectFirst: firstTryCorrect,
           createBlanksTotal: totalBlanks,
+          createMistakes: mistakes,
+          createAttempts:
+            (useAlgorithmStore.getState().algorithmProgress[algorithmId]?.createAttempts || 0) + 1,
           createCompletedAt: new Date().toISOString(),
         });
       } else if (isCorrect) {
@@ -142,6 +146,8 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
           setActiveBlank(null);
         }
       } else {
+        setMistakes((m) => m + 1);
+        updateProgress({ createMistakes: mistakes + 1 });
         onMistake?.();
       }
     },

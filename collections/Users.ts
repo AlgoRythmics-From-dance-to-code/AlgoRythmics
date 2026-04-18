@@ -175,6 +175,7 @@ export const Users: CollectionConfig = {
       type: 'json',
       admin: {
         description: 'Persistent state of the algorithm visualizer for each algorithm.',
+        hidden: true,
       },
     },
     {

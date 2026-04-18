@@ -42,9 +42,11 @@ export default function middleware(request: NextRequest) {
   }
 
   // 5. Guest Guard: Redirect authenticated users away from login/register
-  if (token && isAuthPage) {
-    return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
-  }
+  // DEPRECATED: We now handle this via server components in /login and /register
+  // because middleware cannot validate if a JWT is actually expired.
+  // if (token && isAuthPage) {
+  //   return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
+  // }
 
   // 6. Frontend Protected Routes Guard
   if (!token && isProtectedRoute) {

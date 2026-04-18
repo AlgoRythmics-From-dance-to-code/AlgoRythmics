@@ -519,6 +519,7 @@
   },
   "courses": {
     "hero_title": "Courses",
+    "learning_paths": "Learning Paths",
     "hero_description": "Explore our course categories and learn algorithms through different interactive methods",
     "all_courses": "All Courses",
     "lessons": "lessons",

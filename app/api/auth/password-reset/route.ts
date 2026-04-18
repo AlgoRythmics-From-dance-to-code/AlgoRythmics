@@ -80,7 +80,9 @@ export async function GET(req: Request) {
     }
 
     const user = users.docs[0] as any;
-    const expiration = user._resetPasswordExpiration ? new Date(user._resetPasswordExpiration).getTime() : 0;
+    const expiration = user._resetPasswordExpiration
+      ? new Date(user._resetPasswordExpiration).getTime()
+      : 0;
     const now = Date.now();
 
     if (!expiration || now > expiration) {

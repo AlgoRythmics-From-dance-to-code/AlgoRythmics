@@ -9,10 +9,12 @@ import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Check, ShieldAlert, Sparkles } from 'lucide-react';
 
+import { useShallow } from 'zustand/react/shallow';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
 import type { CourseBlueprint, CoursePhase } from '../../../lib/courses/courseCatalog';
 import { VIDEOS } from '../../../lib/constants';
+import { useAnalytics } from '../../hooks/useAnalytics';
 
 const AlgorithmVisualizer = dynamic(() => import('../Learning/AlgorithmVisualizer'));
 const ControlVisualizer = dynamic(() => import('../Learning/ControlVisualizer'));
@@ -33,30 +35,50 @@ type PendingAdvance = {
 
 function getCompletionFlag(
   progress: ReturnType<typeof useAlgorithmStore.getState>['algorithmProgress'][string],
-  courseProgress: { completedPhases: string[] },
+  courseProgress: { completedPhases: string[]; firstStartedAt?: string },
   phase: CoursePhase,
 ) {
+  // 1. Explicitly marked as completed in this course
   if (courseProgress?.completedPhases?.includes(phase.phaseId)) return true;
+
+  // 2. Check if the underlying algorithm module was completed DURING this specific course session.
+  // If they completed the video yesterday, but started the course today, we want them to re-do it for the course!
+  const courseStartStr = courseProgress?.firstStartedAt;
+  if (!courseStartStr) return false;
+
+  const courseStartTime = new Date(courseStartStr).getTime();
+
+  const isCompletedAfterCourseStart = (completionTimeStr?: string | null) => {
+    if (!completionTimeStr) return false;
+    // Allow a small 5-second buffer for timestamp skewing between calls
+    return new Date(completionTimeStr).getTime() >= (courseStartTime - 5000);
+  };
 
   switch (phase.sourceView) {
     case 'video':
-      return !!progress?.videoWatched;
+      return !!progress?.videoWatched && isCompletedAfterCourseStart(progress?.videoCompletedAt);
     case 'animation':
-      return !!progress?.animationCompleted;
+      return !!progress?.animationCompleted && isCompletedAfterCourseStart(progress?.animationCompletedAt);
     case 'control':
-      return !!progress?.controlCompleted;
+      return !!progress?.controlCompleted && isCompletedAfterCourseStart(progress?.controlCompletedAt);
     case 'create':
-      return !!progress?.createCompleted;
+      return !!progress?.createCompleted && isCompletedAfterCourseStart(progress?.createCompletedAt);
     case 'alive':
     case 'final-challenge':
-      return !!progress?.aliveCompleted;
+      return !!progress?.aliveCompleted && isCompletedAfterCourseStart(progress?.aliveCompletedAt);
     default:
       return false;
   }
 }
 
 function InfoComponent({ phase, courseId }: { phase: CoursePhase; courseId: string }) {
-  const { markCoursePhaseComplete, setCoursePhasePoints, syncProgress } = useAlgorithmStore();
+  const { markCoursePhaseComplete, setCoursePhasePoints, syncProgress } = useAlgorithmStore(
+    useShallow((state) => ({
+      markCoursePhaseComplete: state.markCoursePhaseComplete,
+      setCoursePhasePoints: state.setCoursePhasePoints,
+      syncProgress: state.syncProgress,
+    })),
+  );
   const { t } = useLocale();
   const isRead = useAlgorithmStore((state) =>
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
@@ -102,7 +124,14 @@ function QuizComponent({
 }) {
   const { t } = useLocale();
   const { markCoursePhaseComplete, setCoursePhasePoints, setCoursePhaseResult, syncProgress } =
-    useAlgorithmStore();
+    useAlgorithmStore(
+      useShallow((state) => ({
+        markCoursePhaseComplete: state.markCoursePhaseComplete,
+        setCoursePhasePoints: state.setCoursePhasePoints,
+        setCoursePhaseResult: state.setCoursePhaseResult,
+        syncProgress: state.syncProgress,
+      })),
+    );
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const isDone = useAlgorithmStore((state) =>
@@ -284,8 +313,27 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     updateCourseTotalTime,
     isRehydrated,
     syncProgress,
-  } = useAlgorithmStore();
+  } = useAlgorithmStore(
+    useShallow((state) => ({
+      algorithmProgress: state.algorithmProgress,
+      resetAlgorithmProgressTab: state.resetAlgorithmProgressTab,
+      courseProgress: state.courseProgress,
+      setCourseActivePhase: state.setCourseActivePhase,
+      resetCoursePhasesFrom: state.resetCoursePhasesFrom,
+      resetCourseProgress: state.resetCourseProgress,
+      setCourseConfidenceRating: state.setCourseConfidenceRating,
+      setCoursePhasePoints: state.setCoursePhasePoints,
+      markCourseCompleted: state.markCourseCompleted,
+      updateCoursePhaseStats: state.updateCoursePhaseStats,
+      incrementCourseMascotInteraction: state.incrementCourseMascotInteraction,
+      incrementCourseMistakes: state.incrementCourseMistakes,
+      updateCourseTotalTime: state.updateCourseTotalTime,
+      isRehydrated: state.isRehydrated,
+      syncProgress: state.syncProgress,
+    })),
+  );
 
+  const { trackEvent } = useAnalytics(course.algorithmId, undefined, course.slug);
   const { t } = useLocale();
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
@@ -331,8 +379,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     return Math.max(Math.min(firstIncompletePhaseIndex, course.phases.length - 1), 0);
   }, [course.phases.length, course.slug, firstIncompletePhaseIndex, courseProgress]);
 
-
-
   const [activePhaseIndex, setActivePhaseIndex] = useState(initialPhaseIndex);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [mascotVisible, setMascotVisible] = useState(false);
@@ -377,7 +423,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRehydrated, course.slug]); // courseProgress omitted to avoid loops; isRehydrated ensures we run after hydration
 
-
   // Auto-prompt to restart if course was already completed on entry.
   // Uses snapshot ref to avoid adding live `courseProgress` to deps (would cause infinite loop).
   useEffect(() => {
@@ -392,9 +437,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const handleConfirmRestart = () => {
     if (modalMode === 'restart') {
       resetCourseProgress(course.slug);
-      course.phases.forEach((p) => {
-        resetAlgorithmProgressTab(p.sourceAlgorithmId || course.algorithmId, p.sourceView);
-      });
+      // We no longer call resetAlgorithmProgressTab here! 
+      // getCompletionFlag now correctly ignores old completions based on course.firstStartedAt,
+      // so we don't need to destructively wipe global algorithm progress when restarting a course.
       setActivePhaseIndex(0);
       setIsFinished(false);
       setPhaseKey((v) => v + 1);
@@ -542,7 +587,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
   // Note: Redundant slug-navigation jump effect removed as it is now handled by the resume effect above.
 
-
   // Handle mascot message when phase changes (triggered by user or slug change)
   useEffect(() => {
     // actually, it's better to update on unmount of the phase or when handleContinue happens.
@@ -564,6 +608,13 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     phaseMascotHelpCount.current = phaseAdvice ? 1 : 0;
     setPhaseMistakesCount(0);
     mascotHelpedCurrentPhase.current = !!phaseAdvice;
+
+    trackEvent('course_phase_enter', {
+      phaseId: activePhase.phaseId,
+      phaseType: activePhase.sourceView,
+      title: activePhase.title,
+      isRepeat: !!courseProgress[course.slug]?.completedPhases?.includes(activePhase.phaseId),
+    });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePhaseIndex, course.slug]);
@@ -728,12 +779,28 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     });
     updateCourseTotalTime(course.slug, elapsed);
 
+    trackEvent('course_phase_completed', {
+      phaseId: activePhase.phaseId,
+      durationMs: elapsed,
+      mistakes: phaseMistakesCount,
+      earnedPoints,
+      maxPoints,
+      confidence: level,
+      mascotHelpCount: phaseMascotHelpCount.current,
+      improvedAfterMascot: improved,
+      helpUsed,
+    });
+
     if (activePhaseIndex < course.phases.length - 1) {
       setActivePhaseIndex((value) => value + 1);
     } else {
       markCourseCompleted(course.slug);
       setIsFinished(true);
       promptShownRef.current = true;
+      trackEvent('course_completed', {
+        courseId: course.slug,
+        totalTimeMs: elapsed, // This is just the last phase, but the event aggregates
+      });
     }
 
     setPendingAdvance(null);

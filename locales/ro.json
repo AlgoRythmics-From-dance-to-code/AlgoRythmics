@@ -519,6 +519,7 @@
   },
   "courses": {
     "hero_title": "Cursuri",
+    "learning_paths": "Rute de învățare",
     "hero_description": "Explorează categoriile noastre de cursuri și învață algoritmi prin diferite metode interactive",
     "all_courses": "Toate cursurile",
     "lessons": "lecții",
