@@ -411,13 +411,13 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
     // Refresh snapshot when slug changes
     if (lastSnapshotSlugRef.current !== course.slug) {
-      courseProgressSnapshotRef.current = courseProgress;
+      courseProgressSnapshotRef.current = useAlgorithmStore.getState().courseProgress;
       lastSnapshotSlugRef.current = course.slug;
     }
 
     setHasHydrated(true);
 
-    const storedProgress = courseProgress[course.slug];
+    const storedProgress = useAlgorithmStore.getState().courseProgress[course.slug];
     if (storedProgress) {
       if (typeof storedProgress.activePhaseIndex === 'number') {
         const resumeIndex = Math.min(storedProgress.activePhaseIndex, firstIncompletePhaseIndex);
@@ -427,8 +427,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         setIsFinished(true);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRehydrated, course.slug]); // courseProgress omitted to avoid loops; isRehydrated ensures we run after hydration
+  }, [isRehydrated, course.slug, firstIncompletePhaseIndex]);
 
   // Auto-prompt to restart if course was already completed on entry.
   // Uses snapshot ref to avoid adding live `courseProgress` to deps (would cause infinite loop).
@@ -620,11 +619,21 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       phaseId: activePhase.phaseId,
       phaseType: activePhase.sourceView,
       title: activePhase.title,
-      isRepeat: !!courseProgress[course.slug]?.completedPhases?.includes(activePhase.phaseId),
+      isRepeat: !!useAlgorithmStore
+        .getState()
+        .courseProgress[course.slug]?.completedPhases?.includes(activePhase.phaseId),
     });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePhaseIndex, course.slug, trackEvent]);
+  }, [
+    activePhaseIndex,
+    course.slug,
+    trackEvent,
+    activePhase.phaseId,
+    activePhase.sourceView,
+    activePhase.title,
+    activePhase.mascotLine,
+    mascotEnabled,
+    incrementCourseMascotInteraction,
+  ]);
 
   useEffect(() => {
     if (!hasHydrated) return;

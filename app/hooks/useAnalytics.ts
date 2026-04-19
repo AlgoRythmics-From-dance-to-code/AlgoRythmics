@@ -53,7 +53,10 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
       body: JSON.stringify({ events }),
     }).catch((err: unknown) => {
       console.error('[Analytics] event flush failed:', err);
-      eventBuffer.current.unshift(...events); // retry later
+      // Re-queue for retry, but cap buffer to prevent memory leak
+      const MAX_BUFFER_SIZE = 200;
+      const requeued = [...events, ...eventBuffer.current].slice(0, MAX_BUFFER_SIZE);
+      eventBuffer.current = requeued;
     });
   }, [isAuth]);
 
@@ -96,7 +99,14 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
         );
         eventBuffer.current = [];
       } catch {
-        flushEvents();
+        // Fallback with keepalive to survive page unload
+        fetch('/api/analytics/event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ events: eventBuffer.current }),
+          keepalive: true,
+        }).catch(() => {});
+        eventBuffer.current = [];
       }
     }
 
@@ -110,10 +120,17 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
         );
         progressBuffer.current = {};
       } catch {
-        flushProgress();
+        // Fallback with keepalive to survive page unload
+        fetch('/api/analytics/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ algorithmId, updates: progressBuffer.current }),
+          keepalive: true,
+        }).catch(() => {});
+        progressBuffer.current = {};
       }
     }
-  }, [isAuth, algorithmId, flushEvents, flushProgress]);
+  }, [isAuth, algorithmId]);
 
   const summarizeProgressSnapshot = useCallback((progress: AlgorithmProgress | undefined) => {
     if (!progress) return undefined;
@@ -172,6 +189,9 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
           typeof navigator !== 'undefined' ? getCoarseUserAgent(navigator.userAgent) : undefined,
       };
 
+      // Cap durationMs at 5 minutes to avoid idle gaps inflating time stats
+      const MAX_DURATION_MS = 5 * 60 * 1000;
+      const rawDuration = now - lastEventTime.current;
       const event: LearningEvent = {
         algorithmId,
         courseId,
@@ -179,7 +199,7 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
         eventType,
         eventData: enrichedData,
         sessionId: sessionId.current,
-        durationMs: now - lastEventTime.current,
+        durationMs: Math.min(rawDuration, MAX_DURATION_MS),
       };
       lastEventTime.current = now;
       eventBuffer.current.push(event);

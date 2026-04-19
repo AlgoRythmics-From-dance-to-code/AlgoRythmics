@@ -25,4 +25,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(withPayload(nextConfig));
+const payloadConfig = withPayload(nextConfig);
+
+if (payloadConfig.experimental && 'turbopackServerFastRefresh' in payloadConfig.experimental) {
+  delete payloadConfig.experimental.turbopackServerFastRefresh;
+}
+
+export default withPWA(payloadConfig);

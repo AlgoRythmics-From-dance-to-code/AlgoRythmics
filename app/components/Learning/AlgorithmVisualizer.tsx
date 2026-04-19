@@ -139,11 +139,11 @@ export default function AlgorithmVisualizer({ id }: AlgorithmVisualizerProps) {
       updateProgress({
         animationCompleted: true,
         animationCompletedAt: new Date().toISOString(),
-        animationPlayCount: (algorithmProgress[id]?.animationPlayCount || 0) + 1,
+        animationPlayCount:
+          (useAlgorithmStore.getState().algorithmProgress[id]?.animationPlayCount || 0) + 1,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFinished]);
+  }, [isFinished, currentStep, steps, trackEvent, updateProgress, id]);
 
   // Autoplay
   useEffect(() => {
