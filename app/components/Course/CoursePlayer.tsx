@@ -111,7 +111,8 @@ function InfoComponent({ phase, courseId }: { phase: CoursePhase; courseId: stri
             markCoursePhaseComplete(courseId, phase.phaseId);
             syncProgress();
           }}
-          className="self-end px-8 py-3 bg-[#269984] text-white rounded-xl font-bold hover:bg-[#1f7a6a] transition-all shadow-lg shadow-[#269984]/20"
+          style={{ backgroundColor: phase.maxPoints ? undefined : undefined, background: `linear-gradient(to right, ${useAlgorithmStore.getState().courseProgress[courseId]?.accentColor || '#269984'}, ${useAlgorithmStore.getState().courseProgress[courseId]?.accentColor || '#269984'}ee)` }}
+          className="self-end px-8 py-3 text-white rounded-xl font-bold transition-all shadow-lg hover:brightness-110 active:scale-95"
         >
           {t('course.info_understand')}
         </button>
@@ -123,10 +124,12 @@ function InfoComponent({ phase, courseId }: { phase: CoursePhase; courseId: stri
 function QuizComponent({
   phase,
   courseId,
+  accentColor,
   onMistake,
 }: {
   phase: CoursePhase;
   courseId: string;
+  accentColor: string;
   onMistake?: () => void;
 }) {
   const { t } = useLocale();
@@ -195,9 +198,9 @@ function QuizComponent({
               textClass = 'text-red-700 dark:text-red-400';
             }
           } else if (isSelected) {
-            borderClass = 'border-[#269984]';
-            bgClass = 'bg-[#269984]/5';
-            textClass = 'text-[#269984]';
+            borderClass = '';
+            bgClass = '';
+            textClass = '';
           }
 
           return (
@@ -205,7 +208,26 @@ function QuizComponent({
               key={idx}
               disabled={isDone || showFeedback}
               onClick={() => handleSelect(idx)}
-              className={`flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all ${borderClass} ${bgClass} ${textClass} ${isHovered && 'hover:border-[#269984] hover:bg-[#269984]/5'}`}
+              className={`flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all ${borderClass} ${bgClass} ${textClass}`}
+              style={
+                !showFeedback && !isDone && isSelected
+                  ? { borderColor: accentColor, backgroundColor: `${accentColor}10`, color: accentColor }
+                  : !showFeedback && !isDone && !isSelected
+                  ? {} 
+                  : {}
+              }
+              onMouseEnter={(e) => {
+                if (!isDone && !showFeedback && !isSelected) {
+                  e.currentTarget.style.borderColor = accentColor;
+                  e.currentTarget.style.backgroundColor = `${accentColor}05`;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isDone && !showFeedback && !isSelected) {
+                  e.currentTarget.style.borderColor = '';
+                  e.currentTarget.style.backgroundColor = '';
+                }
+              }}
             >
               <div
                 className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold shrink-0 ${isSelected ? 'border-current' : 'border-gray-200 dark:border-white/10'}`}
@@ -256,7 +278,14 @@ function PhaseBody({
     case 'info':
       return <InfoComponent phase={phase} courseId={course.slug} />;
     case 'quiz':
-      return <QuizComponent phase={phase} courseId={course.slug} onMistake={onMistake} />;
+      return (
+        <QuizComponent
+          phase={phase}
+          courseId={course.slug}
+          accentColor={course.accentColor}
+          onMistake={onMistake}
+        />
+      );
     case 'video': {
       const video =
         VIDEOS.find((item) => item.id === algorithmId) ||
@@ -1164,7 +1193,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
               width: `${(activePhaseIndex / Math.max(1, course.phases.length - 1)) * 100}%`,
             }}
             transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-            className="absolute top-1/2 left-0 h-[6px] -translate-y-1/2 rounded-full bg-gradient-to-r from-[#269984] to-[#36b39c]"
+            className="absolute top-1/2 left-0 h-[6px] -translate-y-1/2 rounded-full"
+            style={{ 
+              background: `linear-gradient(to right, ${course.accentColor}, ${course.accentColor}dd)` 
+            }}
           />
 
           {/* Spheres / Checkpoints */}
@@ -1194,11 +1226,20 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                       locked
                         ? 'bg-gray-100 border-gray-200 cursor-not-allowed dark:bg-white/5 dark:border-white/10 opacity-40'
                         : completed
-                          ? 'bg-[#269984] border-[#269984] text-white shadow-[0_0_15px_rgba(38,153,132,0.3)]'
+                          ? 'text-white'
                           : isActive
-                            ? 'bg-white border-[#269984] text-[#269984] shadow-[0_0_20px_rgba(38,153,132,0.4)] scale-110'
-                            : 'bg-white border-gray-200 text-gray-400 dark:bg-black/40 dark:border-white/10 hover:border-[#269984]/50'
+                            ? 'bg-white scale-110'
+                            : 'bg-white border-gray-200 text-gray-400 dark:bg-black/40 dark:border-white/10'
                     }`}
+                    style={
+                      !locked
+                        ? completed
+                          ? { backgroundColor: course.accentColor, borderColor: course.accentColor }
+                          : isActive
+                            ? { borderColor: course.accentColor, color: course.accentColor }
+                            : {}
+                        : {}
+                    }
                   >
                     {completed ? (
                       <Check className="w-4 h-4 stroke-[3px]" />
@@ -1215,8 +1256,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                       animate={{ opacity: 1 }}
                       className="absolute top-full mt-4 flex flex-col items-center"
                     >
-                      <div className="w-1 h-1 rounded-full bg-[#269984] mb-1" />
-                      <span className="text-[9px] font-bold text-[#269984] uppercase tracking-tighter whitespace-nowrap">
+                      <div className="w-1 h-1 rounded-full mb-1" style={{ backgroundColor: course.accentColor }} />
+                      <span className="text-[9px] font-bold uppercase tracking-tighter whitespace-nowrap" style={{ color: course.accentColor }}>
                         {t('common.current')}
                       </span>
                     </motion.div>
@@ -1231,13 +1272,13 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         <div className="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-[#269984]" />
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: course.accentColor }} />
               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                 {t('common.completed')}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full border-2 border-[#269984] bg-white" />
+              <div className="w-2 h-2 rounded-full border-2 bg-white" style={{ borderColor: course.accentColor }} />
               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                 {t('common.active')}
               </span>
@@ -1260,7 +1301,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         <div className="rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#269984]">
+              <div className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: course.accentColor }}>
                 {t('course.current_phase')}
               </div>
               <h3 className="mt-2 text-2xl font-bold text-black dark:text-white">
@@ -1275,7 +1316,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                 {t('course.completion')}
               </div>
               <div
-                className={`mt-1 font-bold ${phaseComplete ? 'text-green-600 dark:text-green-400' : 'text-[#269984]'}`}
+                className={`mt-1 font-bold ${phaseComplete ? 'text-green-600 dark:text-green-400' : ''}`}
+                style={!phaseComplete ? { color: course.accentColor } : {}}
               >
                 {phaseComplete ? t('course.ready_to_continue') : t('course.finish_activity')}
               </div>
@@ -1299,7 +1341,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             <button
               onClick={handleContinue}
               disabled={!phaseComplete}
-              className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
               style={{ backgroundColor: course.accentColor }}
             >
               {activePhaseIndex === course.phases.length - 1
@@ -1330,7 +1372,13 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                 <button
                   key={value}
                   onClick={() => applyAdvance(value)}
-                  className="rounded-full border border-[#269984]/20 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#269984] transition-colors hover:bg-[#e8f7f3] dark:bg-black/20 dark:text-white dark:hover:bg-white/10"
+                  className="rounded-full border bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] transition-colors dark:bg-black/20 dark:text-white"
+                  style={{ 
+                    borderColor: `${course.accentColor}33`,
+                    color: course.accentColor 
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = `${course.accentColor}10`)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '')}
                 >
                   {label}
                 </button>
@@ -1357,8 +1405,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
               className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] bg-white p-8 shadow-2xl dark:bg-gray-900"
             >
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-2xl bg-[#269984]/10 flex items-center justify-center mb-6">
-                  <Sparkles className="w-8 h-8 text-[#269984]" />
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ backgroundColor: `${course.accentColor}15` }}>
+                  <Sparkles className="w-8 h-8" style={{ color: course.accentColor }} />
                 </div>
                 <h3 className="mb-3 text-2xl font-bold text-black dark:text-white">
                   {t('course.confidence_title')}
@@ -1382,12 +1430,29 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                         setShowConfidenceModal(false);
                         applyAdvance(value);
                       }}
-                      className="group flex items-center justify-between rounded-2xl border-2 border-gray-100 bg-gray-50 px-6 py-4 text-left transition-all hover:border-[#269984] hover:bg-[#269984]/5 dark:border-white/5 dark:bg-white/5 dark:hover:border-[#269984]"
+                      className="group flex items-center justify-between rounded-2xl border-2 border-gray-100 bg-gray-50 px-6 py-4 text-left transition-all dark:border-white/5 dark:bg-white/5"
+                      style={{ transition: 'all 0.2s' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = course.accentColor;
+                        e.currentTarget.style.backgroundColor = `${course.accentColor}05`;
+                        const span = e.currentTarget.querySelector('span');
+                        const icon = e.currentTarget.querySelector('svg');
+                        if (span) span.style.color = course.accentColor;
+                        if (icon) icon.style.color = course.accentColor;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '';
+                        e.currentTarget.style.backgroundColor = '';
+                        const span = e.currentTarget.querySelector('span');
+                        const icon = e.currentTarget.querySelector('svg');
+                        if (span) span.style.color = '';
+                        if (icon) icon.style.color = '';
+                      }}
                     >
-                      <span className="font-bold text-gray-700 dark:text-gray-300 group-hover:text-[#269984]">
+                      <span className="font-bold text-gray-700 dark:text-gray-300 transition-colors">
                         {label}
                       </span>
-                      <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-[#269984]" />
+                      <ChevronRight className="h-5 w-5 text-gray-300 transition-colors" />
                     </button>
                   ))}
                 </div>
@@ -1434,7 +1499,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   className="flex flex-col items-start gap-4 w-64"
                 >
                   <motion.div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-[#269984]/20 relative cursor-default">
-                    <div className="absolute top-full left-6 w-3 h-3 bg-white dark:bg-gray-900 rotate-45 border-r border-b border-[#269984]/20" />
+                    <div 
+                      className="absolute top-full left-6 w-3 h-3 bg-white dark:bg-gray-900 rotate-45 border-r border-b" 
+                      style={{ borderColor: `${course.accentColor}33` }}
+                    />
 
                     {mascotMood === 'mistake' && (
                       <div className="mb-2 flex items-center gap-1.5 text-amber-600 dark:text-amber-500 font-bold text-[10px] uppercase tracking-widest">
@@ -1460,7 +1528,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                             setMascotMessage(advice);
                             setMascotActions(false);
                           }}
-                          className="flex-1 py-1.5 bg-[#269984] text-white rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                          className="flex-1 py-1.5 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-opacity hover:opacity-90"
+                          style={{ backgroundColor: course.accentColor }}
                         >
                           {t('course.help_yes')}
                         </button>
@@ -1482,20 +1551,34 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                                 `${activePhase.title}: ${activePhase.hintCopy || activePhase.mascotLine || activePhase.summary}`,
                               )
                             }
-                            className="px-2 py-1 bg-[#269984]/5 hover:bg-[#269984]/15 text-[#269984] rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
+                            className="px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
+                            style={{ 
+                              backgroundColor: `${course.accentColor}15`,
+                              color: course.accentColor 
+                            }}
                           >
                             {t('course.how_are_we')}
                           </button>
                           <button
                             onClick={() => setMascotMessage(course.summary)}
-                            className="px-2 py-1 bg-[#269984]/5 hover:bg-[#269984]/15 text-[#269984] rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
+                            className="px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
+                            style={{ 
+                              backgroundColor: `${course.accentColor}15`,
+                              color: course.accentColor 
+                            }}
                           >
                             {t('course.summary_title')}
                           </button>
                         </div>
                         <button
                           onClick={() => setMascotVisible(false)}
-                          className="block w-full text-center py-2 bg-[#f0fbf9] dark:bg-white/5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-[#269984] hover:bg-[#269984] hover:text-white transition-colors"
+                          className="block w-full text-center py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover:text-white"
+                          style={{ 
+                            backgroundColor: `${course.accentColor}10`,
+                            color: course.accentColor 
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = course.accentColor)}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = `${course.accentColor}10`)}
                         >
                           {t('course.understand')}
                         </button>
@@ -1511,7 +1594,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                       setMascotActions(false);
                     }}
                   >
-                    <div className="absolute inset-0 bg-[#269984]/10 rounded-full blur-2xl group-hover:bg-[#269984]/20 transition-colors" />
+                    <div 
+                      className="absolute inset-0 rounded-full blur-2xl transition-colors" 
+                      style={{ backgroundColor: `${course.accentColor}25` }}
+                    />
                     <Image
                       src={`/assets/${course.mascot.asset}`}
                       alt={course.mascot.name}
@@ -1536,9 +1622,16 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                     setMascotActions(false);
                     setMascotVisible(true);
                   }}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-900 border border-[#269984]/20 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 text-[#269984] group cursor-grab active:cursor-grabbing select-none"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-900 border rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 group cursor-grab active:cursor-grabbing select-none"
+                  style={{ 
+                    borderColor: `${course.accentColor}33`,
+                    color: course.accentColor 
+                  }}
                 >
-                  <div className="w-5 h-5 rounded-full overflow-hidden border border-[#269984]/10 pointer-events-none">
+                  <div 
+                    className="w-5 h-5 rounded-full overflow-hidden border pointer-events-none"
+                    style={{ borderColor: `${course.accentColor}20` }}
+                  >
                     <Image
                       src={`/assets/${course.mascot.asset}`}
                       alt="Mascot"

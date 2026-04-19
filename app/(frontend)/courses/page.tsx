@@ -3,7 +3,9 @@ import { getPayloadInstance } from '../../../lib/payload';
 import { getServerLocale, getT } from '../../../lib/i18n-server';
 import CoursesClient from '../../components/Course/CoursesClient';
 
-export const revalidate = 600; // Cache for 10 minutes
+import { unstable_cache } from 'next/cache';
+
+export const revalidate = 3600; // Cache for 1 hour
 
 export async function generateMetadata() {
   const t = await getT();
@@ -12,25 +14,33 @@ export async function generateMetadata() {
   };
 }
 
+// Cached fetcher for courses
+const getCachedCourses = unstable_cache(
+  async (locale: string) => {
+    const payload = await getPayloadInstance();
+    if (!payload) return [];
+
+    const result = await payload.find({
+      collection: 'courses',
+      depth: 0,
+      limit: 100,
+      sort: 'title',
+      locale: locale as 'en' | 'hu' | 'ro',
+      overrideAccess: true, // Bypass access control for background caching
+    });
+
+    // Crucial: unstable_cache works best with plain JSON-serializable objects
+    return JSON.parse(JSON.stringify(result.docs)) as CourseCollectionDoc[];
+  },
+  ['courses-list-cache'],
+  { revalidate: 3600, tags: ['courses'] },
+);
+
 export default async function CoursesPage() {
   const locale = await getServerLocale();
   const t = await getT();
 
-  let docs: CourseCollectionDoc[] = [];
-  try {
-    const payload = await getPayloadInstance();
-    const result = await payload.find({
-      collection: 'courses',
-      depth: 0,
-      limit: 50,
-      sort: 'title',
-      locale: locale as 'en' | 'hu' | 'ro',
-    });
-    docs = result.docs as unknown as CourseCollectionDoc[];
-  } catch {
-    docs = [];
-  }
-
+  const docs = await getCachedCourses(locale);
   const courses = await getCourseCatalog(docs);
 
   return (
