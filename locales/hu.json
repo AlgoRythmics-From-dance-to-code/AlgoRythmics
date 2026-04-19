@@ -585,7 +585,8 @@
     "open": "Megnyitás",
     "checkpoints": "ellenőrzőpont",
     "back_to_courses": "Vissza a tanfolyamokhoz",
-    "no_matches": "Nincs a keresésnek megfelelő kurzus"
+    "no_matches": "Nincs a keresésnek megfelelő kurzus",
+    "try_adjusting_filters": "Próbáld meg módosítani a szűrőket vagy a keresést."
   },
   "course": {
     "info_understand": "Értem, mehetünk tovább!",

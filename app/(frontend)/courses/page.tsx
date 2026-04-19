@@ -34,21 +34,13 @@ export default async function CoursesPage() {
   const courses = await getCourseCatalog(docs);
 
   return (
-    <main className="w-full bg-white px-4 py-10 dark:bg-[#0a0a0a] sm:px-6 md:py-20 lg:py-28">
-      <div className="mx-auto max-w-[1200px]">
-        <div className="mb-14 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#f0fbf9] px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] text-[#269984] dark:bg-white/5">
-            {t('courses.learning_paths')}
-          </div>
-          <h1 className="text-4xl font-black text-black dark:text-white sm:text-5xl lg:text-6xl tracking-tight">
-            {t('courses.hero_title')}
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg font-medium leading-relaxed text-gray-500 dark:text-gray-400">
-            {t('courses.hero_description')}
-          </p>
-        </div>
-
-        <CoursesClient courses={courses} />
+    <main className="w-full bg-[#fcfdfd] dark:bg-[#080808] py-8 sm:py-12 md:py-16">
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
+        <CoursesClient
+          courses={courses}
+          title={t('courses.hero_title')}
+          description={t('courses.hero_description')}
+        />
       </div>
     </main>
   );

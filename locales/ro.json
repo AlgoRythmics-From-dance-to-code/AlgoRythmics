@@ -586,7 +586,8 @@
     "checkpoints": "puncte de control",
     "back_to_courses": "Înapoi la cursuri",
     "confidence_check": "Verificarea încrederii",
-    "no_matches": "Niciun curs nu corespunde căutării"
+    "no_matches": "Niciun curs nu corespunde căutării",
+    "try_adjusting_filters": "Încearcă să ajustezi filtrele sau căutarea."
   },
   "course": {
     "info_understand": "Am înțeles, să mergem mai departe!",

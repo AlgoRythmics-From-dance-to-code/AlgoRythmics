@@ -586,7 +586,8 @@
     "checkpoints": "checkpoints",
     "back_to_courses": "Back to courses",
     "confidence_check": "Confidence check",
-    "no_matches": "No courses match your search"
+    "no_matches": "No courses match your search",
+    "try_adjusting_filters": "Try adjusting your filters or search query."
   },
   "course": {
     "info_understand": "I understand, let's move on!",
