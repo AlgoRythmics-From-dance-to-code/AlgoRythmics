@@ -589,6 +589,7 @@
     "try_adjusting_filters": "Próbáld meg módosítani a szűrőket vagy a keresést."
   },
   "course": {
+    "learning_path": "Tanulási útvonal",
     "info_understand": "Értem, mehetünk tovább!",
     "quiz_explanation": "Magyarázat",
     "final_challenge": "Végső kihívás",

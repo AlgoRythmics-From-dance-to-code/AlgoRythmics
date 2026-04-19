@@ -14,6 +14,7 @@ import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
 import type { CourseBlueprint, CoursePhase } from '../../../lib/courses/courseCatalog';
 import { VIDEOS } from '../../../lib/constants';
+import { BaseUser } from '../../../lib/types/auth';
 import { useAnalytics } from '../../hooks/useAnalytics';
 
 const AlgorithmVisualizer = dynamic(() => import('../Learning/AlgorithmVisualizer'));
@@ -78,7 +79,15 @@ function getCompletionFlag(
   }
 }
 
-function InfoComponent({ phase, courseId }: { phase: CoursePhase; courseId: string }) {
+function InfoComponent({
+  phase,
+  courseId,
+  accentColor,
+}: {
+  phase: CoursePhase;
+  courseId: string;
+  accentColor: string;
+}) {
   const { markCoursePhaseComplete, setCoursePhasePoints, syncProgress } = useAlgorithmStore(
     useShallow((state) => ({
       markCoursePhaseComplete: state.markCoursePhaseComplete,
@@ -111,7 +120,7 @@ function InfoComponent({ phase, courseId }: { phase: CoursePhase; courseId: stri
             markCoursePhaseComplete(courseId, phase.phaseId);
             syncProgress();
           }}
-          style={{ backgroundColor: phase.maxPoints ? undefined : undefined, background: `linear-gradient(to right, ${useAlgorithmStore.getState().courseProgress[courseId]?.accentColor || '#269984'}, ${useAlgorithmStore.getState().courseProgress[courseId]?.accentColor || '#269984'}ee)` }}
+          style={{ background: `linear-gradient(to right, ${accentColor}, ${accentColor}ee)` }}
           className="self-end px-8 py-3 text-white rounded-xl font-bold transition-all shadow-lg hover:brightness-110 active:scale-95"
         >
           {t('course.info_understand')}
@@ -180,7 +189,6 @@ function QuizComponent({
       <div className="grid gap-3">
         {q.options.map((option, idx) => {
           const isSelected = selectedIdx === idx;
-          const isHovered = !isDone && !showFeedback;
           const isCorrect = idx === q.correctIndex;
 
           let borderClass = 'border-gray-100 dark:border-white/10';
@@ -211,10 +219,14 @@ function QuizComponent({
               className={`flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all ${borderClass} ${bgClass} ${textClass}`}
               style={
                 !showFeedback && !isDone && isSelected
-                  ? { borderColor: accentColor, backgroundColor: `${accentColor}10`, color: accentColor }
+                  ? {
+                      borderColor: accentColor,
+                      backgroundColor: `${accentColor}10`,
+                      color: accentColor,
+                    }
                   : !showFeedback && !isDone && !isSelected
-                  ? {} 
-                  : {}
+                    ? {}
+                    : {}
               }
               onMouseEnter={(e) => {
                 if (!isDone && !showFeedback && !isSelected) {
@@ -266,17 +278,19 @@ function PhaseBody({
   phase,
   course,
   onMistake,
+  accentColor,
 }: {
   phase: CoursePhase;
   course: CourseBlueprint;
   onMistake?: () => void;
+  accentColor: string;
 }) {
   const { t } = useLocale();
   const algorithmId = phase.sourceAlgorithmId || course.algorithmId;
 
   switch (phase.sourceView) {
     case 'info':
-      return <InfoComponent phase={phase} courseId={course.slug} />;
+      return <InfoComponent phase={phase} courseId={course.slug} accentColor={accentColor} />;
     case 'quiz':
       return (
         <QuizComponent
@@ -375,7 +389,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const { data: session, status: sessionStatus } = useSession();
 
   // Enabled if still loading (on by default) or explicitly not false
-  const mascotEnabled = sessionStatus === 'loading' ? true : session?.user?.mascotEnabled !== false;
+  const mascotEnabled =
+    sessionStatus === 'loading' ? true : (session?.user as BaseUser)?.mascotEnabled !== false;
 
   useEffect(() => {
     if (!mascotEnabled) setMascotVisible(false);
@@ -417,6 +432,13 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
   const [activePhaseIndex, setActivePhaseIndex] = useState(initialPhaseIndex);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [popoverGap, setPopoverGap] = useState<{
+    index: number;
+    phases: CoursePhase[];
+    x: number;
+  } | null>(null);
   const [mascotVisible, setMascotVisible] = useState(false);
   const [mascotMood, setMascotMood] = useState<
     'idle' | 'mistake' | 'confidence' | 'neutral' | 'welcome' | 'streak' | 'overconfident'
@@ -433,6 +455,18 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const [modalMode, setModalMode] = useState<'restart' | 'checkpoint'>('restart');
   const [pendingPhaseIndex, setPendingPhaseIndex] = useState<number | null>(null);
   const promptShownRef = useRef(false);
+
+  // Measure container width
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Resume from stored state after hydration — runs once when store rehydrates or slug changes.
   useEffect(() => {
@@ -974,7 +1008,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   if (!activePhase) return null;
 
   return (
-    <section className="relative rounded-[2.25rem] border border-[#269984]/15 bg-white p-6 shadow-[0_18px_70px_rgba(0,0,0,0.08)] dark:border-white/10 dark:bg-white/5">
+    <section className="relative w-full">
       <AnimatePresence>
         <RestartCourseModal
           isOpen={showRestartModal}
@@ -1139,516 +1173,765 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#f0fbf9] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#269984] dark:bg-white/10">
-            <Sparkles className="h-3.5 w-3.5" />
-            {t('course.playable_course')}
-          </div>
-          <h2 className="mt-3 text-3xl font-bold text-black dark:text-white">{course.title}</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-7 text-[#666] dark:text-gray-400">
-            {course.heroTagline}
-          </p>
-        </div>
-
-        <div className="flex flex-col items-end gap-4">
-          <button
-            onClick={handleResetCourse}
-            className="text-[10px] font-bold uppercase tracking-widest text-red-500 hover:text-red-600 transition-colors bg-red-500/5 px-3 py-1.5 rounded-lg border border-red-500/10"
-          >
-            {t('course.reset_course')}
-          </button>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="rounded-2xl border border-gray-100 bg-[#fafafa] px-4 py-3 text-sm dark:border-white/10 dark:bg-black/20">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">
-                {t('course.points')}
-              </div>
-              <div className="mt-1 font-bold text-black dark:text-white">
-                {courseProgress[course.slug]?.points || 0}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-gray-100 bg-[#fafafa] px-4 py-3 text-sm dark:border-white/10 dark:bg-black/20">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">
-                {t('course.phase')}
-              </div>
-              <div className="mt-1 font-bold text-black dark:text-white">
-                {activePhaseIndex + 1}/{course.phases.length}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-10 mb-14 px-4 overflow-x-auto pb-4 scrollbar-hide">
-        {/* Progress Container */}
-        <div className="relative pt-12 min-w-[600px] sm:min-w-0">
-          {/* Main Track */}
-          <div className="absolute top-1/2 left-0 w-full h-[6px] -translate-y-1/2 rounded-full bg-gray-100 dark:bg-white/5" />
-
-          {/* Active Fill Track */}
-          <motion.div
-            initial={false}
-            animate={{
-              width: `${(activePhaseIndex / Math.max(1, course.phases.length - 1)) * 100}%`,
-            }}
-            transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-            className="absolute top-1/2 left-0 h-[6px] -translate-y-1/2 rounded-full"
-            style={{ 
-              background: `linear-gradient(to right, ${course.accentColor}, ${course.accentColor}dd)` 
-            }}
-          />
-
-          {/* Spheres / Checkpoints */}
-          <div className="absolute top-1/2 left-0 w-full flex justify-between -translate-y-1/2">
-            {course.phases.map((phase, index) => {
-              const completed = completedPhaseStatuses[index];
-              const isActive = index === activePhaseIndex;
-              const locked = !canOpenPhase(index) && !completed;
-
-              return (
-                <div key={phase.phaseId} className="relative flex flex-col items-center group">
-                  {/* Tooltip Label (Shows on Hover) */}
-                  <div className="absolute bottom-full mb-6 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-30">
-                    <div className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-xl flex flex-col items-center">
-                      <span>{phase.title}</span>
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-900 dark:border-t-white" />
-                    </div>
-                  </div>
-
-                  {/* The Sphere */}
-                  <motion.button
-                    disabled={locked}
-                    onClick={() => handleJumpToPhase(index)}
-                    whileHover={!locked ? { scale: 1.25, y: -2 } : {}}
-                    whileTap={!locked ? { scale: 0.9 } : {}}
-                    className={`relative z-20 w-8 h-8 rounded-full border-[3px] flex items-center justify-center transition-all duration-500 ${
-                      locked
-                        ? 'bg-gray-100 border-gray-200 cursor-not-allowed dark:bg-white/5 dark:border-white/10 opacity-40'
-                        : completed
-                          ? 'text-white'
-                          : isActive
-                            ? 'bg-white scale-110'
-                            : 'bg-white border-gray-200 text-gray-400 dark:bg-black/40 dark:border-white/10'
-                    }`}
-                    style={
-                      !locked
-                        ? completed
-                          ? { backgroundColor: course.accentColor, borderColor: course.accentColor }
-                          : isActive
-                            ? { borderColor: course.accentColor, color: course.accentColor }
-                            : {}
-                        : {}
-                    }
-                  >
-                    {completed ? (
-                      <Check className="w-4 h-4 stroke-[3px]" />
-                    ) : (
-                      <span className="text-[11px] font-black">{index + 1}</span>
-                    )}
-                  </motion.button>
-
-                  {/* Phase Status indicator below */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="active-indicator"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="absolute top-full mt-4 flex flex-col items-center"
-                    >
-                      <div className="w-1 h-1 rounded-full mb-1" style={{ backgroundColor: course.accentColor }} />
-                      <span className="text-[9px] font-bold uppercase tracking-tighter whitespace-nowrap" style={{ color: course.accentColor }}>
-                        {t('common.current')}
-                      </span>
-                    </motion.div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Legend / Status Text */}
-        <div className="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: course.accentColor }} />
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                {t('common.completed')}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full border-2 bg-white" style={{ borderColor: course.accentColor }} />
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                {t('common.active')}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-gray-200 dark:bg-white/10" />
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                {t('common.locked')}
-              </span>
-            </div>
-          </div>
-          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-black/20 px-3 py-1 rounded-full border border-gray-100 dark:border-white/5 w-fit">
-            {phaseComplete ? t('course.phase_complete') : t('course.in_progress')} •{' '}
-            {activePhaseIndex + 1}/{course.phases.length}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 space-y-6">
-        <div className="rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: course.accentColor }}>
-                {t('course.current_phase')}
-              </div>
-              <h3 className="mt-2 text-2xl font-bold text-black dark:text-white">
-                {activePhase.title}
-              </h3>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-[#666] dark:text-gray-400">
-                {activePhase.summary}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-[#f8faf9] px-4 py-3 text-sm dark:bg-black/20">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">
-                {t('course.completion')}
-              </div>
-              <div
-                className={`mt-1 font-bold ${phaseComplete ? 'text-green-600 dark:text-green-400' : ''}`}
-                style={!phaseComplete ? { color: course.accentColor } : {}}
-              >
-                {phaseComplete ? t('course.ready_to_continue') : t('course.finish_activity')}
-              </div>
-              <div className="mt-2 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg inline-block">
-                ★ {activePhase.maxPoints ?? 10} pt
-              </div>
-            </div>
-          </div>
-
-          <div key={`${activePhase.phaseId}-${phaseKey}`} className="mt-6">
-            <PhaseBody
-              phase={activePhase}
-              course={course}
-              onMistake={() => setPhaseMistakesCount((c) => c + 1)}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-end gap-3 rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={handleContinue}
-              disabled={!phaseComplete}
-              className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+      <div className="mx-auto max-w-[1500px] px-0 py-0 sm:px-4 lg:pt-0 lg:pb-6">
+        <div className="relative rounded-[3rem] border border-gray-100 bg-white shadow-2xl shadow-gray-200/50 dark:border-white/5 dark:bg-[#111111]/80 dark:shadow-none backdrop-blur-xl overflow-hidden">
+          {/* Main Header Section */}
+          <div className="relative pt-4 px-6 pb-0 lg:pt-6 lg:px-10 lg:pb-0 border-b border-gray-50 dark:border-white/5 overflow-hidden">
+            {/* Subtle Accent Glow */}
+            <div
+              className="absolute -top-32 -right-32 w-96 h-96 blur-[120px] opacity-10 pointer-events-none"
               style={{ backgroundColor: course.accentColor }}
-            >
-              {activePhaseIndex === course.phases.length - 1
-                ? t('course.finish_course')
-                : t('course.next_phase')}
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {pendingAdvance && (
-          <div className="rounded-[2rem] border border-[#269984]/20 bg-[#f0fbf9] p-5 shadow-sm dark:bg-black/20">
-            <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#269984]">
-              {t('courses.confidence_check')}
-            </div>
-            <p className="mt-2 text-sm leading-7 text-[#444] dark:text-gray-300">
-              {t('course.confidence_prompt')}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {(
-                [
-                  ['very-sure', t('course.confidence_very_sure')],
-                  ['sure', t('course.confidence_sure')],
-                  ['unsure', t('course.confidence_unsure')],
-                  ['guess', t('course.confidence_guess')],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  onClick={() => applyAdvance(value)}
-                  className="rounded-full border bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] transition-colors dark:bg-black/20 dark:text-white"
-                  style={{ 
-                    borderColor: `${course.accentColor}33`,
-                    color: course.accentColor 
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = `${course.accentColor}10`)}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '')}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <AnimatePresence>
-        {showConfidenceModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-12">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowConfidenceModal(false)}
             />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] bg-white p-8 shadow-2xl dark:bg-gray-900"
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ backgroundColor: `${course.accentColor}15` }}>
-                  <Sparkles className="w-8 h-8" style={{ color: course.accentColor }} />
-                </div>
-                <h3 className="mb-3 text-2xl font-bold text-black dark:text-white">
-                  {t('course.confidence_title')}
-                </h3>
-                <p className="mb-8 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                  {t('course.confidence_desc')}
-                </p>
 
-                <div className="grid w-full gap-3">
-                  {(
-                    [
-                      ['very-sure', t('course.confidence_very_sure_desc')],
-                      ['sure', t('course.confidence_sure_desc')],
-                      ['unsure', t('course.confidence_unsure_desc')],
-                      ['guess', t('course.confidence_guess_desc')],
-                    ] as const
-                  ).map(([value, label]) => (
-                    <button
-                      key={value}
-                      onClick={() => {
-                        setShowConfidenceModal(false);
-                        applyAdvance(value);
-                      }}
-                      className="group flex items-center justify-between rounded-2xl border-2 border-gray-100 bg-gray-50 px-6 py-4 text-left transition-all dark:border-white/5 dark:bg-white/5"
-                      style={{ transition: 'all 0.2s' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = course.accentColor;
-                        e.currentTarget.style.backgroundColor = `${course.accentColor}05`;
-                        const span = e.currentTarget.querySelector('span');
-                        const icon = e.currentTarget.querySelector('svg');
-                        if (span) span.style.color = course.accentColor;
-                        if (icon) icon.style.color = course.accentColor;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = '';
-                        e.currentTarget.style.backgroundColor = '';
-                        const span = e.currentTarget.querySelector('span');
-                        const icon = e.currentTarget.querySelector('svg');
-                        if (span) span.style.color = '';
-                        if (icon) icon.style.color = '';
-                      }}
-                    >
-                      <span className="font-bold text-gray-700 dark:text-gray-300 transition-colors">
-                        {label}
-                      </span>
-                      <ChevronRight className="h-5 w-5 text-gray-300 transition-colors" />
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => setShowConfidenceModal(false)}
-                  className="mt-6 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600"
+            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-4">
+                <Link
+                  href="/courses"
+                  className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-colors hover:text-gray-900 dark:hover:text-white"
                 >
-                  {t('course.confidence_later')}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-      {/* UNIFIED HUB: Handles both the summon button and Bubi himself */}
-      {course.mascot.enabled && mascotEnabled && (
-        <motion.div
-          drag
-          dragMomentum={false}
-          dragConstraints={{
-            left: 0,
-            right: typeof window !== 'undefined' ? window.innerWidth - 100 : 1000,
-            top: typeof window !== 'undefined' ? -window.innerHeight + 100 : -1000,
-            bottom: 0,
-          }}
-          animate={{ x: mascotDragPos.x, y: mascotDragPos.y }}
-          onDragEnd={(_, info) => {
-            setMascotDragPos({
-              x: mascotDragPos.x + info.offset.x,
-              y: mascotDragPos.y + info.offset.y,
-            });
-          }}
-          className="fixed bottom-8 left-8 z-[60] pointer-events-none flex flex-col items-start"
-        >
-          <div className="pointer-events-auto">
-            <AnimatePresence mode="wait">
-              {mascotVisible ? (
-                <motion.div
-                  key="mascot-full"
-                  initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.8, y: 10 }}
-                  className="flex flex-col items-start gap-4 w-64"
-                >
-                  <motion.div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-[#269984]/20 relative cursor-default">
-                    <div 
-                      className="absolute top-full left-6 w-3 h-3 bg-white dark:bg-gray-900 rotate-45 border-r border-b" 
-                      style={{ borderColor: `${course.accentColor}33` }}
-                    />
-
-                    {mascotMood === 'mistake' && (
-                      <div className="mb-2 flex items-center gap-1.5 text-amber-600 dark:text-amber-500 font-bold text-[10px] uppercase tracking-widest">
-                        <ShieldAlert className="w-3.5 h-3.5" />
-                        {t('course.advice')}
-                      </div>
-                    )}
-
-                    <p className="font-montserrat text-sm leading-relaxed text-gray-700 dark:text-gray-300 pr-2">
-                      {mascotMessage}
-                    </p>
-
-                    {mascotActions && mascotMood === 'idle' && (
-                      <div className="mt-4 flex gap-2">
-                        <button
-                          onClick={() => {
-                            setMascotMood('neutral');
-                            const advice =
-                              activePhase.idleHelp ||
-                              activePhase.hintCopy ||
-                              activePhase.mascotLine ||
-                              activePhase.summary;
-                            setMascotMessage(advice);
-                            setMascotActions(false);
-                          }}
-                          className="flex-1 py-1.5 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-opacity hover:opacity-90"
-                          style={{ backgroundColor: course.accentColor }}
-                        >
-                          {t('course.help_yes')}
-                        </button>
-                        <button
-                          onClick={() => setMascotVisible(false)}
-                          className="flex-1 py-1.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 rounded-lg text-[10px] font-bold uppercase tracking-wider"
-                        >
-                          {t('course.help_no')}
-                        </button>
-                      </div>
-                    )}
-
-                    {!mascotActions && (
-                      <div className="mt-3 flex flex-col gap-1.5">
-                        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-                          <button
-                            onClick={() =>
-                              setMascotMessage(
-                                `${activePhase.title}: ${activePhase.hintCopy || activePhase.mascotLine || activePhase.summary}`,
-                              )
-                            }
-                            className="px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
-                            style={{ 
-                              backgroundColor: `${course.accentColor}15`,
-                              color: course.accentColor 
-                            }}
-                          >
-                            {t('course.how_are_we')}
-                          </button>
-                          <button
-                            onClick={() => setMascotMessage(course.summary)}
-                            className="px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
-                            style={{ 
-                              backgroundColor: `${course.accentColor}15`,
-                              color: course.accentColor 
-                            }}
-                          >
-                            {t('course.summary_title')}
-                          </button>
-                        </div>
-                        <button
-                          onClick={() => setMascotVisible(false)}
-                          className="block w-full text-center py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover:text-white"
-                          style={{ 
-                            backgroundColor: `${course.accentColor}10`,
-                            color: course.accentColor 
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = course.accentColor)}
-                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = `${course.accentColor}10`)}
-                        >
-                          {t('course.understand')}
-                        </button>
-                      </div>
-                    )}
-                  </motion.div>
-
-                  <motion.div
-                    className="w-16 h-16 relative cursor-grab active:cursor-grabbing group select-none ml-4"
-                    onClick={() => {
-                      setMascotMood('welcome');
-                      setMascotMessage(getRandomMessage(course.mascot.welcomeMessages));
-                      setMascotActions(false);
+                  <span className="transition-transform group-hover:-translate-x-1">←</span>
+                  {t('courses.back_to_courses')}
+                </Link>
+                <div className="space-y-1.5">
+                  <div
+                    className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.25em]"
+                    style={{
+                      backgroundColor: `${course.accentColor}15`,
+                      color: course.accentColor,
                     }}
                   >
-                    <div 
-                      className="absolute inset-0 rounded-full blur-2xl transition-colors" 
-                      style={{ backgroundColor: `${course.accentColor}25` }}
-                    />
-                    <Image
-                      src={`/assets/${course.mascot.asset}`}
-                      alt={course.mascot.name}
-                      width={64}
-                      height={64}
-                      className="drop-shadow-2xl transform active:scale-95 transition-transform"
-                    />
-                  </motion.div>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="summon-btn"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  onClick={() => {
-                    setMascotMood('neutral');
-                    const welcomeMsg =
-                      activePhase.mascotLine ||
-                      t('course.currently_at').replace('{title}', activePhase.title);
-                    setMascotMessage(welcomeMsg);
-                    setMascotActions(false);
-                    setMascotVisible(true);
-                  }}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-900 border rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 group cursor-grab active:cursor-grabbing select-none"
-                  style={{ 
-                    borderColor: `${course.accentColor}33`,
-                    color: course.accentColor 
-                  }}
-                >
-                  <div 
-                    className="w-5 h-5 rounded-full overflow-hidden border pointer-events-none"
-                    style={{ borderColor: `${course.accentColor}20` }}
-                  >
-                    <Image
-                      src={`/assets/${course.mascot.asset}`}
-                      alt="Mascot"
-                      width={20}
-                      height={20}
-                      className="w-full h-auto"
-                    />
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {t('course.playable_course')}
                   </div>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-[#269984] pointer-events-none">
-                    {course.mascot.summonLabel}
-                  </span>
-                </motion.button>
-              )}
-            </AnimatePresence>
+                  <h2 className="text-4xl lg:text-5xl font-black text-black dark:text-white tracking-tighter leading-none">
+                    {course.title}
+                  </h2>
+                  <p className="max-w-2xl text-base font-medium leading-relaxed text-gray-500 dark:text-gray-400/80">
+                    {course.heroTagline}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 lg:self-center">
+                {/* Stat Item: Points */}
+                <div className="flex flex-col items-start lg:items-end">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    {t('course.points')}
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-1.5">
+                    <span className="text-3xl font-black text-black dark:text-white">
+                      {courseProgress[course.slug]?.points || 0}
+                    </span>
+                    <span
+                      className="text-[11px] font-black text-[#269984] uppercase"
+                      style={{ color: course.accentColor }}
+                    >
+                      pts
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-10 w-px bg-gray-100 dark:bg-white/10 hidden sm:block mx-2" />
+
+                {/* Stat Item: Progress */}
+                <div className="flex flex-col items-start lg:items-end">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    {t('course.phase')}
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-1.5">
+                    <span className="text-3xl font-black text-black dark:text-white">
+                      {activePhaseIndex + 1}
+                    </span>
+                    <span className="text-sm font-black text-gray-300">
+                      / {course.phases.length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Integrated Path Navigator (Thin and Elegant) */}
+            <div className="mt-4">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
+                  {t('course.learning_path')}
+                </div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-500/60">
+                  {Math.round(
+                    ((activePhaseIndex + (phaseComplete ? 1 : 0)) / course.phases.length) * 100,
+                  )}
+                  % {t('common.completed')}
+                </div>
+              </div>
+
+              <div className="relative py-4">
+                <div
+                  ref={containerRef}
+                  className="relative flex justify-between items-center z-20 h-10"
+                >
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    {(() => {
+                      const total = course.phases.length;
+                      const ITEM_WIDTH = 48;
+                      const capacity = Math.max(5, Math.floor(containerWidth / ITEM_WIDTH));
+                      const showEllipsis = total > capacity;
+
+                      const visibleIndices = new Set<number>();
+                      if (!showEllipsis) {
+                        course.phases.forEach((_, i) => visibleIndices.add(i));
+                      } else {
+                        visibleIndices.add(0);
+                        visibleIndices.add(total - 1);
+                        visibleIndices.add(activePhaseIndex);
+                        let radius = 1;
+                        while (visibleIndices.size < capacity - 2 && radius < total) {
+                          if (activePhaseIndex - radius > 0)
+                            visibleIndices.add(activePhaseIndex - radius);
+                          if (
+                            visibleIndices.size < capacity - 2 &&
+                            activePhaseIndex + radius < total - 1
+                          ) {
+                            visibleIndices.add(activePhaseIndex + radius);
+                          }
+                          radius++;
+                        }
+                      }
+
+                      const renderedItems: {
+                        type: 'checkpoint' | 'ellipsis';
+                        index: number;
+                        phases?: CoursePhase[];
+                      }[] = [];
+                      let lastIdx = -1;
+                      course.phases.forEach((phase, index) => {
+                        if (visibleIndices.has(index)) {
+                          if (lastIdx !== -1 && index - lastIdx > 1) {
+                            renderedItems.push({
+                              type: 'ellipsis',
+                              index: lastIdx + 1,
+                              phases: course.phases.slice(lastIdx + 1, index),
+                            });
+                          }
+                          renderedItems.push({ type: 'checkpoint', index });
+                          lastIdx = index;
+                        }
+                      });
+
+                      // Calculate progress percentage based on rendered items
+                      const activeRenderedIdx = renderedItems.findIndex(
+                        (item) => item.type === 'checkpoint' && item.index === activePhaseIndex,
+                      );
+                      const progressPct =
+                        renderedItems.length > 1
+                          ? (activeRenderedIdx / (renderedItems.length - 1)) * 100
+                          : 0;
+
+                      return (
+                        <>
+                          {/* Re-render the Progress Line here to have access to progressPct */}
+                          <div className="absolute top-1/2 left-0 w-full h-[3px] -translate-y-1/2 bg-gray-100 dark:bg-white/5 rounded-full pointer-events-none" />
+                          <motion.div
+                            initial={false}
+                            animate={{ width: `${progressPct}%` }}
+                            transition={{ type: 'spring', stiffness: 70, damping: 25 }}
+                            className="absolute top-1/2 left-0 h-[3px] -translate-y-1/2 rounded-full z-10 origin-left pointer-events-none"
+                            style={{
+                              background: `linear-gradient(90deg, ${course.accentColor}dd, ${course.accentColor})`,
+                              boxShadow: `0 0 15px ${course.accentColor}66`,
+                            }}
+                          />
+
+                          {renderedItems.map((item) => {
+                            if (item.type === 'ellipsis') {
+                              return (
+                                <motion.button
+                                  layout
+                                  initial={{ opacity: 0, scale: 0 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0 }}
+                                  key={`ellipsis-${item.index}`}
+                                  onClick={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const containerRect =
+                                      containerRef.current?.getBoundingClientRect();
+                                    if (containerRect) {
+                                      setPopoverGap({
+                                        index: item.index,
+                                        phases: item.phases!,
+                                        x: rect.left - containerRect.left + rect.width / 2,
+                                      });
+                                    }
+                                  }}
+                                  className="group flex items-center justify-center px-1 hover:scale-125 transition-transform shrink-0 z-20"
+                                >
+                                  <div className="flex gap-1">
+                                    {[1, 2, 3].map((i) => (
+                                      <div
+                                        key={i}
+                                        className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20 group-hover:bg-gray-400 dark:group-hover:bg-white/40 transition-colors"
+                                        style={
+                                          completedPhaseStatuses[item.index]
+                                            ? { backgroundColor: course.accentColor }
+                                            : {}
+                                        }
+                                      />
+                                    ))}
+                                  </div>
+                                </motion.button>
+                              );
+                            }
+
+                            const phase = course.phases[item.index];
+                            const completed = completedPhaseStatuses[item.index];
+                            const isActive = item.index === activePhaseIndex;
+                            const locked = !canOpenPhase(item.index) && !completed;
+
+                            return (
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                key={phase.phaseId}
+                                className="relative group flex flex-col items-center shrink-0 z-20"
+                              >
+                                <motion.button
+                                  disabled={locked}
+                                  onClick={() => handleJumpToPhase(item.index)}
+                                  whileHover={!locked ? { scale: 1.15, y: -2 } : {}}
+                                  className={`relative w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
+                                    locked
+                                      ? 'bg-gray-50 border-gray-100 dark:bg-white/5 dark:border-white/5 opacity-40'
+                                      : completed
+                                        ? 'text-white border-transparent'
+                                        : isActive
+                                          ? 'bg-white scale-110 shadow-lg dark:shadow-none'
+                                          : 'bg-white border-gray-200 text-gray-400 dark:bg-[#1a1a1a] dark:border-white/10'
+                                  }`}
+                                  style={
+                                    !locked
+                                      ? completed
+                                        ? {
+                                            backgroundColor: course.accentColor,
+                                            boxShadow: `0 4px 12px ${course.accentColor}33`,
+                                          }
+                                        : isActive
+                                          ? {
+                                              borderColor: course.accentColor,
+                                              color: course.accentColor,
+                                              boxShadow: `0 0 20px ${course.accentColor}22`,
+                                            }
+                                          : {}
+                                      : {}
+                                  }
+                                >
+                                  {completed ? (
+                                    <Check className="w-4 h-4 stroke-[4px]" />
+                                  ) : (
+                                    <span className="text-[10px] font-black">{item.index + 1}</span>
+                                  )}
+
+                                  {isActive && (
+                                    <motion.div
+                                      layoutId="activeIndicator"
+                                      className="absolute -inset-1 rounded-full border-2 opacity-20"
+                                      style={{ borderColor: course.accentColor }}
+                                    />
+                                  )}
+                                </motion.button>
+                              </motion.div>
+                            );
+                          })}
+                        </>
+                      );
+                    })()}
+                  </AnimatePresence>
+                </div>
+
+                {/* Modal for hidden phases */}
+                <AnimatePresence>
+                  {popoverGap && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-12">
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                        onClick={() => setPopoverGap(null)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] bg-white p-8 shadow-2xl dark:bg-gray-900 border border-gray-100 dark:border-white/5"
+                      >
+                        <div className="flex flex-col gap-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-xl font-black text-black dark:text-white uppercase tracking-tight">
+                                {t('course.checkpoints')}
+                              </h3>
+                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
+                                {popoverGap.phases.length} {t('course.hidden_phases')}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => setPopoverGap(null)}
+                              className="w-10 h-10 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-white/10">
+                            {popoverGap.phases.map((p) => {
+                              const pIdx = course.phases.findIndex(
+                                (cp) => cp.phaseId === p.phaseId,
+                              );
+                              const pCompleted = completedPhaseStatuses[pIdx];
+                              const pLocked = !canOpenPhase(pIdx) && !pCompleted;
+
+                              return (
+                                <button
+                                  key={p.phaseId}
+                                  disabled={pLocked}
+                                  onClick={() => {
+                                    handleJumpToPhase(pIdx);
+                                    setPopoverGap(null);
+                                  }}
+                                  className={`group flex items-center gap-4 p-4 rounded-2xl text-left transition-all ${
+                                    pLocked
+                                      ? 'opacity-30 cursor-not-allowed bg-gray-50/50 dark:bg-white/[0.02]'
+                                      : 'bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98]'
+                                  }`}
+                                >
+                                  <div
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shrink-0 shadow-sm transition-transform group-hover:rotate-3 ${
+                                      pCompleted
+                                        ? 'text-white'
+                                        : 'bg-white dark:bg-gray-800 text-gray-400 border border-gray-100 dark:border-white/5'
+                                    }`}
+                                    style={
+                                      pCompleted
+                                        ? {
+                                            backgroundColor: course.accentColor,
+                                            boxShadow: `0 8px 16px ${course.accentColor}33`,
+                                          }
+                                        : {}
+                                    }
+                                  >
+                                    {pCompleted ? (
+                                      <Check className="w-5 h-5 stroke-[4px]" />
+                                    ) : (
+                                      pIdx + 1
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <span className="block text-sm font-black text-gray-900 dark:text-white truncate">
+                                      {p.title}
+                                    </span>
+                                    <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                                      {pLocked
+                                        ? t('course.locked')
+                                        : pCompleted
+                                          ? t('course.completed')
+                                          : t('course.next_up')}
+                                    </span>
+                                  </div>
+                                  {!pLocked && (
+                                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 transition-transform" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
           </div>
-        </motion.div>
-      )}
+
+          {/* Content Body Section */}
+          <div className="pt-0 px-6 pb-6 lg:pt-0 lg:px-10 lg:pb-10 bg-gray-50/30 dark:bg-transparent">
+            <div className="mb-4 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                    style={{
+                      backgroundColor: `${course.accentColor}10`,
+                      color: course.accentColor,
+                    }}
+                  >
+                    {t('course.current_phase')} {activePhaseIndex + 1}
+                  </span>
+                  <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1">
+                    ★ {activePhase.maxPoints ?? 10}
+                  </span>
+                  {phaseComplete && (
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-500/10 text-green-600 text-[10px] font-black uppercase tracking-widest">
+                      <Check className="w-3.5 h-3.5 stroke-[3px]" />
+                      {t('course.phase_complete')}
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-3xl font-black text-black dark:text-white tracking-tight">
+                  {activePhase.title}
+                </h3>
+                <p className="max-w-3xl text-base font-medium text-gray-500 dark:text-gray-400 leading-relaxed">
+                  {activePhase.summary}
+                </p>
+              </div>
+            </div>
+
+            <div key={`${activePhase.phaseId}-${phaseKey}`} className="relative">
+              <PhaseBody
+                phase={activePhase}
+                course={course}
+                accentColor={course.accentColor}
+                onMistake={() => setPhaseMistakesCount((c) => c + 1)}
+              />
+            </div>
+
+            {/* Footer Actions Integrated */}
+            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <button
+                onClick={handleResetCourse}
+                className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors flex items-center gap-2"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                {t('course.reset_course')}
+              </button>
+
+              <button
+                onClick={handleContinue}
+                disabled={!phaseComplete}
+                className="group relative inline-flex items-center gap-4 rounded-2xl px-10 py-5 text-sm font-black uppercase tracking-widest text-white shadow-2xl transition-all hover:-translate-y-1 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 overflow-hidden"
+                style={{
+                  backgroundColor: course.accentColor,
+                  boxShadow: `0 20px 40px ${course.accentColor}44`,
+                }}
+              >
+                <span className="relative z-10">
+                  {activePhaseIndex === course.phases.length - 1
+                    ? t('course.finish_course')
+                    : t('course.next_phase')}
+                </span>
+                <ChevronRight className="relative z-10 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {pendingAdvance && (
+            <div className="rounded-[2rem] border border-[#269984]/20 bg-[#f0fbf9] p-5 shadow-sm dark:bg-black/20">
+              <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#269984]">
+                {t('courses.confidence_check')}
+              </div>
+              <p className="mt-2 text-sm leading-7 text-[#444] dark:text-gray-300">
+                {t('course.confidence_prompt')}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                {(
+                  [
+                    ['very-sure', t('course.confidence_very_sure')],
+                    ['sure', t('course.confidence_sure')],
+                    ['unsure', t('course.confidence_unsure')],
+                    ['guess', t('course.confidence_guess')],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => applyAdvance(value)}
+                    className="rounded-full border bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] transition-colors dark:bg-black/20 dark:text-white"
+                    style={{
+                      borderColor: `${course.accentColor}33`,
+                      color: course.accentColor,
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = `${course.accentColor}10`)
+                    }
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '')}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {showConfidenceModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-12">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={() => setShowConfidenceModal(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] bg-white p-8 shadow-2xl dark:bg-gray-900"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
+                    style={{ backgroundColor: `${course.accentColor}15` }}
+                  >
+                    <Sparkles className="w-8 h-8" style={{ color: course.accentColor }} />
+                  </div>
+                  <h3 className="mb-3 text-2xl font-bold text-black dark:text-white">
+                    {t('course.confidence_title')}
+                  </h3>
+                  <p className="mb-8 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                    {t('course.confidence_desc')}
+                  </p>
+
+                  <div className="grid w-full gap-3">
+                    {(
+                      [
+                        ['very-sure', t('course.confidence_very_sure_desc')],
+                        ['sure', t('course.confidence_sure_desc')],
+                        ['unsure', t('course.confidence_unsure_desc')],
+                        ['guess', t('course.confidence_guess_desc')],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        onClick={() => {
+                          setShowConfidenceModal(false);
+                          applyAdvance(value);
+                        }}
+                        className="group flex items-center justify-between rounded-2xl border-2 border-gray-100 bg-gray-50 px-6 py-4 text-left transition-all dark:border-white/5 dark:bg-white/5"
+                        style={{ transition: 'all 0.2s' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = course.accentColor;
+                          e.currentTarget.style.backgroundColor = `${course.accentColor}05`;
+                          const span = e.currentTarget.querySelector('span');
+                          const icon = e.currentTarget.querySelector('svg');
+                          if (span) span.style.color = course.accentColor;
+                          if (icon) icon.style.color = course.accentColor;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = '';
+                          e.currentTarget.style.backgroundColor = '';
+                          const span = e.currentTarget.querySelector('span');
+                          const icon = e.currentTarget.querySelector('svg');
+                          if (span) span.style.color = '';
+                          if (icon) icon.style.color = '';
+                        }}
+                      >
+                        <span className="font-bold text-gray-700 dark:text-gray-300 transition-colors">
+                          {label}
+                        </span>
+                        <ChevronRight className="h-5 w-5 text-gray-300 transition-colors" />
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setShowConfidenceModal(false)}
+                    className="mt-6 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600"
+                  >
+                    {t('course.confidence_later')}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+        {/* UNIFIED HUB: Handles both the summon button and Bubi himself */}
+        {course.mascot.enabled && mascotEnabled && (
+          <motion.div
+            drag
+            dragMomentum={false}
+            dragConstraints={{
+              left: 0,
+              right: typeof window !== 'undefined' ? window.innerWidth - 100 : 1000,
+              top: typeof window !== 'undefined' ? -window.innerHeight + 100 : -1000,
+              bottom: 0,
+            }}
+            animate={{ x: mascotDragPos.x, y: mascotDragPos.y }}
+            onDragEnd={(_, info) => {
+              setMascotDragPos({
+                x: mascotDragPos.x + info.offset.x,
+                y: mascotDragPos.y + info.offset.y,
+              });
+            }}
+            className="fixed bottom-8 left-8 z-[60] pointer-events-none flex flex-col items-start"
+          >
+            <div className="pointer-events-auto">
+              <AnimatePresence mode="wait">
+                {mascotVisible ? (
+                  <motion.div
+                    key="mascot-full"
+                    initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                    className="flex flex-col items-start gap-4 w-64"
+                  >
+                    <motion.div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-[#269984]/20 relative cursor-default">
+                      <div
+                        className="absolute top-full left-6 w-3 h-3 bg-white dark:bg-gray-900 rotate-45 border-r border-b"
+                        style={{ borderColor: `${course.accentColor}33` }}
+                      />
+
+                      {mascotMood === 'mistake' && (
+                        <div className="mb-2 flex items-center gap-1.5 text-amber-600 dark:text-amber-500 font-bold text-[10px] uppercase tracking-widest">
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          {t('course.advice')}
+                        </div>
+                      )}
+
+                      <p className="font-montserrat text-sm leading-relaxed text-gray-700 dark:text-gray-300 pr-2">
+                        {mascotMessage}
+                      </p>
+
+                      {mascotActions && mascotMood === 'idle' && (
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            onClick={() => {
+                              setMascotMood('neutral');
+                              const advice =
+                                activePhase.idleHelp ||
+                                activePhase.hintCopy ||
+                                activePhase.mascotLine ||
+                                activePhase.summary;
+                              setMascotMessage(advice);
+                              setMascotActions(false);
+                            }}
+                            className="flex-1 py-1.5 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-opacity hover:opacity-90"
+                            style={{ backgroundColor: course.accentColor }}
+                          >
+                            {t('course.help_yes')}
+                          </button>
+                          <button
+                            onClick={() => setMascotVisible(false)}
+                            className="flex-1 py-1.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                          >
+                            {t('course.help_no')}
+                          </button>
+                        </div>
+                      )}
+
+                      {!mascotActions && (
+                        <div className="mt-3 flex flex-col gap-1.5">
+                          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                            <button
+                              onClick={() =>
+                                setMascotMessage(
+                                  `${activePhase.title}: ${activePhase.hintCopy || activePhase.mascotLine || activePhase.summary}`,
+                                )
+                              }
+                              className="px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
+                              style={{
+                                backgroundColor: `${course.accentColor}15`,
+                                color: course.accentColor,
+                              }}
+                            >
+                              {t('course.how_are_we')}
+                            </button>
+                            <button
+                              onClick={() => setMascotMessage(course.summary)}
+                              className="px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
+                              style={{
+                                backgroundColor: `${course.accentColor}15`,
+                                color: course.accentColor,
+                              }}
+                            >
+                              {t('course.summary_title')}
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => setMascotVisible(false)}
+                            className="block w-full text-center py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover:text-white"
+                            style={{
+                              backgroundColor: `${course.accentColor}10`,
+                              color: course.accentColor,
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.backgroundColor = course.accentColor)
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.backgroundColor = `${course.accentColor}10`)
+                            }
+                          >
+                            {t('course.understand')}
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
+
+                    <motion.div
+                      className="w-16 h-16 relative cursor-grab active:cursor-grabbing group select-none ml-4"
+                      onClick={() => {
+                        setMascotMood('welcome');
+                        setMascotMessage(getRandomMessage(course.mascot.welcomeMessages));
+                        setMascotActions(false);
+                      }}
+                    >
+                      <div
+                        className="absolute inset-0 rounded-full blur-2xl transition-colors"
+                        style={{ backgroundColor: `${course.accentColor}25` }}
+                      />
+                      <Image
+                        src={`/assets/${course.mascot.asset}`}
+                        alt={course.mascot.name}
+                        width={64}
+                        height={64}
+                        className="drop-shadow-2xl transform active:scale-95 transition-transform"
+                      />
+                    </motion.div>
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    key="summon-btn"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    onClick={() => {
+                      setMascotMood('neutral');
+                      const welcomeMsg =
+                        activePhase.mascotLine ||
+                        t('course.currently_at').replace('{title}', activePhase.title);
+                      setMascotMessage(welcomeMsg);
+                      setMascotActions(false);
+                      setMascotVisible(true);
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-900 border rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 group cursor-grab active:cursor-grabbing select-none"
+                    style={{
+                      borderColor: `${course.accentColor}33`,
+                      color: course.accentColor,
+                    }}
+                  >
+                    <div
+                      className="w-5 h-5 rounded-full overflow-hidden border pointer-events-none"
+                      style={{ borderColor: `${course.accentColor}20` }}
+                    >
+                      <Image
+                        src={`/assets/${course.mascot.asset}`}
+                        alt="Mascot"
+                        width={20}
+                        height={20}
+                        className="w-full h-auto"
+                      />
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-[#269984] pointer-events-none">
+                      {course.mascot.summonLabel}
+                    </span>
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </div>
     </section>
   );
 }

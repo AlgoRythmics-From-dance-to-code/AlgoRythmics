@@ -590,6 +590,7 @@
     "try_adjusting_filters": "Try adjusting your filters or search query."
   },
   "course": {
+    "learning_path": "Learning Path",
     "info_understand": "I understand, let's move on!",
     "quiz_explanation": "Explanation",
     "final_challenge": "Final Challenge",
@@ -743,7 +744,7 @@
   "control": {
     "select_pair": "Select two adjacent elements to compare",
     "correct": "Correct!",
-    "incorrect": "Not quite — try again!",
+    "incorrect": "Not quite!",
     "hint": "Hint",
     "mistakes": "Mistakes",
     "summary": "You got {correct} out of {total} steps right on the first try!",
