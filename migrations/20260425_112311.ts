@@ -1,6 +1,6 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
+export async function up({ db, payload: _payload, req: _req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
    CREATE TYPE "public"."enum_search_analytics_language" AS ENUM('en', 'hu', 'ro');
   ALTER TYPE "public"."enum_learning_events_tab" ADD VALUE 'order';
@@ -32,11 +32,11 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "payload_locked_documents_rels_search_analytics_id_idx" ON "payload_locked_documents_rels" USING btree ("search_analytics_id");`)
 }
 
-export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
+export async function down({ db, payload: _payload, req: _req }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
    ALTER TABLE "search_analytics" DISABLE ROW LEVEL SECURITY;
-  DROP TABLE "search_analytics" CASCADE;
   ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_search_analytics_fk";
+  DROP TABLE "search_analytics" CASCADE;
   
   ALTER TABLE "learning_events" ALTER COLUMN "tab" SET DATA TYPE text;
   DROP TYPE "public"."enum_learning_events_tab";

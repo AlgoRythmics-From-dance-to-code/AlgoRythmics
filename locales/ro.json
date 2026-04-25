@@ -861,7 +861,8 @@
     "rank": "Rang",
     "user": "Utilizator",
     "xp": "Puncte de Experiență",
-    "badges": "Insigne"
+    "badges": "Insigne",
+    "empty": "Nu există date disponibile."
   },
   "badges": {
     "perfect_coder": "Programator Perfect",

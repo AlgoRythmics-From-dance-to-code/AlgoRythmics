@@ -864,7 +864,8 @@
     "rank": "Helyezés",
     "user": "Felhasználó",
     "xp": "Tapasztalati Pont",
-    "badges": "Kitűzők"
+    "badges": "Kitűzők",
+    "empty": "Nincsenek elérhető adatok."
   },
   "badges": {
     "perfect_coder": "Hibátlan Kódoló",

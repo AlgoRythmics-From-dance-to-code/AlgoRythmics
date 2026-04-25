@@ -865,7 +865,8 @@
     "rank": "Rank",
     "user": "User",
     "xp": "Experience Points",
-    "badges": "Badges"
+    "badges": "Badges",
+    "empty": "No data available."
   },
   "badges": {
     "perfect_coder": "Perfect Coder",

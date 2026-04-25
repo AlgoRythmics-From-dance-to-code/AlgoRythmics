@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getPayloadInstance } from '../../../lib/payload';
+import { auth } from '../../../auth';
 
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const payload = await getPayloadInstance();
 
     const users = await payload.find({
@@ -18,7 +24,7 @@ export async function GET() {
     });
 
     const publicUsers = users.docs.map((user) => ({
-      id: user.id,
+      id: String(user.id),
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       imageUrl: user.imageUrl || null,

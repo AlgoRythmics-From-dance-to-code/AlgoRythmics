@@ -64,7 +64,7 @@ export default function LeaderboardPage() {
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#269984] to-transparent opacity-50"></div>
 
           {users.length === 0 ? (
-            <div className="p-12 text-center text-gray-500 font-montserrat">No data available.</div>
+            <div className="p-12 text-center text-gray-500 font-montserrat">{t('leaderboard.empty')}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left font-montserrat">
