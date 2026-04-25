@@ -12,6 +12,9 @@ import { Toaster } from 'sonner';
 import UserProgressSync from '../components/Learning/UserProgressSync';
 import PWAInstallPrompt from '../components/PWAInstallPrompt';
 import HtmlLangSync from '../components/HtmlLangSync';
+import { auth } from '../../auth';
+import { cookies } from 'next/headers';
+import { Locale } from '../i18n/LocaleProvider';
 
 const montserrat = Montserrat({
   variable: '--font-montserrat',
@@ -69,13 +72,16 @@ export const viewport = {
   maximumScale: 5,
 };
 
-export default function FrontendLayout({ children }: { children: React.ReactNode }) {
+export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
+  const [session, cookieStore] = await Promise.all([auth(), cookies()]);
+  const locale = (cookieStore.get('locale')?.value as Locale) || 'hu';
+
   return (
-    <html lang="hu" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${montserrat.variable} antialiased min-h-screen flex flex-col`}>
-        <NextAuthProvider>
+        <NextAuthProvider session={session}>
           <ThemeProviderClient>
-            <LocaleProvider>
+            <LocaleProvider initialLocale={locale}>
               <HtmlLangSync />
               <UserProgressSync />
               <Header />
