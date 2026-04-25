@@ -29,13 +29,23 @@ export function useLocale() {
   return useContext(LocaleContext);
 }
 
-export default function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('hu');
+export default function LocaleProvider({
+  children,
+  initialLocale,
+}: {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale || 'hu');
 
   useEffect(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('locale') : null;
-    if (saved === 'en' || saved === 'hu' || saved === 'ro') setLocaleState(saved);
-  }, []);
+    // Only load from localStorage if we didn't get an initialLocale from the server
+    // OR if we want to ensure client-side preference overrides server-side cookie (usually cookie is better)
+    if (!initialLocale) {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('locale') : null;
+      if (saved === 'en' || saved === 'hu' || saved === 'ro') setLocaleState(saved);
+    }
+  }, [initialLocale]);
 
   function setLocale(l: Locale) {
     setLocaleState(l);

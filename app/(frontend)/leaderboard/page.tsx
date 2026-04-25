@@ -6,10 +6,9 @@ import Image from 'next/image';
 import { Trophy, Medal, Award, User, Flame } from 'lucide-react';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { getUserBadges, UserStats } from '../../../lib/badges';
-import LoadingOverlay from '../../components/LoadingOverlay';
-
 import { useSession } from 'next-auth/react';
 import { BaseUser } from '../../../lib/types/auth';
+import LeaderboardSkeleton from '../../components/LeaderboardSkeleton';
 
 interface LeaderboardUser {
   id: string;
@@ -40,7 +39,7 @@ export default function LeaderboardPage() {
   }, []);
 
   if (loading) {
-    return <LoadingOverlay isVisible={true} message={t('common.loading')} />;
+    return <LeaderboardSkeleton />;
   }
 
   return (
