@@ -83,6 +83,35 @@ export async function POST(req: Request) {
     const now = new Date().toISOString();
 
     if (docs.length > 0) {
+      const existing = docs[0] as unknown as Record<string, unknown>;
+
+      // Merge completedPhases as a union set to prevent stale clients from erasing progress
+      if (Array.isArray(updates.completedPhases) && Array.isArray(existing.completedPhases)) {
+        const merged = new Set([
+          ...(existing.completedPhases as string[]),
+          ...(updates.completedPhases as string[]),
+        ]);
+        updates.completedPhases = [...merged];
+      }
+
+      // Protect cumulative numeric fields from regression
+      const cumulativeFields = [
+        'points',
+        'totalTimeMs',
+        'totalMistakes',
+        'mascotInteractionsTotal',
+      ] as const;
+      for (const field of cumulativeFields) {
+        if (updates[field] !== undefined && typeof existing[field] === 'number') {
+          updates[field] = Math.max(existing[field] as number, updates[field] as number);
+        }
+      }
+
+      // Don't allow isCompleted to regress from true to false
+      if (existing.isCompleted === true && updates.isCompleted === false) {
+        delete updates.isCompleted;
+      }
+
       await payload.update({
         collection: 'course-progress',
         id: docs[0].id,

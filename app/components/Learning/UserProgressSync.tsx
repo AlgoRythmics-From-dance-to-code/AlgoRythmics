@@ -102,8 +102,7 @@ export default function UserProgressSync() {
     };
 
     fetchFullProgress();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, session, isAuthPage]);
+  }, [status, session, isAuthPage, clearStore, hydrate]);
 
   // 2. Persistent Sync Logic
   const syncProgress = useCallback(async () => {

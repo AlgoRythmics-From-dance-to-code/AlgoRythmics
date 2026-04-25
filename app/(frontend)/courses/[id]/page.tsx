@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import CoursePlayer from '../../../components/Course/CoursePlayer';
@@ -8,12 +7,11 @@ import {
   getCourseCatalog,
   type CourseCollectionDoc,
 } from '../../../../lib/courses/courseCatalog';
-import { getT, getServerLocale } from '../../../../lib/i18n-server';
+import { getServerLocale } from '../../../../lib/i18n-server';
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const locale = await getServerLocale();
-  const t = await getT();
 
   let docs: CourseCollectionDoc[] = [];
   try {
@@ -23,8 +21,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
       depth: 0,
       limit: 50,
       sort: 'title',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      locale: locale as any,
+      locale: locale as 'all' | 'en' | 'hu' | 'ro',
     });
     docs = result.docs as unknown as CourseCollectionDoc[];
   } catch {
@@ -45,17 +42,14 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
   }
 
   return (
-    <main className="w-full bg-white dark:bg-[#0a0a0a]">
-      <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
-        <Link
-          href="/courses"
-          className="inline-flex items-center gap-2 rounded-full border border-[#269984]/20 bg-white/80 px-4 py-2 text-sm font-bold text-[#269984] shadow-sm backdrop-blur transition-colors hover:bg-[#f0fbf9] dark:bg-black/20 dark:text-white dark:hover:bg-white/5"
-        >
-          ← {t('courses.back_to_courses')}
-        </Link>
+    <main className="relative min-h-screen w-full bg-[#fdfdfd] dark:bg-[#080808] overflow-hidden">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1400px] h-full pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[30%] rounded-full bg-[#269984]/5 blur-[120px]" />
+        <div className="absolute bottom-[20%] left-[-10%] w-[30%] h-[40%] rounded-full bg-[#269984]/3 blur-[100px]" />
       </div>
 
-      <div className="mx-auto max-w-[1400px] px-4 pb-14 sm:px-6 md:pb-16">
+      <div className="relative mx-auto max-w-[1500px] px-0 py-0 sm:px-4 lg:pt-6 lg:pb-12">
         <CoursePlayer course={course} />
       </div>
     </main>

@@ -600,9 +600,11 @@
     "checkpoints": "puncte de control",
     "back_to_courses": "Înapoi la cursuri",
     "confidence_check": "Verificarea încrederii",
-    "no_matches": "Niciun curs nu corespunde căutării"
+    "no_matches": "Niciun curs nu corespunde căutării",
+    "try_adjusting_filters": "Încearcă să ajustezi filtrele sau căutarea."
   },
   "course": {
+    "learning_path": "Drumul de învățare",
     "info_understand": "Am înțeles, să mergem mai departe!",
     "quiz_explanation": "Explicație",
     "final_challenge": "Provocarea finală",

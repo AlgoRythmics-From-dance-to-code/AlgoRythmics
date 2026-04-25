@@ -121,6 +121,24 @@ export async function POST(req: Request) {
 
     // Compute aggregates based on merged data
     const existing = docs.length > 0 ? (docs[0] as AlgorithmProgress) : undefined;
+
+    // Protect boolean completion flags from regression (stale client sending false when server has true)
+    const completionFlags = [
+      'videoWatched',
+      'animationCompleted',
+      'controlCompleted',
+      'createCompleted',
+      'aliveCompleted',
+    ] as const;
+    if (existing) {
+      const existingRecord = existing as unknown as Record<string, unknown>;
+      for (const flag of completionFlags) {
+        if (existingRecord[flag] === true && updates[flag] === false) {
+          delete updates[flag];
+        }
+      }
+    }
+
     const merged = { ...(existing || {}), ...updates };
 
     let overall = 0;
@@ -154,6 +172,10 @@ export async function POST(req: Request) {
           existing.aliveCodeSubmissions || 0,
           updates.aliveCodeSubmissions,
         );
+      // Best time should be MINIMUM (faster = better), not maximum
+      if (updates.controlBestTimeMs !== undefined && existing.controlBestTimeMs) {
+        updates.controlBestTimeMs = Math.min(existing.controlBestTimeMs, updates.controlBestTimeMs);
+      }
     }
 
     updates.totalTimeSpentMs = computeTotalTimeSpentMs(existing, updates);

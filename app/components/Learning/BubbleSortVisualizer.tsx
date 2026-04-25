@@ -11,12 +11,8 @@ import {
 } from '../../../lib/algorithms/bubbleSortSteps';
 
 export default function BubbleSortVisualizer({ id = 'bubble-sort' }: { id?: string }) {
-  const {
-    visualizerProgress,
-    updateVisualizerProgress,
-    algorithmProgress,
-    resetAlgorithmProgressTab,
-  } = useAlgorithmStore();
+  const { visualizerProgress, updateVisualizerProgress, resetAlgorithmProgressTab } =
+    useAlgorithmStore();
   const { trackEvent, updateProgress } = useAnalytics(id, 'animation');
 
   const initialProgress = visualizerProgress[id] || { step: 0, speed: 1 };
@@ -121,11 +117,11 @@ export default function BubbleSortVisualizer({ id = 'bubble-sort' }: { id?: stri
       updateProgress({
         animationCompleted: true,
         animationCompletedAt: new Date().toISOString(),
-        animationPlayCount: (algorithmProgress[id]?.animationPlayCount || 0) + 1,
+        animationPlayCount:
+          (useAlgorithmStore.getState().algorithmProgress[id]?.animationPlayCount || 0) + 1,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFinished]);
+  }, [isFinished, currentStep, steps, trackEvent, updateProgress, id]);
 
   // Autoplay
   useEffect(() => {

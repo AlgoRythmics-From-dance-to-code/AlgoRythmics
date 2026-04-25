@@ -11,12 +11,8 @@ import {
 } from '../../../lib/algorithms/insertionSortSteps';
 
 export default function InsertionSortVisualizer({ id = 'insertion-sort' }: { id?: string }) {
-  const {
-    visualizerProgress,
-    updateVisualizerProgress,
-    algorithmProgress,
-    resetAlgorithmProgressTab,
-  } = useAlgorithmStore();
+  const { visualizerProgress, updateVisualizerProgress, resetAlgorithmProgressTab } =
+    useAlgorithmStore();
   const { trackEvent, updateProgress } = useAnalytics(id, 'animation');
 
   const initialProgress = visualizerProgress[id] || { step: 0, speed: 1 };
@@ -121,11 +117,11 @@ export default function InsertionSortVisualizer({ id = 'insertion-sort' }: { id?
       updateProgress({
         animationCompleted: true,
         animationCompletedAt: new Date().toISOString(),
-        animationPlayCount: (algorithmProgress[id]?.animationPlayCount || 0) + 1,
+        animationPlayCount:
+          (useAlgorithmStore.getState().algorithmProgress[id]?.animationPlayCount || 0) + 1,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFinished]);
+  }, [isFinished, currentStep, steps, trackEvent, updateProgress, id]);
 
   // Autoplay
   useEffect(() => {

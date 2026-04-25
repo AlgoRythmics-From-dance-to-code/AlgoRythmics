@@ -243,12 +243,13 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             break;
           case 'control':
             updates.controlCompleted = false;
+            updates.controlCompletedAt = null;
             updates.controlBestScore = 0;
+            updates.controlBestTimeMs = 0;
             updates.controlMistakes = 0;
             updates.controlAttempts = 0;
             updates.controlHintsUsed = 0;
             updates.controlTotalTimeMs = 0;
-            updates.controlMistakes = 0;
             break;
           case 'create':
             updates.createCompleted = false;
