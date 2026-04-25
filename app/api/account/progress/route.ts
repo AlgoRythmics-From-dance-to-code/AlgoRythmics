@@ -370,8 +370,11 @@ export async function POST(req: Request) {
               updates.completedPhases = [...merged];
             }
 
-            // Protect cumulative fields against stale data
-            updates.points = Math.max(existing.points || 0, (updates.points as number) || 0);
+            // Allow points to decrease (e.g. on reset)
+            if (updates.points !== undefined) {
+              updates.points = (updates.points as number) || 0;
+            }
+            
             updates.totalTimeMs = Math.max(
               existing.totalTimeMs || 0,
               (updates.totalTimeMs as number) || 0,
@@ -385,10 +388,8 @@ export async function POST(req: Request) {
               (updates.mascotInteractionsTotal as number) || 0,
             );
 
-            // Don't allow isCompleted to regress from true to false
-            if (existing.isCompleted === true && updates.isCompleted === false) {
-              delete updates.isCompleted;
-            }
+            // Allow isCompleted to be reset
+            // (Removed regression protection to support course resets)
 
             await payload.update({
               collection: 'course-progress',
