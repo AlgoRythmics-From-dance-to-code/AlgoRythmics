@@ -170,7 +170,7 @@ function CodeMode({
       attempt: submissions + 1,
     });
 
-    const bestScore = Math.max(Number(result?.score || 0), analysis.score);
+    const bestScore = Math.max(progress?.aliveBestScore || 0, analysis.score);
 
     if (analysis.isCorrect) {
       trackEvent('alive_code_success', {
@@ -193,11 +193,11 @@ function CodeMode({
         score: analysis.score,
       });
 
-      const isPartiallyCorrect = analysis.score > 0;
-      const isNewlyCompleted = isPartiallyCorrect && !progress?.aliveCompleted;
+      const meetsCompletionThreshold = analysis.score >= 50;
+      const isNewlyCompleted = meetsCompletionThreshold && !progress?.aliveCompleted;
 
       updateProgress({
-        aliveCompleted: isPartiallyCorrect || (progress?.aliveCompleted ?? false),
+        aliveCompleted: meetsCompletionThreshold || (progress?.aliveCompleted ?? false),
         aliveLastCode: code,
         aliveBestScore: bestScore,
         aliveCodeSubmissions: submissions + 1,
@@ -214,7 +214,7 @@ function CodeMode({
     helpUsed,
     trackEvent,
     updateProgress,
-    result?.score,
+    progress?.aliveBestScore,
     progress?.aliveCompleted,
     onMistake,
   ]);

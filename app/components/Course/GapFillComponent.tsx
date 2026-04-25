@@ -14,11 +14,7 @@ interface GapFillComponentProps {
   onMistake?: () => void;
 }
 
-export default function GapFillComponent({
-  phase,
-  courseId,
-  onMistake: _onMistake,
-}: GapFillComponentProps) {
+export default function GapFillComponent({ phase, courseId, onMistake }: GapFillComponentProps) {
   const { t } = useLocale();
   const { markCoursePhaseComplete, setCoursePhaseResult, setCoursePhasePoints, syncProgress } =
     useAlgorithmStore();
@@ -66,6 +62,7 @@ export default function GapFillComponent({
     setShowFeedback(true);
 
     const allCorrect = correct === blankCount;
+    if (!allCorrect) onMistake?.();
 
     trackEvent('gap_fill_checked', {
       phaseId: phase.phaseId,

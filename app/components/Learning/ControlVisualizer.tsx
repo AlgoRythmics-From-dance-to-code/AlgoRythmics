@@ -70,7 +70,7 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
       const spentMs = Date.now() - startTime.current;
       const currentTotal = progressRef.current?.controlTotalTimeMs || 0;
       updateProgress({
-        controlAttempts: (progressRef.current?.controlAttempts || 0) + 1,
+        // Only track time on unmount — controlAttempts is incremented in finishControl()
         controlTotalTimeMs: currentTotal + spentMs,
       });
     };

@@ -38,12 +38,10 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
 
     const timer = setTimeout(() => {
       trackEvent('video_watched_10s', { youtubeId });
-      if (!isWatchedRef.current) {
-        updateProgress({
-          videoWatched: true,
-          videoCompletedAt: new Date().toISOString(),
-        });
-      }
+      updateProgress({
+        videoWatched: true,
+        videoCompletedAt: new Date().toISOString(),
+      });
     }, 10000); // 10 seconds of "watching" is enough to count
 
     return () => {

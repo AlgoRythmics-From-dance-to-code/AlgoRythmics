@@ -185,6 +185,23 @@ export async function POST(req: Request) {
 
           // For counts and scores, ensure we take the maximum to protect against stale client data
           if (existingDoc) {
+            // Protect boolean completion flags from regression
+            const completionFlags = [
+              'videoWatched',
+              'animationCompleted',
+              'controlCompleted',
+              'createCompleted',
+              'aliveCompleted',
+            ] as const;
+            for (const flag of completionFlags) {
+              if (
+                (existingDoc as unknown as Record<string, unknown>)[flag] === true &&
+                updates[flag] === false
+              ) {
+                delete updates[flag];
+              }
+            }
+
             if (updates.controlBestScore !== undefined)
               updates.controlBestScore = Math.max(
                 existingDoc.controlBestScore || 0,
@@ -240,6 +257,13 @@ export async function POST(req: Request) {
                 existingDoc.aliveTotalTimeMs || 0,
                 updates.aliveTotalTimeMs as number,
               );
+            // Best time should be MINIMUM (faster = better)
+            if (updates.controlBestTimeMs !== undefined && existingDoc.controlBestTimeMs) {
+              updates.controlBestTimeMs = Math.min(
+                existingDoc.controlBestTimeMs,
+                updates.controlBestTimeMs as number,
+              );
+            }
           }
 
           // Compute algorithm-specific aggregates based on FULL merged state
@@ -250,12 +274,18 @@ export async function POST(req: Request) {
             ((merged.createTotalTimeMs as number) || 0) +
             ((merged.aliveTotalTimeMs as number) || 0);
 
+          // Compute overallProgress from post-protection merged state
+          const protectedMerged = {
+            ...(existingDoc || {}),
+            ...updates,
+          };
+
           let overall = 0;
-          if (merged.videoWatched) overall += 20;
-          if (merged.animationCompleted) overall += 20;
-          if (merged.controlCompleted) overall += 20;
-          if (merged.createCompleted) overall += 20;
-          if (merged.aliveCompleted) overall += 20;
+          if (protectedMerged.videoWatched) overall += 20;
+          if (protectedMerged.animationCompleted) overall += 20;
+          if (protectedMerged.controlCompleted) overall += 20;
+          if (protectedMerged.createCompleted) overall += 20;
+          if (protectedMerged.aliveCompleted) overall += 20;
 
           updates.totalTimeSpentMs = totalTime;
           updates.overallProgress = overall;
@@ -292,57 +322,85 @@ export async function POST(req: Request) {
         ([, data]) => data && typeof data === 'object',
       ) as [string, Record<string, unknown>][];
 
-      for (const [slug, data] of courseEntries) {
+      if (courseEntries.length > 0) {
+        const courseSlugs = courseEntries.map(([slug]) => slug);
+
+        // Batch find all existing course-progress docs instead of N+1 queries
         const { docs: existingCourseDocs } = await payload.find({
           collection: 'course-progress',
           where: {
-            and: [{ user: { equals: userId } }, { courseId: { equals: slug } }],
+            and: [{ user: { equals: userId } }, { courseId: { in: courseSlugs } }],
           },
-          limit: 1,
+          limit: courseSlugs.length,
           depth: 0,
         });
 
-        const updates = { ...data } as Record<string, unknown>;
-        delete updates.user;
-        delete updates.courseId;
-        delete updates.id;
-        delete updates.createdAt;
-        delete updates.updatedAt;
+        const existingBySlug = new Map(
+          existingCourseDocs.map((doc) => [
+            String((doc as unknown as { courseId: string }).courseId),
+            doc as unknown as {
+              id: string | number;
+              points?: number;
+              totalTimeMs?: number;
+              totalMistakes?: number;
+              mascotInteractionsTotal?: number;
+              completedPhases?: string[];
+              isCompleted?: boolean;
+            },
+          ]),
+        );
 
-        if (existingCourseDocs.length > 0) {
-          const existing = existingCourseDocs[0] as unknown as {
-            id: string | number;
-            points?: number;
-            totalTimeMs?: number;
-            totalMistakes?: number;
-            mascotInteractionsTotal?: number;
-          };
+        for (const [slug, data] of courseEntries) {
+          const updates = { ...data } as Record<string, unknown>;
+          delete updates.user;
+          delete updates.courseId;
+          delete updates.id;
+          delete updates.createdAt;
+          delete updates.updatedAt;
 
-          // Protect cumulative fields against stale data
-          updates.points = Math.max(existing.points || 0, (updates.points as number) || 0);
-          updates.totalTimeMs = Math.max(
-            existing.totalTimeMs || 0,
-            (updates.totalTimeMs as number) || 0,
-          );
-          updates.totalMistakes = Math.max(
-            existing.totalMistakes || 0,
-            (updates.totalMistakes as number) || 0,
-          );
-          updates.mascotInteractionsTotal = Math.max(
-            existing.mascotInteractionsTotal || 0,
-            (updates.mascotInteractionsTotal as number) || 0,
-          );
+          const existing = existingBySlug.get(slug);
 
-          await payload.update({
-            collection: 'course-progress',
-            id: existing.id,
-            data: { ...updates, updatedAt: now },
-          });
-        } else {
-          await payload.create({
-            collection: 'course-progress',
-            data: { ...updates, user: userId, courseId: slug, createdAt: now, updatedAt: now },
-          });
+          if (existing) {
+            // Merge completedPhases as a union set to prevent stale clients from erasing progress
+            if (Array.isArray(updates.completedPhases) && Array.isArray(existing.completedPhases)) {
+              const merged = new Set([
+                ...existing.completedPhases,
+                ...(updates.completedPhases as string[]),
+              ]);
+              updates.completedPhases = [...merged];
+            }
+
+            // Protect cumulative fields against stale data
+            updates.points = Math.max(existing.points || 0, (updates.points as number) || 0);
+            updates.totalTimeMs = Math.max(
+              existing.totalTimeMs || 0,
+              (updates.totalTimeMs as number) || 0,
+            );
+            updates.totalMistakes = Math.max(
+              existing.totalMistakes || 0,
+              (updates.totalMistakes as number) || 0,
+            );
+            updates.mascotInteractionsTotal = Math.max(
+              existing.mascotInteractionsTotal || 0,
+              (updates.mascotInteractionsTotal as number) || 0,
+            );
+
+            // Don't allow isCompleted to regress from true to false
+            if (existing.isCompleted === true && updates.isCompleted === false) {
+              delete updates.isCompleted;
+            }
+
+            await payload.update({
+              collection: 'course-progress',
+              id: existing.id,
+              data: { ...updates, updatedAt: now },
+            });
+          } else {
+            await payload.create({
+              collection: 'course-progress',
+              data: { ...updates, user: userId, courseId: slug, createdAt: now, updatedAt: now },
+            });
+          }
         }
       }
     }
