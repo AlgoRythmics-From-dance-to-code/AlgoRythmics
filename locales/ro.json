@@ -40,7 +40,8 @@
     "switch_theme": "Schimbă tema",
     "about": "Despre noi",
     "terms": "Termenii și condițiile",
-    "privacy": "Politica de confidențialitate"
+    "privacy": "Politica de confidențialitate",
+    "leaderboard": "Clasament"
   },
   "aria": {
     "go_home": "Mergi la pagina principală",
@@ -114,14 +115,13 @@
     "install_desc": "Doriți să descărcați aplicația pe telefon?",
     "install_btn": "Instalează",
     "dismiss_btn": "Nu acum",
-    "profile_install_btn": "Descarcă Aplicația",
+    "profile_install_btn": "Instalează Aplicația",
     "confirm_title": "Ești sigur?",
     "confirm_desc": "Dacă închizi acest mesaj, nu va mai apărea automat. Poți instala oricând din profilul tău.",
     "confirm_btn": "Da, închide",
     "cancel_btn": "Anulează",
     "already_installed_check": "Se verifică...",
-    "ios_instructions": "Apasă butonul Share și apoi 'Adaugă la ecranul de pornire'.",
-    "profile_install_btn": "Instalează Aplicația"
+    "ios_instructions": "Apasă butonul Share și apoi 'Adaugă la ecranul de pornire'."
   },
   "errors": {
     "unauthorized": "Neautorizat",
@@ -155,7 +155,9 @@
       "current": "Curent",
       "best": "Cel mai bun",
       "learning_time": "Timp de învățare",
-      "avg_score": "Scor mediu"
+      "avg_score": "Scor mediu",
+      "badges_title": "Insigne Obținute",
+      "no_badges": "Nu ai obținut încă insigne."
     },
     "edit": {
       "title": "Editează profilul",
@@ -311,10 +313,22 @@
     "team_title": "Echipa noastră",
     "team_subtitle": "Faceți cunoștință cu oamenii pasionați din spatele AlgoRythmics",
     "team": {
-      "sarah": { "name": "Dr. Sarah Chen", "role": "Fondator și cercetător principal" },
-      "mark": { "name": "Mark Williams", "role": "Director creativ" },
-      "anna": { "name": "Anna Kovács", "role": "Dezvoltator Frontend" },
-      "david": { "name": "David Park", "role": "Specialist în algoritmi" }
+      "sarah": {
+        "name": "Dr. Sarah Chen",
+        "role": "Fondator și cercetător principal"
+      },
+      "mark": {
+        "name": "Mark Williams",
+        "role": "Director creativ"
+      },
+      "anna": {
+        "name": "Anna Kovács",
+        "role": "Dezvoltator Frontend"
+      },
+      "david": {
+        "name": "David Park",
+        "role": "Specialist în algoritmi"
+      }
     },
     "how_it_works": "Cum funcționează",
     "steps": {
@@ -644,7 +658,6 @@
     "rewards": "Recompense",
     "grand_total": "Total general",
     "currently_at": "În această parte: {title}",
-    "quiz_explanation": "Explicație",
     "quiz": {
       "ordering_title": "Trageți elementele în ordinea corectă",
       "check": "Verificare",
@@ -841,5 +854,20 @@
     "rights_title": "5. Drepturile Dumneavoastră",
     "rights_text": "Aveți dreptul de a accesa, rectifica sau șterge datele dumneavoastră personale. Vă puteți șterge contul oricând direct din secțiunea „Profil”.",
     "back_home": "Înapoi la Acasă"
+  },
+  "leaderboard": {
+    "title": "Clasament Comunitar",
+    "subtitle": "Vezi cine are cele mai multe XP-uri!",
+    "rank": "Rang",
+    "user": "Utilizator",
+    "xp": "Puncte de Experiență",
+    "badges": "Insigne",
+    "empty": "Nu există date disponibile."
+  },
+  "badges": {
+    "perfect_coder": "Programator Perfect",
+    "experienced": "Experimentat",
+    "persistent": "Perseverent",
+    "master": "Maestru"
   }
 }

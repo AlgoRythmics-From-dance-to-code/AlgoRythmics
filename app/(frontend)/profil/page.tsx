@@ -24,12 +24,14 @@ import {
   Clock,
   Trophy,
   Target,
+  Medal,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocale, Locale } from '../../i18n/LocaleProvider';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import LoadingOverlay from '../../components/LoadingOverlay';
+import { getUserBadges } from '../../../lib/badges';
 
 const formatDate = (dateString: string, locale: Locale, t: (key: string) => string) => {
   if (!dateString) return t('common.not_available');
@@ -220,6 +222,8 @@ export default function ProfilePage() {
     if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
     return (user.email?.[0] || 'U').toUpperCase();
   };
+
+  const userBadges = getUserBadges((user as BaseUser).learningStats);
 
   const initials = getInitials();
   const avatarUrl: string | undefined =
@@ -426,6 +430,37 @@ export default function ProfilePage() {
                             <p className="font-montserrat text-base font-bold text-gray-800 dark:text-gray-200">
                               {formatDate((user as BaseUser).createdAt || '', locale, t)}
                             </p>
+                          </div>
+                        </div>
+
+                        {/* Badges Section */}
+                        <div>
+                          <label className="flex items-center gap-2 font-montserrat font-black text-[#269984] mb-3 text-xs uppercase tracking-[0.2em]">
+                            <Medal size={14} className="opacity-70" />
+                            {t('profile.public.badges_title')}
+                          </label>
+                          <div className="p-6 bg-gray-50/50 dark:bg-neutral-900/50 rounded-3xl border border-gray-100 dark:border-neutral-800">
+                            <div className="flex flex-wrap gap-3">
+                              {userBadges.length > 0 ? (
+                                userBadges.map((badge) => (
+                                  <div
+                                    key={badge.id}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${badge.color} shadow-sm group relative cursor-help transition-transform hover:scale-105`}
+                                  >
+                                    <span className="text-xl drop-shadow-sm">{badge.icon}</span>
+                                    <span className="font-bold text-xs whitespace-nowrap">
+                                      {t(badge.translationKey)}
+                                    </span>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="w-full text-center py-6 border-2 border-dashed border-gray-200 dark:border-neutral-800 rounded-xl">
+                                  <p className="text-sm font-medium text-gray-400 italic">
+                                    {t('profile.public.no_badges')}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

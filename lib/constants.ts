@@ -23,6 +23,7 @@ export const ROUTES = {
   COURSES: '/courses',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
+  LEADERBOARD: '/leaderboard',
 } as const;
 
 export const API_ROUTES = {

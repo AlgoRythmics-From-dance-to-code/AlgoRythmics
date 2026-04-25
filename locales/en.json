@@ -40,7 +40,8 @@
     "switch_theme": "Switch Theme",
     "about": "About Us",
     "terms": "Terms of Service",
-    "privacy": "Privacy Policy"
+    "privacy": "Privacy Policy",
+    "leaderboard": "Leaderboard"
   },
   "aria": {
     "go_home": "Go to homepage",
@@ -114,14 +115,13 @@
     "install_desc": "Would you like to download the app to your phone?",
     "install_btn": "Install",
     "dismiss_btn": "Not now",
-    "profile_install_btn": "Download App",
+    "profile_install_btn": "Install Application",
     "confirm_title": "Are you sure?",
     "confirm_desc": "If you dismiss this, it won't show again automatically. You can always install it from your profile.",
     "confirm_btn": "Yes, dismiss",
     "cancel_btn": "Cancel",
     "already_installed_check": "Pending...",
-    "ios_instructions": "Tap the Share button and then 'Add to Home Screen'.",
-    "profile_install_btn": "Install Application"
+    "ios_instructions": "Tap the Share button and then 'Add to Home Screen'."
   },
   "errors": {
     "unauthorized": "Unauthorized",
@@ -155,7 +155,9 @@
       "current": "Current",
       "best": "Best",
       "learning_time": "Learning Time",
-      "avg_score": "Avg Score"
+      "avg_score": "Avg Score",
+      "badges_title": "Earned Badges",
+      "no_badges": "No badges earned yet."
     },
     "edit": {
       "title": "Edit Profile",
@@ -311,10 +313,22 @@
     "team_title": "Our Team",
     "team_subtitle": "Meet the passionate people behind AlgoRythmics",
     "team": {
-      "sarah": { "name": "Dr. Sarah Chen", "role": "Founder & Lead Researcher" },
-      "mark": { "name": "Mark Williams", "role": "Creative Director" },
-      "anna": { "name": "Anna Kovács", "role": "Frontend Developer" },
-      "david": { "name": "David Park", "role": "Algorithm Specialist" }
+      "sarah": {
+        "name": "Dr. Sarah Chen",
+        "role": "Founder & Lead Researcher"
+      },
+      "mark": {
+        "name": "Mark Williams",
+        "role": "Creative Director"
+      },
+      "anna": {
+        "name": "Anna Kovács",
+        "role": "Frontend Developer"
+      },
+      "david": {
+        "name": "David Park",
+        "role": "Algorithm Specialist"
+      }
     },
     "how_it_works": "How It Works",
     "steps": {
@@ -844,5 +858,20 @@
     "rights_title": "5. Your Rights",
     "rights_text": "You have the right to access, rectify, or delete your personal data. You can delete your account at any time directly from the 'Profile' section.",
     "back_home": "Back to Home"
+  },
+  "leaderboard": {
+    "title": "Community Leaderboard",
+    "subtitle": "See who has the most XP!",
+    "rank": "Rank",
+    "user": "User",
+    "xp": "Experience Points",
+    "badges": "Badges",
+    "empty": "No data available."
+  },
+  "badges": {
+    "perfect_coder": "Perfect Coder",
+    "experienced": "Experienced",
+    "persistent": "Persistent",
+    "master": "Master"
   }
 }

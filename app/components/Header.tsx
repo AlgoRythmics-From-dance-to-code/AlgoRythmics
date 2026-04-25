@@ -125,6 +125,12 @@ export default function Header({
                 active={pathname === ROUTES.COURSES}
                 prefetch={true}
               />
+              <NavLink
+                href={ROUTES.LEADERBOARD}
+                label={t('nav.leaderboard')}
+                active={pathname === ROUTES.LEADERBOARD}
+                prefetch={true}
+              />
             </>
           )}
         </nav>
@@ -334,6 +340,13 @@ export default function Header({
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.courses')}
+                </Link>
+                <Link
+                  href={ROUTES.LEADERBOARD}
+                  className={`font-montserrat text-xl ${pathname === ROUTES.LEADERBOARD ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('nav.leaderboard')}
                 </Link>
               </div>
             )}
