@@ -40,7 +40,8 @@
     "switch_theme": "Séma váltása",
     "about": "Rólunk",
     "terms": "Felhasználási feltételek",
-    "privacy": "Adatvédelmi irányelvek"
+    "privacy": "Adatvédelmi irányelvek",
+    "leaderboard": "Ranglista"
   },
   "aria": {
     "go_home": "Ugrás a kezdőlapra",
@@ -114,14 +115,13 @@
     "install_desc": "Szeretnéd letölteni az alkalmazást a telefonodra?",
     "install_btn": "Telepítés",
     "dismiss_btn": "Most nem",
-    "profile_install_btn": "Alkalmazás letöltése",
+    "profile_install_btn": "Alkalmazás Telepítése",
     "confirm_title": "Biztosan bezárod?",
     "confirm_desc": "Ha most elutasítod, az üzenet többet nem fog automatikusan megjelenni. Később a profilodban bármikor telepítheted.",
     "confirm_btn": "Igen, bezárom",
     "cancel_btn": "Mégse",
     "already_installed_check": "Várakozás...",
-    "ios_instructions": "Kattints a Megosztás gombra, majd a 'Hozzáadás a kezdőképernyőhöz' opcióra.",
-    "profile_install_btn": "Alkalmazás Telepítése"
+    "ios_instructions": "Kattints a Megosztás gombra, majd a 'Hozzáadás a kezdőképernyőhöz' opcióra."
   },
   "errors": {
     "unauthorized": "Nincs jogosultság",
@@ -155,7 +155,9 @@
       "current": "Jelenlegi",
       "best": "Legjobb",
       "learning_time": "Tanulási idő",
-      "avg_score": "Átlagos pontszám"
+      "avg_score": "Átlagos pontszám",
+      "badges_title": "Megszerzett Kitűzők",
+      "no_badges": "Még nem szereztél kitűzőt."
     },
     "edit": {
       "title": "Profil szerkesztése",
@@ -311,10 +313,22 @@
     "team_title": "Csapatunk",
     "team_subtitle": "Ismerd meg az AlgoRythmics mögött álló lelkes csapatot",
     "team": {
-      "sarah": { "name": "Dr. Sarah Chen", "role": "Alapító és vezető kutató" },
-      "mark": { "name": "Mark Williams", "role": "Kreatív igazgató" },
-      "anna": { "name": "Kovács Anna", "role": "Frontend fejlesztő" },
-      "david": { "name": "David Park", "role": "Algoritmus szakértő" }
+      "sarah": {
+        "name": "Dr. Sarah Chen",
+        "role": "Alapító és vezető kutató"
+      },
+      "mark": {
+        "name": "Mark Williams",
+        "role": "Kreatív igazgató"
+      },
+      "anna": {
+        "name": "Kovács Anna",
+        "role": "Frontend fejlesztő"
+      },
+      "david": {
+        "name": "David Park",
+        "role": "Algoritmus szakértő"
+      }
     },
     "how_it_works": "Hogyan működik?",
     "steps": {
@@ -643,7 +657,6 @@
     "rewards": "Jutalmak",
     "grand_total": "Mindösszesen",
     "currently_at": "Ebben a részben épp: {title}",
-    "quiz_explanation": "Magyarázat",
     "quiz": {
       "ordering_title": "Húzd a helyes sorrendbe az elemeket",
       "check": "Ellenőrzés",
@@ -844,5 +857,19 @@
     "rights_title": "5. Az Ön jogai",
     "rights_text": "Önnek joga van hozzáférni, helyesbíteni vagy törölni személyes adatait. Fiókját bármikor törölheti közvetlenül a 'Profil' menüpontban.",
     "back_home": "Vissza a kezdőlapra"
+  },
+  "leaderboard": {
+    "title": "Közösségi Ranglista",
+    "subtitle": "Nézd meg, kinek van a legtöbb XP-je!",
+    "rank": "Helyezés",
+    "user": "Felhasználó",
+    "xp": "Tapasztalati Pont",
+    "badges": "Kitűzők"
+  },
+  "badges": {
+    "perfect_coder": "Hibátlan Kódoló",
+    "experienced": "Tapasztalt",
+    "persistent": "Kitartó",
+    "master": "Mester"
   }
 }
