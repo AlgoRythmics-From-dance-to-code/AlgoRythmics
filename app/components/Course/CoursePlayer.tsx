@@ -57,6 +57,7 @@ function getCompletionFlag(
 
   switch (phase.sourceView) {
     case 'video':
+    case 'video-custom':
       return !!progress?.videoWatched && isCompletedAfterCourseStart(progress?.videoCompletedAt);
     case 'animation':
       return (
@@ -356,6 +357,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     resetCourseProgress,
     setCourseConfidenceRating,
     setCoursePhasePoints,
+    markCoursePhaseComplete,
     markCourseCompleted,
     updateCoursePhaseStats,
     incrementCourseMascotInteraction,
@@ -373,6 +375,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       resetCourseProgress: state.resetCourseProgress,
       setCourseConfidenceRating: state.setCourseConfidenceRating,
       setCoursePhasePoints: state.setCoursePhasePoints,
+      markCoursePhaseComplete: state.markCoursePhaseComplete,
       markCourseCompleted: state.markCourseCompleted,
       updateCoursePhaseStats: state.updateCoursePhaseStats,
       incrementCourseMascotInteraction: state.incrementCourseMascotInteraction,
@@ -857,6 +860,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       mascotIntentionallyDisabled: !mascotEnabled,
     });
     updateCourseTotalTime(course.slug, elapsed);
+    markCoursePhaseComplete(course.slug, activePhase.phaseId);
 
     trackEvent('course_phase_completed', {
       phaseId: activePhase.phaseId,

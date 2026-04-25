@@ -225,6 +225,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
         switch (tab.toLowerCase()) {
           case 'video':
+          case 'video-custom':
             updates.videoWatched = false;
             updates.videoCompletedAt = null;
             updates.videoWatchTimeMs = 0;
@@ -262,6 +263,7 @@ export const useAlgorithmStore = create<AlgorithmState>()(
             updates.createCompletedAt = null;
             break;
           case 'alive':
+          case 'final-challenge':
             updates.aliveCompleted = false;
             updates.aliveBestScore = 0;
             updates.aliveCodeSubmissions = 0;
@@ -476,8 +478,15 @@ export const useAlgorithmStore = create<AlgorithmState>()(
 
         const currentResults = current.phaseResults || {};
         const nextResults: Record<string, 'success' | 'fail'> = {};
+        const currentStats = current.detailedStats || {};
+        const nextStats: Record<string, any> = {};
+        const currentConfidence = current.confidenceResults || {};
+        const nextConfidence: Record<string, string> = {};
+
         nextCompleted.forEach((id) => {
           if (currentResults[id]) nextResults[id] = currentResults[id];
+          if (currentStats[id]) nextStats[id] = currentStats[id];
+          if (currentConfidence[id]) nextConfidence[id] = currentConfidence[id];
         });
 
         // Smart points subtraction:
@@ -509,6 +518,8 @@ export const useAlgorithmStore = create<AlgorithmState>()(
               activePhaseIndex: phaseIndex,
               completedPhases: nextCompleted,
               phaseResults: nextResults,
+              detailedStats: nextStats,
+              confidenceResults: nextConfidence,
               phasePoints: nextPhasePoints,
               points: nextPoints,
               isCompleted: false,
