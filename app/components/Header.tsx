@@ -13,24 +13,18 @@ import { ROUTES, API_ROUTES } from '../../lib/constants';
 import { useAlgorithmStore } from '../store/useAlgorithmStore';
 import { useGlobalAnalytics } from '../hooks/useGlobalAnalytics';
 
-export default function Header({
-  isAuthenticated: propIsAuthenticated,
-  userImage: propUserImage,
-}: {
-  isAuthenticated?: boolean;
-  userImage?: string | null;
-}) {
+export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const isAuthenticated = !!session || propIsAuthenticated;
+  const isAuthenticated = !!session;
   const user = session?.user as
     | { firstName?: string; lastName?: string; imageUrl?: string; image?: string | null }
     | undefined;
   const firstName = user?.firstName || '';
   const lastName = user?.lastName || '';
-  const avatarUrl = user?.imageUrl || user?.image || propUserImage;
+  const avatarUrl = user?.imageUrl || user?.image || null;
 
   const getInitials = () => {
     if (firstName && lastName) return (firstName[0] + lastName[0]).toUpperCase();
