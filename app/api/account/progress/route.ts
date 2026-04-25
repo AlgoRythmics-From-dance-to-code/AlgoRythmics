@@ -361,13 +361,9 @@ export async function POST(req: Request) {
           const existing = existingBySlug.get(slug);
 
           if (existing) {
-            // Merge completedPhases as a union set to prevent stale clients from erasing progress
-            if (Array.isArray(updates.completedPhases) && Array.isArray(existing.completedPhases)) {
-              const merged = new Set([
-                ...existing.completedPhases,
-                ...(updates.completedPhases as string[]),
-              ]);
-              updates.completedPhases = [...merged];
+            // Trust the frontend for the exact set of completed phases to support rollbacks
+            if (updates.completedPhases !== undefined) {
+              updates.completedPhases = updates.completedPhases as string[];
             }
 
             // Allow points to decrease (e.g. on reset)
