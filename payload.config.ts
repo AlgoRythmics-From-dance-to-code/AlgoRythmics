@@ -50,6 +50,9 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL
         ? process.env.DATABASE_URL.replace(/(sslmode=)(require|prefer|verify-ca)/, '$1verify-full')
         : '',
+      max: 10,
+      idleTimeoutMillis: 20000,
+      connectionTimeoutMillis: 10000,
     },
     migrationDir: path.resolve(dirname, 'migrations'),
   }),
