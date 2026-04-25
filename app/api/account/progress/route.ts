@@ -167,7 +167,13 @@ export async function POST(req: Request) {
         const existingByAlgoId = new Map(existingDocs.map((doc) => [String(doc.algorithmId), doc]));
 
         for (const [id, data] of progressEntries) {
-          const existingDoc = existingByAlgoId.get(id);
+          const existingDoc = existingByAlgoId.get(id) as AlgorithmProgress | undefined;
+
+          // Merge incoming data with existing record to ensure accurate aggregate calculation
+          const merged = {
+            ...(existingDoc || {}),
+            ...(data as Record<string, unknown>),
+          };
 
           // We don't want to overwrite identity fields if they come from the frontend
           const updates = { ...(data as Record<string, unknown>) };
@@ -177,20 +183,79 @@ export async function POST(req: Request) {
           delete updates.createdAt;
           delete updates.updatedAt;
 
-          // Compute algorithm-specific aggregates
+          // For counts and scores, ensure we take the maximum to protect against stale client data
+          if (existingDoc) {
+            if (updates.controlBestScore !== undefined)
+              updates.controlBestScore = Math.max(
+                existingDoc.controlBestScore || 0,
+                updates.controlBestScore as number,
+              );
+            if (updates.controlAttempts !== undefined)
+              updates.controlAttempts = Math.max(
+                existingDoc.controlAttempts || 0,
+                updates.controlAttempts as number,
+              );
+            if (updates.createAttempts !== undefined)
+              updates.createAttempts = Math.max(
+                existingDoc.createAttempts || 0,
+                updates.createAttempts as number,
+              );
+            if (updates.createBlanksCorrectFirst !== undefined)
+              updates.createBlanksCorrectFirst = Math.max(
+                existingDoc.createBlanksCorrectFirst || 0,
+                updates.createBlanksCorrectFirst as number,
+              );
+            if (updates.aliveBestScore !== undefined)
+              updates.aliveBestScore = Math.max(
+                existingDoc.aliveBestScore || 0,
+                updates.aliveBestScore as number,
+              );
+            if (updates.aliveCodeSubmissions !== undefined)
+              updates.aliveCodeSubmissions = Math.max(
+                existingDoc.aliveCodeSubmissions || 0,
+                updates.aliveCodeSubmissions as number,
+              );
+            if (updates.animationTotalTimeMs !== undefined)
+              updates.animationTotalTimeMs = Math.max(
+                existingDoc.animationTotalTimeMs || 0,
+                updates.animationTotalTimeMs as number,
+              );
+            if (updates.videoWatchTimeMs !== undefined)
+              updates.videoWatchTimeMs = Math.max(
+                existingDoc.videoWatchTimeMs || 0,
+                updates.videoWatchTimeMs as number,
+              );
+            if (updates.controlTotalTimeMs !== undefined)
+              updates.controlTotalTimeMs = Math.max(
+                existingDoc.controlTotalTimeMs || 0,
+                updates.controlTotalTimeMs as number,
+              );
+            if (updates.createTotalTimeMs !== undefined)
+              updates.createTotalTimeMs = Math.max(
+                existingDoc.createTotalTimeMs || 0,
+                updates.createTotalTimeMs as number,
+              );
+            if (updates.aliveTotalTimeMs !== undefined)
+              updates.aliveTotalTimeMs = Math.max(
+                existingDoc.aliveTotalTimeMs || 0,
+                updates.aliveTotalTimeMs as number,
+              );
+          }
+
+          // Compute algorithm-specific aggregates based on FULL merged state
           const totalTime =
-            ((updates.videoWatchTimeMs as number) || 0) +
-            ((updates.animationTotalTimeMs as number) || 0) +
-            ((updates.controlTotalTimeMs as number) || 0) +
-            ((updates.createTotalTimeMs as number) || 0) +
-            ((updates.aliveTotalTimeMs as number) || 0);
+            ((merged.videoWatchTimeMs as number) || 0) +
+            ((merged.animationTotalTimeMs as number) || 0) +
+            ((merged.controlTotalTimeMs as number) || 0) +
+            ((merged.createTotalTimeMs as number) || 0) +
+            ((merged.aliveTotalTimeMs as number) || 0);
 
           let overall = 0;
-          if (updates.videoWatched) overall += 20;
-          if (updates.animationCompleted) overall += 20;
-          if (updates.controlCompleted) overall += 20;
-          if (updates.createCompleted) overall += 20;
-          if (updates.aliveCompleted) overall += 20;
+          if (merged.videoWatched) overall += 20;
+          if (merged.animationCompleted) overall += 20;
+          if (merged.controlCompleted) overall += 20;
+          if (merged.createCompleted) overall += 20;
+          if (merged.aliveCompleted) overall += 20;
 
           updates.totalTimeSpentMs = totalTime;
           updates.overallProgress = overall;
@@ -237,7 +302,7 @@ export async function POST(req: Request) {
           depth: 0,
         });
 
-        const updates = { ...data };
+        const updates = { ...data } as Record<string, unknown>;
         delete updates.user;
         delete updates.courseId;
         delete updates.id;
@@ -245,9 +310,32 @@ export async function POST(req: Request) {
         delete updates.updatedAt;
 
         if (existingCourseDocs.length > 0) {
+          const existing = existingCourseDocs[0] as unknown as {
+            id: string | number;
+            points?: number;
+            totalTimeMs?: number;
+            totalMistakes?: number;
+            mascotInteractionsTotal?: number;
+          };
+
+          // Protect cumulative fields against stale data
+          updates.points = Math.max(existing.points || 0, (updates.points as number) || 0);
+          updates.totalTimeMs = Math.max(
+            existing.totalTimeMs || 0,
+            (updates.totalTimeMs as number) || 0,
+          );
+          updates.totalMistakes = Math.max(
+            existing.totalMistakes || 0,
+            (updates.totalMistakes as number) || 0,
+          );
+          updates.mascotInteractionsTotal = Math.max(
+            existing.mascotInteractionsTotal || 0,
+            (updates.mascotInteractionsTotal as number) || 0,
+          );
+
           await payload.update({
             collection: 'course-progress',
-            id: existingCourseDocs[0].id,
+            id: existing.id,
             data: { ...updates, updatedAt: now },
           });
         } else {
@@ -323,6 +411,70 @@ export async function POST(req: Request) {
     ).length;
     const totalCoursesStarted = allCourseDocs.docs.length;
 
+    // --- Streak Calculation ---
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    let currentStreak = (existingStats.currentStreak as number) || 0;
+    let longestStreak = (existingStats.longestStreak as number) || 0;
+
+    if (existingStats.lastActiveDate) {
+      const lastActive = new Date(existingStats.lastActiveDate as string);
+      lastActive.setUTCHours(0, 0, 0, 0);
+
+      const diffTime = today.getTime() - lastActive.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        currentStreak += 1;
+        if (currentStreak > longestStreak) longestStreak = currentStreak;
+      } else if (diffDays > 1) {
+        currentStreak = 1;
+        if (longestStreak === 0) longestStreak = 1;
+      } else if (diffDays === 0 && currentStreak === 0) {
+        currentStreak = 1;
+        if (longestStreak === 0) longestStreak = 1;
+      }
+    } else {
+      currentStreak = 1;
+      longestStreak = 1;
+    }
+
+    // --- Average Score Calculation ---
+    let totalScoreSum = 0;
+    let scoreCount = 0;
+    allAlgoDocs.docs.forEach((doc) => {
+      const aDoc = doc as unknown as AlgorithmProgress;
+      if (
+        aDoc.controlBestScore !== undefined &&
+        aDoc.controlBestScore !== null &&
+        aDoc.controlBestScore > 0
+      ) {
+        totalScoreSum += aDoc.controlBestScore;
+        scoreCount++;
+      }
+      if (
+        aDoc.aliveBestScore !== undefined &&
+        aDoc.aliveBestScore !== null &&
+        aDoc.aliveBestScore > 0
+      ) {
+        totalScoreSum += aDoc.aliveBestScore;
+        scoreCount++;
+      }
+    });
+    const averageScore = scoreCount > 0 ? Math.round(totalScoreSum / scoreCount) : 0;
+
+    // --- Preferred Speed Calculation ---
+    let preferredSpeed = 1;
+    if (visualizerProgress && typeof visualizerProgress === 'object') {
+      const speeds = Object.values(visualizerProgress)
+        .map((v) => (v as { speed?: number })?.speed)
+        .filter((s): s is number => typeof s === 'number');
+      if (speeds.length > 0) {
+        preferredSpeed = Number((speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(2));
+      }
+    }
+
     await payload.update({
       collection: 'users',
       id: userId,
@@ -340,6 +492,10 @@ export async function POST(req: Request) {
           totalAlgorithmsCompleted,
           totalCoursesStarted,
           totalCoursesCompleted,
+          currentStreak,
+          longestStreak,
+          averageScore,
+          preferredSpeed,
           lastActiveDate: new Date().toISOString(),
         },
       },

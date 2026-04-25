@@ -4,10 +4,12 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useLocale } from '../i18n/LocaleProvider';
+import { useGlobalAnalytics } from '../hooks/useGlobalAnalytics';
 
 export default function ThemeToggle() {
   const { t } = useLocale();
   const { theme, setTheme } = useTheme();
+  const { trackGlobalEvent } = useGlobalAnalytics();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -20,7 +22,11 @@ export default function ThemeToggle() {
 
   return (
     <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={() => {
+        const nextTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+        trackGlobalEvent('theme_switched', { to: nextTheme });
+      }}
       className="p-2 rounded-md hover:bg-white/10 transition-colors"
       aria-label={t('visualizer.controls.toggle_dark_mode')}
     >

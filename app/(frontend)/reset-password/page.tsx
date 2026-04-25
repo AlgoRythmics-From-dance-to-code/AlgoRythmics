@@ -102,18 +102,26 @@ function ResetPasswordForm() {
     return (
       <div className="text-center w-full max-w-[400px]">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full mb-6">
-          <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-8 h-8 text-red-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </div>
         <h1 className="font-montserrat font-bold text-2xl text-black dark:text-white mb-4">
           {error || t('login.errors.reset_token_invalid')}
         </h1>
-        <p className="font-montserrat text-gray-500 mb-8">
-          {t('login.reset_password_subtitle')}
-        </p>
-        <Link 
-          href={ROUTES.LOGIN} 
+        <p className="font-montserrat text-gray-500 mb-8">{t('login.reset_password_subtitle')}</p>
+        <Link
+          href={ROUTES.LOGIN}
           className="inline-block font-montserrat font-bold text-white bg-[#269984] px-8 py-3 rounded-lg hover:opacity-90 transition-all"
         >
           {t('login.forgot_password_back_to_login')}

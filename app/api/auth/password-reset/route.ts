@@ -1,4 +1,5 @@
 import { getPayload } from 'payload';
+import type { User } from '../../../../payload-types';
 import configPromise from '../../../../payload.config';
 import { NextResponse } from 'next/server';
 import logger from '../../../../lib/logger';
@@ -79,8 +80,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: t('login.errors.reset_token_invalid') }, { status: 400 });
     }
 
-    const user = users.docs[0] as any;
-    const expiration = user._resetPasswordExpiration ? new Date(user._resetPasswordExpiration).getTime() : 0;
+    const user = users.docs[0] as User;
+    const expiration = user.resetPasswordExpiration
+      ? new Date(user.resetPasswordExpiration).getTime()
+      : 0;
     const now = Date.now();
 
     if (!expiration || now > expiration) {

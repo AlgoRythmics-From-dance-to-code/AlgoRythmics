@@ -6,6 +6,7 @@ import { Check, X, GripVertical } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
+import { useAnalytics } from '../../hooks/useAnalytics';
 
 interface OrderingComponentProps {
   phase: CoursePhase;
@@ -20,6 +21,8 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
   const isDone = useAlgorithmStore((state) =>
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
+
+  const { trackEvent } = useAnalytics(undefined, 'order', courseId);
 
   const initialItems =
     phase.ordering?.map((o, i) => ({ id: `O-${i}`, text: o.text, originalIndex: i })) || [];
@@ -38,6 +41,14 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
 
     setIsCorrect(matchesOriginal);
     if (!matchesOriginal) onMistake?.();
+
+    trackEvent('ordering_checked', {
+      phaseId: phase.phaseId,
+      allCorrect: matchesOriginal,
+      correctCount,
+      totalCount,
+      currentOrder: items.map((item) => item.text),
+    });
 
     // Scale points to phase maxPoints
     const maxPoints = phase.maxPoints ?? 10;
@@ -73,6 +84,7 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
           onReorder={(newOrder) => {
             if (isDone || showFeedback) return;
             setItems(newOrder);
+            trackEvent('ordering_reorder', { currentOrder: newOrder.map((i) => i.text) });
           }}
           className="space-y-3"
         >

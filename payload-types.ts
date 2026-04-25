@@ -72,6 +72,7 @@ export interface Config {
     'learning-events': LearningEvent;
     'algorithm-progress': AlgorithmProgress;
     'course-progress': CourseProgress;
+    'search-analytics': SearchAnalytic;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +85,7 @@ export interface Config {
     'learning-events': LearningEventsSelect<false> | LearningEventsSelect<true>;
     'algorithm-progress': AlgorithmProgressSelect<false> | AlgorithmProgressSelect<true>;
     'course-progress': CourseProgressSelect<false> | CourseProgressSelect<true>;
+    'search-analytics': SearchAnalyticsSelect<false> | SearchAnalyticsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -484,8 +486,12 @@ export interface LearningEvent {
   /**
    * e.g. bubble-sort, insertion-sort
    */
-  algorithmId: string;
-  tab: 'video' | 'animation' | 'control' | 'create' | 'alive';
+  algorithmId?: string | null;
+  /**
+   * e.g. intro-to-algorithms
+   */
+  courseId?: string | null;
+  tab?: ('video' | 'animation' | 'control' | 'create' | 'alive' | 'order' | 'match' | 'gap-fill' | 'debug') | null;
   /**
    * e.g. tab_enter, animation_play, control_compare, create_blank_attempt, alive_code_submit
    */
@@ -640,6 +646,28 @@ export interface CourseProgress {
   createdAt: string;
 }
 /**
+ * Track what users search for in the algorithm library.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "search-analytics".
+ */
+export interface SearchAnalytic {
+  id: number;
+  query: string;
+  user?: (number | null) | User;
+  /**
+   * Number of results found for this query.
+   */
+  resultsCount: number;
+  language: 'en' | 'hu' | 'ro';
+  /**
+   * Selected category filter when search was performed (if any).
+   */
+  category?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -682,6 +710,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'course-progress';
         value: number | CourseProgress;
+      } | null)
+    | ({
+        relationTo: 'search-analytics';
+        value: number | SearchAnalytic;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -896,6 +928,7 @@ export interface UsersSelect<T extends boolean = true> {
 export interface LearningEventsSelect<T extends boolean = true> {
   user?: T;
   algorithmId?: T;
+  courseId?: T;
   tab?: T;
   eventType?: T;
   eventData?: T;
@@ -969,6 +1002,19 @@ export interface CourseProgressSelect<T extends boolean = true> {
   lastActivityAt?: T;
   detailedStats?: T;
   phasePoints?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "search-analytics_select".
+ */
+export interface SearchAnalyticsSelect<T extends boolean = true> {
+  query?: T;
+  user?: T;
+  resultsCount?: T;
+  language?: T;
+  category?: T;
   updatedAt?: T;
   createdAt?: T;
 }

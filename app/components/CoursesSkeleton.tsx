@@ -55,7 +55,10 @@ export default function CoursesSkeleton() {
         {/* Course Rows */}
         <div className="divide-y divide-gray-100 dark:divide-white/10">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="grid grid-cols-1 gap-6 px-5 py-8 md:grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.55fr_0.35fr] md:items-center md:gap-6 md:px-8">
+            <div
+              key={i}
+              className="grid grid-cols-1 gap-6 px-5 py-8 md:grid-cols-[1.2fr_1fr_0.55fr_0.55fr_0.55fr_0.35fr] md:items-center md:gap-6 md:px-8"
+            >
               {/* Name & Icon */}
               <div className="flex items-center gap-5">
                 <SkeletonBlock className="h-14 w-14 shrink-0 rounded-[1.25rem]" />
@@ -64,7 +67,7 @@ export default function CoursesSkeleton() {
                   <SkeletonBlock className="h-3 w-1/2 rounded-md" />
                 </div>
               </div>
-              
+
               {/* Summary */}
               <div className="space-y-2">
                 <SkeletonBlock className="h-3 w-full rounded" />

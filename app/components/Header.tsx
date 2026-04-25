@@ -11,6 +11,7 @@ import { User as UserIcon } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import { ROUTES, API_ROUTES } from '../../lib/constants';
 import { useAlgorithmStore } from '../store/useAlgorithmStore';
+import { useGlobalAnalytics } from '../hooks/useGlobalAnalytics';
 
 export default function Header({
   isAuthenticated: propIsAuthenticated,
@@ -41,6 +42,7 @@ export default function Header({
 
   const [menuOpen, setMenuOpen] = useState(false);
   const { locale, setLocale, t } = useLocale();
+  const { trackGlobalEvent } = useGlobalAnalytics();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const { clearStore } = useAlgorithmStore();
@@ -123,6 +125,12 @@ export default function Header({
                 active={pathname === ROUTES.COURSES}
                 prefetch={true}
               />
+              <NavLink
+                href={ROUTES.LEADERBOARD}
+                label={t('nav.leaderboard')}
+                active={pathname === ROUTES.LEADERBOARD}
+                prefetch={true}
+              />
             </>
           )}
         </nav>
@@ -188,8 +196,10 @@ export default function Header({
                   <button
                     key={lang.code}
                     onClick={() => {
+                      const oldLocale = locale;
                       setLocale(lang.code);
                       setLangDropdownOpen(false);
+                      trackGlobalEvent('language_switched', { from: oldLocale, to: lang.code });
                       router.refresh();
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors ${
@@ -331,6 +341,13 @@ export default function Header({
                 >
                   {t('nav.courses')}
                 </Link>
+                <Link
+                  href={ROUTES.LEADERBOARD}
+                  className={`font-montserrat text-xl ${pathname === ROUTES.LEADERBOARD ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('nav.leaderboard')}
+                </Link>
               </div>
             )}
 
@@ -351,8 +368,14 @@ export default function Header({
                   <button
                     key={lang.code}
                     onClick={() => {
+                      const oldLocale = locale;
                       setLocale(lang.code);
                       setMenuOpen(false);
+                      trackGlobalEvent('language_switched', {
+                        from: oldLocale,
+                        to: lang.code,
+                        platform: 'mobile',
+                      });
                       router.refresh();
                     }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all active:scale-95 ${

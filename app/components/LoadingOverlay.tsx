@@ -2,7 +2,6 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 
-
 interface LoadingOverlayProps {
   isVisible: boolean;
   message?: string;
@@ -25,27 +24,27 @@ export default function LoadingOverlay({ isVisible, message }: LoadingOverlayPro
             {/* Outer spinning ring with gradient-like effect */}
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
               className="w-24 h-24 rounded-full border-4 border-t-[#269984] border-r-transparent border-b-[#36D6BA] border-l-transparent shadow-[0_0_25px_-5px_rgba(38,153,132,0.4)]"
             />
-            
+
             {/* Secondary spinning ring (opposite direction) */}
             <motion.div
               animate={{ rotate: -360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
               className="absolute inset-0 w-24 h-24 rounded-full border-[1px] border-[#269984]/20 border-t-transparent border-b-transparent"
             />
 
             {/* Inner pulsing logo fallback icon */}
             <motion.div
-              animate={{ 
+              animate={{
                 scale: [1, 1.15, 1],
-                opacity: [0.7, 1, 0.7]
+                opacity: [0.7, 1, 0.7],
               }}
-              transition={{ 
-                duration: 2, 
-                repeat: Infinity, 
-                ease: "easeInOut" 
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
               }}
               className="absolute inset-0 flex items-center justify-center"
             >
@@ -54,7 +53,7 @@ export default function LoadingOverlay({ isVisible, message }: LoadingOverlayPro
               </div>
             </motion.div>
           </div>
-          
+
           {message && (
             <motion.div
               initial={{ y: 10, opacity: 0 }}

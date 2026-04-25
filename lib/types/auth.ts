@@ -18,4 +18,5 @@ export type BaseUser = {
   completedAlgorithms?: PayloadUser['completedAlgorithms'];
   visualizerProgress?: PayloadUser['visualizerProgress'];
   mascotEnabled?: boolean;
+  learningStats?: Record<string, unknown>;
 };
