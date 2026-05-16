@@ -47,7 +47,6 @@ export const ROLES = {
 export const AUTH_PROVIDERS = {
   EMAIL: 'email',
   GOOGLE: 'google',
-  FACEBOOK: 'facebook',
   DISCORD: 'discord',
   GITHUB: 'github',
 } as const;

@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const user = users.docs[0] as unknown as LocalUser;
 
     // Check if the user is using an email provider
-    // Social login accounts (Google, Facebook, etc.) cannot reset passwords this way
+    // Social login accounts (Google, etc.) cannot reset passwords this way
     if (user.authProvider && user.authProvider !== 'email') {
       // Return success but don't perform the reset to prevent revealing account provider
       return NextResponse.json({

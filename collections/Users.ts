@@ -207,7 +207,6 @@ export const Users: CollectionConfig = {
       options: [
         { label: 'Email', value: AUTH_PROVIDERS.EMAIL },
         { label: 'Google', value: AUTH_PROVIDERS.GOOGLE },
-        { label: 'Facebook', value: AUTH_PROVIDERS.FACEBOOK },
         { label: 'Discord', value: AUTH_PROVIDERS.DISCORD },
         { label: 'GitHub', value: AUTH_PROVIDERS.GITHUB },
       ],
