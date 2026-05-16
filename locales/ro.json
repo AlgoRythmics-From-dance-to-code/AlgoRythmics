@@ -209,7 +209,7 @@
       "auth_failed": "E-mail sau parolă invalidă, sau cont neverificat!",
       "rate_limit_error": "Prea multe cereri. Vă rugăm să așteptați 15 minute înainte de a încerca din nou.",
       "reset_token_invalid": "Token-ul de resetare este invalid sau a expirat.",
-      "social_account_error": "Acest cont folosește autentificarea socială (Google/Facebook/etc.). Te rugăm să te autentifici cu furnizorul tău social."
+      "social_account_error": "Acest cont folosește autentificarea socială (Google/etc.). Te rugăm să te autentifici cu furnizorul tău social."
     },
     "forgot_password_title": "Am uitat parola",
     "forgot_password_subtitle": "Introdu adresa de e-mail și îți vom trimite un link pentru a-ți reseta parola.",

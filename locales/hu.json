@@ -209,7 +209,7 @@
       "auth_failed": "Hibás e-mail vagy jelszó, vagy a fiók nincs megerősítve!",
       "rate_limit_error": "Túl sok kérés. Kérjük, várj 15 percet az újabb próbálkozás előtt.",
       "reset_token_invalid": "A visszaállító token érvénytelen vagy lejárt.",
-      "social_account_error": "Ez a fiók közösségi bejelentkezést használ (Google/Facebook/stb.). Kérjük, jelentkezz be a közösségi szolgáltatóddal."
+      "social_account_error": "Ez a fiók közösségi bejelentkezést használ (Google/stb.). Kérjük, jelentkezz be a közösségi szolgáltatóddal."
     },
     "forgot_password_title": "Elfelejtett jelszó",
     "forgot_password_subtitle": "Add meg az e-mail címedet, és küldünk egy linket a jelszavad visszaállításához.",

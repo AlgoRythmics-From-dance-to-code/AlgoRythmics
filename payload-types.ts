@@ -452,7 +452,7 @@ export interface User {
     lastActiveDate?: string | null;
     preferredSpeed?: number | null;
   };
-  authProvider?: ('email' | 'google' | 'facebook' | 'discord' | 'github') | null;
+  authProvider?: ('email' | 'google' | 'discord' | 'github') | null;
   authProviderId?: string | null;
   lastResetRequest?: string | null;
   updatedAt: string;

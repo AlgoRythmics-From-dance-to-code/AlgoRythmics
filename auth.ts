@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto';
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
-import Facebook from 'next-auth/providers/facebook';
 import Discord from 'next-auth/providers/discord';
 import GitHub from 'next-auth/providers/github';
 import Credentials from 'next-auth/providers/credentials';
@@ -59,20 +58,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           image: profile.picture,
           firstName: profile.given_name,
           lastName: profile.family_name,
-        };
-      },
-    }),
-    Facebook({
-      clientId: process.env.FACEBOOK_CLIENT_ID!,
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
-      profile(profile) {
-        return {
-          id: profile.id,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture?.data?.url,
-          firstName: profile.first_name,
-          lastName: profile.last_name,
         };
       },
     }),
