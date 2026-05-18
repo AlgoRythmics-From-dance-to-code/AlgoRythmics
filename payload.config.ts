@@ -59,7 +59,7 @@ export default buildConfig({
   sharp,
   email: resendAdapter({
     apiKey: process.env.RESEND_API_KEY || '',
-    defaultFromAddress: 'onboarding@resend.dev',
+    defaultFromAddress: 'noreply@algo-rythmics.com',
     defaultFromName: 'AlgoRythmics',
   }),
   plugins: [
