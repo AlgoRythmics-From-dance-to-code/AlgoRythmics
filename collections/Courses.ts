@@ -1,6 +1,8 @@
 import type { CollectionConfig } from 'payload';
 
 import { ROLES } from '../lib/constants';
+// Helper to parse Markdown strings into Lexical Editor JSON states
+import { markdownToLexical } from '@/lib/courses/lexicalConverter';
 
 const difficultyOptions = [
   { label: 'Beginner', value: 'Beginner' },
@@ -43,6 +45,20 @@ export const Courses: CollectionConfig = {
     {
       type: 'tabs',
       tabs: [
+        {
+          label: 'AI Generator',
+          fields: [
+            {
+              name: 'aiGenerator',
+              type: 'ui',
+              admin: {
+                components: {
+                  Field: '@/app/components/Payload/AIGeneratorField#default',
+                },
+              },
+            },
+          ],
+        },
         {
           label: 'General info',
           fields: [
@@ -369,11 +385,22 @@ export const Courses: CollectionConfig = {
                 },
                 {
                   name: 'infoContent',
-                  type: 'textarea',
+                  type: 'richText',
                   localized: true,
                   admin: {
                     description: 'Információs szöveg (csak info nézetnél látszik).',
                     condition: (data, siblingData) => siblingData?.sourceView === 'info',
+                  },
+                  hooks: {
+                    afterRead: [
+                      (args: any) => {
+                        const value = args.value;
+                        if (typeof value === 'string') {
+                          return markdownToLexical(value);
+                        }
+                        return value;
+                      },
+                    ],
                   },
                 },
                 {

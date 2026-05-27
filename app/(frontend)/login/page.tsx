@@ -279,7 +279,6 @@ export default function LoginPage() {
                 Google
               </button>
 
-
               <button
                 type="button"
                 onClick={() => socialLogin('discord')}

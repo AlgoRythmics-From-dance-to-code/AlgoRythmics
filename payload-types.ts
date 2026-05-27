@@ -302,7 +302,21 @@ export interface Course {
         /**
          * Információs szöveg (csak info nézetnél látszik).
          */
-        infoContent?: string | null;
+        infoContent?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
         /**
          * YouTube Video ID (pl. d995_u3q6mE). Csak egyéni videó esetén.
          */

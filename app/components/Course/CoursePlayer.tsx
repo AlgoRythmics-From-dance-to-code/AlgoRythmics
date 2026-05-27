@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Check, ShieldAlert, Sparkles } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 import { useShallow } from 'zustand/react/shallow';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
@@ -103,10 +104,8 @@ function InfoComponent({
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <div className="prose dark:prose-invert max-w-none">
-        <p className="text-lg leading-relaxed text-gray-700 dark:text-gray-300">
-          {phase.infoContent}
-        </p>
+      <div className="prose dark:prose-invert max-w-none text-lg leading-relaxed text-gray-700 dark:text-gray-300 markdown-content">
+        <ReactMarkdown>{phase.infoContent || ''}</ReactMarkdown>
       </div>
       {!isRead && (
         <button
