@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Check, ShieldAlert, Sparkles } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { RichText } from '../Payload/RichText';
 
 import { useShallow } from 'zustand/react/shallow';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
@@ -40,11 +40,8 @@ function getCompletionFlag(
   courseProgress: { completedPhases: string[]; firstStartedAt?: string },
   phase: CoursePhase,
 ) {
-  // 1. Explicitly marked as completed in this course
   if (courseProgress?.completedPhases?.includes(phase.phaseId)) return true;
 
-  // 2. Check if the underlying algorithm module was completed DURING this specific course session.
-  // If they completed the video yesterday, but started the course today, we want them to re-do it for the course!
   const courseStartStr = courseProgress?.firstStartedAt;
   if (!courseStartStr) return false;
 
@@ -52,7 +49,6 @@ function getCompletionFlag(
 
   const isCompletedAfterCourseStart = (completionTimeStr?: string | null) => {
     if (!completionTimeStr) return false;
-    // Allow a small 5-second buffer for timestamp skewing between calls
     return new Date(completionTimeStr).getTime() >= courseStartTime - 5000;
   };
 
@@ -81,6 +77,8 @@ function getCompletionFlag(
   }
 }
 
+// --- Sub-components (InfoComponent, QuizComponent, PhaseBody) unchanged from original ---
+
 function InfoComponent({
   phase,
   courseId,
@@ -104,8 +102,8 @@ function InfoComponent({
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <div className="prose dark:prose-invert max-w-none text-lg leading-relaxed text-gray-700 dark:text-gray-300 markdown-content">
-        <ReactMarkdown>{phase.infoContent || ''}</ReactMarkdown>
+      <div className="markdown-content">
+        <RichText content={phase.infoContent} />
       </div>
       {!isRead && (
         <button
@@ -178,8 +176,6 @@ function QuizComponent({
       partial: false,
     });
     markCoursePhaseComplete(courseId, phase.phaseId);
-
-    // Sync to backend immediately
     setTimeout(() => syncProgress(), 0);
   };
 
@@ -205,10 +201,6 @@ function QuizComponent({
               bgClass = 'bg-red-500/5';
               textClass = 'text-red-700 dark:text-red-400';
             }
-          } else if (isSelected) {
-            borderClass = '';
-            bgClass = '';
-            textClass = '';
           }
 
           return (
@@ -224,9 +216,7 @@ function QuizComponent({
                       backgroundColor: `${accentColor}10`,
                       color: accentColor,
                     }
-                  : !showFeedback && !isDone && !isSelected
-                    ? {}
-                    : {}
+                  : {}
               }
               onMouseEnter={(e) => {
                 if (!isDone && !showFeedback && !isSelected) {
@@ -258,11 +248,7 @@ function QuizComponent({
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={`p-5 rounded-2xl border-l-4 ${
-            selectedIdx === q.correctIndex || (isDone && selectedIdx === null)
-              ? 'bg-green-500/5 border-green-500 text-green-800 dark:text-green-400'
-              : 'bg-red-500/5 border-red-500 text-red-800 dark:text-red-400'
-          }`}
+          className={`p-5 rounded-2xl border-l-4 ${selectedIdx === q.correctIndex || (isDone && selectedIdx === null) ? 'bg-green-500/5 border-green-500 text-green-800 dark:text-green-400' : 'bg-red-500/5 border-red-500 text-red-800 dark:text-red-400'}`}
         >
           <p className="font-black uppercase tracking-widest text-[10px] mb-2 opacity-60">
             {t('course.quiz_explanation')}
@@ -346,6 +332,8 @@ function PhaseBody({
   }
 }
 
+// --- Main Component ---
+
 export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const {
     algorithmProgress,
@@ -389,8 +377,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const { t } = useLocale();
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
-
-  // Enabled if still loading (on by default) or explicitly not false
   const mascotEnabled =
     sessionStatus === 'loading' ? true : (session?.user as BaseUser)?.mascotEnabled !== false;
 
@@ -418,8 +404,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     return index >= 0 ? index : course.phases.length;
   }, [completedPhaseStatuses, course.phases.length]);
 
-  // Snapshot courseProgress once per course slug to avoid including the live store in deps
-  // that would cause an infinite loop (effect → setCourseActivePhase → courseProgress changes → effect)
   const courseProgressSnapshotRef = useRef(courseProgress);
   const lastSnapshotSlugRef = useRef('');
 
@@ -428,7 +412,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     if (typeof stored === 'number' && stored >= 0 && stored < course.phases.length) {
       return Math.min(stored, firstIncompletePhaseIndex);
     }
-
     return Math.max(Math.min(firstIncompletePhaseIndex, course.phases.length - 1), 0);
   }, [course.phases.length, course.slug, firstIncompletePhaseIndex, courseProgress]);
 
@@ -446,7 +429,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     'idle' | 'mistake' | 'confidence' | 'neutral' | 'welcome' | 'streak' | 'overconfident'
   >('welcome');
   const [mascotMessage, setMascotMessage] = useState<string>('');
-  const [mascotActions, setMascotActions] = useState<boolean>(false); // Show Yes/No buttons
+  const [mascotActions, setMascotActions] = useState<boolean>(false);
   const [streak, setStreak] = useState(0);
   const [phaseKey, setPhaseKey] = useState(0);
   const [pendingAdvance, setPendingAdvance] = useState<PendingAdvance | null>(null);
@@ -458,44 +441,30 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const [pendingPhaseIndex, setPendingPhaseIndex] = useState<number | null>(null);
   const promptShownRef = useRef(false);
 
-  // Measure container width
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width);
-      }
+      for (const entry of entries) setContainerWidth(entry.contentRect.width);
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, []);
 
-  // Resume from stored state after hydration — runs once when store rehydrates or slug changes.
   useEffect(() => {
     if (!isRehydrated) return;
-
-    // Refresh snapshot when slug changes
     if (lastSnapshotSlugRef.current !== course.slug) {
       courseProgressSnapshotRef.current = useAlgorithmStore.getState().courseProgress;
       lastSnapshotSlugRef.current = course.slug;
     }
-
     setHasHydrated(true);
-
     const storedProgress = useAlgorithmStore.getState().courseProgress[course.slug];
     if (storedProgress) {
-      if (typeof storedProgress.activePhaseIndex === 'number') {
-        const resumeIndex = Math.min(storedProgress.activePhaseIndex, firstIncompletePhaseIndex);
-        setActivePhaseIndex(resumeIndex);
-      }
-      if (storedProgress.isCompleted) {
-        setIsFinished(true);
-      }
+      if (typeof storedProgress.activePhaseIndex === 'number')
+        setActivePhaseIndex(Math.min(storedProgress.activePhaseIndex, firstIncompletePhaseIndex));
+      if (storedProgress.isCompleted) setIsFinished(true);
     }
   }, [isRehydrated, course.slug, firstIncompletePhaseIndex]);
 
-  // Auto-prompt to restart if course was already completed on entry.
-  // Uses snapshot ref to avoid adding live `courseProgress` to deps (would cause infinite loop).
   useEffect(() => {
     if (courseProgressSnapshotRef.current[course.slug]?.isCompleted && !promptShownRef.current) {
       promptShownRef.current = true;
@@ -503,14 +472,11 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       setModalMode('restart');
       setShowRestartModal(true);
     }
-  }, [course.slug]); // courseProgress intentionally omitted — read via snapshot ref
+  }, [course.slug]);
 
   const handleConfirmRestart = () => {
     if (modalMode === 'restart') {
       resetCourseProgress(course.slug);
-      // We no longer call resetAlgorithmProgressTab here!
-      // getCompletionFlag now correctly ignores old completions based on course.firstStartedAt,
-      // so we don't need to destructively wipe global algorithm progress when restarting a course.
       setActivePhaseIndex(0);
       setIsFinished(false);
       setPhaseKey((v) => v + 1);
@@ -536,49 +502,35 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const handleCancelRestart = () => {
     setShowRestartModal(false);
     setPendingPhaseIndex(null);
-    if (!isInternalReset && modalMode === 'restart') {
-      router.push('/courses');
-    }
+    if (!isInternalReset && modalMode === 'restart') router.push('/courses');
   };
 
   const [mascotDragPos, setMascotDragPos] = useState({ x: 0, y: 0 });
 
-  const getRandomMessage = (pool: string[]) => {
-    if (!pool || pool.length === 0) return '';
-    return pool[Math.floor(Math.random() * pool.length)];
-  };
+  const getRandomMessage = (pool: string[]) => pool[Math.floor(Math.random() * pool.length)] || '';
 
   const activePhase = course.phases[activePhaseIndex];
 
-  // Monitor idle activity
   useEffect(() => {
     if (!activePhase) return;
-
     let timeout: NodeJS.Timeout;
-
     const resetTimer = () => {
       clearTimeout(timeout);
       timeout = setTimeout(
         () => {
           setMascotMood('idle');
           setMascotMessage(activePhase.idleHelp || course.mascot.idlePrompt);
-          setMascotActions(true); // Offer help buttons
+          setMascotActions(true);
           if (mascotEnabled) setMascotVisible(true);
         },
         (course.mascot.idleTriggerSeconds || 30) * 1000,
       );
     };
-
-    const handleActivity = () => {
-      resetTimer();
-    };
-
+    const handleActivity = () => resetTimer();
     window.addEventListener('mousemove', handleActivity);
     window.addEventListener('keydown', handleActivity);
     window.addEventListener('click', handleActivity);
-
     resetTimer();
-
     return () => {
       clearTimeout(timeout);
       window.removeEventListener('mousemove', handleActivity);
@@ -601,14 +553,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const currentMistakeTriggered = useMemo(() => {
     if (!activePhase) return false;
     const thresh = course.mascot.mistakeTriggerCount || 2;
-
-    // Check algorithm-level control mistakes (persistent)
     const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
-    const algoMistakes = progress.controlMistakes || 0;
-
-    // Trigger if EITHER persistent control mistakes OR current phase session mistakes hit thresh
     return (
-      (activePhase.sourceView === 'control' && algoMistakes >= thresh) ||
+      (activePhase.sourceView === 'control' && (progress.controlMistakes || 0) >= thresh) ||
       phaseMistakesCount >= thresh
     );
   }, [
@@ -624,8 +571,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       setMascotMood('mistake');
       const intro =
         activePhase.mascotMistakeLine || course.mascot.mistakePrompt || t('course.mistake_prompt');
-      const hint = activePhase.hintCopy;
-      setMascotMessage(hint ? `${intro} ${hint}` : intro);
+      setMascotMessage(activePhase.hintCopy ? `${intro} ${activePhase.hintCopy}` : intro);
       if (mascotEnabled) setMascotVisible(true);
       setMascotActions(false);
       incrementCourseMascotInteraction(course.slug);
@@ -651,35 +597,24 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const phaseComplete = activePhase
     ? getCompletionFlag(activeProgress, activePhaseProgress, activePhase)
     : false;
-
   const canOpenPhase = (phaseIndex: number) => phaseIndex <= firstIncompletePhaseIndex;
 
-  // Remove the automatic hiding of the mascot on phase change to fulfill "ne resetelődjön amikor válaszol"
-
-  // Note: Redundant slug-navigation jump effect removed as it is now handled by the resume effect above.
-
-  // Handle mascot message when phase changes (triggered by user or slug change)
   useEffect(() => {
-    // actually, it's better to update on unmount of the phase or when handleContinue happens.
-
     const phaseAdvice = activePhase.mascotLine;
     if (phaseAdvice) {
       setMascotMood('welcome');
       setMascotMessage(phaseAdvice);
       if (mascotEnabled) setMascotVisible(true);
       setMascotActions(false);
-      // If it's a specific instruction (not just general objective), count it
       if (activePhase.mascotLine) {
         incrementCourseMascotInteraction(course.slug);
         mascotHelpedCurrentPhase.current = true;
       }
     }
-
     phaseStartTime.current = Date.now();
     phaseMascotHelpCount.current = phaseAdvice ? 1 : 0;
     setPhaseMistakesCount(0);
     mascotHelpedCurrentPhase.current = !!phaseAdvice;
-
     trackEvent('course_phase_enter', {
       phaseId: activePhase.phaseId,
       phaseType: activePhase.sourceView,
@@ -701,23 +636,19 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   ]);
 
   useEffect(() => {
-    if (!hasHydrated) return;
-    setCourseActivePhase(course.slug, activePhaseIndex);
+    if (hasHydrated) setCourseActivePhase(course.slug, activePhaseIndex);
   }, [activePhaseIndex, course.slug, setCourseActivePhase, hasHydrated]);
 
   const resetFutureProgressFrom = (phaseIndex: number) => {
-    const targetAndFuturePhases = course.phases.slice(phaseIndex);
-
-    targetAndFuturePhases.forEach((phase) => {
-      resetAlgorithmProgressTab(phase.sourceAlgorithmId || course.algorithmId, phase.sourceView);
-    });
+    course.phases
+      .slice(phaseIndex)
+      .forEach((phase) =>
+        resetAlgorithmProgressTab(phase.sourceAlgorithmId || course.algorithmId, phase.sourceView),
+      );
   };
 
   const handleJumpToPhase = (phaseIndex: number) => {
-    if (!canOpenPhase(phaseIndex)) {
-      return;
-    }
-
+    if (!canOpenPhase(phaseIndex)) return;
     if (phaseIndex < activePhaseIndex) {
       setIsInternalReset(true);
       setModalMode('checkpoint');
@@ -725,31 +656,23 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       setShowRestartModal(true);
       return;
     }
-
     setActivePhaseIndex(phaseIndex);
   };
 
   const applyAdvance = (level?: ConfidenceLevel) => {
     if (!activePhase) return;
-
     const result = courseProgress[course.slug]?.phaseResults?.[activePhase.phaseId];
     const hasPointsForThisPhase = !!courseProgress[course.slug]?.phasePoints?.[activePhase.phaseId];
-
-    // Don't award points if the user failed a quiz phase
     const isFailure = activePhase.sourceView === 'quiz' && result === 'fail';
 
-    // Smart logic for mascot reactions based on results
     if (!hasPointsForThisPhase) {
       if (isFailure) {
         setStreak(0);
-        if (level === 'very-sure') {
-          // Overconfident case
-          if (course.mascot.enabled) {
-            setMascotMood('overconfident');
-            setMascotMessage(getRandomMessage(course.mascot.overconfidentMessages));
-            if (mascotEnabled) setMascotVisible(true);
-            setMascotActions(false);
-          }
+        if (level === 'very-sure' && course.mascot.enabled) {
+          setMascotMood('overconfident');
+          setMascotMessage(getRandomMessage(course.mascot.overconfidentMessages));
+          if (mascotEnabled) setMascotVisible(true);
+          setMascotActions(false);
         }
       } else {
         const nextStreak = streak + 1;
@@ -763,10 +686,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       }
     }
 
-    // --- DYNAMIC SCORING ---
     const maxPoints = activePhase.maxPoints ?? 10;
-
-    // Determine if help was used
     const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
     let helpUsed = false;
     if (activePhase.sourceView === 'create') helpUsed = !!progress.createHelpUsed;
@@ -774,72 +694,48 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       helpUsed = !!progress.aliveHelpUsed;
     if (activePhase.sourceView === 'control') helpUsed = (progress.controlHintsUsed || 0) > 0;
 
-    let earnedPoints = 0;
-    let isPartial = false;
-
+    let earnedPoints = 0,
+      isPartial = false;
     if (!hasPointsForThisPhase && !isFailure) {
-      // Partial scoring logic
       if (activePhase.sourceView === 'create') {
-        const blanksCorrect = progress.createBlanksCorrectFirst || 0;
-        const blanksTotal = progress.createBlanksTotal || 1;
-        const ratio = blanksTotal > 0 ? blanksCorrect / blanksTotal : 0;
+        const ratio =
+          (progress.createBlanksTotal || 1) > 0
+            ? (progress.createBlanksCorrectFirst || 0) / (progress.createBlanksTotal || 1)
+            : 0;
         earnedPoints = Math.round(maxPoints * ratio);
         isPartial = ratio < 1 && ratio > 0;
       } else if (
         activePhase.sourceView === 'alive' ||
         activePhase.sourceView === 'final-challenge'
       ) {
-        const bestScore = progress.aliveBestScore || 0;
-        const ratio = bestScore / 100; // aliveBestScore is a percentage 0-100
+        const ratio = (progress.aliveBestScore || 0) / 100;
         earnedPoints = Math.round(maxPoints * ratio);
         isPartial = ratio < 1 && ratio > 0;
-      } else if (activePhase.sourceView === 'quiz') {
+      } else if (['quiz', 'match', 'order', 'debug', 'gap-fill'].includes(activePhase.sourceView)) {
         earnedPoints = result === 'success' ? maxPoints : 0;
-      } else if (activePhase.sourceView === 'match') {
-        // We'll trust the successful check in MatchingComponent since it sets the result
-        earnedPoints = result === 'success' ? maxPoints : 0;
-      } else if (activePhase.sourceView === 'order') {
-        earnedPoints = result === 'success' ? maxPoints : 0;
-      } else if (activePhase.sourceView === 'debug') {
-        earnedPoints = result === 'success' ? maxPoints : 0;
-      } else if (activePhase.sourceView === 'gap-fill') {
-        earnedPoints = result === 'success' ? maxPoints : 0;
-      } else {
-        // Full points for static phase types (video, animation, info, etc.)
-        earnedPoints = maxPoints;
-      }
-
+      } else earnedPoints = maxPoints;
       setCoursePhasePoints(course.slug, activePhase.phaseId, {
         earned: earnedPoints,
         max: maxPoints,
         helpUsed,
         partial: isPartial,
       });
-    } else if (hasPointsForThisPhase) {
-      // Points already persistent — don't award again
-    } else if (isFailure) {
-      // Failure — record 0 points
+    } else if (isFailure)
       setCoursePhasePoints(course.slug, activePhase.phaseId, {
         earned: 0,
         max: maxPoints,
         helpUsed,
         partial: false,
       });
-    }
 
-    if (level) {
-      setCourseConfidenceRating(course.slug, activePhase.phaseId, level);
-    }
+    if (level) setCourseConfidenceRating(course.slug, activePhase.phaseId, level);
 
     const elapsed = Date.now() - phaseStartTime.current;
-
-    // Auto-success for info and video phases once completed
     const isAutoSuccess = activePhase.sourceView === 'info' || activePhase.sourceView === 'video';
-    const storedResult = courseProgress[course.slug]?.phaseResults?.[activePhase.phaseId];
-    const finalResult = storedResult || (isAutoSuccess ? 'success' : null);
+    const finalResult =
+      courseProgress[course.slug]?.phaseResults?.[activePhase.phaseId] ||
+      (isAutoSuccess ? 'success' : null);
     const isSuccess = finalResult === 'success';
-
-    // Track "improved after mascot"
     const improved = mascotHelpedCurrentPhase.current && isSuccess;
 
     updateCoursePhaseStats(course.slug, activePhase.phaseId, {
@@ -860,7 +756,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     });
     updateCourseTotalTime(course.slug, elapsed);
     markCoursePhaseComplete(course.slug, activePhase.phaseId);
-
     trackEvent('course_phase_completed', {
       phaseId: activePhase.phaseId,
       durationMs: elapsed,
@@ -873,36 +768,23 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       helpUsed,
     });
 
-    if (activePhaseIndex < course.phases.length - 1) {
-      setActivePhaseIndex((value) => value + 1);
-    } else {
+    if (activePhaseIndex < course.phases.length - 1) setActivePhaseIndex((v) => v + 1);
+    else {
       markCourseCompleted(course.slug);
       setIsFinished(true);
       promptShownRef.current = true;
-      trackEvent('course_completed', {
-        courseId: course.slug,
-        totalTimeMs: elapsed, // This is just the last phase, but the event aggregates
-      });
+      trackEvent('course_completed', { courseId: course.slug, totalTimeMs: elapsed });
     }
-
     setPendingAdvance(null);
-    // Persist after every phase completion (not just at the end)
     setTimeout(() => syncProgress(), 0);
   };
 
   const handleContinue = () => {
     if (!activePhase || !phaseComplete) return;
-
     const nextPhaseIndex =
       activePhaseIndex < course.phases.length - 1 ? activePhaseIndex + 1 : null;
-
-    if (nextPhaseIndex !== null && !canOpenPhase(nextPhaseIndex)) {
-      return;
-    }
-
-    const askConfidenceNow = activePhase.askConfidence;
-
-    if (askConfidenceNow) {
+    if (nextPhaseIndex !== null && !canOpenPhase(nextPhaseIndex)) return;
+    if (activePhase.askConfidence) {
       if (course.mascot.enabled) {
         setMascotMood('confidence');
         setMascotMessage(t('course.confidence_prompt'));
@@ -911,7 +793,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       setShowConfidenceModal(true);
       return;
     }
-
     applyAdvance();
   };
 
@@ -921,12 +802,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     setShowRestartModal(true);
   };
 
-  // Save partial phase time when the user leaves mid-phase (tab hidden, page closed, etc.)
   const savePartialPhaseProgress = useCallback(() => {
     if (!activePhase) return;
     const elapsed = Date.now() - phaseStartTime.current;
-    if (elapsed < 500) return; // Skip trivially small intervals
-
+    if (elapsed < 500) return;
     const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
     let helpUsed = false;
     if (activePhase.sourceView === 'create') helpUsed = !!progress.createHelpUsed;
@@ -948,12 +827,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       mascotIntentionallyDisabled: !mascotEnabled,
     });
     updateCourseTotalTime(course.slug, elapsed);
-    // Reset phase timer so accumulated time isn't double-counted if the tab comes back
     phaseStartTime.current = Date.now();
     setPhaseMistakesCount(0);
     phaseMascotHelpCount.current = 0;
-
-    // Sync to backend
     syncProgress();
   }, [
     activePhase,
@@ -968,7 +844,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     syncProgress,
   ]);
 
-  // Persist to server on page-hide / tab-switch (best-effort)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
@@ -978,7 +853,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     };
     const handleBeforeUnload = () => {
       savePartialPhaseProgress();
-      // Use a synchronous beacon so it fires even when the page is being closed
       const {
         completedIds,
         visualizerProgress,
@@ -1030,7 +904,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
           }
           cancelLabel={isInternalReset ? t('course.cancel_continue') : t('course.cancel_back')}
         />
-
         {isFinished && (
           <motion.div
             key="finish-screen"
@@ -1050,14 +923,12 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   <Sparkles className="h-12 w-12 text-white" />
                 </motion.div>
               </div>
-
               <h2 className="mb-2 text-4xl font-black text-black dark:text-white uppercase tracking-tight">
                 {t('course.congratulations')}
               </h2>
               <p className="mb-8 text-lg font-bold text-[#269984] uppercase tracking-widest">
                 {t('course.completed_course', { title: course.title })}
               </p>
-
               <div className="mb-6 grid grid-cols-2 gap-4 w-full">
                 <div className="rounded-[1.5rem] border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-900/20 dark:bg-amber-900/10">
                   <div className="text-[10px] font-black uppercase tracking-tighter text-amber-600 dark:text-amber-500/70 mb-1">
@@ -1079,8 +950,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   </div>
                 </div>
               </div>
-
-              {/* --- Phase-by-phase score breakdown --- */}
+              {/* Phase-by-phase breakdown */}
               <div className="w-full mb-8 rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden">
                 <div className="bg-gray-50 dark:bg-white/5 px-4 py-3 border-b border-gray-100 dark:border-white/10">
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
@@ -1095,17 +965,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                     const helpUsed = pp?.helpUsed ?? false;
                     const isPartial = pp?.partial ?? false;
                     const pct = max > 0 ? Math.round((earned / max) * 100) : 0;
-
                     return (
                       <div key={phase.phaseId} className="flex items-center gap-3 px-4 py-3">
                         <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0 ${
-                            earned === max
-                              ? 'bg-[#269984]'
-                              : earned > 0
-                                ? 'bg-amber-500'
-                                : 'bg-gray-300 dark:bg-white/20'
-                          }`}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0 ${earned === max ? 'bg-[#269984]' : earned > 0 ? 'bg-amber-500' : 'bg-gray-300 dark:bg-white/20'}`}
                         >
                           {earned === max ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : idx + 1}
                         </div>
@@ -1115,13 +978,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span
-                              className={`text-[10px] font-bold tabular-nums ${
-                                earned === max
-                                  ? 'text-[#269984]'
-                                  : earned > 0
-                                    ? 'text-amber-600 dark:text-amber-400'
-                                    : 'text-gray-400'
-                              }`}
+                              className={`text-[10px] font-bold tabular-nums ${earned === max ? 'text-[#269984]' : earned > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}
                             >
                               {earned}/{max} pt
                             </span>
@@ -1142,13 +999,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                             initial={{ width: 0 }}
                             animate={{ width: `${pct}%` }}
                             transition={{ delay: idx * 0.1, duration: 0.5 }}
-                            className={`h-full rounded-full ${
-                              earned === max
-                                ? 'bg-[#269984]'
-                                : earned > 0
-                                  ? 'bg-amber-500'
-                                  : 'bg-gray-300'
-                            }`}
+                            className={`h-full rounded-full ${earned === max ? 'bg-[#269984]' : earned > 0 ? 'bg-amber-500' : 'bg-gray-300'}`}
                           />
                         </div>
                       </div>
@@ -1156,14 +1007,12 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   })}
                 </div>
               </div>
-
               <div className="flex flex-col gap-4 sm:flex-row">
                 <Link
                   href="/courses"
                   className="inline-flex items-center gap-3 rounded-2xl bg-[#269984] px-8 py-4 font-black uppercase tracking-widest text-white shadow-xl shadow-[#269984]/30 transition-transform hover:-translate-y-1"
                 >
-                  {t('course.next_courses')}
-                  <ChevronRight className="h-5 w-5" />
+                  {t('course.next_courses')} <ChevronRight className="h-5 w-5" />
                 </Link>
                 <button
                   onClick={() => setIsFinished(false)}
@@ -1178,21 +1027,18 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       </AnimatePresence>
       <div className="mx-auto max-w-[1500px] px-0 py-0 sm:px-4 lg:pt-0 lg:pb-6">
         <div className="relative rounded-[3rem] border border-gray-100 bg-white shadow-2xl shadow-gray-200/50 dark:border-white/5 dark:bg-[#111111]/80 dark:shadow-none backdrop-blur-xl overflow-hidden">
-          {/* Main Header Section */}
           <div className="relative pt-4 px-6 pb-0 lg:pt-6 lg:px-10 lg:pb-0 border-b border-gray-50 dark:border-white/5 overflow-hidden">
-            {/* Subtle Accent Glow */}
             <div
               className="absolute -top-32 -right-32 w-96 h-96 blur-[120px] opacity-10 pointer-events-none"
               style={{ backgroundColor: course.accentColor }}
             />
-
             <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-4">
                 <Link
                   href="/courses"
                   className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-colors hover:text-gray-900 dark:hover:text-white"
                 >
-                  <span className="transition-transform group-hover:-translate-x-1">←</span>
+                  <span className="transition-transform group-hover:-translate-x-1">←</span>{' '}
                   {t('courses.back_to_courses')}
                 </Link>
                 <div className="space-y-1.5">
@@ -1203,8 +1049,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                       color: course.accentColor,
                     }}
                   >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {t('course.playable_course')}
+                    <Sparkles className="h-3.5 w-3.5" /> {t('course.playable_course')}
                   </div>
                   <h2 className="text-4xl lg:text-5xl font-black text-black dark:text-white tracking-tighter leading-none">
                     {course.title}
@@ -1214,9 +1059,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   </p>
                 </div>
               </div>
-
               <div className="flex flex-wrap items-center gap-4 lg:self-center">
-                {/* Stat Item: Points */}
                 <div className="flex flex-col items-start lg:items-end">
                   <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">
                     {t('course.points')}
@@ -1233,10 +1076,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                     </span>
                   </div>
                 </div>
-
                 <div className="h-10 w-px bg-gray-100 dark:bg-white/10 hidden sm:block mx-2" />
-
-                {/* Stat Item: Progress */}
                 <div className="flex flex-col items-start lg:items-end">
                   <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">
                     {t('course.phase')}
@@ -1253,205 +1093,258 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
               </div>
             </div>
 
-            {/* Integrated Path Navigator (Thin and Elegant) */}
-            <div className="mt-4">
-              <div className="mb-2 flex items-center justify-between">
+            {/* Progress Navigator */}
+            <div className="mt-6 mb-2">
+              <div className="mb-3 flex items-center justify-between">
                 <div className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
                   {t('course.learning_path')}
                 </div>
                 <div className="text-[10px] font-black uppercase tracking-widest text-gray-500/60">
                   {Math.round(
-                    ((activePhaseIndex + (phaseComplete ? 1 : 0)) / course.phases.length) * 100,
+                    (completedPhaseStatuses.filter(Boolean).length / course.phases.length) * 100,
                   )}
                   % {t('common.completed')}
                 </div>
               </div>
-
-              <div className="relative py-4">
+              <div className="relative py-6">
                 <div
                   ref={containerRef}
-                  className="relative flex justify-between items-center z-20 h-10"
+                  className="relative flex items-center z-20"
+                  style={{ height: 48 }}
                 >
-                  <AnimatePresence mode="popLayout" initial={false}>
-                    {(() => {
-                      const total = course.phases.length;
-                      const ITEM_WIDTH = 48;
-                      const capacity = Math.max(5, Math.floor(containerWidth / ITEM_WIDTH));
-                      const showEllipsis = total > capacity;
+                  {(() => {
+                    const total = course.phases.length;
+                    const ITEM_WIDTH = 48;
+                    const capacity = Math.max(5, Math.floor(containerWidth / ITEM_WIDTH));
+                    const showEllipsis = total > capacity;
 
-                      const visibleIndices = new Set<number>();
-                      if (!showEllipsis) {
-                        course.phases.forEach((_, i) => visibleIndices.add(i));
-                      } else {
-                        visibleIndices.add(0);
-                        visibleIndices.add(total - 1);
-                        visibleIndices.add(activePhaseIndex);
-                        let radius = 1;
-                        while (visibleIndices.size < capacity - 2 && radius < total) {
-                          if (activePhaseIndex - radius > 0)
-                            visibleIndices.add(activePhaseIndex - radius);
-                          if (
-                            visibleIndices.size < capacity - 2 &&
-                            activePhaseIndex + radius < total - 1
-                          ) {
-                            visibleIndices.add(activePhaseIndex + radius);
-                          }
-                          radius++;
+                    const visibleIndices = new Set<number>();
+                    if (!showEllipsis) course.phases.forEach((_, i) => visibleIndices.add(i));
+                    else {
+                      visibleIndices.add(0);
+                      visibleIndices.add(total - 1);
+                      visibleIndices.add(activePhaseIndex);
+                      let radius = 1;
+                      while (visibleIndices.size < capacity - 2 && radius < total) {
+                        if (activePhaseIndex - radius > 0)
+                          visibleIndices.add(activePhaseIndex - radius);
+                        if (
+                          visibleIndices.size < capacity - 2 &&
+                          activePhaseIndex + radius < total - 1
+                        )
+                          visibleIndices.add(activePhaseIndex + radius);
+                        radius++;
+                      }
+                    }
+
+                    const renderedItems: {
+                      type: 'checkpoint' | 'ellipsis';
+                      index: number;
+                      phases?: CoursePhase[];
+                    }[] = [];
+                    let lastIdx = -1;
+                    course.phases.forEach((phase, index) => {
+                      if (visibleIndices.has(index)) {
+                        if (lastIdx !== -1 && index - lastIdx > 1)
+                          renderedItems.push({
+                            type: 'ellipsis',
+                            index: lastIdx + 1,
+                            phases: course.phases.slice(lastIdx + 1, index),
+                          });
+                        renderedItems.push({ type: 'checkpoint', index });
+                        lastIdx = index;
+                      }
+                    });
+
+                    const renderedTotal = renderedItems.length;
+
+                    // Map each rendered checkpoint to its fractional position along the
+                    // track so the fill can be aligned exactly with the node positions,
+                    // interpolating through ellipsis gaps for a consistent look.
+                    const anchors: { phaseIdx: number; frac: number }[] = [];
+                    renderedItems.forEach((item, ri) => {
+                      if (item.type === 'checkpoint') {
+                        anchors.push({
+                          phaseIdx: item.index,
+                          frac: renderedTotal > 1 ? ri / (renderedTotal - 1) : 0.5,
+                        });
+                      }
+                    });
+
+                    const phaseToFrac = (targetIdx: number): number => {
+                      if (anchors.length === 0) return 0;
+                      if (targetIdx <= anchors[0].phaseIdx) return anchors[0].frac;
+                      const last = anchors[anchors.length - 1];
+                      if (targetIdx >= last.phaseIdx) return last.frac;
+                      for (let i = 0; i < anchors.length - 1; i++) {
+                        const a = anchors[i];
+                        const b = anchors[i + 1];
+                        if (targetIdx >= a.phaseIdx && targetIdx <= b.phaseIdx) {
+                          const ratio = (targetIdx - a.phaseIdx) / (b.phaseIdx - a.phaseIdx);
+                          return a.frac + ratio * (b.frac - a.frac);
                         }
                       }
+                      return last.frac;
+                    };
 
-                      const renderedItems: {
-                        type: 'checkpoint' | 'ellipsis';
-                        index: number;
-                        phases?: CoursePhase[];
-                      }[] = [];
-                      let lastIdx = -1;
-                      course.phases.forEach((phase, index) => {
-                        if (visibleIndices.has(index)) {
-                          if (lastIdx !== -1 && index - lastIdx > 1) {
-                            renderedItems.push({
-                              type: 'ellipsis',
-                              index: lastIdx + 1,
-                              phases: course.phases.slice(lastIdx + 1, index),
-                            });
-                          }
-                          renderedItems.push({ type: 'checkpoint', index });
-                          lastIdx = index;
-                        }
-                      });
+                    // Fill extends to the current active phase position. Completed
+                    // phases fill solidly, while reaching the active (in-progress)
+                    // phase ensures the bar visually tracks where the user is working.
+                    const completedCount = completedPhaseStatuses.filter(Boolean).length;
+                    const fillTargetIdx = Math.max(
+                      completedCount > 0 ? completedCount - 1 : -1,
+                      activePhaseIndex,
+                    );
+                    const fillFrac = fillTargetIdx >= 0 ? phaseToFrac(fillTargetIdx) : 0;
+                    const fillWidth = Math.round(fillFrac * 100);
 
-                      // Calculate progress percentage based on rendered items
-                      const activeRenderedIdx = renderedItems.findIndex(
-                        (item) => item.type === 'checkpoint' && item.index === activePhaseIndex,
-                      );
-                      const progressPct =
-                        renderedItems.length > 1
-                          ? (activeRenderedIdx / (renderedItems.length - 1)) * 100
-                          : 0;
+                    // Inset the track so it starts/ends at the center of the first/last node
+                    const NODE_SIZE = 36; // px
+                    const halfNode =
+                      containerWidth > 0 ? (NODE_SIZE / 2 / containerWidth) * 100 : 2;
 
-                      return (
-                        <>
-                          {/* Re-render the Progress Line here to have access to progressPct */}
-                          <div className="absolute top-1/2 left-0 w-full h-[3px] -translate-y-1/2 bg-gray-100 dark:bg-white/5 rounded-full pointer-events-none" />
-                          <motion.div
-                            initial={false}
-                            animate={{ width: `${progressPct}%` }}
-                            transition={{ type: 'spring', stiffness: 70, damping: 25 }}
-                            className="absolute top-1/2 left-0 h-[3px] -translate-y-1/2 rounded-full z-10 origin-left pointer-events-none"
-                            style={{
-                              background: `linear-gradient(90deg, ${course.accentColor}dd, ${course.accentColor})`,
-                              boxShadow: `0 0 15px ${course.accentColor}66`,
-                            }}
-                          />
+                    return (
+                      <>
+                        {/* Track background — inset to align with node centers */}
+                        <div
+                          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full pointer-events-none bg-gray-200/70 dark:bg-white/10"
+                          style={{ left: `${halfNode}%`, right: `${halfNode}%` }}
+                        />
+                        {/* Filled portion of the track */}
+                        <div
+                          key="progress-fill"
+                          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full z-10 origin-left pointer-events-none transition-[width] duration-700 ease-out"
+                          style={{
+                            left: `${halfNode}%`,
+                            width: `${Math.max(0, fillWidth - halfNode * 2) * (100 / (100 - halfNode * 2))}%`,
+                            maxWidth: `${100 - halfNode * 2}%`,
+                            background: `linear-gradient(90deg, ${course.accentColor}, ${course.accentColor}dd)`,
+                          }}
+                        />
+                        {renderedItems.map((item, renderIdx) => {
+                          const posPct =
+                            renderedTotal > 1 ? (renderIdx / (renderedTotal - 1)) * 100 : 50;
 
-                          {renderedItems.map((item) => {
-                            if (item.type === 'ellipsis') {
-                              return (
-                                <motion.button
-                                  layout
-                                  initial={{ opacity: 0, scale: 0 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  exit={{ opacity: 0, scale: 0 }}
-                                  key={`ellipsis-${item.index}`}
-                                  onClick={(e) => {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    const containerRect =
-                                      containerRef.current?.getBoundingClientRect();
-                                    if (containerRect) {
-                                      setPopoverGap({
-                                        index: item.index,
-                                        phases: item.phases!,
-                                        x: rect.left - containerRect.left + rect.width / 2,
-                                      });
-                                    }
-                                  }}
-                                  className="group flex items-center justify-center px-1 hover:scale-125 transition-transform shrink-0 z-20"
-                                >
-                                  <div className="flex gap-1">
-                                    {[1, 2, 3].map((i) => (
-                                      <div
-                                        key={i}
-                                        className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20 group-hover:bg-gray-400 dark:group-hover:bg-white/40 transition-colors"
-                                        style={
-                                          completedPhaseStatuses[item.index]
-                                            ? { backgroundColor: course.accentColor }
-                                            : {}
-                                        }
-                                      />
-                                    ))}
-                                  </div>
-                                </motion.button>
-                              );
-                            }
-
-                            const phase = course.phases[item.index];
-                            const completed = completedPhaseStatuses[item.index];
-                            const isActive = item.index === activePhaseIndex;
-                            const locked = !canOpenPhase(item.index) && !completed;
-
+                          if (item.type === 'ellipsis') {
                             return (
-                              <motion.div
-                                layout
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                key={phase.phaseId}
-                                className="relative group flex flex-col items-center shrink-0 z-20"
+                              <button
+                                key={`ellipsis-${item.index}`}
+                                style={{ left: `${posPct}%` }}
+                                onClick={(e) => {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const cr = containerRef.current?.getBoundingClientRect();
+                                  if (cr)
+                                    setPopoverGap({
+                                      index: item.index,
+                                      phases: item.phases!,
+                                      x: rect.left - cr.left + rect.width / 2,
+                                    });
+                                }}
+                                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 group flex items-center justify-center hover:scale-125 transition-transform z-20"
                               >
-                                <motion.button
-                                  disabled={locked}
-                                  onClick={() => handleJumpToPhase(item.index)}
-                                  whileHover={!locked ? { scale: 1.15, y: -2 } : {}}
-                                  className={`relative w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
-                                    locked
-                                      ? 'bg-gray-50 border-gray-100 dark:bg-white/5 dark:border-white/5 opacity-40'
-                                      : completed
-                                        ? 'text-white border-transparent'
-                                        : isActive
-                                          ? 'bg-white scale-110 shadow-lg dark:shadow-none'
-                                          : 'bg-white border-gray-200 text-gray-400 dark:bg-[#1a1a1a] dark:border-white/10'
-                                  }`}
-                                  style={
-                                    !locked
-                                      ? completed
-                                        ? {
-                                            backgroundColor: course.accentColor,
-                                            boxShadow: `0 4px 12px ${course.accentColor}33`,
-                                          }
-                                        : isActive
-                                          ? {
-                                              borderColor: course.accentColor,
-                                              color: course.accentColor,
-                                              boxShadow: `0 0 20px ${course.accentColor}22`,
-                                            }
+                                <div className="flex gap-[3px]">
+                                  {[1, 2, 3].map((i) => (
+                                    <div
+                                      key={i}
+                                      className="w-[5px] h-[5px] rounded-full bg-gray-300 dark:bg-white/20 group-hover:bg-gray-400 dark:group-hover:bg-white/40 transition-colors"
+                                      style={
+                                        completedPhaseStatuses[item.index]
+                                          ? { backgroundColor: course.accentColor }
                                           : {}
-                                      : {}
-                                  }
-                                >
-                                  {completed ? (
-                                    <Check className="w-4 h-4 stroke-[4px]" />
-                                  ) : (
-                                    <span className="text-[10px] font-black">{item.index + 1}</span>
-                                  )}
-
-                                  {isActive && (
-                                    <motion.div
-                                      layoutId="activeIndicator"
-                                      className="absolute -inset-1 rounded-full border-2 opacity-20"
-                                      style={{ borderColor: course.accentColor }}
+                                      }
                                     />
-                                  )}
-                                </motion.button>
-                              </motion.div>
+                                  ))}
+                                </div>
+                              </button>
                             );
-                          })}
-                        </>
-                      );
-                    })()}
-                  </AnimatePresence>
+                          }
+
+                          const phase = course.phases[item.index];
+                          const completed = completedPhaseStatuses[item.index];
+                          const isActive = item.index === activePhaseIndex;
+                          const locked = !canOpenPhase(item.index) && !completed;
+                          const isBehindFill = item.index <= fillTargetIdx;
+
+                          return (
+                            <div
+                              key={phase.phaseId}
+                              style={{ left: `${posPct}%` }}
+                              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 group"
+                            >
+                              <motion.button
+                                disabled={locked}
+                                onClick={() => handleJumpToPhase(item.index)}
+                                whileHover={!locked ? { scale: 1.15 } : {}}
+                                whileTap={!locked ? { scale: 0.92 } : {}}
+                                className={`relative flex items-center justify-center shrink-0 transition-all duration-300 ${
+                                  locked
+                                    ? 'w-7 h-7 rounded-full bg-gray-100 dark:bg-white/5 opacity-40 cursor-not-allowed'
+                                    : completed
+                                      ? 'w-9 h-9 rounded-full text-white cursor-pointer'
+                                      : isActive
+                                        ? 'w-9 h-9 rounded-full bg-white dark:bg-[#1a1a1a] cursor-pointer'
+                                        : 'w-8 h-8 rounded-full bg-white dark:bg-[#1a1a1a] cursor-pointer'
+                                }`}
+                                style={
+                                  locked
+                                    ? {}
+                                    : completed
+                                      ? {
+                                          backgroundColor: course.accentColor,
+                                          boxShadow: `0 2px 12px ${course.accentColor}44`,
+                                          border: `2px solid ${course.accentColor}`,
+                                        }
+                                      : isActive
+                                        ? {
+                                            borderWidth: 3,
+                                            borderStyle: 'solid',
+                                            borderColor: course.accentColor,
+                                            color: course.accentColor,
+                                            boxShadow: `0 0 0 4px ${course.accentColor}22, 0 2px 12px ${course.accentColor}33`,
+                                          }
+                                        : {
+                                            borderWidth: 2,
+                                            borderStyle: 'solid',
+                                            borderColor: isBehindFill
+                                              ? course.accentColor
+                                              : undefined,
+                                            color: isBehindFill ? course.accentColor : undefined,
+                                          }
+                                }
+                              >
+                                {completed ? (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                                  >
+                                    <Check className="w-4 h-4 stroke-[3px]" />
+                                  </motion.div>
+                                ) : (
+                                  <span
+                                    className={`text-[11px] font-black ${locked ? 'text-gray-300 dark:text-white/20' : ''}`}
+                                  >
+                                    {item.index + 1}
+                                  </span>
+                                )}
+                              </motion.button>
+                              {/* Tooltip on hover */}
+                              {!locked && (
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30">
+                                  <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
+                                    {phase.title}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </>
+                    );
+                  })()}
                 </div>
 
-                {/* Modal for hidden phases */}
+                {/* Hidden phase modal */}
                 <AnimatePresence>
                   {popoverGap && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-12">
@@ -1485,7 +1378,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                               ✕
                             </button>
                           </div>
-
                           <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-white/10">
                             {popoverGap.phases.map((p) => {
                               const pIdx = course.phases.findIndex(
@@ -1493,7 +1385,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                               );
                               const pCompleted = completedPhaseStatuses[pIdx];
                               const pLocked = !canOpenPhase(pIdx) && !pCompleted;
-
                               return (
                                 <button
                                   key={p.phaseId}
@@ -1502,18 +1393,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                                     handleJumpToPhase(pIdx);
                                     setPopoverGap(null);
                                   }}
-                                  className={`group flex items-center gap-4 p-4 rounded-2xl text-left transition-all ${
-                                    pLocked
-                                      ? 'opacity-30 cursor-not-allowed bg-gray-50/50 dark:bg-white/[0.02]'
-                                      : 'bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98]'
-                                  }`}
+                                  className={`group flex items-center gap-4 p-4 rounded-2xl text-left transition-all ${pLocked ? 'opacity-30 cursor-not-allowed bg-gray-50/50 dark:bg-white/[0.02]' : 'bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98]'}`}
                                 >
                                   <div
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shrink-0 shadow-sm transition-transform group-hover:rotate-3 ${
-                                      pCompleted
-                                        ? 'text-white'
-                                        : 'bg-white dark:bg-gray-800 text-gray-400 border border-gray-100 dark:border-white/5'
-                                    }`}
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shrink-0 shadow-sm transition-transform group-hover:rotate-3 ${pCompleted ? 'text-white' : 'bg-white dark:bg-gray-800 text-gray-400 border border-gray-100 dark:border-white/5'}`}
                                     style={
                                       pCompleted
                                         ? {
@@ -1557,7 +1440,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             </div>
           </div>
 
-          {/* Content Body Section */}
+          {/* Content area */}
           <div className="pt-0 px-6 pb-6 lg:pt-0 lg:px-10 lg:pb-10 bg-gray-50/30 dark:bg-transparent">
             <div className="mb-4 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
               <div className="space-y-3">
@@ -1576,8 +1459,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   </span>
                   {phaseComplete && (
                     <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-500/10 text-green-600 text-[10px] font-black uppercase tracking-widest">
-                      <Check className="w-3.5 h-3.5 stroke-[3px]" />
-                      {t('course.phase_complete')}
+                      <Check className="w-3.5 h-3.5 stroke-[3px]" /> {t('course.phase_complete')}
                     </span>
                   )}
                 </div>
@@ -1589,7 +1471,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                 </p>
               </div>
             </div>
-
             <div key={`${activePhase.phaseId}-${phaseKey}`} className="relative">
               <PhaseBody
                 phase={activePhase}
@@ -1598,17 +1479,13 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                 onMistake={() => setPhaseMistakesCount((c) => c + 1)}
               />
             </div>
-
-            {/* Footer Actions Integrated */}
             <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
               <button
                 onClick={handleResetCourse}
                 className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors flex items-center gap-2"
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                {t('course.reset_course')}
+                <div className="w-1.5 h-1.5 rounded-full bg-current" /> {t('course.reset_course')}
               </button>
-
               <button
                 onClick={handleContinue}
                 disabled={!phaseComplete}
@@ -1630,6 +1507,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
           </div>
         </div>
 
+        {/* Confidence modal & mascot */}
         <AnimatePresence>
           {pendingAdvance && (
             <div className="rounded-[2rem] border border-[#269984]/20 bg-[#f0fbf9] p-5 shadow-sm dark:bg-black/20">
@@ -1652,10 +1530,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                     key={value}
                     onClick={() => applyAdvance(value)}
                     className="rounded-full border bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] transition-colors dark:bg-black/20 dark:text-white"
-                    style={{
-                      borderColor: `${course.accentColor}33`,
-                      color: course.accentColor,
-                    }}
+                    style={{ borderColor: `${course.accentColor}33`, color: course.accentColor }}
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.backgroundColor = `${course.accentColor}10`)
                     }
@@ -1695,7 +1570,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   <p className="mb-8 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
                     {t('course.confidence_desc')}
                   </p>
-
                   <div className="grid w-full gap-3">
                     {(
                       [
@@ -1712,22 +1586,21 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                           applyAdvance(value);
                         }}
                         className="group flex items-center justify-between rounded-2xl border-2 border-gray-100 bg-gray-50 px-6 py-4 text-left transition-all dark:border-white/5 dark:bg-white/5"
-                        style={{ transition: 'all 0.2s' }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.borderColor = course.accentColor;
                           e.currentTarget.style.backgroundColor = `${course.accentColor}05`;
-                          const span = e.currentTarget.querySelector('span');
-                          const icon = e.currentTarget.querySelector('svg');
-                          if (span) span.style.color = course.accentColor;
-                          if (icon) icon.style.color = course.accentColor;
+                          const s = e.currentTarget.querySelector('span');
+                          const i = e.currentTarget.querySelector('svg');
+                          if (s) s.style.color = course.accentColor;
+                          if (i) i.style.color = course.accentColor;
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.borderColor = '';
                           e.currentTarget.style.backgroundColor = '';
-                          const span = e.currentTarget.querySelector('span');
-                          const icon = e.currentTarget.querySelector('svg');
-                          if (span) span.style.color = '';
-                          if (icon) icon.style.color = '';
+                          const s = e.currentTarget.querySelector('span');
+                          const i = e.currentTarget.querySelector('svg');
+                          if (s) s.style.color = '';
+                          if (i) i.style.color = '';
                         }}
                       >
                         <span className="font-bold text-gray-700 dark:text-gray-300 transition-colors">
@@ -1737,7 +1610,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                       </button>
                     ))}
                   </div>
-
                   <button
                     onClick={() => setShowConfidenceModal(false)}
                     className="mt-6 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600"
@@ -1749,7 +1621,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             </div>
           )}
         </AnimatePresence>
-        {/* UNIFIED HUB: Handles both the summon button and Bubi himself */}
+
         {course.mascot.enabled && mascotEnabled && (
           <motion.div
             drag
@@ -1761,12 +1633,12 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
               bottom: 0,
             }}
             animate={{ x: mascotDragPos.x, y: mascotDragPos.y }}
-            onDragEnd={(_, info) => {
+            onDragEnd={(_, info) =>
               setMascotDragPos({
                 x: mascotDragPos.x + info.offset.x,
                 y: mascotDragPos.y + info.offset.y,
-              });
-            }}
+              })
+            }
             className="fixed bottom-8 left-8 z-[60] pointer-events-none flex flex-col items-start"
           >
             <div className="pointer-events-auto">
@@ -1784,29 +1656,25 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                         className="absolute top-full left-6 w-3 h-3 bg-white dark:bg-gray-900 rotate-45 border-r border-b"
                         style={{ borderColor: `${course.accentColor}33` }}
                       />
-
                       {mascotMood === 'mistake' && (
                         <div className="mb-2 flex items-center gap-1.5 text-amber-600 dark:text-amber-500 font-bold text-[10px] uppercase tracking-widest">
-                          <ShieldAlert className="w-3.5 h-3.5" />
-                          {t('course.advice')}
+                          <ShieldAlert className="w-3.5 h-3.5" /> {t('course.advice')}
                         </div>
                       )}
-
                       <p className="font-montserrat text-sm leading-relaxed text-gray-700 dark:text-gray-300 pr-2">
                         {mascotMessage}
                       </p>
-
                       {mascotActions && mascotMood === 'idle' && (
                         <div className="mt-4 flex gap-2">
                           <button
                             onClick={() => {
                               setMascotMood('neutral');
-                              const advice =
+                              setMascotMessage(
                                 activePhase.idleHelp ||
-                                activePhase.hintCopy ||
-                                activePhase.mascotLine ||
-                                activePhase.summary;
-                              setMascotMessage(advice);
+                                  activePhase.hintCopy ||
+                                  activePhase.mascotLine ||
+                                  activePhase.summary,
+                              );
                               setMascotActions(false);
                             }}
                             className="flex-1 py-1.5 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-opacity hover:opacity-90"
@@ -1822,7 +1690,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                           </button>
                         </div>
                       )}
-
                       {!mascotActions && (
                         <div className="mt-3 flex flex-col gap-1.5">
                           <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
@@ -1870,7 +1737,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                         </div>
                       )}
                     </motion.div>
-
                     <motion.div
                       className="w-16 h-16 relative cursor-grab active:cursor-grabbing group select-none ml-4"
                       onClick={() => {
@@ -1900,18 +1766,15 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                     exit={{ opacity: 0, scale: 0.8 }}
                     onClick={() => {
                       setMascotMood('neutral');
-                      const welcomeMsg =
+                      setMascotMessage(
                         activePhase.mascotLine ||
-                        t('course.currently_at').replace('{title}', activePhase.title);
-                      setMascotMessage(welcomeMsg);
+                          t('course.currently_at').replace('{title}', activePhase.title),
+                      );
                       setMascotActions(false);
                       setMascotVisible(true);
                     }}
                     className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-900 border rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 group cursor-grab active:cursor-grabbing select-none"
-                    style={{
-                      borderColor: `${course.accentColor}33`,
-                      color: course.accentColor,
-                    }}
+                    style={{ borderColor: `${course.accentColor}33`, color: course.accentColor }}
                   >
                     <div
                       className="w-5 h-5 rounded-full overflow-hidden border pointer-events-none"

@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload';
+import type { CollectionConfig, FieldHook } from 'payload';
 
 import { ROLES } from '../lib/constants';
 // Helper to parse Markdown strings into Lexical Editor JSON states
@@ -393,13 +393,12 @@ export const Courses: CollectionConfig = {
                   },
                   hooks: {
                     afterRead: [
-                      (args: any) => {
-                        const value = args.value;
+                      (({ value }) => {
                         if (typeof value === 'string') {
                           return markdownToLexical(value);
                         }
                         return value;
-                      },
+                      }) as FieldHook,
                     ],
                   },
                 },

@@ -260,7 +260,11 @@ export default function Header() {
                       setProfileDropdownOpen(false);
                       clearStore(); // Clear storage on logout
                       await axios.post(API_ROUTES.AUTH.LOGOUT).catch(() => {});
-                      await signOut({ redirect: false });
+                      try {
+                        await signOut({ redirect: false });
+                      } catch {
+                        // ignore redirect/html JSON parsing errors
+                      }
                       window.location.href = ROUTES.LOGIN;
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors group"
@@ -453,7 +457,11 @@ export default function Header() {
                     setMenuOpen(false);
                     clearStore();
                     await axios.post(API_ROUTES.AUTH.LOGOUT).catch(() => {});
-                    await signOut({ redirect: false });
+                    try {
+                      await signOut({ redirect: false });
+                    } catch {
+                      // ignore redirect/html JSON parsing errors
+                    }
                     window.location.href = ROUTES.LOGIN;
                   }}
                   className="w-full font-montserrat bg-red-500/20 text-red-50 py-3 rounded-xl text-center font-bold text-sm border border-red-500/20"

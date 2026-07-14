@@ -39,6 +39,42 @@ export function markdownToLexical(markdown: string) {
       continue;
     }
 
+    // Fenced code block: ```language ... ```
+    if (line.startsWith('```')) {
+      if (currentList) {
+        children.push(currentList);
+        currentList = null;
+      }
+      const lang = line.slice(3).trim() || 'plain';
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith('```')) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      // i now points to the closing ``` line (or past end), the for-loop will increment it
+      children.push({
+        type: 'code',
+        language: lang,
+        format: '',
+        indent: 0,
+        version: 1,
+        direction: 'ltr',
+        children: [
+          {
+            type: 'code-highlight',
+            text: codeLines.join('\n'),
+            mode: 'normal',
+            style: '',
+            detail: 0,
+            format: 0,
+            version: 1,
+          },
+        ],
+      });
+      continue;
+    }
+
     // Heading: ## Heading 2
     const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
     if (headingMatch) {

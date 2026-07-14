@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from '@payloadcms/ui';
 import { useLocale } from '../../i18n/LocaleProvider';
 import {
@@ -12,6 +12,8 @@ import {
   Lightbulb,
   Plus,
   Trash2,
+  RefreshCw,
+  ExternalLink,
 } from 'lucide-react';
 
 const customExamples = {
@@ -108,54 +110,73 @@ const loadingSteps = {
   ],
 };
 
-function flattenLocalization(data: unknown, locale: 'hu' | 'en' | 'ro'): unknown {
-  if (data === null || data === undefined) {
-    return data;
-  }
-
-  if (
-    typeof data === 'object' &&
-    !Array.isArray(data) &&
-    'hu' in data &&
-    'en' in data &&
-    'ro' in data
-  ) {
-    return (data as Record<string, unknown>)[locale];
-  }
-
-  if (Array.isArray(data)) {
-    return data.map((item) => flattenLocalization(item, locale));
-  }
-
-  if (typeof data === 'object') {
-    const flattened: Record<string, unknown> = {};
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        flattened[key] = flattenLocalization((data as Record<string, unknown>)[key], locale);
-      }
-    }
-    return flattened;
-  }
-
-  return data;
-}
-
 export default function AIGeneratorField() {
   const { locale } = useLocale();
-  const { dispatchFields, addFieldRow, removeFieldRow, getData } = useForm();
+  const {
+    dispatchFields,
+    addFieldRow: _addFieldRow,
+    removeFieldRow: _removeFieldRow,
+    getData: _getData,
+  } = useForm();
   const formDispatch = dispatchFields;
 
   const [generalDescription, setGeneralDescription] = useState('');
   const [stepsList, setStepsList] = useState<string[]>(['', '', '']);
-  const [model, setModel] = useState('google/gemini-2.5-flash');
+  const [model, setModel] = useState('openrouter/free');
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
+  const [saveWarning, setSaveWarning] = useState<string | null>(null);
 
   const activeLocale = locale === 'hu' || locale === 'en' || locale === 'ro' ? locale : 'en';
   const examples = customExamples[activeLocale] || customExamples['en'];
   const steps = loadingSteps[activeLocale] || loadingSteps['en'];
+
+  const loadingRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Keep loadingRef in sync with loading state
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
+  // Prevent browser tab close or reload when generating
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (loading) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [loading]);
+
+  const modalText = {
+    hu: {
+      title: 'Kurzus generálása folyamatban',
+      description:
+        'Kérjük, ne válts tabot és ne zárd be a böngészőablakot, különben a folyamat megszakad.',
+      cancel: 'Megszakítás és képernyő feloldása',
+    },
+    en: {
+      title: 'Course Generation in Progress',
+      description:
+        'Please do not switch tabs or close this browser window. Doing so will cancel the generation.',
+      cancel: 'Cancel & Unblock Screen',
+    },
+    ro: {
+      title: 'Generare curs în desfășurare',
+      description:
+        'Vă rugăm să nu schimbați taburile și să nu închideți fereastra, altfel procesul se va întrerupe.',
+      cancel: 'Anulează și deblochează ecranul',
+    },
+  };
+  const activeModalText = modalText[activeLocale] || modalText['en'];
 
   // Rotate loading steps for visual progress feedback
   useEffect(() => {
@@ -214,6 +235,9 @@ ${stepsList
   .join('\n')}
 `;
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const response = await fetch('/api/ai/generate-course', {
         method: 'POST',
@@ -221,6 +245,7 @@ ${stepsList
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ prompt: combinedPrompt, model }),
+        signal: controller.signal,
       });
 
       const rawData = await response.json();
@@ -229,118 +254,68 @@ ${stepsList
         throw new Error(rawData.error || 'Failed to generate course');
       }
 
+      // Check if the user cancelled the process during the fetch request
+      if (!loadingRef.current) {
+        console.log('[AI Course Generation] Process cancelled by the user.');
+        return;
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = flattenLocalization(rawData, activeLocale) as any;
+      const data = rawData as any;
 
-      if (!formDispatch) {
-        throw new Error(
-          'Form dispatch context not available. Ensure this field is mounted in a Payload form.',
-        );
-      }
-
-      // Helper to dispatch form update
-      const updateField = (path: string, val: unknown) => {
-        formDispatch({
-          type: 'UPDATE',
-          path,
-          value: val,
-          initialValue: val,
-        });
-      };
-
-      // Populate localized and non-localized fields
-      if (data.title) updateField('title', data.title);
-      if (data.slug) updateField('slug', data.slug);
-      if (data.summary) updateField('summary', data.summary);
-      if (data.heroTagline) updateField('heroTagline', data.heroTagline);
-      if (data.estimatedMinutes) updateField('estimatedMinutes', data.estimatedMinutes);
-      if (data.difficulty) updateField('difficulty', data.difficulty);
-
-      // Populate Mascot & Mentoring
-      if (data.mascot) {
-        updateField('mascot.enabled', data.mascot.enabled ?? true);
-        if (data.mascot.name) updateField('mascot.name', data.mascot.name);
-        if (data.mascot.idlePrompt) updateField('mascot.idlePrompt', data.mascot.idlePrompt);
-        if (data.mascot.mistakePrompt)
-          updateField('mascot.mistakePrompt', data.mascot.mistakePrompt);
-        if (data.mascot.welcomeMessages)
-          updateField('mascot.welcomeMessages', data.mascot.welcomeMessages);
-        if (data.mascot.overconfidentMessages)
-          updateField('mascot.overconfidentMessages', data.mascot.overconfidentMessages);
-        if (data.mascot.streakMessages)
-          updateField('mascot.streakMessages', data.mascot.streakMessages);
-      }
-
-      // Populate phases
-      if (data.phases && Array.isArray(data.phases)) {
-        // 1. Clear any existing phases in the form state
-        const currentData = getData ? getData() : {};
-        const existingPhasesCount = (currentData?.phases as unknown[])?.length || 0;
-        for (let i = existingPhasesCount - 1; i >= 0; i--) {
-          removeFieldRow({ path: 'phases', rowIndex: i });
+      // New server-side save flow: the API now saves the course directly via Payload
+      if (data.success && data.courseId) {
+        // Course was successfully saved with all 3 languages
+        setCreatedCourseId(data.courseId);
+        setSaveWarning(null);
+        setSuccess(true);
+      } else if (data.success === false && data.saveError) {
+        // Generation succeeded but Payload save failed (e.g. duplicate slug)
+        setSaveWarning(data.saveError);
+        setCreatedCourseId(null);
+        setSuccess(true);
+      } else if (!data.error) {
+        // Legacy format fallback (backwards compatible): populate form fields
+        if (!formDispatch) {
+          throw new Error(
+            'Form dispatch context not available. Ensure this field is mounted in a Payload form.',
+          );
         }
 
-        // 2. Add the generated number of rows
-        for (let i = 0; i < data.phases.length; i++) {
-          addFieldRow({ path: 'phases', schemaPath: 'phases' });
-        }
+        // Helper to dispatch form update
+        const updateField = (path: string, val: unknown) => {
+          formDispatch({
+            type: 'UPDATE',
+            path,
+            value: val,
+            initialValue: val,
+          });
+        };
 
-        // 3. Dispatch updates to each specific nested phase input path
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (data.phases as any[]).forEach((phase: any, index: number) => {
-          if (phase.phaseId) updateField(`phases.${index}.phaseId`, phase.phaseId);
-          if (phase.title) updateField(`phases.${index}.title`, phase.title);
-          if (phase.sourceAlgorithmId)
-            updateField(`phases.${index}.sourceAlgorithmId`, phase.sourceAlgorithmId);
-          if (phase.sourceView) updateField(`phases.${index}.sourceView`, phase.sourceView);
-          if (phase.summary) updateField(`phases.${index}.summary`, phase.summary);
-          if (phase.mascotLine) updateField(`phases.${index}.mascotLine`, phase.mascotLine);
-          if (phase.mascotMistakeLine)
-            updateField(`phases.${index}.mascotMistakeLine`, phase.mascotMistakeLine);
-          if (phase.hintCopy) updateField(`phases.${index}.hintCopy`, phase.hintCopy);
-          if (phase.idleHelp) updateField(`phases.${index}.idleHelp`, phase.idleHelp);
-          if (phase.askConfidence !== undefined)
-            updateField(`phases.${index}.askConfidence`, phase.askConfidence);
-          if (phase.maxPoints !== undefined)
-            updateField(`phases.${index}.maxPoints`, phase.maxPoints);
-          if (phase.infoContent) updateField(`phases.${index}.infoContent`, phase.infoContent);
-          if (phase.customVideoId)
-            updateField(`phases.${index}.customVideoId`, phase.customVideoId);
-
-          // Quiz questions (array of objects)
-          if (phase.quiz && phase.quiz.length > 0) {
-            updateField(`phases.${index}.quiz`, phase.quiz);
+        // Helper to extract localized string
+        const getLocVal = (val: string | Record<string, string> | null | undefined) => {
+          if (val && typeof val === 'object' && ('hu' in val || 'en' in val || 'ro' in val)) {
+            return val[activeLocale] || val.en || val.hu || '';
           }
+          return val;
+        };
 
-          // Matching pairs (array of objects)
-          if (phase.matching && phase.matching.length > 0) {
-            updateField(`phases.${index}.matching`, phase.matching);
-          }
-
-          // Ordering items (array of objects)
-          if (phase.ordering && phase.ordering.length > 0) {
-            updateField(`phases.${index}.ordering`, phase.ordering);
-          }
-
-          // Debug code blocks
-          if (phase.debugCode) updateField(`phases.${index}.debugCode`, phase.debugCode);
-          if (phase.expectedCode) updateField(`phases.${index}.expectedCode`, phase.expectedCode);
-
-          // Gap fill fields
-          if (phase.gapFillContent)
-            updateField(`phases.${index}.gapFillContent`, phase.gapFillContent);
-          if (phase.gapFillOptions)
-            updateField(`phases.${index}.gapFillOptions`, phase.gapFillOptions);
-          if (phase.gapFillSolutions)
-            updateField(`phases.${index}.gapFillSolutions`, phase.gapFillSolutions);
-        });
+        if (data.title) updateField('title', getLocVal(data.title));
+        if (data.slug) updateField('slug', data.slug);
+        if (data.summary) updateField('summary', getLocVal(data.summary));
+        setSaveWarning(null);
+        setCreatedCourseId(null);
+        setSuccess(true);
       }
-
-      setSuccess(true);
     } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log('[AI Course Generation] Request aborted by user.');
+        return;
+      }
       console.error(err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
+      abortControllerRef.current = null;
       setLoading(false);
     }
   };
@@ -383,7 +358,7 @@ ${stepsList
               color: 'var(--theme-elevation-900)',
             }}
           >
-            Gemini/OpenRouter Multi-Language Course Generator
+            OpenRouter Multi-Language Course Generator
           </h3>
           <p style={{ margin: 0, fontSize: '12px', color: 'var(--theme-elevation-500)' }}>
             Design course outlines and dynamically generate translations for Hungarian, English, and
@@ -394,25 +369,47 @@ ${stepsList
 
       {/* Model Selector */}
       <div style={{ marginTop: '16px', marginBottom: '16px' }}>
-        <label
+        <div
           style={{
-            display: 'block',
-            fontSize: '11px',
-            fontWeight: 'bold',
-            color: 'var(--theme-elevation-600)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             marginBottom: '8px',
           }}
         >
-          OpenRouter Model / Modell név
-        </label>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              color: 'var(--theme-elevation-600)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              margin: 0,
+            }}
+          >
+            OpenRouter Model / Modell név
+          </label>
+          <a
+            href="https://openrouter.ai/collections/free-models"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: '11px',
+              color: '#269984',
+              textDecoration: 'underline',
+              fontWeight: '500',
+            }}
+          >
+            Free Models / Ingyenes modellek
+          </a>
+        </div>
         <input
           type="text"
           value={model}
           onChange={(e) => setModel(e.target.value)}
           disabled={loading}
-          placeholder="e.g. google/gemini-2.5-flash"
+          placeholder="Enter a model ID or leave as openrouter/free (e.g. meta-llama/llama-3.3-70b-instruct:free)"
           style={{
             width: '100%',
             padding: '10px 14px',
@@ -437,29 +434,30 @@ ${stepsList
         {/* Model Presets */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
           {[
-            'google/gemini-2.5-flash',
-            'google/gemini-2.5-pro',
-            'meta-llama/llama-3.3-70b-instruct',
-            'anthropic/claude-3.5-sonnet',
-          ].map((m) => (
+            { id: 'openrouter/free', label: 'Random Free' },
+            { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+            { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
+            { id: 'anthropic/claude-3.5-haiku', label: 'Claude 3.5 Haiku' },
+          ].map((preset) => (
             <button
-              key={m}
+              key={preset.id}
               type="button"
-              onClick={() => !loading && setModel(m)}
+              onClick={() => !loading && setModel(preset.id)}
               disabled={loading}
               style={{
                 cursor: loading ? 'not-allowed' : 'pointer',
                 padding: '4px 8px',
                 borderRadius: '4px',
                 fontSize: '11px',
-                border: '1px solid ' + (model === m ? '#269984' : 'var(--theme-elevation-200)'),
-                backgroundColor: model === m ? 'rgba(38, 153, 132, 0.1)' : 'transparent',
-                color: model === m ? '#269984' : 'var(--theme-elevation-600)',
-                fontWeight: model === m ? 'bold' : 'normal',
+                border:
+                  '1px solid ' + (model === preset.id ? '#269984' : 'var(--theme-elevation-200)'),
+                backgroundColor: model === preset.id ? 'rgba(38, 153, 132, 0.1)' : 'transparent',
+                color: model === preset.id ? '#269984' : 'var(--theme-elevation-600)',
+                fontWeight: model === preset.id ? 'bold' : 'normal',
                 transition: 'all 0.15s ease',
               }}
             >
-              {m.split('/').pop()}
+              {preset.label}
             </button>
           ))}
         </div>
@@ -756,25 +754,120 @@ ${stepsList
         </button>
       </div>
 
-      {/* Progress Walkthrough */}
+      {/* Fullscreen Loading Overlay Modal */}
       {loading && (
         <div
           style={{
-            marginTop: '16px',
-            padding: '12px',
-            backgroundColor: 'var(--theme-elevation-100)',
-            borderLeft: '3px solid #269984',
-            borderRadius: '0 4px 4px 0',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 99999,
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            gap: '10px',
-            animation: 'pulse 1.5s infinite ease-in-out',
+            justifyContent: 'center',
+            color: '#ffffff',
           }}
         >
-          <Loader2 size={16} className="animate-spin" style={{ color: '#269984' }} />
-          <span style={{ fontSize: '12px', color: 'var(--theme-elevation-700)', fontWeight: 500 }}>
-            {steps[currentStep]}
-          </span>
+          <div
+            style={{
+              backgroundColor: 'var(--theme-elevation-100)',
+              color: 'var(--theme-elevation-900)',
+              borderRadius: '12px',
+              padding: '40px',
+              maxWidth: '500px',
+              width: '90%',
+              textAlign: 'center',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              border: '1px solid var(--theme-elevation-200)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '20px',
+            }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Loader2 size={48} className="animate-spin" style={{ color: '#269984' }} />
+              <Sparkles
+                size={20}
+                style={{
+                  position: 'absolute',
+                  color: '#269984',
+                  animation: 'pulse 1.5s infinite ease-in-out',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
+                {activeModalText.title}
+              </h3>
+              <p style={{ margin: 0, fontSize: '13px', color: 'var(--theme-elevation-500)' }}>
+                {activeModalText.description}
+              </p>
+            </div>
+
+            {/* Current Loading Step */}
+            <div
+              style={{
+                width: '100%',
+                padding: '16px',
+                backgroundColor: 'var(--theme-elevation-50)',
+                borderRadius: '8px',
+                border: '1px solid var(--theme-elevation-150)',
+                fontSize: '13px',
+                fontWeight: '500',
+                color: '#269984',
+                minHeight: '50px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {steps[currentStep]}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                abortControllerRef.current?.abort();
+                setLoading(false);
+              }}
+              style={{
+                marginTop: '10px',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: '1px solid var(--theme-elevation-200)',
+                backgroundColor: 'transparent',
+                color: 'var(--theme-elevation-600)',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--theme-elevation-150)';
+                e.currentTarget.style.color = 'var(--theme-elevation-900)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--theme-elevation-600)';
+              }}
+            >
+              {activeModalText.cancel}
+            </button>
+          </div>
         </div>
       )}
 
@@ -794,10 +887,42 @@ ${stepsList
           }}
         >
           <AlertCircle size={16} style={{ marginTop: '2px', flexShrink: 0 }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
             <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Generation Failed</span>
             <span style={{ fontSize: '11px', color: 'var(--theme-elevation-700)' }}>{error}</span>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              handleGenerate();
+            }}
+            disabled={loading || !generalDescription.trim()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              border: '1px solid rgba(235, 87, 87, 0.3)',
+              backgroundColor: 'transparent',
+              color: 'var(--theme-error-500)',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(235, 87, 87, 0.08)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <RefreshCw size={12} />
+            <span>Retry</span>
+          </button>
         </div>
       )}
 
@@ -817,10 +942,48 @@ ${stepsList
           }}
         >
           <CheckCircle size={16} style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: '12px', fontWeight: 500 }}>
-            Course fields populated for Hungarian, English, and Romanian simultaneously! Review the
-            other tabs and click &apos;Create&apos; or &apos;Save&apos;.
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+            {createdCourseId ? (
+              <>
+                <span style={{ fontSize: '12px', fontWeight: 500 }}>
+                  ✅ Course created with Hungarian, English, and Romanian translations!
+                </span>
+                <a
+                  href={`/admin/collections/courses/${createdCourseId}`}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: '#269984',
+                    textDecoration: 'underline',
+                    marginTop: '2px',
+                  }}
+                >
+                  <ExternalLink size={12} />
+                  Open created course for review
+                </a>
+              </>
+            ) : saveWarning ? (
+              <>
+                <span style={{ fontSize: '12px', fontWeight: 500 }}>
+                  ⚠️ Course generated but could not be saved automatically:
+                </span>
+                <span style={{ fontSize: '11px', color: 'var(--theme-elevation-600)' }}>
+                  {saveWarning}
+                </span>
+                <span style={{ fontSize: '11px', color: 'var(--theme-elevation-500)' }}>
+                  The form fields have been populated. Please adjust and save manually.
+                </span>
+              </>
+            ) : (
+              <span style={{ fontSize: '12px', fontWeight: 500 }}>
+                Course fields populated for Hungarian, English, and Romanian simultaneously! Review
+                the other tabs and click &apos;Create&apos; or &apos;Save&apos;.
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>
