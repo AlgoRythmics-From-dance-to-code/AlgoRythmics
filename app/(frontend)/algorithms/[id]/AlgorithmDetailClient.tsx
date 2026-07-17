@@ -4,6 +4,8 @@ import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLocale } from '../../../i18n/LocaleProvider';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 import VideoPlayer from '../../../components/Learning/VideoPlayer';
 import { VIDEOS, ALGORITHMS } from '../../../../lib/constants';
@@ -34,6 +36,15 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
   const [activeView, setActiveView] = useState<string>('Video');
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
+
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'unauthenticated' && id !== 'bubble-sort') {
+      router.push('/login');
+    }
+  }, [status, id, router]);
 
   const data = useMemo(() => {
     const algo = ALGORITHMS.find((a) => a.id === id);
@@ -149,17 +160,19 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
       // We don't wait for the debounced UserProgressSync to ensure the reset is persistent even on refresh
       const store = useAlgorithmStore.getState();
 
-      fetch('/api/account/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          completedIds: store.completedIds,
-          visualizerProgress: store.visualizerProgress,
-          algorithmProgress: {
-            [id]: store.algorithmProgress[id],
-          },
-        }),
-      }).catch((err) => console.error('Failed to sync immediate reset:', err));
+      if (status === 'authenticated') {
+        fetch('/api/account/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            completedIds: store.completedIds,
+            visualizerProgress: store.visualizerProgress,
+            algorithmProgress: {
+              [id]: store.algorithmProgress[id],
+            },
+          }),
+        }).catch((err) => console.error('Failed to sync immediate reset:', err));
+      }
 
       setActiveView(pendingTab);
       setPendingTab(null);

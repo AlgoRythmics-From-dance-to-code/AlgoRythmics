@@ -87,6 +87,8 @@
     "login_success": "Login successful!",
     "login_error": "Login failed",
     "login_error_desc": "Invalid data or unverified account.",
+    "login_required": "Login required",
+    "login_required_desc": "Please log in to access this content.",
     "unexpected_error": "Unexpected error",
     "unexpected_error_desc": "Please try again later.",
     "register_success": "Registration successful!",

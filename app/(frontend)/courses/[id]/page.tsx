@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import CoursePlayer from '../../../components/Course/CoursePlayer';
 import { getPayloadInstance } from '../../../../lib/payload';
@@ -8,8 +8,14 @@ import {
   type CourseCollectionDoc,
 } from '../../../../lib/courses/courseCatalog';
 import { getServerLocale } from '../../../../lib/i18n-server';
+import { auth } from '../../../../auth';
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session) {
+    redirect('/login?reason=login_required');
+  }
+
   const { id } = await params;
   const locale = await getServerLocale();
 

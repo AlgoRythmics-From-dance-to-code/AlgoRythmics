@@ -121,7 +121,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/login?reason=login_required');
     }
   }, [status, router]);
 

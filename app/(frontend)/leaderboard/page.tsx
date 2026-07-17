@@ -9,6 +9,7 @@ import { getUserBadges, UserStats } from '../../../lib/badges';
 import { useSession } from 'next-auth/react';
 import { BaseUser } from '../../../lib/types/auth';
 import LeaderboardSkeleton from '../../components/LeaderboardSkeleton';
+import { useRouter } from 'next/navigation';
 
 interface LeaderboardUser {
   id: string;
@@ -20,11 +21,19 @@ interface LeaderboardUser {
 
 export default function LeaderboardPage() {
   const { t } = useLocale();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [users, setUsers] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login?reason=login_required');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
     const fetchLeaderboard = async () => {
       try {
         const response = await axios.get('/api/leaderboard');
@@ -36,9 +45,9 @@ export default function LeaderboardPage() {
       }
     };
     fetchLeaderboard();
-  }, []);
+  }, [status]);
 
-  if (loading) {
+  if (loading || status !== 'authenticated') {
     return <LeaderboardSkeleton />;
   }
 

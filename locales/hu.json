@@ -87,6 +87,8 @@
     "login_success": "Sikeres bejelentkezés!",
     "login_error": "Sikertelen bejelentkezés",
     "login_error_desc": "Hibás adatok vagy meg nem erősített fiók.",
+    "login_required": "Bejelentkezés szükséges",
+    "login_required_desc": "Kérjük, jelentkezz be a tartalom eléréséhez.",
     "unexpected_error": "Váratlan hiba",
     "unexpected_error_desc": "Kérjük, próbáld meg később.",
     "register_success": "Sikeres regisztráció!",

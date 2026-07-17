@@ -10,10 +10,14 @@ import { useShallow } from 'zustand/react/shallow';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useGlobalAnalytics } from '../../hooks/useGlobalAnalytics';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useSession } from 'next-auth/react';
 
 type Category = 'all' | 'sorting' | 'searching' | 'backtracking' | 'fun';
 
 export default function AlgorithmsClient() {
+  const { data: session } = useSession();
+  const isAuthenticated = !!session;
+
   const { activeCategory, setCategory, searchQuery, setSearchQuery, completedIds } =
     useAlgorithmStore(
       useShallow((state) => ({
@@ -250,9 +254,18 @@ export default function AlgorithmsClient() {
       >
         {filteredAlgorithms.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-            {filteredAlgorithms.map((algo, index) => (
-              <AlgorithmCard key={algo.id} algorithm={algo} index={index} priority={index < 3} />
-            ))}
+            {filteredAlgorithms.map((algo, index) => {
+              const isLocked = !isAuthenticated && algo.id !== 'bubble-sort';
+              return (
+                <AlgorithmCard
+                  key={algo.id}
+                  algorithm={algo}
+                  index={index}
+                  priority={index < 3}
+                  isLocked={isLocked}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="w-full py-20 text-center animate-in fade-in zoom-in-95 duration-700">

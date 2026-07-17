@@ -22,4 +22,3 @@ export async function down({ db, payload: _payload, req: _req }: MigrateDownArgs
    ALTER TYPE "public"."enum_users_auth_provider" ADD VALUE 'facebook' BEFORE 'discord';
   ALTER TABLE "courses_phases_locales" ALTER COLUMN "info_content" SET DATA TYPE varchar USING (info_content #>> '{}');`);
 }
-

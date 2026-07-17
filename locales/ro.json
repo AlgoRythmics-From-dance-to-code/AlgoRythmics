@@ -87,6 +87,8 @@
     "login_success": "Autentificare reușită!",
     "login_error": "Autentificare eșuată",
     "login_error_desc": "Date invalide sau cont neverificat.",
+    "login_required": "Autentificare obligatorie",
+    "login_required_desc": "Vă rugăm să vă autentificați pentru a accesa acest conținut.",
     "unexpected_error": "Eroare neașteptată",
     "unexpected_error_desc": "Vă rugăm să încercați mai târziu.",
     "register_success": "Înregistrare reușită!",
