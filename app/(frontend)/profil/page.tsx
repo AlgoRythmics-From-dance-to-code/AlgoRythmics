@@ -32,6 +32,7 @@ import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import { getUserBadges } from '../../../lib/badges';
+import { useAudioSynthesizer } from '../../hooks/useAudioSynthesizer';
 
 const formatDate = (dateString: string, locale: Locale, t: (key: string) => string) => {
   if (!dateString) return t('common.not_available');
@@ -100,6 +101,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const { courseProgress } = useAlgorithmStore();
   const { install, canInstall, isStandalone, isIOS } = usePWAInstall();
+  const { isMuted, toggleMute } = useAudioSynthesizer();
 
   const [activeTab, setActiveTab] = useState('public');
   const [isSaving, setIsSaving] = useState(false);
@@ -708,6 +710,26 @@ export default function ProfilePage() {
                       >
                         <div
                           className={`w-6 h-6 bg-white rounded-full transition-all shadow-md ${mascotEnabled ? 'translate-x-6' : 'translate-x-0'}`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="p-6 bg-[#f0fbf9] dark:bg-[#269984]/5 rounded-[2rem] border border-[#269984]/20 flex items-center justify-between">
+                      <div className="flex-1 pr-4">
+                        <p className="font-montserrat font-black text-[#269984] text-xs uppercase tracking-widest mb-1">
+                          {t('profile.edit.sound_label') || 'Sound Effects'}
+                        </p>
+                        <p className="text-xs text-[#269984]/70 leading-relaxed">
+                          {t('profile.edit.sound_description') ||
+                            'Enable or disable interactive sound effects during algorithm animations.'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={toggleMute}
+                        className={`w-14 h-8 rounded-full transition-all relative p-1 ${!isMuted ? 'bg-[#269984]' : 'bg-gray-300 dark:bg-neutral-700'}`}
+                      >
+                        <div
+                          className={`w-6 h-6 bg-white rounded-full transition-all shadow-md ${!isMuted ? 'translate-x-6' : 'translate-x-0'}`}
                         />
                       </button>
                     </div>

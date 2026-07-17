@@ -14,6 +14,14 @@ export function useGlobalAnalytics() {
     (eventType: string, eventData?: Record<string, unknown>) => {
       if (!isAuth) return;
 
+      const enrichedData = {
+        ...eventData,
+        audioEnabled:
+          typeof window !== 'undefined'
+            ? localStorage.getItem('algorythmics-muted') !== 'true'
+            : undefined,
+      };
+
       // Use the generic learning-events collection but without algorithmId
       // This is used for theme_switched, language_switched, pwa_interactions etc.
       fetch('/api/analytics/event', {
@@ -23,7 +31,7 @@ export function useGlobalAnalytics() {
           events: [
             {
               eventType,
-              eventData,
+              eventData: enrichedData,
               sessionId: `global-${Date.now()}`, // Global sessions are short-lived
               durationMs: 0,
             },

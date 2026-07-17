@@ -171,6 +171,8 @@
       "saving": "Saving...",
       "mascot_label": "Mascot assistant",
       "mascot_description": "The mascot automatically provides hints and advice if you get stuck during a course.",
+      "sound_label": "Sound Effects",
+      "sound_description": "Enable or disable interactive sound effects during algorithm animations.",
       "first_name_placeholder": "Your first name",
       "last_name_placeholder": "Your last name",
       "bio_placeholder": "Tell us about yourself..."

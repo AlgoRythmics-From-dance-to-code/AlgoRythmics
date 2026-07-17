@@ -171,6 +171,8 @@
       "saving": "Mentés...",
       "mascot_label": "Kabala segítő",
       "mascot_description": "A kabalaállat automatikusan tanácsokat és tippeket ad, ha elakadsz a tanfolyam közben.",
+      "sound_label": "Hanghatások",
+      "sound_description": "Interaktív hanghatások engedélyezése vagy letiltása az algoritmus-animációk során.",
       "first_name_placeholder": "Kereszneved",
       "last_name_placeholder": "Vezetékneved",
       "bio_placeholder": "Mesélj magadról..."

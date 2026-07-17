@@ -171,6 +171,8 @@
       "saving": "Se salvează...",
       "mascot_label": "Asistent mascotă",
       "mascot_description": "Mascota oferă automat indicii și sfaturi dacă te blochezi în timpul unui curs.",
+      "sound_label": "Efecte sonore",
+      "sound_description": "Activați sau dezactivați efectele sonore interactive în timpul animațiilor algoritmilor.",
       "first_name_placeholder": "Prenumele tău",
       "last_name_placeholder": "Numele tău",
       "bio_placeholder": "Spune-ne ceva despre tine..."
