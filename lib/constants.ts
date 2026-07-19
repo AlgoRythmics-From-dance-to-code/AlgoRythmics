@@ -20,6 +20,7 @@ export const ROUTES = {
   VERIFY: '/verify',
   PROFILE: '/profil',
   ALGORITHMS: '/algorithms',
+  BIG_O: '/big-o',
   COURSES: '/courses',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',

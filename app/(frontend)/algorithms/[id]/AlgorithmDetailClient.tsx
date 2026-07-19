@@ -66,6 +66,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
       description: t(`algorithms.list.${id}.description`),
       illAsset: algo.illAsset,
       steps: Array.isArray(localizedSteps) ? localizedSteps : algo.steps,
+      realLife: t(`algorithms.list.${id}.real_life`),
     };
   }, [id, t, getRaw]);
 
@@ -341,6 +342,22 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
               >
                 {data.description}
               </p>
+
+              {data.realLife && data.realLife !== `algorithms.list.${id}.real_life` && (
+                <div className="mt-6 p-4 rounded-2xl bg-white/50 dark:bg-black/20 border border-[#269984]/20 flex items-start gap-3 text-left max-w-lg mx-auto md:mx-0 shadow-sm backdrop-blur-sm">
+                  <div className="p-2 rounded-xl bg-[#269984]/15 text-[#269984] flex-shrink-0">
+                    <Lightbulb className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-montserrat font-bold text-xs uppercase tracking-wider text-[#269984] mb-1">
+                      {t('algorithms.detail.real_life_title') || 'Where is this used?'}
+                    </h3>
+                    <p className="font-montserrat text-xs text-[#555] dark:text-gray-300 leading-relaxed">
+                      {data.realLife}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex-shrink-0 w-48 sm:w-56 md:w-64 lg:w-80 animate-in fade-in zoom-in-95 duration-1000">

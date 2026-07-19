@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
 import Link from 'next/link';
 import { Search, Grid2X2, X, BarChart3, Activity, ArrowRight, Smile } from 'lucide-react';
 import { useLocale } from '../../i18n/LocaleProvider';
-import { ALGORITHMS } from '../../../lib/constants';
+import { ALGORITHMS, ROUTES } from '../../../lib/constants';
 import AlgorithmCard from '../../components/AlgorithmCard';
 import { useShallow } from 'zustand/react/shallow';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
@@ -155,21 +155,44 @@ export default function AlgorithmsClient() {
     <div className="w-full bg-white dark:bg-[#0a0a0a] min-h-screen pt-5">
       {/* Ultra-Minimal Localized Hero (No Title) */}
       <div ref={heroRef} className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-5 pb-3">
-        <p className="font-montserrat font-bold text-xs sm:text-sm text-[#999] dark:text-gray-500 max-w-4xl leading-relaxed animate-in fade-in slide-in-from-left-4 duration-1000">
-          {t('algorithms.inspiring_text')}
-        </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex-1">
+            <p className="font-montserrat font-bold text-xs sm:text-sm text-[#999] dark:text-gray-500 max-w-4xl leading-relaxed animate-in fade-in slide-in-from-left-4 duration-1000">
+              {t('algorithms.inspiring_text')}
+            </p>
 
-        {/* Learning Progress Indicator */}
-        <div className="flex items-center gap-2 mt-5 animate-in fade-in slide-in-from-left-6 duration-1000">
-          <div className="h-1.5 w-32 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#269984] transition-all duration-700"
-              style={{ width: `${(completedIds.length / ALGORITHMS.length) * 100}%` }}
-            />
+            {/* Learning Progress Indicator */}
+            <div className="flex items-center gap-2 mt-5 animate-in fade-in slide-in-from-left-6 duration-1000">
+              <div className="h-1.5 w-32 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#269984] transition-all duration-700"
+                  style={{ width: `${(completedIds.length / ALGORITHMS.length) * 100}%` }}
+                />
+              </div>
+              <span className="text-[10px] sm:text-xs font-montserrat font-bold text-[#269984] uppercase tracking-wider">
+                {completedIds.length} / {ALGORITHMS.length} {t('common.completed') || 'Completed'}
+              </span>
+            </div>
           </div>
-          <span className="text-[10px] sm:text-xs font-montserrat font-bold text-[#269984] uppercase tracking-wider">
-            {completedIds.length} / {ALGORITHMS.length} {t('common.completed') || 'Completed'}
-          </span>
+
+          {isAuthenticated && (
+            <div className="flex flex-wrap items-center gap-3 flex-shrink-0 animate-in fade-in slide-in-from-right-4 duration-1000">
+              <Link
+                href={`${ROUTES.BIG_O}#graph`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#269984]/10 hover:bg-[#269984]/20 border border-[#269984]/25 text-[#269984] hover:text-[#269984] font-montserrat font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 duration-300"
+              >
+                <Activity className="w-4 h-4" />
+                {t('big_o.tab_graph') || 'Interactive Graph'}
+              </Link>
+              <Link
+                href={`${ROUTES.BIG_O}#race`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#269984]/10 hover:bg-[#269984]/20 border border-[#269984]/25 text-[#269984] hover:text-[#269984] font-montserrat font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 duration-300"
+              >
+                <BarChart3 className="w-4 h-4" />
+                {t('big_o.tab_race') || 'Race Mode'}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
