@@ -25,6 +25,12 @@ import {
   Trophy,
   Target,
   Medal,
+  Bug,
+  Upload,
+  X,
+  FileText,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocale, Locale } from '../../i18n/LocaleProvider';
@@ -92,6 +98,7 @@ const sidebarLinks = [
   { key: 'public', icon: User },
   { key: 'edit', icon: Settings },
   { key: 'password', icon: Lock },
+  { key: 'bug_report', icon: Bug },
   { key: 'delete', icon: Trash2 },
 ];
 
@@ -120,6 +127,71 @@ export default function ProfilePage() {
   const [isDeleteConfirmed, setIsDeleteConfirmed] = useState(false);
 
   const [lastSyncedEmail, setLastSyncedEmail] = useState<string | null>(null);
+
+  // Bug report states
+  const [bugDescription, setBugDescription] = useState('');
+  const [bugSeverity, setBugSeverity] = useState('medium');
+  const [bugScreenshot, setBugScreenshot] = useState<File | null>(null);
+  const [bugScreenshotPreview, setBugScreenshotPreview] = useState<string | null>(null);
+  const [isSubmittingBug, setIsSubmittingBug] = useState(false);
+
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('profile.bug_report.toast_only_images'));
+      return;
+    }
+
+    setBugScreenshot(file);
+    const objectUrl = URL.createObjectURL(file);
+    setBugScreenshotPreview(objectUrl);
+  };
+
+  const handleRemoveScreenshot = () => {
+    if (bugScreenshotPreview) {
+      URL.revokeObjectURL(bugScreenshotPreview);
+    }
+    setBugScreenshot(null);
+    setBugScreenshotPreview(null);
+  };
+
+  const handleSubmitBugReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bugDescription.trim()) {
+      toast.error(t('profile.bug_report.fill_required'));
+      return;
+    }
+
+    setIsSubmittingBug(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', bugDescription.trim().slice(0, 50));
+      formData.append('description', bugDescription.trim());
+      formData.append('severity', bugSeverity);
+      formData.append('pageUrl', typeof window !== 'undefined' ? window.location.href : '');
+      if (bugScreenshot) {
+        formData.append('screenshot', bugScreenshot);
+      }
+
+      await axios.post('/api/bug-reports', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success(t('profile.bug_report.success_toast'));
+      setBugDescription('');
+      setBugSeverity('medium');
+      handleRemoveScreenshot();
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      toast.error(err.response?.data?.error || t('toasts.unexpected_error'));
+    } finally {
+      setIsSubmittingBug(false);
+    }
+  };
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -806,6 +878,147 @@ export default function ProfilePage() {
                         </button>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Bug Report Content */}
+                {activeTab === 'bug_report' && (
+                  <div className="max-w-2xl space-y-8 animate-in fade-in duration-500">
+                    <div className="p-6 bg-teal-50 dark:bg-teal-900/10 border border-teal-100 dark:border-teal-900/30 rounded-3xl flex gap-4">
+                      <Bug className="text-[#269984] flex-shrink-0" size={28} />
+                      <div>
+                        <h3 className="font-montserrat font-black text-gray-900 dark:text-white text-lg">
+                          {t('profile.bug_report.title')}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 font-medium leading-relaxed mt-1">
+                          {t('profile.bug_report.subtitle')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Submission Form */}
+                    <form onSubmit={handleSubmitBugReport} className="space-y-6">
+                      <h4 className="font-montserrat font-black text-[#269984] text-xs uppercase tracking-[0.2em]">
+                        {t('profile.bug_report.form_title')}
+                      </h4>
+
+                      <div className="space-y-2">
+                        <label className="font-montserrat font-black text-black dark:text-white text-xs uppercase tracking-widest pl-1">
+                          {t('profile.bug_report.severity_label')}
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {[
+                            { id: 'low', label: t('profile.bug_report.severity_low') },
+                            { id: 'medium', label: t('profile.bug_report.severity_medium') },
+                            { id: 'high', label: t('profile.bug_report.severity_high') },
+                            { id: 'critical', label: t('profile.bug_report.severity_critical') },
+                          ].map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setBugSeverity(item.id)}
+                              className={`p-3 rounded-2xl border-2 text-xs font-bold transition-all text-center ${
+                                bugSeverity === item.id
+                                  ? 'border-[#269984] bg-[#269984]/10 text-[#269984] shadow-sm'
+                                  : 'border-gray-100 dark:border-neutral-800 bg-gray-50/50 dark:bg-[#1a1a1a] text-gray-500 hover:border-gray-300'
+                              }`}
+                            >
+                              {t(`profile.bug_report.severity_${item.id}_short`) || item.id.toUpperCase()}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="font-montserrat font-black text-black dark:text-white text-xs uppercase tracking-widest pl-1">
+                          {t('profile.bug_report.description_label')} *
+                        </label>
+                        <textarea
+                          value={bugDescription}
+                          onChange={(e) => setBugDescription(e.target.value)}
+                          rows={4}
+                          placeholder={t('profile.bug_report.description_placeholder')}
+                          required
+                          className="w-full font-montserrat py-4 border-2 border-gray-100 dark:border-neutral-800 bg-gray-50/50 dark:bg-[#1a1a1a] dark:text-white rounded-2xl px-5 text-sm outline-none focus:border-[#269984] transition-all resize-none"
+                        />
+                      </div>
+
+                      {/* Single Screenshot Upload */}
+                      <div className="space-y-2">
+                        <label className="font-montserrat font-black text-black dark:text-white text-xs uppercase tracking-widest pl-1">
+                          {t('profile.bug_report.screenshot_label')}
+                        </label>
+                        <p className="text-[11px] text-gray-400 dark:text-gray-500 pl-1 mb-2">
+                          {t('profile.bug_report.screenshot_hint')}
+                        </p>
+
+                        {!bugScreenshotPreview ? (
+                          <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-200 dark:border-neutral-800 hover:border-[#269984] dark:hover:border-[#269984] rounded-2xl cursor-pointer bg-gray-50/50 dark:bg-[#1a1a1a]/50 hover:bg-[#269984]/5 transition-all group">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <Upload className="w-8 h-8 text-gray-400 group-hover:text-[#269984] transition-colors mb-2" />
+                              <p className="text-xs font-bold text-gray-600 dark:text-gray-300">
+                                {t('profile.bug_report.screenshot_select')}
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-1">
+                                {t('profile.bug_report.screenshot_types')}
+                              </p>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleScreenshotChange}
+                              className="hidden"
+                            />
+                          </label>
+                        ) : (
+                          <div className="relative rounded-2xl border-2 border-[#269984]/30 overflow-hidden bg-black/5 dark:bg-black/40 p-3 flex items-center gap-4">
+                            <div className="w-20 h-20 rounded-xl overflow-hidden relative flex-shrink-0 border border-gray-200 dark:border-neutral-700 bg-black">
+                              <Image
+                                src={bugScreenshotPreview}
+                                alt="Screenshot Preview"
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
+                                {bugScreenshot?.name}
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-0.5">
+                                {bugScreenshot?.size ? (bugScreenshot.size / 1024).toFixed(1) : 0}{' '}
+                                KB
+                              </p>
+                              <span className="inline-block mt-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded">
+                                {t('profile.bug_report.screenshot_downscaled')}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleRemoveScreenshot}
+                              className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all"
+                              title={t('profile.bug_report.screenshot_remove')}
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmittingBug}
+                        className="w-full font-montserrat font-black text-white h-14 px-8 rounded-2xl text-base hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#269984]/30 transition-all cursor-pointer bg-[#269984] disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isSubmittingBug ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            {t('profile.bug_report.submitting')}
+                          </>
+                        ) : (
+                          t('profile.bug_report.submit_btn')
+                        )}
+                      </button>
+                    </form>
                   </div>
                 )}
 
