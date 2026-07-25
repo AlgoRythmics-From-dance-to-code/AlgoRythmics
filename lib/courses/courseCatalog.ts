@@ -33,7 +33,8 @@ export type CoursePhase = {
   askConfidence?: boolean;
   maxPoints: number;
   quiz?: CourseQuizQuestion[];
-  infoContent?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  infoContent?: any;
   customVideoId?: string;
   matching?: { left: string; right: string }[];
   ordering?: { text: string }[];
@@ -148,7 +149,7 @@ function toPhases(value: unknown): CoursePhase[] {
         askConfidence: !!current.askConfidence,
         maxPoints: typeof current.maxPoints === 'number' ? current.maxPoints : 10,
         quiz,
-        infoContent: current.infoContent as string,
+        infoContent: current.infoContent,
         customVideoId: current.customVideoId as string,
         matching: Array.isArray(current.matching)
           ? current.matching.map((m: Record<string, unknown>) => ({

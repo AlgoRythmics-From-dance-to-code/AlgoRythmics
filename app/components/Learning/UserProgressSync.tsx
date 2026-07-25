@@ -75,7 +75,7 @@ export default function UserProgressSync() {
           console.warn('[AlgoRythmics] Session stale. Clearing local session and progress data.');
           clearStore();
           clearAuthCookies();
-          signOut({ redirect: false });
+          signOut({ redirect: false }).catch(() => {});
           return;
         }
 
@@ -138,7 +138,7 @@ export default function UserProgressSync() {
         console.warn('[AlgoRythmics] syncProgress returned 401. Clearing local session.');
         clearStore();
         clearAuthCookies();
-        signOut({ redirect: false });
+        signOut({ redirect: false }).catch(() => {});
         return;
       }
 

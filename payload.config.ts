@@ -12,6 +12,8 @@ import { AlgorithmProgress } from './collections/AlgorithmProgress';
 import { Courses } from './collections/Courses';
 import { CourseProgress } from './collections/CourseProgress';
 import { SearchAnalytics } from './collections/SearchAnalytics';
+import { Media } from './collections/Media';
+import { BugReports } from './collections/BugReports';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -39,7 +41,16 @@ export default buildConfig({
     'https://nextjs-frontend-three-eta.vercel.app',
   ].filter(Boolean),
   cookiePrefix: 'algorythmics-admin',
-  collections: [Courses, Users, LearningEvents, AlgorithmProgress, CourseProgress, SearchAnalytics],
+  collections: [
+    Courses,
+    Users,
+    LearningEvents,
+    AlgorithmProgress,
+    CourseProgress,
+    SearchAnalytics,
+    Media,
+    BugReports,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'fallback-secret',
   typescript: {

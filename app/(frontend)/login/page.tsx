@@ -54,6 +54,14 @@ export default function LoginPage() {
       setSystemError(msg);
       toast.error(t('toasts.login_error'), { description: msg });
     }
+
+    const reason = searchParams.get('reason');
+    if (reason === 'login_required') {
+      toast.info(t('toasts.login_required'), {
+        description: t('toasts.login_required_desc'),
+        id: 'login-required-toast',
+      });
+    }
   }, [searchParams, t, clearStore]);
 
   const socialLogin = (provider: string) => {
@@ -278,7 +286,6 @@ export default function LoginPage() {
                 </svg>
                 Google
               </button>
-
 
               <button
                 type="button"

@@ -187,6 +187,10 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
             : 'light',
         device:
           typeof navigator !== 'undefined' ? getCoarseUserAgent(navigator.userAgent) : undefined,
+        audioEnabled:
+          typeof window !== 'undefined'
+            ? localStorage.getItem('algorythmics-muted') !== 'true'
+            : undefined,
       };
 
       // Cap durationMs at 5 minutes to avoid idle gaps inflating time stats

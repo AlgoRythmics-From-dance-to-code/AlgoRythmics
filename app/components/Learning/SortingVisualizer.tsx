@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SortStep } from '../../../lib/algorithms/bubbleSortSteps';
 import { useLocale } from '../../i18n/LocaleProvider';
+import { useAudioSynthesizer } from '../../hooks/useAudioSynthesizer';
 
 interface SortingVisualizerProps {
   steps: SortStep[];
@@ -36,6 +37,54 @@ export default function SortingVisualizer({
   legend,
 }: SortingVisualizerProps) {
   const { t } = useLocale();
+  const prevStepRef = useRef<number>(-1);
+  const { playCompare, playSwap, playSorted, playComplete } = useAudioSynthesizer();
+
+  useEffect(() => {
+    if (currentStep === prevStepRef.current) return;
+
+    const prevStep = prevStepRef.current;
+    prevStepRef.current = currentStep;
+
+    // Avoid playing sound when initializing/resetting to step 0
+    if (prevStep === -1 && currentStep === 0) return;
+
+    const state = steps[currentStep];
+    if (!state) return;
+
+    // 1. Completion sound
+    if (currentStep === steps.length - 1) {
+      playComplete();
+      return;
+    }
+
+    // 2. Play sorted chime if sortedIndices count increased
+    const prevState = steps[prevStep];
+    const prevSortedCount = prevState?.sortedIndices?.length ?? 0;
+    const currentSortedCount = state.sortedIndices?.length ?? 0;
+    if (currentSortedCount > prevSortedCount) {
+      playSorted();
+      return;
+    }
+
+    // 3. Play swap sound if active and swapping
+    if (state.swapping && state.activeIndices.length === 2) {
+      const val1 = state.array[state.activeIndices[0]]?.val ?? 0;
+      const val2 = state.array[state.activeIndices[1]]?.val ?? 0;
+      const maxVal = Math.max(...state.array.map((item) => item.val));
+      playSwap(val1, val2, maxVal);
+      return;
+    }
+
+    // 4. Play compare sound
+    if (state.activeIndices.length === 2 && !state.swapping) {
+      const val1 = state.array[state.activeIndices[0]]?.val ?? 0;
+      const val2 = state.array[state.activeIndices[1]]?.val ?? 0;
+      const maxVal = Math.max(...state.array.map((item) => item.val));
+      playCompare(val1, val2, maxVal);
+    }
+  }, [currentStep, steps, playCompare, playSwap, playSorted, playComplete]);
+
   const visualState = steps[currentStep];
   if (!visualState) return null;
 

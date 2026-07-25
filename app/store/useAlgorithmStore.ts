@@ -479,7 +479,21 @@ export const useAlgorithmStore = create<AlgorithmState>()(
         const currentResults = current.phaseResults || {};
         const nextResults: Record<string, 'success' | 'fail'> = {};
         const currentStats = current.detailedStats || {};
-        const nextStats: Record<string, any> = {};
+        const nextStats: Record<
+          string,
+          {
+            timeSpentMs: number;
+            completed: boolean;
+            completedAt?: string | null;
+            result: 'success' | 'fail' | null;
+            helpUsed: boolean;
+            mascotHelpCount: number;
+            improvedAfterMascot: boolean;
+            attempts: number;
+            mistakes: number;
+            mascotIntentionallyDisabled?: boolean;
+          }
+        > = {};
         const currentConfidence = current.confidenceResults || {};
         const nextConfidence: Record<string, string> = {};
 

@@ -1463,7 +1463,7 @@
         },
         "info_content": {
           "name": "info_content",
-          "type": "varchar",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
@@ -4117,7 +4117,7 @@
     "public.enum_users_auth_provider": {
       "name": "enum_users_auth_provider",
       "schema": "public",
-      "values": ["email", "google", "facebook", "discord", "github"]
+      "values": ["email", "google", "discord", "github"]
     },
     "public.enum_learning_events_tab": {
       "name": "enum_learning_events_tab",
@@ -4150,6 +4150,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "2bc6f065-dc19-4e8b-9bce-f761f42aad1d",
+  "id": "4ecc30eb-1242-4533-9a71-14f3420868cf",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

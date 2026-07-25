@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { useLocale } from '../../i18n/LocaleProvider';
+import { useAudioSynthesizer } from '../../hooks/useAudioSynthesizer';
 
 interface VisualizerControlsProps {
   onPlayPause: () => void;
@@ -30,6 +31,7 @@ export default function VisualizerControls({
   speedOptions,
 }: VisualizerControlsProps) {
   const { t } = useLocale();
+  const { isMuted, toggleMute } = useAudioSynthesizer();
   const speeds = speedOptions ?? [0.5, 1, 2];
   return (
     <div className="w-full max-w-3xl mx-auto mt-6 md:mt-10 p-4 sm:p-6 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm">
@@ -110,6 +112,20 @@ export default function VisualizerControls({
               aria-label={t('visualizer.controls.step_forward_aria')}
             >
               <SkipForward className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="p-3 sm:p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 transition-all active:scale-90"
+              title={isMuted ? 'Unmute' : 'Mute'}
+              aria-label={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted ? (
+                <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" />
+              ) : (
+                <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" />
+              )}
             </button>
           </div>
 

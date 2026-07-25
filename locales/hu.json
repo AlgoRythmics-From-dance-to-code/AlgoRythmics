@@ -27,6 +27,7 @@
     "loading": "Betöltés..."
   },
   "nav": {
+    "big_o": "Big O & Verseny",
     "home": "Kezdőlap",
     "algorithms": "Algoritmusok",
     "profil": "Profil",
@@ -87,6 +88,8 @@
     "login_success": "Sikeres bejelentkezés!",
     "login_error": "Sikertelen bejelentkezés",
     "login_error_desc": "Hibás adatok vagy meg nem erősített fiók.",
+    "login_required": "Bejelentkezés szükséges",
+    "login_required_desc": "Kérjük, jelentkezz be a tartalom eléréséhez.",
     "unexpected_error": "Váratlan hiba",
     "unexpected_error_desc": "Kérjük, próbáld meg később.",
     "register_success": "Sikeres regisztráció!",
@@ -139,7 +142,35 @@
       "edit": "Profil szerkesztése",
       "password": "Jelszó",
       "security": "Fiók biztonság",
+      "bug_report": "Hibabejelentés",
       "delete": "Fiók törlése"
+    },
+    "bug_report": {
+      "title": "Hiba bejelentése",
+      "subtitle": "Találtál egy hibát? Írd le, és csatolj egy képernyőképet!",
+      "form_title": "Új hibabejelentés",
+      "severity_label": "Súlyosság",
+      "severity_low": "Könnyű (Kisebb esztétikai hiba)",
+      "severity_medium": "Közepes (Funkció működik, de hibásan)",
+      "severity_high": "Súlyos (Funkció nem működik)",
+      "severity_critical": "Kritikus (Összeomlás)",
+      "severity_low_short": "KÖNNYŰ",
+      "severity_medium_short": "KÖZEPES",
+      "severity_high_short": "SÚLYOS",
+      "severity_critical_short": "KRITIKUS",
+      "description_label": "Hiba leírása",
+      "description_placeholder": "Írd le a lépéseket a hiba reprodukálásához...",
+      "screenshot_label": "Képernyőkép (Screenshot)",
+      "screenshot_hint": "Legfeljebb 1 kép tölthető fel (automatikus max. 480p átméretezés)",
+      "screenshot_types": "PNG, JPG, WEBP (max. 1 fájl, max. 480p)",
+      "screenshot_select": "Kép kiválasztása",
+      "screenshot_remove": "Kép eltávolítása",
+      "screenshot_downscaled": "Downscaled to max 480p on upload",
+      "submit_btn": "Hibabejelentés küldése",
+      "submitting": "Küldés...",
+      "fill_required": "Kérjük, töltsd ki a hiba leírását!",
+      "toast_only_images": "Csak képfájlok tölthetők fel!",
+      "success_toast": "Hibabejelentés sikeresen elküldve!"
     },
     "public": {
       "bio_title": "Rólam",
@@ -169,6 +200,8 @@
       "saving": "Mentés...",
       "mascot_label": "Kabala segítő",
       "mascot_description": "A kabalaállat automatikusan tanácsokat és tippeket ad, ha elakadsz a tanfolyam közben.",
+      "sound_label": "Hanghatások",
+      "sound_description": "Interaktív hanghatások engedélyezése vagy letiltása az algoritmus-animációk során.",
       "first_name_placeholder": "Kereszneved",
       "last_name_placeholder": "Vezetékneved",
       "bio_placeholder": "Mesélj magadról..."
@@ -354,6 +387,149 @@
     "cta_btn": "Kezdjük el"
   },
   "algorithms": {
+    "detail": {
+      "real_life_title": "Hol használjuk a valóságban?",
+      "back": "Vissza az algoritmusokhoz",
+      "complexity": "Bonyolultság",
+      "mark_as_done": "Késznek jelölöm",
+      "completed": "Teljesítve",
+      "simple_explanation": "Egyszerű elmagyarázás",
+      "step_by_step": "Lépésről lépésre útmutató",
+      "coming_soon": "Algoritmus részletei hamarosan.",
+      "view_coming_soon": "{view} tartalom {name} algoritmushoz — hamarosan",
+      "redo_confirm": "Ez a lépés már teljesítve van. Az újrakezdés felülírja a korábbi eredményeidet. Szeretnéd újraindítani?"
+    },
+    "list": {
+      "bubble-sort": {
+        "real_life": "Főként oktatási céllal használják az algoritmusok működésének bemutatására. Ritkán alkalmazzák a gyakorlatban, de hasznos lehet olyan rendszerekben, ahol az adathalmaz szinte teljesen rendezett, és a memória írási műveletei rendkívül költségesek.",
+        "name": "Buborékrendezés",
+        "description": "A buborékrendezés célja, hogy a legnagyobb elemeket egyenként a sor végére juttassa (mint a felszálló buborékok), miközben a szomszédos elemeket párban hasonlítja össze és cseréli fel.",
+        "steps": [
+          "Hasonlítsd össze a szomszédos elemeket",
+          "Cseréld fel őket, ha rossz sorrendben vannak",
+          "Lépj a következő párra",
+          "Ismételd, amíg nincs több csere",
+          "A lista most már rendezett"
+        ]
+      },
+      "insertion-sort": {
+        "real_life": "A valóságban olyan hibrid rendezéseknél használják kiegészítésként, mint a Timsort (pl. Pythonban és Javában), a kisebb rész-tömbök gyors rendezésére (kb. 32-64 elem alatt). Kiválóan alkalmas online adatsorok rendezésére is, amelyek futás közben érkeznek.",
+        "name": "Beszúró rendezés",
+        "description": "A beszúró rendezés úgy működik, mint amikor a kártyákat rendezzük a kezünkben: minden új elemet a már rendezett rész megfelelő helyére szúrunk be.",
+        "steps": [
+          "Kezdj a második elemmel",
+          "Hasonlítsd össze a tőle balra lévő elemekkel",
+          "Mozgasd jobbra a nagyobb elemeket",
+          "Szúrd be az elemet a megfelelő helyre",
+          "Ismételd az összes többi elemre"
+        ]
+      },
+      "selection-sort": {
+        "real_life": "Olyan beágyazott rendszerekben vagy hardvereknél használják, ahol a memória írási ciklusainak száma korlátozott (pl. flash memória, EEPROM), mivel a csere- és írási műveletek száma legfeljebb O(n), ami minimális írást jelent a többi algoritmushoz képest.",
+        "name": "Kiválasztó rendezés",
+        "description": "A kiválasztó rendezés minden körben megkeresi a legkisebb elemet a még nem rendezett részből, és a rendezett rész elejére teszi.",
+        "steps": [
+          "Keresd meg a legkisebb elemet a rendezetlen részen",
+          "Cseréld fel az első rendezetlen elemmel",
+          "Bővítsd a rendezett részt eggyel",
+          "Ismételd, amíg a teljes tömb rendezett nem lesz"
+        ]
+      },
+      "shell-sort": {
+        "real_life": "Főként alacsony memóriával rendelkező beágyazott rendszerekben alkalmazzák, mivel nem igényel rekurziót (így nem fenyeget a veremtúlcsordulás veszélye), és helyben (in-place) működik. Megtalálható például az uClibc könyvtárban is.",
+        "name": "Shell-rendezés",
+        "description": "A Donald Shell által 1959-ben javasolt algoritmus a beszúró rendezés egy változata, amely lehetővé teszi, hogy az elemek nagyobbat lépjenek az elején.",
+        "steps": [
+          "Válassz egy távolság-sorozatot",
+          "Rendezd a csoportokat beszúró rendezéssel",
+          "Csökkentsd a távolságot",
+          "Ismételd, amíg a távolság 1 nem lesz",
+          "Végezz egy utolsó beszúró rendezést"
+        ]
+      },
+      "merge-sort": {
+        "real_life": "Külső rendezési feladatoknál alkalmazzák, amikor az adathalmaz túl nagy ahhoz, hogy elférjen a memóriában (RAM), és lemezről kell beolvasni darabokban. Ezenkívül stabil rendezés, így adatbázis-lekérdezések eredményeinek rendezésére is ideális.",
+        "name": "Összefuttatásos rendezés",
+        "description": "Az összefuttatásos rendezés egy oszd meg és uralkodj algoritmus, amely a tömböt félbe vágja, külön-külön rendezi őket, majd összefésüli a helyes sorrendben.",
+        "steps": [
+          "Oszd a tömböt két félre",
+          "Rendezd rekurzívan mindkét felet",
+          "Fésüld össze a rendezett feleket",
+          "Hasonlítsd össze az elemeket mindkét félből",
+          "Helyezd a kisebb elemet az eredménybe"
+        ]
+      },
+      "quick-sort": {
+        "real_life": "Széles körben használják a programozási nyelvek alapértelmezett rendező könyvtáraiban (pl. C++ std::sort), ahol az átlagos sebesség kritikus fontosságú és nincs szükség garantált stabilitásra. Nagyon gyors a cache-barát működése miatt.",
+        "name": "Gyorsrendezés",
+        "description": "A gyorsrendezés kiválaszt egy pivot elemet, és köré rendezi a tömböt: a kisebbeket elé, a nagyobbakat utána, majd rekurzívan teszi ugyanezt.",
+        "steps": [
+          "Válassz egy pivot elemet",
+          "Partícionálás: kisebbek balra, nagyobbak jobbra",
+          "Rendezd rekurzívan a bal oldalt",
+          "Rendezd rekurzívan a jobb oldalt",
+          "Egyesítsd az eredményeket"
+        ]
+      },
+      "heap-sort": {
+        "real_life": "Kritikus és valós idejű rendszerekben alkalmazzák (pl. a Linux kernelben), ahol garantálni kell az O(n log n) legrosszabb esetet is, és el kell kerülni a Quick Sort esetleges O(n^2) visszaesését vagy a rekurzió miatti memóriafogyasztást.",
+        "name": "Kupacrendezés",
+        "description": "A kupacrendezés bináris kupac adatszerkezetet használ. Felépít egy max-kupacot, majd folyamatosan kiveszi a legnagyobb elemet a rendezett tömbhöz.",
+        "steps": [
+          "Építs maximum-kupacot a tömbből",
+          "Vedd ki a gyökérelemet (legnagyobbat)",
+          "Mozgasd a tömb végére",
+          "Kupacold újra az adatszerkezetet",
+          "Ismételd, amíg minden elem rendezett nem lesz"
+        ]
+      },
+      "linear-search": {
+        "real_life": "Egyszerű, kis méretű adathalmazoknál használják, vagy amikor a keresés egy nem indexelt adatbázisban történik (teljes táblavizsgálat). Ideális, ha az adathalmaz nincs rendezve, és csak néhányszor kell keresni.",
+        "name": "Lineáris keresés",
+        "description": "Egy egyszerű keresési algoritmus, amely a tömb elejétől kezdve minden elemet megvizsgál, és összehasonlítja a keresett értékkel.",
+        "steps": [
+          "Kezdd az első elemnél",
+          "Hasonlítsd össze a keresett értékkel",
+          "Ha egyezik, add vissza a pozíciót",
+          "Ha nem egyezik, lépj a következőre",
+          "Ha a lista végére értél, nincs találat"
+        ]
+      },
+      "binary-search": {
+        "real_life": "Adatbázisok indexelési rendszereiben (B-fák keresése), verziókezelőkben a hibát okozó commit keresésénél (git bisect), és minden olyan rendezett szótárban, ahol nagyon gyors, logaritmikus keresési időre van szükség.",
+        "name": "Bináris keresés",
+        "description": "Hatékony keresési algoritmus, amely egy rendezett tömböt folyamatosan felez, amíg meg nem találja a célértéket vagy a tartomány ki nem ürül.",
+        "steps": [
+          "Győződj meg róla, hogy a tömb rendezett",
+          "Keresd meg a középső elemet",
+          "Hasonlítsd össze a célértékkel",
+          "Ha a cél kisebb, keresd a bal félben",
+          "Ha a cél nagyobb, keresd a jobb félben"
+        ]
+      },
+      "n-queens": {
+        "real_life": "Ütemezési feladatoknál, erőforrás-elosztási problémáknál és a mesterséges intelligenciában a kényszer-kielégítési problémák (CSP) modellezésére és megoldására használják.",
+        "name": "N-királynő probléma",
+        "description": "Az N-királynő probléma egy klasszikus visszalépéses feladat, amelyben N sakktábla-királynőt kell elhelyezni egy N×N-es táblán úgy, hogy ne üssék egymást.",
+        "steps": [
+          "Helyezz el egy királynőt az első sorba",
+          "Lépj a következő sorra és próbálj minden oszlopot",
+          "Ellenőrizd, hogy a hely biztonságos-e",
+          "Ha nincs több oszlop, lépj vissza",
+          "Ismételd, amíg minden királynő el nem fogy"
+        ]
+      },
+      "bogosort": {
+        "real_life": "Kizárólag oktatási és demonstrációs célokra használják: tökéletes példája annak, hogyan nem szabad rendező algoritmust írni, bemutatva a legrosszabb lehetséges komplexitást.",
+        "name": "Bogosort",
+        "description": "A Bogosort egy szándékosan hatástalan rendezési eljárás, amely véletlenszerűen keveri a tömböt, amíg az véletlenül sorba nem kerül. Vicces látni táncban!",
+        "steps": [
+          "Ellenőrizd, hogy a lista rendezett-e",
+          "Ha nem, keverd össze véletlenszerűen",
+          "Ismételd, amíg szerencséd nem lesz"
+        ]
+      }
+    },
     "inspiring_text": "Az algoritmusok nem csupán száraz kódok, ők a logika és a mozgás tökéletes harmóniája. Fedezd fel a programozás ritmusát, és sajátítsd el az informatika alapjait ott, ahol a zene és a tánc varázslatos ereje segít megérteni a láthatatlant.",
     "filters": {
       "all": "Összes algoritmus"
@@ -368,17 +544,6 @@
       "subtitle": "Folytasd a teljes utat.",
       "description": "Nézd meg strukturált tanfolyamainkat és interaktív műhelyeinket algoritmikus gondolkodásod fejlesztéséhez.",
       "button": "Tovább a kurzusokhoz"
-    },
-    "detail": {
-      "back": "Vissza az algoritmusokhoz",
-      "complexity": "Bonyolultság",
-      "mark_as_done": "Késznek jelölöm",
-      "completed": "Teljesítve",
-      "simple_explanation": "Egyszerű elmagyarázás",
-      "step_by_step": "Lépésről lépésre útmutató",
-      "coming_soon": "Algoritmus részletei hamarosan.",
-      "view_coming_soon": "{view} tartalom {name} algoritmushoz — hamarosan",
-      "redo_confirm": "Ez a lépés már teljesítve van. Az újrakezdés felülírja a korábbi eredményeidet. Szeretnéd újraindítani?"
     },
     "guides": {
       "video": [
@@ -414,127 +579,7 @@
       "backtracking": "Visszalépéses algoritmusok",
       "fun": "Vicces"
     },
-    "read_more": "Olvass tovább",
-    "list": {
-      "bubble-sort": {
-        "name": "Buborékrendezés",
-        "description": "A buborékrendezés célja, hogy a legnagyobb elemeket egyenként a sor végére juttassa (mint a felszálló buborékok), miközben a szomszédos elemeket párban hasonlítja össze és cseréli fel.",
-        "steps": [
-          "Hasonlítsd össze a szomszédos elemeket",
-          "Cseréld fel őket, ha rossz sorrendben vannak",
-          "Lépj a következő párra",
-          "Ismételd, amíg nincs több csere",
-          "A lista most már rendezett"
-        ]
-      },
-      "insertion-sort": {
-        "name": "Beszúró rendezés",
-        "description": "A beszúró rendezés úgy működik, mint amikor a kártyákat rendezzük a kezünkben: minden új elemet a már rendezett rész megfelelő helyére szúrunk be.",
-        "steps": [
-          "Kezdj a második elemmel",
-          "Hasonlítsd össze a tőle balra lévő elemekkel",
-          "Mozgasd jobbra a nagyobb elemeket",
-          "Szúrd be az elemet a megfelelő helyre",
-          "Ismételd az összes többi elemre"
-        ]
-      },
-      "selection-sort": {
-        "name": "Kiválasztó rendezés",
-        "description": "A kiválasztó rendezés minden körben megkeresi a legkisebb elemet a még nem rendezett részből, és a rendezett rész elejére teszi.",
-        "steps": [
-          "Keresd meg a legkisebb elemet a rendezetlen részen",
-          "Cseréld fel az első rendezetlen elemmel",
-          "Bővítsd a rendezett részt eggyel",
-          "Ismételd, amíg a teljes tömb rendezett nem lesz"
-        ]
-      },
-      "shell-sort": {
-        "name": "Shell-rendezés",
-        "description": "A Donald Shell által 1959-ben javasolt algoritmus a beszúró rendezés egy változata, amely lehetővé teszi, hogy az elemek nagyobbat lépjenek az elején.",
-        "steps": [
-          "Válassz egy távolság-sorozatot",
-          "Rendezd a csoportokat beszúró rendezéssel",
-          "Csökkentsd a távolságot",
-          "Ismételd, amíg a távolság 1 nem lesz",
-          "Végezz egy utolsó beszúró rendezést"
-        ]
-      },
-      "merge-sort": {
-        "name": "Összefuttatásos rendezés",
-        "description": "Az összefuttatásos rendezés egy oszd meg és uralkodj algoritmus, amely a tömböt félbe vágja, külön-külön rendezi őket, majd összefésüli a helyes sorrendben.",
-        "steps": [
-          "Oszd a tömböt két félre",
-          "Rendezd rekurzívan mindkét felet",
-          "Fésüld össze a rendezett feleket",
-          "Hasonlítsd össze az elemeket mindkét félből",
-          "Helyezd a kisebb elemet az eredménybe"
-        ]
-      },
-      "quick-sort": {
-        "name": "Gyorsrendezés",
-        "description": "A gyorsrendezés kiválaszt egy pivot elemet, és köré rendezi a tömböt: a kisebbeket elé, a nagyobbakat utána, majd rekurzívan teszi ugyanezt.",
-        "steps": [
-          "Válassz egy pivot elemet",
-          "Partícionálás: kisebbek balra, nagyobbak jobbra",
-          "Rendezd rekurzívan a bal oldalt",
-          "Rendezd rekurzívan a jobb oldalt",
-          "Egyesítsd az eredményeket"
-        ]
-      },
-      "heap-sort": {
-        "name": "Kupacrendezés",
-        "description": "A kupacrendezés bináris kupac adatszerkezetet használ. Felépít egy max-kupacot, majd folyamatosan kiveszi a legnagyobb elemet a rendezett tömbhöz.",
-        "steps": [
-          "Építs maximum-kupacot a tömbből",
-          "Vedd ki a gyökérelemet (legnagyobbat)",
-          "Mozgasd a tömb végére",
-          "Kupacold újra az adatszerkezetet",
-          "Ismételd, amíg minden elem rendezett nem lesz"
-        ]
-      },
-      "linear-search": {
-        "name": "Lineáris keresés",
-        "description": "Egy egyszerű keresési algoritmus, amely a tömb elejétől kezdve minden elemet megvizsgál, és összehasonlítja a keresett értékkel.",
-        "steps": [
-          "Kezdd az első elemnél",
-          "Hasonlítsd össze a keresett értékkel",
-          "Ha egyezik, add vissza a pozíciót",
-          "Ha nem egyezik, lépj a következőre",
-          "Ha a lista végére értél, nincs találat"
-        ]
-      },
-      "binary-search": {
-        "name": "Bináris keresés",
-        "description": "Hatékony keresési algoritmus, amely egy rendezett tömböt folyamatosan felez, amíg meg nem találja a célértéket vagy a tartomány ki nem ürül.",
-        "steps": [
-          "Győződj meg róla, hogy a tömb rendezett",
-          "Keresd meg a középső elemet",
-          "Hasonlítsd össze a célértékkel",
-          "Ha a cél kisebb, keresd a bal félben",
-          "Ha a cél nagyobb, keresd a jobb félben"
-        ]
-      },
-      "n-queens": {
-        "name": "N-királynő probléma",
-        "description": "Az N-királynő probléma egy klasszikus visszalépéses feladat, amelyben N sakktábla-királynőt kell elhelyezni egy N×N-es táblán úgy, hogy ne üssék egymást.",
-        "steps": [
-          "Helyezz el egy királynőt az első sorba",
-          "Lépj a következő sorra és próbálj minden oszlopot",
-          "Ellenőrizd, hogy a hely biztonságos-e",
-          "Ha nincs több oszlop, lépj vissza",
-          "Ismételd, amíg minden királynő el nem fogy"
-        ]
-      },
-      "bogosort": {
-        "name": "Bogosort",
-        "description": "A Bogosort egy szándékosan hatástalan rendezési eljárás, amely véletlenszerűen keveri a tömböt, amíg az véletlenül sorba nem kerül. Vicces látni táncban!",
-        "steps": [
-          "Ellenőrizd, hogy a lista rendezett-e",
-          "Ha nem, keverd össze véletlenszerűen",
-          "Ismételd, amíg szerencséd nem lesz"
-        ]
-      }
-    }
+    "read_more": "Olvass tovább"
   },
   "courses": {
     "hero_title": "Kurzusok",
@@ -874,5 +919,63 @@
     "experienced": "Tapasztalt",
     "persistent": "Kitartó",
     "master": "Mester"
+  },
+  "big_o": {
+    "title": "Big O Komplexitás & Verseny",
+    "subtitle": "Értsd meg az algoritmusok növekedési ütemét és hasonlítsd össze őket egymással!",
+    "tab_graph": "Interaktív Grafikon",
+    "graph_title": "Interaktív Komplexitás Grafikon (Átlagos Eset)",
+    "tab_race": "Összehasonlító Mód (Race)",
+    "n_elements": "Elemek száma (N)",
+    "algo_select": "Algoritmus kiválasztása",
+    "complexity": "Komplexitás",
+    "operations": "Műveletek",
+    "formula": "Képlet",
+    "graph_desc": "A fenti grafikon az elméleti lépésszám növekedését ábrázolja az N elemek függvényében. Húzd el a csúszkát az N megváltoztatásához!",
+    "select_comparison": "Válassz két algoritmust az összehasonlításhoz!",
+    "race_settings": "Verseny Beállítások",
+    "array_size": "Tömbméret",
+    "array_type": "Kezdőállapot",
+    "random": "Véletlenszerű",
+    "reversed": "Visszafelé rendezett",
+    "nearly_sorted": "Majdnem rendezett",
+    "start_race": "Verseny Indítása",
+    "pause": "Szünet",
+    "reset": "Visszaállítás",
+    "shuffle": "Keverés",
+    "speed": "Sebesség",
+    "steps_per_sec": "lépés/mp",
+    "comparisons": "Összehasonlítások",
+    "swaps": "Cserék",
+    "swaps_writes": "Cserék / Írások",
+    "total_steps": "Összes lépés",
+    "status": "Állapot",
+    "running": "Fut...",
+    "finished": "Befejezve",
+    "algo1_left": "1. Algoritmus (Bal)",
+    "algo2_right": "2. Algoritmus (Jobb)",
+    "complexity_curves_toggle": "Komplexitási görbék kapcsolói",
+    "race_summary_title": "🏁 Verseny eredménye",
+    "tie_msg": "Döntetlen! Mindkét algoritmus azonos számú műveletet végzett.",
+    "winner_msg": "A győztes a(z) {winner}! Összesen {steps} lépést hajtott végre, míg a(z) {loser} {loserSteps} lépést igényelt ({ratio}x hatékonyabb ezen az adathalmazon).",
+    "average_case": "átlagos eset",
+    "classes": {
+      "o1": "Konstans",
+      "ologn": "Logaritmikus",
+      "on": "Lineáris",
+      "onlogn": "Lineáris-logaritmikus",
+      "on2": "Négyzetes",
+      "o2n": "Exponenciális",
+      "onfact": "Faktoriális"
+    },
+    "compare": {
+      "universe": "🌌 Több, mint a megfigyelhető univerzum összes atomja!",
+      "earth_atoms": "🌍 Több, mint a Földbolygót alkotó összes atom száma!",
+      "nanoseconds": "⏳ Több, mint az ősrobbanás óta eltelt összes nanoszekundum!",
+      "ocean_drops": "💧 Több, mint az összes vízcsepp a Föld összes óceánjában!",
+      "sand_grains": "🏖️ Több, mint a Föld összes tengerparti homokszeme!",
+      "human_cells": "🧬 Több, mint az emberi test összes sejtje!",
+      "earth_population": "👥 Több, mint a Föld teljes lakossága!"
+    }
   }
 }
