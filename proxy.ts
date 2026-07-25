@@ -24,7 +24,6 @@ export default function middleware(request: NextRequest) {
     pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname.includes('.');
   const isAdmin = pathname.startsWith('/admin');
   const isProtectedRoute =
-    pathname.startsWith(ROUTES.ALGORITHMS) ||
     pathname.startsWith(ROUTES.COURSES) ||
     pathname.startsWith(ROUTES.PROFILE);
 
