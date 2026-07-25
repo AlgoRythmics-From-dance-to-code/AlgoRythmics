@@ -73,6 +73,8 @@ export interface Config {
     'algorithm-progress': AlgorithmProgress;
     'course-progress': CourseProgress;
     'search-analytics': SearchAnalytic;
+    media: Media;
+    'bug-reports': BugReport;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,6 +88,8 @@ export interface Config {
     'algorithm-progress': AlgorithmProgressSelect<false> | AlgorithmProgressSelect<true>;
     'course-progress': CourseProgressSelect<false> | CourseProgressSelect<true>;
     'search-analytics': SearchAnalyticsSelect<false> | SearchAnalyticsSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
+    'bug-reports': BugReportsSelect<false> | BugReportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -302,7 +306,21 @@ export interface Course {
         /**
          * Információs szöveg (csak info nézetnél látszik).
          */
-        infoContent?: string | null;
+        infoContent?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
         /**
          * YouTube Video ID (pl. d995_u3q6mE). Csak egyéni videó esetén.
          */
@@ -669,6 +687,59 @@ export interface SearchAnalytic {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bug-reports".
+ */
+export interface BugReport {
+  id: number;
+  description: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  status: 'new' | 'in_progress' | 'resolved' | 'closed';
+  user: number | User;
+  pageUrl?: string | null;
+  userAgent?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -714,6 +785,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'search-analytics';
         value: number | SearchAnalytic;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'bug-reports';
+        value: number | BugReport;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1017,6 +1096,61 @@ export interface SearchAnalyticsSelect<T extends boolean = true> {
   category?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media_select".
+ */
+export interface MediaSelect<T extends boolean = true> {
+  alt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bug-reports_select".
+ */
+export interface BugReportsSelect<T extends boolean = true> {
+  description?: T;
+  severity?: T;
+  status?: T;
+  user?: T;
+  pageUrl?: T;
+  userAgent?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

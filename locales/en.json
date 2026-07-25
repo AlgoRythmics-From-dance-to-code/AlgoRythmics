@@ -27,6 +27,7 @@
     "loading": "Loading..."
   },
   "nav": {
+    "big_o": "Big O & Race",
     "home": "Home",
     "algorithms": "Algorithms",
     "profil": "Profile",
@@ -87,6 +88,8 @@
     "login_success": "Login successful!",
     "login_error": "Login failed",
     "login_error_desc": "Invalid data or unverified account.",
+    "login_required": "Login required",
+    "login_required_desc": "Please log in to access this content.",
     "unexpected_error": "Unexpected error",
     "unexpected_error_desc": "Please try again later.",
     "register_success": "Registration successful!",
@@ -139,7 +142,35 @@
       "edit": "Edit Profile",
       "password": "Password",
       "security": "Account Security",
+      "bug_report": "Report a Bug",
       "delete": "Delete Account"
+    },
+    "bug_report": {
+      "title": "Report a Bug",
+      "subtitle": "Found an issue? Describe it and attach a screenshot if possible!",
+      "form_title": "Submit a New Bug Report",
+      "severity_label": "Severity",
+      "severity_low": "Low (Minor UI/Cosmetic glitch)",
+      "severity_medium": "Medium (Feature works incorrectly)",
+      "severity_high": "High (Feature is broken)",
+      "severity_critical": "Critical (App crash)",
+      "severity_low_short": "LOW",
+      "severity_medium_short": "MEDIUM",
+      "severity_high_short": "HIGH",
+      "severity_critical_short": "CRITICAL",
+      "description_label": "Bug Description",
+      "description_placeholder": "Describe steps to reproduce the bug...",
+      "screenshot_label": "Screenshot Attachment",
+      "screenshot_hint": "Maximum 1 image allowed (automatically resized to max 480p)",
+      "screenshot_types": "PNG, JPG, WEBP (max 1 file, max 480p)",
+      "screenshot_select": "Select Screenshot",
+      "screenshot_remove": "Remove Image",
+      "screenshot_downscaled": "Downscaled to max 480p on upload",
+      "submit_btn": "Submit Bug Report",
+      "submitting": "Submitting...",
+      "fill_required": "Please fill in the bug description!",
+      "toast_only_images": "Only image files are allowed!",
+      "success_toast": "Bug report submitted successfully!"
     },
     "public": {
       "bio_title": "About me",
@@ -169,6 +200,8 @@
       "saving": "Saving...",
       "mascot_label": "Mascot assistant",
       "mascot_description": "The mascot automatically provides hints and advice if you get stuck during a course.",
+      "sound_label": "Sound Effects",
+      "sound_description": "Enable or disable interactive sound effects during algorithm animations.",
       "first_name_placeholder": "Your first name",
       "last_name_placeholder": "Your last name",
       "bio_placeholder": "Tell us about yourself..."
@@ -354,6 +387,149 @@
     "cta_btn": "Get Started"
   },
   "algorithms": {
+    "detail": {
+      "real_life_title": "Real-Life Application",
+      "back": "Back to Algorithms",
+      "complexity": "Complexity",
+      "mark_as_done": "Mark as done",
+      "completed": "Completed",
+      "simple_explanation": "Simple Explanation",
+      "step_by_step": "Step-by-Step Guide",
+      "coming_soon": "Algorithm details coming soon.",
+      "view_coming_soon": "{view} content for {name} — coming soon",
+      "redo_confirm": "This step is already completed. Redoing it will overwrite your previous results. Do you want to restart?"
+    },
+    "list": {
+      "bubble-sort": {
+        "real_life": "Mainly used for educational purposes to demonstrate the basic mechanics of sorting. Rarely applied in practice, but can be useful in systems where the dataset is almost sorted and writing to memory is extremely costly.",
+        "name": "Bubble sort",
+        "description": "Bubble sort's goal is to move the largest elements one by one to the end of the list (like rising bubbles), comparing and swapping adjacent items in pairs.",
+        "steps": [
+          "Compare adjacent elements",
+          "Swap if they are in the wrong order",
+          "Move to the next pair",
+          "Repeat until no swaps are needed",
+          "The list is now sorted"
+        ]
+      },
+      "insertion-sort": {
+        "real_life": "Used in hybrid sorting algorithms like Timsort (in Python and Java) to quickly sort small sub-arrays (typically under 32-64 elements). Also excellent for online sorting, where elements are sorted as they arrive.",
+        "name": "Insertion sort",
+        "description": "Insertion sort works like sorting playing cards in your hand: each new element is inserted into its correct position within the already sorted portion.",
+        "steps": [
+          "Start with the second element",
+          "Compare with elements to its left",
+          "Shift larger elements right",
+          "Insert the element in its correct position",
+          "Repeat for all remaining elements"
+        ]
+      },
+      "selection-sort": {
+        "real_life": "Used in embedded systems or hardware where memory write cycles are limited (e.g., flash memory, EEPROM), since it performs at most O(n) write operations, minimizing wear compared to other algorithms.",
+        "name": "Selection sort",
+        "description": "Selection sort finds the smallest element from the unsorted part in each pass and moves it to the beginning of the sorted part.",
+        "steps": [
+          "Find the minimum element in the unsorted region",
+          "Swap it with the first unsorted element",
+          "Expand the sorted region by one",
+          "Repeat until the entire array is sorted"
+        ]
+      },
+      "shell-sort": {
+        "real_life": "Commonly applied in embedded systems with restricted memory, as it does not require recursion (eliminating the risk of stack overflow) and works in-place. Used in libraries like uClibc.",
+        "name": "Shell sort",
+        "description": "A sorting algorithm proposed by Donald Shell in 1959, it is a variant of straight insertion sort that allows records to take long leaps rather than single steps.",
+        "steps": [
+          "Choose a gap sequence",
+          "Sort elements separated by the gap using insertion sort",
+          "Reduce the gap",
+          "Repeat until the gap is 1",
+          "Perform final insertion sort pass"
+        ]
+      },
+      "merge-sort": {
+        "real_life": "Used in external sorting, where datasets are too large to fit in RAM and must be read from disk in chunks. Also preferred when a stable sort is required, such as in database search results.",
+        "name": "Merge sort",
+        "description": "Merge sort is a divide-and-conquer algorithm that divides the array in half, sorts each half, and then merges them back together in the correct order.",
+        "steps": [
+          "Divide the array into two halves",
+          "Recursively sort each half",
+          "Merge the sorted halves",
+          "Compare elements from each half",
+          "Place the smaller element into the result"
+        ]
+      },
+      "quick-sort": {
+        "real_life": "Widely implemented in standard libraries (like C++ std::sort) where average-case speed is critical and stability is not required. Extremely fast due to cache-friendly memory access patterns.",
+        "name": "Quick sort",
+        "description": "Quick sort selects a pivot element and partitions the array around it, placing smaller elements before and larger after the pivot, then recursively sorts both sides.",
+        "steps": [
+          "Choose a pivot element",
+          "Partition: elements < pivot go left, > pivot go right",
+          "Recursively sort the left partition",
+          "Recursively sort the right partition",
+          "Combine the results"
+        ]
+      },
+      "heap-sort": {
+        "real_life": "Used in safety-critical and real-time systems (such as the Linux kernel) where a guaranteed worst-case complexity of O(n log n) is required, avoiding Quick Sort's worst-case degradation and Merge Sort's extra memory overhead.",
+        "name": "Heap sort",
+        "description": "Heap sort uses a binary heap data structure. It builds a max-heap from the array, then repeatedly extracts the maximum element to build the sorted array.",
+        "steps": [
+          "Build a max-heap from the array",
+          "Extract the root (maximum) element",
+          "Move it to the end of the array",
+          "Heapify the reduced heap",
+          "Repeat until all elements are sorted"
+        ]
+      },
+      "linear-search": {
+        "real_life": "Used for small, unsorted datasets, or when searching non-indexed databases (full table scans). Ideal when data is unordered and searches are infrequent.",
+        "name": "Linear search",
+        "description": "A sequential search algorithm that checks each element of the array from the beginning, comparing each element with the desired value.",
+        "steps": [
+          "Start from the first element",
+          "Compare with the target",
+          "If match, return position",
+          "If no match, move to the next element",
+          "If end of list, target not found"
+        ]
+      },
+      "binary-search": {
+        "real_life": "Crucial for database indexing systems (like B-Tree search), debugging tools to find a regression (e.g., git bisect), and searching through any ordered dictionary where fast logarithmic time is required.",
+        "name": "Binary search",
+        "description": "An efficient search algorithm that repeatedly divides the sorted search interval in half until the target value is found or the interval is empty.",
+        "steps": [
+          "Ensure the array is sorted",
+          "Find the middle element",
+          "Compare with the target",
+          "If target is smaller, search the left half",
+          "If target is larger, search the right half"
+        ]
+      },
+      "n-queens": {
+        "real_life": "Applied in scheduling tasks, resource allocation problems, and constraint satisfaction problems (CSP) in artificial intelligence.",
+        "name": "N-Queens problem",
+        "description": "The N-Queens problem is a classic backtracking problem that involves placing N chess queens on an N×N chessboard so that no two queens threaten each other.",
+        "steps": [
+          "Place a queen in the first row",
+          "Move to the next row and try each column",
+          "Check if placement is safe (no conflicts)",
+          "If no safe column exists, backtrack",
+          "Repeat until all queens are placed"
+        ]
+      },
+      "bogosort": {
+        "real_life": "Used strictly for educational and comedic purposes to illustrate how NOT to write a sorting algorithm, demonstrating the worst-case time complexity.",
+        "name": "Bogosort",
+        "description": "Bogosort is an intentionally inefficient sorting algorithm that randomly shuffles the array until it's sorted by pure chance. Hilarious in dance!",
+        "steps": [
+          "Check if the list is sorted",
+          "If not sorted, shuffle the list randomly",
+          "Repeat until the list is sorted by chance"
+        ]
+      }
+    },
     "inspiring_text": "Algorithms are not just dry lines of code, they are the perfect harmony of logic and movement. Discover the rhythm of programming, and master the fundamentals of computer science where the magical power of music and dance helps you understand the invisible.",
     "filters": {
       "all": "All Algorithms"
@@ -368,17 +544,6 @@
       "subtitle": "Take the full journey.",
       "description": "Check out our structured courses and interactive workshops to master algorithmic thinking.",
       "button": "Go to Courses"
-    },
-    "detail": {
-      "back": "Back to Algorithms",
-      "complexity": "Complexity",
-      "mark_as_done": "Mark as done",
-      "completed": "Completed",
-      "simple_explanation": "Simple Explanation",
-      "step_by_step": "Step-by-Step Guide",
-      "coming_soon": "Algorithm details coming soon.",
-      "view_coming_soon": "{view} content for {name} — coming soon",
-      "redo_confirm": "This step is already completed. Redoing it will overwrite your previous results. Do you want to restart?"
     },
     "guides": {
       "video": [
@@ -414,127 +579,7 @@
       "backtracking": "Backtracking algorithms",
       "fun": "Fun"
     },
-    "read_more": "Read more",
-    "list": {
-      "bubble-sort": {
-        "name": "Bubble sort",
-        "description": "Bubble sort's goal is to move the largest elements one by one to the end of the list (like rising bubbles), comparing and swapping adjacent items in pairs.",
-        "steps": [
-          "Compare adjacent elements",
-          "Swap if they are in the wrong order",
-          "Move to the next pair",
-          "Repeat until no swaps are needed",
-          "The list is now sorted"
-        ]
-      },
-      "insertion-sort": {
-        "name": "Insertion sort",
-        "description": "Insertion sort works like sorting playing cards in your hand: each new element is inserted into its correct position within the already sorted portion.",
-        "steps": [
-          "Start with the second element",
-          "Compare with elements to its left",
-          "Shift larger elements right",
-          "Insert the element in its correct position",
-          "Repeat for all remaining elements"
-        ]
-      },
-      "selection-sort": {
-        "name": "Selection sort",
-        "description": "Selection sort finds the smallest element from the unsorted part in each pass and moves it to the beginning of the sorted part.",
-        "steps": [
-          "Find the minimum element in the unsorted region",
-          "Swap it with the first unsorted element",
-          "Expand the sorted region by one",
-          "Repeat until the entire array is sorted"
-        ]
-      },
-      "shell-sort": {
-        "name": "Shell sort",
-        "description": "A sorting algorithm proposed by Donald Shell in 1959, it is a variant of straight insertion sort that allows records to take long leaps rather than single steps.",
-        "steps": [
-          "Choose a gap sequence",
-          "Sort elements separated by the gap using insertion sort",
-          "Reduce the gap",
-          "Repeat until the gap is 1",
-          "Perform final insertion sort pass"
-        ]
-      },
-      "merge-sort": {
-        "name": "Merge sort",
-        "description": "Merge sort is a divide-and-conquer algorithm that divides the array in half, sorts each half, and then merges them back together in the correct order.",
-        "steps": [
-          "Divide the array into two halves",
-          "Recursively sort each half",
-          "Merge the sorted halves",
-          "Compare elements from each half",
-          "Place the smaller element into the result"
-        ]
-      },
-      "quick-sort": {
-        "name": "Quick sort",
-        "description": "Quick sort selects a pivot element and partitions the array around it, placing smaller elements before and larger after the pivot, then recursively sorts both sides.",
-        "steps": [
-          "Choose a pivot element",
-          "Partition: elements < pivot go left, > pivot go right",
-          "Recursively sort the left partition",
-          "Recursively sort the right partition",
-          "Combine the results"
-        ]
-      },
-      "heap-sort": {
-        "name": "Heap sort",
-        "description": "Heap sort uses a binary heap data structure. It builds a max-heap from the array, then repeatedly extracts the maximum element to build the sorted array.",
-        "steps": [
-          "Build a max-heap from the array",
-          "Extract the root (maximum) element",
-          "Move it to the end of the array",
-          "Heapify the reduced heap",
-          "Repeat until all elements are sorted"
-        ]
-      },
-      "linear-search": {
-        "name": "Linear search",
-        "description": "A sequential search algorithm that checks each element of the array from the beginning, comparing each element with the desired value.",
-        "steps": [
-          "Start from the first element",
-          "Compare with the target",
-          "If match, return position",
-          "If no match, move to the next element",
-          "If end of list, target not found"
-        ]
-      },
-      "binary-search": {
-        "name": "Binary search",
-        "description": "An efficient search algorithm that repeatedly divides the sorted search interval in half until the target value is found or the interval is empty.",
-        "steps": [
-          "Ensure the array is sorted",
-          "Find the middle element",
-          "Compare with the target",
-          "If target is smaller, search the left half",
-          "If target is larger, search the right half"
-        ]
-      },
-      "n-queens": {
-        "name": "N-Queens problem",
-        "description": "The N-Queens problem is a classic backtracking problem that involves placing N chess queens on an N×N chessboard so that no two queens threaten each other.",
-        "steps": [
-          "Place a queen in the first row",
-          "Move to the next row and try each column",
-          "Check if placement is safe (no conflicts)",
-          "If no safe column exists, backtrack",
-          "Repeat until all queens are placed"
-        ]
-      },
-      "bogosort": {
-        "name": "Bogosort",
-        "description": "Bogosort is an intentionally inefficient sorting algorithm that randomly shuffles the array until it's sorted by pure chance. Hilarious in dance!",
-        "steps": [
-          "Check if the list is sorted",
-          "If not sorted, shuffle the list randomly",
-          "Repeat until the list is sorted by chance"
-        ]
-      }
-    }
+    "read_more": "Read more"
   },
   "courses": {
     "hero_title": "Courses",
@@ -875,5 +920,63 @@
     "experienced": "Experienced",
     "persistent": "Persistent",
     "master": "Master"
+  },
+  "big_o": {
+    "title": "Big O Complexity & Race",
+    "subtitle": "Understand algorithm growth rates and compare them side-by-side!",
+    "tab_graph": "Interactive Graph",
+    "graph_title": "Interactive Complexity Graph (Average Case)",
+    "tab_race": "Race Mode",
+    "n_elements": "Number of elements (N)",
+    "algo_select": "Select Algorithm",
+    "complexity": "Complexity",
+    "operations": "Operations",
+    "formula": "Formula",
+    "graph_desc": "The chart above illustrates the theoretical growth of steps as a function of elements N. Drag the slider to change N!",
+    "select_comparison": "Select two algorithms to compare!",
+    "race_settings": "Race Settings",
+    "array_size": "Array Size",
+    "array_type": "Initial State",
+    "random": "Random",
+    "reversed": "Reversed",
+    "nearly_sorted": "Nearly Sorted",
+    "start_race": "Start Race",
+    "pause": "Pause",
+    "reset": "Reset",
+    "shuffle": "Shuffle",
+    "speed": "Speed",
+    "steps_per_sec": "steps/sec",
+    "comparisons": "Comparisons",
+    "swaps": "Swaps",
+    "swaps_writes": "Swaps / Writes",
+    "total_steps": "Total Steps",
+    "status": "Status",
+    "running": "Running...",
+    "finished": "Finished",
+    "algo1_left": "Algorithm 1 (Left)",
+    "algo2_right": "Algorithm 2 (Right)",
+    "complexity_curves_toggle": "Complexity curves toggle",
+    "race_summary_title": "🏁 Race Summary",
+    "tie_msg": "Tie! Both algorithms executed the exact same number of operations.",
+    "winner_msg": "The winner is {winner}! It executed {steps} operations in total, while {loser} needed {loserSteps} operations ({ratio}x more efficient on this dataset).",
+    "average_case": "average case",
+    "classes": {
+      "o1": "Constant",
+      "ologn": "Logarithmic",
+      "on": "Linear",
+      "onlogn": "Linearithmic",
+      "on2": "Quadratic",
+      "o2n": "Exponential",
+      "onfact": "Factorial"
+    },
+    "compare": {
+      "universe": "🌌 More than all the atoms in the observable universe!",
+      "earth_atoms": "🌍 More than all the atoms that make up the planet Earth!",
+      "nanoseconds": "⏳ More than all the nanoseconds elapsed since the Big Bang!",
+      "ocean_drops": "💧 More than all the drops of water in Earth's oceans!",
+      "sand_grains": "🏖️ More than all the grains of sand on all Earth's beaches!",
+      "human_cells": "🧬 More than all the cells in the human body!",
+      "earth_population": "👥 More than the entire population of Earth!"
+    }
   }
 }

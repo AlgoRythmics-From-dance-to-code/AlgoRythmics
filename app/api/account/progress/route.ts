@@ -370,7 +370,7 @@ export async function POST(req: Request) {
             if (updates.points !== undefined) {
               updates.points = (updates.points as number) || 0;
             }
-            
+
             updates.totalTimeMs = Math.max(
               existing.totalTimeMs || 0,
               (updates.totalTimeMs as number) || 0,

@@ -2,6 +2,8 @@ import { getCourseCatalog, type CourseCollectionDoc } from '../../../lib/courses
 import { getPayloadInstance } from '../../../lib/payload';
 import { getServerLocale, getT } from '../../../lib/i18n-server';
 import CoursesClient from '../../components/Course/CoursesClient';
+import { auth } from '../../../auth';
+import { redirect } from 'next/navigation';
 
 import { unstable_cache } from 'next/cache';
 
@@ -37,6 +39,11 @@ const getCachedCourses = unstable_cache(
 );
 
 export default async function CoursesPage() {
+  const session = await auth();
+  if (!session) {
+    redirect('/login?reason=login_required');
+  }
+
   const locale = await getServerLocale();
   const t = await getT();
 

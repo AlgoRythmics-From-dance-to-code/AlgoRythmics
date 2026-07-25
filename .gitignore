@@ -46,3 +46,7 @@ public/sw.js.map
 public/workbox-*.js
 public/worker-*.js
 public/fallback-*.js
+
+# uploads
+public/uploads/*
+!public/uploads/.gitkeep

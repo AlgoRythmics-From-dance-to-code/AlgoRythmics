@@ -28,8 +28,9 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
   const options = phase.gapFillOptions || [];
   const solutions = phase.gapFillSolutions || [];
 
-  // Find all [blank] markers
-  const parts = content.split(/(\[blank\])/);
+  // Normalize both {{gap}} and [blank] markers to [blank] for uniform handling
+  const normalizedContent = content.replace(/\{\{gap\}\}/g, '[blank]');
+  const parts = normalizedContent.split(/(\[blank\])/);
   const blankCount = parts.filter((p) => p === '[blank]').length;
 
   const [choices, setChoices] = useState<string[]>(new Array(blankCount).fill(''));

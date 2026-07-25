@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, BarChart3, Check } from 'lucide-react';
+import { ArrowRight, BarChart3, Check, Lock } from 'lucide-react';
 import { useLocale } from '../i18n/LocaleProvider';
 import { Algorithm } from '../../lib/constants';
 import { useAlgorithmStore } from '../store/useAlgorithmStore';
@@ -12,9 +12,15 @@ interface AlgorithmCardProps {
   algorithm: Algorithm;
   index: number;
   priority?: boolean;
+  isLocked?: boolean;
 }
 
-export default function AlgorithmCard({ algorithm, index, priority }: AlgorithmCardProps) {
+export default function AlgorithmCard({
+  algorithm,
+  index,
+  priority,
+  isLocked = false,
+}: AlgorithmCardProps) {
   const { t } = useLocale();
 
   const completed = useAlgorithmStore((s) => s.completedIds.includes(algorithm.id));
@@ -32,7 +38,7 @@ export default function AlgorithmCard({ algorithm, index, priority }: AlgorithmC
 
   return (
     <Link
-      href={`/algorithms/${algorithm.id}`}
+      href={isLocked ? '/login?reason=login_required' : `/algorithms/${algorithm.id}`}
       className="group relative flex flex-col bg-white dark:bg-[#151515] rounded-3xl overflow-hidden border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-2xl hover:shadow-[#269984]/10 transition-all duration-500 hover:-translate-y-2 animate-in fade-in slide-in-from-bottom-10 fill-mode-both"
       style={{ animationDelay: `${index * 100}ms` }}
     >
@@ -50,7 +56,7 @@ export default function AlgorithmCard({ algorithm, index, priority }: AlgorithmC
           height={200}
           priority={priority}
           sizes="(max-width: 640px) 150px, (max-width: 1024px) 200px, 200px"
-          className="w-auto h-32 sm:h-40 object-contain dark:invert dark:hue-rotate-180 drop-shadow-xl group-hover:scale-110 transition-transform duration-500"
+          className={`w-auto h-32 sm:h-40 object-contain dark:invert dark:hue-rotate-180 drop-shadow-xl group-hover:scale-110 transition-transform duration-500 ${isLocked ? 'opacity-40 grayscale-[30%]' : ''}`}
         />
 
         {/* Floating Badges */}
@@ -68,6 +74,12 @@ export default function AlgorithmCard({ algorithm, index, priority }: AlgorithmC
         {completed && (
           <div className="absolute top-4 right-4 bg-green-500 text-white p-1.5 rounded-full shadow-lg shadow-green-500/20 z-10 animate-in zoom-in-50 duration-500">
             <Check className="w-3.5 h-3.5 stroke-[3]" />
+          </div>
+        )}
+
+        {isLocked && (
+          <div className="absolute top-4 right-4 bg-gray-500/80 backdrop-blur-sm text-white p-1.5 rounded-full shadow-lg z-10 animate-in zoom-in-50 duration-500">
+            <Lock className="w-3.5 h-3.5 stroke-[3]" />
           </div>
         )}
       </div>
@@ -90,8 +102,12 @@ export default function AlgorithmCard({ algorithm, index, priority }: AlgorithmC
           </div>
 
           <div className="flex items-center gap-1.5 ml-auto text-[#269984] font-montserrat font-bold text-sm">
-            <span>{t('algorithm_card.read_more')}</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <span>{isLocked ? t('common.locked') : t('algorithm_card.read_more')}</span>
+            {isLocked ? (
+              <Lock className="w-4 h-4" />
+            ) : (
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            )}
           </div>
         </div>
       </div>

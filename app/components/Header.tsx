@@ -104,7 +104,7 @@ export default function Header() {
 
         {/* Desktop Nav — centre links */}
         <nav className="hidden md:flex items-center gap-5 lg:gap-8">
-          {isAuthenticated && (
+          {isAuthenticated ? (
             <>
               <NavLink href={ROUTES.HOME} label={t('nav.home')} active={pathname === ROUTES.HOME} />
               <NavLink
@@ -126,6 +126,13 @@ export default function Header() {
                 prefetch={true}
               />
             </>
+          ) : (
+            <NavLink
+              href={ROUTES.ALGORITHMS}
+              label={t('nav.algorithms')}
+              active={pathname?.startsWith(ROUTES.ALGORITHMS) ?? false}
+              prefetch={true}
+            />
           )}
         </nav>
 
@@ -260,7 +267,11 @@ export default function Header() {
                       setProfileDropdownOpen(false);
                       clearStore(); // Clear storage on logout
                       await axios.post(API_ROUTES.AUTH.LOGOUT).catch(() => {});
-                      await signOut({ redirect: false });
+                      try {
+                        await signOut({ redirect: false });
+                      } catch {
+                        // ignore redirect/html JSON parsing errors
+                      }
                       window.location.href = ROUTES.LOGIN;
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors group"
@@ -312,7 +323,7 @@ export default function Header() {
       {menuOpen && (
         <div className="md:hidden absolute top-[var(--header-height)] left-0 right-0 bg-[#269984] shadow-2xl border-t border-white/10 overflow-hidden animate-in slide-in-from-top-2 duration-300">
           <nav className="flex flex-col p-8 gap-6">
-            {isAuthenticated && (
+            {isAuthenticated ? (
               <div className="flex flex-col gap-5">
                 <Link
                   href={ROUTES.HOME}
@@ -341,6 +352,16 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.leaderboard')}
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-5">
+                <Link
+                  href={ROUTES.ALGORITHMS}
+                  className={`font-montserrat text-xl ${pathname?.startsWith(ROUTES.ALGORITHMS) ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('nav.algorithms')}
                 </Link>
               </div>
             )}
@@ -453,7 +474,11 @@ export default function Header() {
                     setMenuOpen(false);
                     clearStore();
                     await axios.post(API_ROUTES.AUTH.LOGOUT).catch(() => {});
-                    await signOut({ redirect: false });
+                    try {
+                      await signOut({ redirect: false });
+                    } catch {
+                      // ignore redirect/html JSON parsing errors
+                    }
                     window.location.href = ROUTES.LOGIN;
                   }}
                   className="w-full font-montserrat bg-red-500/20 text-red-50 py-3 rounded-xl text-center font-bold text-sm border border-red-500/20"
