@@ -10,6 +10,8 @@ import * as migration_20260409_171419_add_phase_scoring from './20260409_171419_
 import * as migration_20260409_200859 from './20260409_200859';
 import * as migration_20260411_122606 from './20260411_122606';
 import * as migration_20260527_185849_change_info_to_richtext from './20260527_185849_change_info_to_richtext';
+import * as migration_20260726_081543_add_bug_reports from './20260726_081543_add_bug_reports';
+import * as migration_20260726_081627_add_bug_reports from './20260726_081627_add_bug_reports';
 
 export const migrations = [
   {
@@ -71,5 +73,15 @@ export const migrations = [
     up: migration_20260527_185849_change_info_to_richtext.up,
     down: migration_20260527_185849_change_info_to_richtext.down,
     name: '20260527_185849_change_info_to_richtext',
+  },
+  {
+    up: migration_20260726_081543_add_bug_reports.up,
+    down: migration_20260726_081543_add_bug_reports.down,
+    name: '20260726_081543_add_bug_reports',
+  },
+  {
+    up: migration_20260726_081627_add_bug_reports.up,
+    down: migration_20260726_081627_add_bug_reports.down,
+    name: '20260726_081627_add_bug_reports'
   },
 ];
