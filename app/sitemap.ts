@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { getPayloadInstance } from '../lib/payload';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://algorythmics.com';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.algo-rythmics.com';
 
   // Base routes
   const routes = ['', '/courses', '/algorithms', '/videos', '/about', '/contact'].map((route) => ({

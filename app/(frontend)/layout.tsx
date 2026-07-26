@@ -31,7 +31,7 @@ export const metadata = {
   description:
     'Learn algorithms through dance and interactive visualizations. AlgoRythmics makes computer science accessible and fun.',
   keywords: 'algorithms, sorting, computer science, dance, education, coding, visualizer',
-  metadataBase: new URL('https://algorythmics.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.algo-rythmics.com'),
   openGraph: {
     title: 'AlgoRythmics - From Dance to Code',
     description:
@@ -80,6 +80,20 @@ export default async function FrontendLayout({ children }: { children: React.Rea
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'AlgoRythmics',
+              alternateName: ['AlgoRythmics - From Dance to Code'],
+              url: process.env.NEXT_PUBLIC_APP_URL || 'https://www.algo-rythmics.com',
+            }),
+          }}
+        />
+      </head>
       <body className={`${montserrat.variable} antialiased min-h-screen flex flex-col`}>
         {clarityProjectId && (
           <Script
