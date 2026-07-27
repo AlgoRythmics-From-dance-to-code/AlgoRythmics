@@ -139,11 +139,22 @@
     },
     "tabs": {
       "public": "Public Profile",
+      "certificates": "Certificates",
       "edit": "Edit Profile",
       "password": "Password",
       "security": "Account Security",
       "bug_report": "Report a Bug",
       "delete": "Delete Account"
+    },
+    "certificates": {
+      "title": "Certificates & Diplomas",
+      "subtitle": "Certificates earned for completing courses",
+      "no_certificates": "No certificates earned yet. Complete a course to earn a certificate!",
+      "view": "View Certificate",
+      "copy_link": "Copy Link",
+      "copied_toast": "Certificate link copied to clipboard!",
+      "earned_date": "Earned on: {date}",
+      "course_certificate": "Course Certificate"
     },
     "bug_report": {
       "title": "Report a Bug",
@@ -978,5 +989,20 @@
       "human_cells": "🧬 More than all the cells in the human body!",
       "earth_population": "👥 More than the entire population of Earth!"
     }
+  },
+  "certificate_page": {
+    "title": "CERTIFICATE",
+    "subtitle": "CERTIFICATE OF COMPLETION",
+    "certifies_that": "This is to certify that",
+    "has_completed": "has successfully completed the course:",
+    "issue_date": "Date of Issue",
+    "earned_points": "Earned Points",
+    "verification_id": "Certificate ID",
+    "copy_link": "Copy Link",
+    "print": "Print",
+    "back_to_profile": "Back to Profile",
+    "not_found": "Certificate Not Found",
+    "not_found_desc": "The requested certificate does not exist or has an invalid ID.",
+    "official_seal": "Official AlgoRythmics Certificate"
   }
 }

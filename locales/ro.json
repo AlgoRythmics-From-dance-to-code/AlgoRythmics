@@ -139,11 +139,22 @@
     },
     "tabs": {
       "public": "Profil public",
+      "certificates": "Certificate",
       "edit": "Editează profilul",
       "password": "Parolă",
       "security": "Securitate cont",
       "bug_report": "Raportează o hiba",
       "delete": "Șterge contul"
+    },
+    "certificates": {
+      "title": "Diplome și Certificate",
+      "subtitle": "Certificate obținute pentru finalizarea cursurilor",
+      "no_certificates": "Nu ai obținut încă niciun certificat. Completează un curs pentru a primi o diplomă!",
+      "view": "Vezi Certificatul",
+      "copy_link": "Copiază Link-ul",
+      "copied_toast": "Link-ul certificatului a fost copiat!",
+      "earned_date": "Obținut la: {date}",
+      "course_certificate": "Certificat Curs"
     },
     "bug_report": {
       "title": "Raportează o problemă",
@@ -974,5 +985,20 @@
       "human_cells": "🧬 Mai mult decât toate celulele din corpul uman!",
       "earth_population": "👥 Mai mult decât populația întregii planete!"
     }
+  },
+  "certificate_page": {
+    "title": "CERTIFICAT",
+    "subtitle": "CERTIFICATE OF COMPLETION",
+    "certifies_that": "Prin prezenta se adeverește că",
+    "has_completed": "a absolvit cu succes cursul:",
+    "issue_date": "Data emiterii",
+    "earned_points": "Punctaj obținut",
+    "verification_id": "ID Certificat",
+    "copy_link": "Copiază Link-ul",
+    "print": "Printează",
+    "back_to_profile": "Înapoi la profil",
+    "not_found": "Certificatul nu a fost găsit",
+    "not_found_desc": "Diplomă căutată nu există sau codul este invalid.",
+    "official_seal": "Certificat Oficial AlgoRythmics"
   }
 }

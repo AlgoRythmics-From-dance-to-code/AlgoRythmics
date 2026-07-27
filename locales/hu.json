@@ -139,11 +139,22 @@
     },
     "tabs": {
       "public": "Nyilvános profil",
+      "certificates": "Oklevelek",
       "edit": "Profil szerkesztése",
       "password": "Jelszó",
       "security": "Fiók biztonság",
       "bug_report": "Hibabejelentés",
       "delete": "Fiók törlése"
+    },
+    "certificates": {
+      "title": "Oklevelek és Tanúsítványok",
+      "subtitle": "A teljesített kurzusaidért kapott oklevelek",
+      "no_certificates": "Még nincs megszerzett okleveled. Teljesíts egy kurzust az oklevél megszerzéséhez!",
+      "view": "Oklevél megtekintése",
+      "copy_link": "Link másolása",
+      "copied_toast": "Oklevél linkje a vágólapra másolva!",
+      "earned_date": "Megszerezve: {date}",
+      "course_certificate": "Kurzus tanúsítvány"
     },
     "bug_report": {
       "title": "Hiba bejelentése",
@@ -977,5 +988,20 @@
       "human_cells": "🧬 Több, mint az emberi test összes sejtje!",
       "earth_population": "👥 Több, mint a Föld teljes lakossága!"
     }
+  },
+  "certificate_page": {
+    "title": "TANÚSÍTVÁNY",
+    "subtitle": "CERTIFICATE OF COMPLETION",
+    "certifies_that": "Ezúton igazoljuk, hogy",
+    "has_completed": "sikeresen teljesítette az alábbi kurzust:",
+    "issue_date": "Kiállítás dátuma",
+    "earned_points": "Szerzett pontszám",
+    "verification_id": "Tanúsítvány azonosító",
+    "copy_link": "Link másolása",
+    "print": "Nyomtatás",
+    "back_to_profile": "Vissza a profilhoz",
+    "not_found": "A tanúsítvány nem található",
+    "not_found_desc": "A keresett oklevél nem létezik vagy érvénytelen azonosítóval rendelkezel.",
+    "official_seal": "Hivatalos AlgoRythmics Tanúsítvány"
   }
 }
