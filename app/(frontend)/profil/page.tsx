@@ -7,6 +7,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import axios, { AxiosError } from 'axios';
+import Link from 'next/link';
 import {
   AlertTriangle,
   User,
@@ -31,6 +32,9 @@ import {
   FileText,
   AlertCircle,
   Loader2,
+  Award,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocale, Locale } from '../../i18n/LocaleProvider';
@@ -96,6 +100,7 @@ const formatLearningTime = (timeSpentMs: number, locale: Locale) => {
 
 const sidebarLinks = [
   { key: 'public', icon: User },
+  { key: 'certificates', icon: Award },
   { key: 'edit', icon: Settings },
   { key: 'password', icon: Lock },
   { key: 'bug_report', icon: Bug },
@@ -709,6 +714,105 @@ export default function ProfilePage() {
                         </div>
                       )}
                     </div>
+                  </div>
+                )}
+
+                {/* Certificates Content */}
+                {activeTab === 'certificates' && (
+                  <div className="space-y-6 font-montserrat">
+                    <div>
+                      <h2 className="text-2xl font-extrabold text-[#269984]">
+                        {t('profile.certificates.title')}
+                      </h2>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+                        {t('profile.certificates.subtitle')}
+                      </p>
+                    </div>
+
+                    {Object.entries(courseProgress).filter(([, p]) => p.isCompleted).length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {Object.entries(courseProgress)
+                          .filter(([, p]) => p.isCompleted)
+                          .map(([courseSlug, p]) => {
+                            const certUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/certificate/${(user as BaseUser).id}/${courseSlug}`;
+                            const courseTitle = courseSlug
+                              .replace(/[-_]+/g, ' ')
+                              .replace(/\b\w/g, (c) => c.toUpperCase());
+
+                            return (
+                              <div
+                                key={courseSlug}
+                                className="bg-white dark:bg-neutral-900 rounded-3xl p-6 border-2 border-emerald-500/20 shadow-lg relative overflow-hidden flex flex-col justify-between"
+                              >
+                                <div className="flex items-start justify-between gap-4 mb-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-3 bg-[#269984]/10 text-[#269984] rounded-2xl">
+                                      <Award size={24} />
+                                    </div>
+                                    <div>
+                                      <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100">
+                                        {courseTitle}
+                                      </h3>
+                                      <span className="text-xs text-[#269984] font-semibold">
+                                        {t('profile.certificates.course_certificate')}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <span className="text-xs font-bold bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full border border-amber-500/20">
+                                    {p.points || 0} XP
+                                  </span>
+                                </div>
+
+                                <div className="pt-4 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-3">
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(certUrl);
+                                      toast.success(t('profile.certificates.copied_toast'));
+                                    }}
+                                    className="flex items-center gap-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:text-[#269984] transition-colors p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800 hover:bg-[#269984]/10"
+                                  >
+                                    <Copy size={16} />
+                                    {t('profile.certificates.copy_link')}
+                                  </button>
+
+                                  <Link
+                                    href={`/certificate/${(user as BaseUser).id}/${courseSlug}`}
+                                    target="_blank"
+                                    className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#269984] hover:bg-[#1f7c6b] transition-all px-4 py-2.5 rounded-xl shadow-md"
+                                  >
+                                    <ExternalLink size={16} />
+                                    {t('profile.certificates.view')}
+                                  </Link>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    ) : (
+                      <div className="p-12 text-center border-2 border-dashed border-gray-200 dark:border-neutral-800 rounded-3xl bg-gray-50/50 dark:bg-neutral-900/50">
+                        <Award size={48} className="mx-auto text-gray-400 mb-4 opacity-50" />
+                        <p className="text-gray-500 dark:text-gray-400 font-medium max-w-md mx-auto mb-6">
+                          {t('profile.certificates.no_certificates')}
+                        </p>
+                        <div className="flex flex-wrap items-center justify-center gap-4">
+                          <button
+                            onClick={() => router.push('/courses')}
+                            className="inline-flex items-center gap-2 bg-[#269984] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#1f7c6b] transition-all shadow-lg text-sm"
+                          >
+                            {t('nav.courses')}
+                          </button>
+
+                          <Link
+                            href={`/certificate/${(user as BaseUser).id || 1}/bubble-sort`}
+                            target="_blank"
+                            className="inline-flex items-center gap-2 bg-neutral-800 text-gray-300 font-bold px-5 py-3 rounded-xl hover:bg-neutral-700 transition-all text-sm border border-neutral-700"
+                          >
+                            <ExternalLink size={16} />
+                            {locale === 'hu' ? 'Minta Oklevél Megtekintése' : 'Preview Sample Certificate'}
+                          </Link>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
