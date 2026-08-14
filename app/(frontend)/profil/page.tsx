@@ -32,6 +32,7 @@ import {
   Loader2,
   Award,
   Copy,
+  Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLocale, Locale } from '../../i18n/LocaleProvider';

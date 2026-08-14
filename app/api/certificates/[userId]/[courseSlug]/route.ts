@@ -8,7 +8,7 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ userId: string; courseSlug: string }> },
+  { params }: { params: Promise<{ userId: string; courseSlug: string }> }
 ) {
   try {
     const { userId: userIdStr, courseSlug } = await params;
