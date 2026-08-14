@@ -4,6 +4,9 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import SortingVisualizer from './SortingVisualizer';
 import QueensVisualizer from './QueensVisualizer';
 import VisualizerControls from './VisualizerControls';
+import CustomInputBar from './CustomInputBar';
+import CodeTracingPanel from './CodeTracingPanel';
+import VariableWatchPanel from './VariableWatchPanel';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { getAlgorithm } from '../../../lib/algorithms/registry';
@@ -13,7 +16,10 @@ interface AlgorithmVisualizerProps {
 }
 
 /**
- * Generic Animation visualizer that works with any algorithm registered in the system.
+ * Enhanced Animation visualizer with:
+ * - Code Tracing (active execution line highlight)
+ * - Variable Watch (real-time variable inspector)
+ * - Custom Input & Presets (sorted, reverse, nearly sorted, duplicates, random, target selector)
  */
 export default function AlgorithmVisualizer({ id }: AlgorithmVisualizerProps) {
   const {
@@ -26,6 +32,21 @@ export default function AlgorithmVisualizer({ id }: AlgorithmVisualizerProps) {
   const { trackEvent, updateProgress } = useAnalytics(id, 'animation');
 
   const initialProgress = visualizerProgress[id] || { step: 0, speed: 1 };
+  const algoDef = useMemo(() => getAlgorithm(id), [id]);
+
+  // Array and target state for custom inputs
+  const [arrayValues, setArrayValues] = useState<number[]>(
+    algoDef?.defaultArray || [45, 12, 89, 34, 67, 23, 56, 10, 78],
+  );
+  const [targetValue, setTargetValue] = useState<number | undefined>(undefined);
+
+  // Sync array when algorithm ID changes
+  useEffect(() => {
+    if (algoDef) {
+      setArrayValues(algoDef.defaultArray);
+      setTargetValue(undefined);
+    }
+  }, [algoDef]);
 
   const [currentStep, setCurrentStep] = useState(initialProgress.step);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -36,13 +57,18 @@ export default function AlgorithmVisualizer({ id }: AlgorithmVisualizerProps) {
   }, [algorithmProgress, id]);
   const startTime = useRef(Date.now());
 
-  const algoDef = useMemo(() => getAlgorithm(id), [id]);
-
-  // Pre-calculate all steps
+  // Pre-calculate all steps for the current array & target
   const steps = useMemo(() => {
     if (!algoDef) return [];
-    return algoDef.generateSteps(algoDef.defaultArray);
-  }, [algoDef]);
+    return algoDef.generateSteps(arrayValues, targetValue);
+  }, [algoDef, arrayValues, targetValue]);
+
+  // Ensure current step stays in bounds if array size changed
+  useEffect(() => {
+    if (currentStep >= steps.length) {
+      setCurrentStep(0);
+    }
+  }, [steps.length, currentStep]);
 
   // Sync state to local store
   useEffect(() => {
@@ -61,6 +87,21 @@ export default function AlgorithmVisualizer({ id }: AlgorithmVisualizerProps) {
   }, [id, updateProgress]);
 
   const isFinished = currentStep === steps.length - 1;
+
+  // Custom Input Apply Handler
+  const handleApplyArray = useCallback(
+    (newArr: number[], newTarget?: number) => {
+      setArrayValues(newArr);
+      setTargetValue(newTarget);
+      setCurrentStep(0);
+      setIsPlaying(false);
+      trackEvent('animation_custom_input', {
+        length: newArr.length,
+        target: newTarget,
+      });
+    },
+    [trackEvent],
+  );
 
   // Controls
   const stepForward = useCallback(() => {
@@ -156,31 +197,65 @@ export default function AlgorithmVisualizer({ id }: AlgorithmVisualizerProps) {
 
   if (!algoDef || steps.length === 0) return null;
 
-  return (
-    <div className="w-full flex flex-col items-center">
-      {algoDef.category === 'backtracking' ? (
-        <QueensVisualizer steps={steps} currentStep={currentStep} />
-      ) : (
-        <SortingVisualizer
-          steps={steps}
-          currentStep={currentStep}
-          speed={speed}
-          legend={algoDef.legend}
-        />
-      )}
+  const currentStepData = steps[currentStep] || steps[0];
 
-      <VisualizerControls
-        onPlayPause={handlePlayPause}
-        onStepForward={stepForward}
-        onStepBackward={stepBackward}
-        onReset={reset}
-        isPlaying={isPlaying}
-        isFinished={isFinished}
-        speed={speed}
-        setSpeed={handleSpeedChange}
-        progress={(currentStep / (steps.length - 1)) * 100}
-        speedOptions={algoDef.category === 'backtracking' ? [1, 2, 10, 100] : undefined}
+  return (
+    <div className="w-full flex flex-col gap-6">
+      {/* 1. Custom Input & Preset Bar */}
+      <CustomInputBar
+        algorithmId={id}
+        category={algoDef.category}
+        defaultArray={algoDef.defaultArray}
+        currentArray={arrayValues}
+        currentTarget={currentStepData?.target ?? targetValue}
+        onApplyArray={handleApplyArray}
       />
+
+      {/* 2. Main Workspace Layout */}
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Visualizer Arena & Playback Controls */}
+        <div className="lg:col-span-7 flex flex-col items-center gap-4">
+          <div className="w-full">
+            {algoDef.category === 'backtracking' ? (
+              <QueensVisualizer steps={steps} currentStep={currentStep} />
+            ) : (
+              <SortingVisualizer
+                steps={steps}
+                currentStep={currentStep}
+                speed={speed}
+                legend={algoDef.legend}
+              />
+            )}
+          </div>
+
+          <VisualizerControls
+            onPlayPause={handlePlayPause}
+            onStepForward={stepForward}
+            onStepBackward={stepBackward}
+            onReset={reset}
+            isPlaying={isPlaying}
+            isFinished={isFinished}
+            speed={speed}
+            setSpeed={handleSpeedChange}
+            progress={(currentStep / (steps.length - 1)) * 100}
+            speedOptions={algoDef.category === 'backtracking' ? [1, 2, 10, 100] : undefined}
+          />
+        </div>
+
+        {/* Right Column: Variable Watch & Code Tracing Inspector */}
+        <div className="lg:col-span-5 flex flex-col gap-4">
+          {/* Variable Watch Panel */}
+          <VariableWatchPanel variables={currentStepData?.variables} />
+
+          {/* Code Tracing Panel */}
+          {algoDef.codeDefinition && (
+            <CodeTracingPanel
+              codeDef={algoDef.codeDefinition}
+              highlightLine={currentStepData?.highlightLine}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

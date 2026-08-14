@@ -20,6 +20,8 @@ export function generateSelectionSortSteps(initialValues: number[]): SortStep[] 
       comparisons: 0,
       swapCount: 0,
       pass: 0,
+      highlightLine: 1,
+      variables: { n: arr.length, comparisons: 0, swaps: 0 },
     },
   ];
 
@@ -40,6 +42,14 @@ export function generateSelectionSortSteps(initialValues: number[]): SortStep[] 
       comparisons,
       swapCount,
       pass: i,
+      highlightLine: 3,
+      variables: {
+        i,
+        minIdx: i,
+        'arr[minIdx]': arr[i].val,
+        comparisons,
+        swaps: swapCount,
+      },
     });
 
     for (let j = i + 1; j < arr.length; j++) {
@@ -55,6 +65,17 @@ export function generateSelectionSortSteps(initialValues: number[]): SortStep[] 
         comparisons,
         swapCount,
         pass: i,
+        highlightLine: 5,
+        variables: {
+          i,
+          j,
+          minIdx,
+          'arr[minIdx]': arr[minIdx].val,
+          'arr[j]': arr[j].val,
+          'arr[j] < arr[minIdx]': arr[j].val < arr[minIdx].val,
+          comparisons,
+          swaps: swapCount,
+        },
       });
 
       if (arr[j].val < arr[minIdx].val) {
@@ -69,6 +90,15 @@ export function generateSelectionSortSteps(initialValues: number[]): SortStep[] 
           comparisons,
           swapCount,
           pass: i,
+          highlightLine: 6,
+          variables: {
+            i,
+            j,
+            minIdx: j,
+            'arr[minIdx]': arr[j].val,
+            comparisons,
+            swaps: swapCount,
+          },
         });
       }
     }
@@ -89,6 +119,16 @@ export function generateSelectionSortSteps(initialValues: number[]): SortStep[] 
         comparisons,
         swapCount,
         pass: i,
+        highlightLine: 7,
+        variables: {
+          i,
+          minIdx,
+          temp: temp.val,
+          'arr[i]': arr[i].val,
+          'arr[minIdx]': arr[minIdx].val,
+          comparisons,
+          swaps: swapCount,
+        },
       });
     }
 
@@ -103,6 +143,13 @@ export function generateSelectionSortSteps(initialValues: number[]): SortStep[] 
       comparisons,
       swapCount,
       pass: i,
+      highlightLine: 2,
+      variables: {
+        i,
+        sortedVal: arr[i].val,
+        comparisons,
+        swaps: swapCount,
+      },
     });
   }
 
@@ -118,6 +165,12 @@ export function generateSelectionSortSteps(initialValues: number[]): SortStep[] 
     comparisons,
     swapCount,
     pass: arr.length - 1,
+    highlightLine: 8,
+    variables: {
+      comparisons,
+      swaps: swapCount,
+      status: 'Sorted',
+    },
   });
 
   return result;

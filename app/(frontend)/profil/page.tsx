@@ -808,7 +808,9 @@ export default function ProfilePage() {
                             className="inline-flex items-center gap-2 bg-neutral-800 text-gray-300 font-bold px-5 py-3 rounded-xl hover:bg-neutral-700 transition-all text-sm border border-neutral-700"
                           >
                             <ExternalLink size={16} />
-                            {locale === 'hu' ? 'Minta Oklevél Megtekintése' : 'Preview Sample Certificate'}
+                            {locale === 'hu'
+                              ? 'Minta Oklevél Megtekintése'
+                              : 'Preview Sample Certificate'}
                           </Link>
                         </div>
                       </div>
@@ -1027,7 +1029,8 @@ export default function ProfilePage() {
                                   : 'border-gray-100 dark:border-neutral-800 bg-gray-50/50 dark:bg-[#1a1a1a] text-gray-500 hover:border-gray-300'
                               }`}
                             >
-                              {t(`profile.bug_report.severity_${item.id}_short`) || item.id.toUpperCase()}
+                              {t(`profile.bug_report.severity_${item.id}_short`) ||
+                                item.id.toUpperCase()}
                             </button>
                           ))}
                         </div>

@@ -20,6 +20,8 @@ export function generateHeapSortSteps(initialValues: number[]): SortStep[] {
       comparisons: 0,
       swapCount: 0,
       pass: 0,
+      highlightLine: 1,
+      variables: { n: arr.length, comparisons: 0, swaps: 0 },
     },
   ];
 
@@ -42,6 +44,16 @@ export function generateHeapSortSteps(initialValues: number[]): SortStep[] {
       comparisons,
       swapCount,
       pass: 0,
+      highlightLine: 7,
+      variables: {
+        i,
+        largest: i,
+        l,
+        r,
+        'arr[i]': arr[i].val,
+        comparisons,
+        swaps: swapCount,
+      },
     });
 
     if (l < n) {
@@ -73,6 +85,14 @@ export function generateHeapSortSteps(initialValues: number[]): SortStep[] {
         comparisons,
         swapCount,
         pass: 0,
+        highlightLine: 10,
+        variables: {
+          i,
+          largest,
+          swapped: `${arr[i].val} ↔ ${arr[largest].val}`,
+          comparisons,
+          swaps: swapCount,
+        },
       });
 
       heapify(arr, n, largest);
@@ -93,6 +113,12 @@ export function generateHeapSortSteps(initialValues: number[]): SortStep[] {
     comparisons,
     swapCount,
     pass: 0,
+    highlightLine: 2,
+    variables: {
+      status: 'Heap Built',
+      comparisons,
+      swaps: swapCount,
+    },
   });
 
   // Extract elements from heap
@@ -112,6 +138,14 @@ export function generateHeapSortSteps(initialValues: number[]): SortStep[] {
       comparisons,
       swapCount,
       pass: 0,
+      highlightLine: 4,
+      variables: {
+        i,
+        'root (max)': arr[i].val,
+        newAtRoot: arr[0].val,
+        comparisons,
+        swaps: swapCount,
+      },
     });
 
     sorted.push(i);
@@ -129,6 +163,12 @@ export function generateHeapSortSteps(initialValues: number[]): SortStep[] {
     comparisons,
     swapCount,
     pass: 0,
+    highlightLine: 1,
+    variables: {
+      comparisons,
+      swaps: swapCount,
+      status: 'Sorted',
+    },
   });
 
   return result;

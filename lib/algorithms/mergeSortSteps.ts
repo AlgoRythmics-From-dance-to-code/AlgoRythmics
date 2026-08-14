@@ -20,6 +20,8 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
       comparisons: 0,
       swapCount: 0,
       pass: 0,
+      highlightLine: 1,
+      variables: { n: items.length, comparisons: 0, placements: 0 },
     },
   ];
 
@@ -43,6 +45,16 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
       comparisons,
       swapCount,
       pass: 0,
+      highlightLine: 7,
+      variables: {
+        start,
+        mid,
+        end,
+        leftSize: leftArr.length,
+        rightSize: rightArr.length,
+        comparisons,
+        placements: swapCount,
+      },
     });
 
     while (i < leftArr.length && j < rightArr.length) {
@@ -56,6 +68,19 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
         comparisons,
         swapCount,
         pass: 0,
+        highlightLine: 9,
+        variables: {
+          start,
+          end,
+          i,
+          j,
+          k,
+          'L[i]': leftArr[i].val,
+          'R[j]': rightArr[j].val,
+          'L[i] <= R[j]': leftArr[i].val <= rightArr[j].val,
+          comparisons,
+          placements: swapCount,
+        },
       });
 
       const targetItem = leftArr[i].val <= rightArr[j].val ? leftArr[i] : rightArr[j];
@@ -85,6 +110,13 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
           comparisons,
           swapCount,
           pass: 0,
+          highlightLine: 9,
+          variables: {
+            k,
+            placedVal: arr[k].val,
+            comparisons,
+            placements: swapCount,
+          },
         });
       } else if (foundIdx === k) {
         result.push({
@@ -96,6 +128,13 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
           comparisons,
           swapCount,
           pass: 0,
+          highlightLine: 9,
+          variables: {
+            k,
+            placedVal: arr[k].val,
+            comparisons,
+            placements: swapCount,
+          },
         });
       }
 
@@ -132,6 +171,14 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
           comparisons,
           swapCount,
           pass: 0,
+          highlightLine: 9,
+          variables: {
+            k,
+            placedVal: arr[k].val,
+            remainingSide: 'left',
+            comparisons,
+            placements: swapCount,
+          },
         });
       } else if (foundIdx === k) {
         result.push({
@@ -143,6 +190,13 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
           comparisons,
           swapCount,
           pass: 0,
+          highlightLine: 9,
+          variables: {
+            k,
+            placedVal: arr[k].val,
+            comparisons,
+            placements: swapCount,
+          },
         });
       }
       i++;
@@ -174,6 +228,14 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
           comparisons,
           swapCount,
           pass: 0,
+          highlightLine: 10,
+          variables: {
+            k,
+            placedVal: arr[k].val,
+            remainingSide: 'right',
+            comparisons,
+            placements: swapCount,
+          },
         });
       } else if (foundIdx === k) {
         result.push({
@@ -185,6 +247,13 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
           comparisons,
           swapCount,
           pass: 0,
+          highlightLine: 10,
+          variables: {
+            k,
+            placedVal: arr[k].val,
+            comparisons,
+            placements: swapCount,
+          },
         });
       }
       j++;
@@ -205,6 +274,14 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
         comparisons,
         swapCount,
         pass: 0,
+        highlightLine: 3,
+        variables: {
+          start,
+          mid,
+          end,
+          comparisons,
+          placements: swapCount,
+        },
       });
 
       sort(arr, start, mid);
@@ -232,6 +309,12 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
     comparisons,
     swapCount,
     pass: 0,
+    highlightLine: 1,
+    variables: {
+      comparisons,
+      placements: swapCount,
+      status: 'Sorted',
+    },
   });
 
   return result;

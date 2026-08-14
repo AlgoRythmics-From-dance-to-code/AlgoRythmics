@@ -22,6 +22,8 @@ export function generateNQueensSteps(nValues: number[]): SortStep[] {
       swapCount: 0,
       pass: 0,
       target: n,
+      highlightLine: 1,
+      variables: { n, row: 0, placedQueens: 0 },
     },
   ];
 
@@ -52,6 +54,14 @@ export function generateNQueensSteps(nValues: number[]): SortStep[] {
         swapCount: col,
         pass: row,
         target: n,
+        highlightLine: 4,
+        variables: {
+          n,
+          row,
+          col,
+          isSafe: 'checking...',
+          placedQueens: board.filter((v) => v !== -1).length,
+        },
       });
 
       board[row] = col;
@@ -69,6 +79,15 @@ export function generateNQueensSteps(nValues: number[]): SortStep[] {
           swapCount: col,
           pass: row,
           target: n,
+          highlightLine: 5,
+          variables: {
+            n,
+            row,
+            col,
+            'board[row]': col,
+            isSafe: true,
+            placedQueens: board.filter((v) => v !== -1).length,
+          },
         });
 
         if (solve(row + 1)) return true;
@@ -86,6 +105,15 @@ export function generateNQueensSteps(nValues: number[]): SortStep[] {
           swapCount: col,
           pass: row,
           target: n,
+          highlightLine: 7,
+          variables: {
+            n,
+            row,
+            col,
+            action: 'backtrack',
+            'board[row]': -1,
+            placedQueens: board.filter((v) => v !== -1).length - 1,
+          },
         });
       } else {
         result.push({
@@ -100,6 +128,14 @@ export function generateNQueensSteps(nValues: number[]): SortStep[] {
           swapCount: col,
           pass: row,
           target: n,
+          highlightLine: 4,
+          variables: {
+            n,
+            row,
+            col,
+            isSafe: false,
+            conflict: true,
+          },
         });
       }
 
@@ -120,6 +156,12 @@ export function generateNQueensSteps(nValues: number[]): SortStep[] {
     swapCount: 0,
     pass: 0,
     target: n,
+    highlightLine: 2,
+    variables: {
+      n,
+      status: 'All Queens Placed!',
+      solved: true,
+    },
   });
 
   return result;

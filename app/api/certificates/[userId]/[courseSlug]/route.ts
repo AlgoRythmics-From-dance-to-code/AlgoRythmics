@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPayloadInstance } from '../../../../../lib/payload';
-import { courseBlueprints, findCourseBySlug, normalizeCourse } from '../../../../../lib/courses/courseCatalog';
+import {
+  courseBlueprints,
+  findCourseBySlug,
+  normalizeCourse,
+} from '../../../../../lib/courses/courseCatalog';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ userId: string; courseSlug: string }> }
+  { params }: { params: Promise<{ userId: string; courseSlug: string }> },
 ) {
   try {
     const { userId: userIdStr, courseSlug } = await params;
@@ -56,7 +60,9 @@ export async function GET(
       });
 
       if (courseDocs.docs.length > 0) {
-        const normalized = normalizeCourse(courseDocs.docs[0] as unknown as Record<string, unknown>);
+        const normalized = normalizeCourse(
+          courseDocs.docs[0] as unknown as Record<string, unknown>,
+        );
         courseTitle = normalized.title;
         courseSummary = normalized.summary;
         accentColor = normalized.accentColor || '#269984';
@@ -81,10 +87,7 @@ export async function GET(
       const progressDocs = await payload.find({
         collection: 'course-progress',
         where: {
-          and: [
-            { user: { equals: userId } },
-            { courseId: { equals: courseSlug } },
-          ],
+          and: [{ user: { equals: userId } }, { courseId: { equals: courseSlug } }],
         },
         depth: 0,
         limit: 1,
@@ -125,9 +128,6 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error fetching certificate:', error);
-    return NextResponse.json(
-      { error: 'Hiba történt a tanúsítvány lekérésekor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Hiba történt a tanúsítvány lekérésekor' }, { status: 500 });
   }
 }

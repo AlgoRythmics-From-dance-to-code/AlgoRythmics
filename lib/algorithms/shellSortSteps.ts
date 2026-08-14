@@ -20,6 +20,8 @@ export function generateShellSortSteps(initialValues: number[]): SortStep[] {
       comparisons: 0,
       swapCount: 0,
       pass: 0,
+      highlightLine: 1,
+      variables: { n: arr.length, comparisons: 0, swaps: 0 },
     },
   ];
 
@@ -37,6 +39,12 @@ export function generateShellSortSteps(initialValues: number[]): SortStep[] {
       comparisons,
       swapCount,
       pass: gap,
+      highlightLine: 2,
+      variables: {
+        gap,
+        comparisons,
+        swaps: swapCount,
+      },
     });
 
     for (let i = gap; i < n; i++) {
@@ -54,6 +62,17 @@ export function generateShellSortSteps(initialValues: number[]): SortStep[] {
           comparisons,
           swapCount,
           pass: gap,
+          highlightLine: 6,
+          variables: {
+            gap,
+            i,
+            j,
+            temp: arr[j].val,
+            'arr[j-gap]': arr[j - gap].val,
+            'arr[j]': arr[j].val,
+            comparisons,
+            swaps: swapCount,
+          },
         });
 
         if (arr[j - gap].val > arr[j].val) {
@@ -72,6 +91,15 @@ export function generateShellSortSteps(initialValues: number[]): SortStep[] {
             comparisons,
             swapCount,
             pass: gap,
+            highlightLine: 7,
+            variables: {
+              gap,
+              i,
+              j,
+              swapped: `${arr[j].val} ↔ ${arr[j - gap].val}`,
+              comparisons,
+              swaps: swapCount,
+            },
           });
           j -= gap;
         } else {
@@ -91,6 +119,12 @@ export function generateShellSortSteps(initialValues: number[]): SortStep[] {
     comparisons,
     swapCount,
     pass: 0,
+    highlightLine: 10,
+    variables: {
+      comparisons,
+      swaps: swapCount,
+      status: 'Sorted',
+    },
   });
 
   return result;

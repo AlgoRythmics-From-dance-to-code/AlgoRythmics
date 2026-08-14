@@ -20,6 +20,8 @@ export function generateQuickSortSteps(initialValues: number[]): SortStep[] {
       comparisons: 0,
       swapCount: 0,
       pass: 0,
+      highlightLine: 1,
+      variables: { n: items.length, comparisons: 0, swaps: 0 },
     },
   ];
 
@@ -40,6 +42,15 @@ export function generateQuickSortSteps(initialValues: number[]): SortStep[] {
       swapCount,
       pass: 0,
       pivotIndex: high,
+      highlightLine: 3,
+      variables: {
+        low,
+        high,
+        pivot: pivot.val,
+        i: low - 1,
+        comparisons,
+        swaps: swapCount,
+      },
     });
 
     let i = low - 1;
@@ -56,6 +67,18 @@ export function generateQuickSortSteps(initialValues: number[]): SortStep[] {
         swapCount,
         pass: 0,
         pivotIndex: high,
+        highlightLine: 6,
+        variables: {
+          low,
+          high,
+          pivot: pivot.val,
+          i,
+          j,
+          'arr[j]': arr[j].val,
+          'arr[j] < pivot': arr[j].val < pivot.val,
+          comparisons,
+          swaps: swapCount,
+        },
       });
 
       if (arr[j].val < pivot.val) {
@@ -73,6 +96,18 @@ export function generateQuickSortSteps(initialValues: number[]): SortStep[] {
           swapCount,
           pass: 0,
           pivotIndex: high,
+          highlightLine: 7,
+          variables: {
+            low,
+            high,
+            pivot: pivot.val,
+            i,
+            j,
+            'arr[i]': arr[i].val,
+            'arr[j]': arr[j].val,
+            comparisons,
+            swaps: swapCount,
+          },
         });
       }
     }
@@ -90,6 +125,16 @@ export function generateQuickSortSteps(initialValues: number[]): SortStep[] {
       swapCount,
       pass: 0,
       pivotIndex: i + 1,
+      highlightLine: 8,
+      variables: {
+        low,
+        high,
+        pivotIndex: i + 1,
+        pivot: arr[i + 1].val,
+        'arr[i+1]': arr[i + 1].val,
+        comparisons,
+        swaps: swapCount,
+      },
     });
 
     sorted.push(i + 1);
@@ -119,6 +164,12 @@ export function generateQuickSortSteps(initialValues: number[]): SortStep[] {
     comparisons,
     swapCount,
     pass: 0,
+    highlightLine: 1,
+    variables: {
+      comparisons,
+      swaps: swapCount,
+      status: 'Sorted',
+    },
   });
 
   return result;

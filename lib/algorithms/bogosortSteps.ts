@@ -22,6 +22,8 @@ export function generateBogosortSteps(initialValues: number[]): SortStep[] {
       comparisons: 0,
       swapCount: 0,
       pass: 0,
+      highlightLine: 1,
+      variables: { attempts: 0, isSorted: false },
     },
   ];
 
@@ -58,6 +60,13 @@ export function generateBogosortSteps(initialValues: number[]): SortStep[] {
       comparisons: n - 1,
       swapCount: n,
       pass: attempts,
+      highlightLine: 3,
+      variables: {
+        attempts,
+        isSorted: false,
+        comparisons: n - 1,
+        shuffledItems: n,
+      },
     });
   }
 
@@ -74,6 +83,12 @@ export function generateBogosortSteps(initialValues: number[]): SortStep[] {
     comparisons: n - 1,
     swapCount: 0,
     pass: attempts,
+    highlightLine: 5,
+    variables: {
+      attempts,
+      isSorted: true,
+      status: 'Sorted!',
+    },
   });
 
   return result;

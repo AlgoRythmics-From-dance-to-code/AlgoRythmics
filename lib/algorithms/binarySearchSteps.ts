@@ -26,6 +26,8 @@ export function generateBinarySearchSteps(initialValues: number[], target?: numb
       swapCount: 0,
       pass: 0,
       target: searchTarget,
+      highlightLine: 1,
+      variables: { target: searchTarget, low: 0, high: arr.length - 1, comparisons: 0 },
     },
   ];
 
@@ -58,6 +60,15 @@ export function generateBinarySearchSteps(initialValues: number[], target?: numb
       swapCount,
       pass: 0,
       target: searchTarget,
+      highlightLine: 5,
+      variables: {
+        low: left,
+        high: right,
+        mid,
+        'arr[mid]': midVal,
+        target: searchTarget,
+        comparisons,
+      },
     });
 
     if (arr[mid].val === searchTarget) {
@@ -78,6 +89,17 @@ export function generateBinarySearchSteps(initialValues: number[], target?: numb
         swapCount,
         pass: 0,
         target: searchTarget,
+        highlightLine: 5,
+        variables: {
+          low: left,
+          high: right,
+          mid,
+          'arr[mid]': midVal,
+          target: searchTarget,
+          found: true,
+          return: mid,
+          comparisons,
+        },
       });
       break;
     } else if (arr[mid].val < searchTarget) {
@@ -97,6 +119,15 @@ export function generateBinarySearchSteps(initialValues: number[], target?: numb
         swapCount: 0,
         pass: 0,
         target: searchTarget,
+        highlightLine: 6,
+        variables: {
+          low: left,
+          high: right,
+          mid,
+          target: searchTarget,
+          'arr[mid] < target': true,
+          comparisons,
+        },
       });
     } else {
       right = mid - 1;
@@ -115,6 +146,15 @@ export function generateBinarySearchSteps(initialValues: number[], target?: numb
         swapCount: 0,
         pass: 0,
         target: searchTarget,
+        highlightLine: 7,
+        variables: {
+          low: left,
+          high: right,
+          mid,
+          target: searchTarget,
+          'arr[mid] > target': true,
+          comparisons,
+        },
       });
     }
   }
@@ -131,6 +171,15 @@ export function generateBinarySearchSteps(initialValues: number[], target?: numb
       swapCount: 0,
       pass: 0,
       target: searchTarget,
+      highlightLine: 8,
+      variables: {
+        low: left,
+        high: right,
+        target: searchTarget,
+        found: false,
+        return: -1,
+        comparisons,
+      },
     });
   }
 

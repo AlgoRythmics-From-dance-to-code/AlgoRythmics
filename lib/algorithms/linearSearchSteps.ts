@@ -23,6 +23,8 @@ export function generateLinearSearchSteps(initialValues: number[], target?: numb
       swapCount: 0,
       pass: 0,
       target: searchTarget,
+      highlightLine: 1,
+      variables: { target: searchTarget, n: arr.length, comparisons: 0 },
     },
   ];
 
@@ -48,6 +50,14 @@ export function generateLinearSearchSteps(initialValues: number[], target?: numb
       swapCount: 0,
       pass: 0,
       target: searchTarget,
+      highlightLine: 3,
+      variables: {
+        i,
+        'arr[i]': arr[i].val,
+        target: searchTarget,
+        'arr[i] == target': arr[i].val === searchTarget,
+        comparisons,
+      },
     });
 
     if (arr[i].val === searchTarget) {
@@ -68,6 +78,15 @@ export function generateLinearSearchSteps(initialValues: number[], target?: numb
         swapCount: 0,
         pass: 0,
         target: searchTarget,
+        highlightLine: 4,
+        variables: {
+          i,
+          'arr[i]': arr[i].val,
+          target: searchTarget,
+          found: true,
+          foundIndex: i,
+          comparisons,
+        },
       });
       break;
     }
@@ -86,6 +105,13 @@ export function generateLinearSearchSteps(initialValues: number[], target?: numb
       swapCount: 0,
       pass: 0,
       target: searchTarget,
+      highlightLine: 5,
+      variables: {
+        target: searchTarget,
+        found: false,
+        return: -1,
+        comparisons,
+      },
     });
   }
 

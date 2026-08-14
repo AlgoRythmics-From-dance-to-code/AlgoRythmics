@@ -90,10 +90,7 @@ export async function POST(req: Request) {
       overrideAccess: true,
     });
 
-    logger.info(
-      { userId, reportId: bugReport.id },
-      'Bug report created successfully',
-    );
+    logger.info({ userId, reportId: bugReport.id }, 'Bug report created successfully');
 
     return NextResponse.json({
       message: t('toasts.bug_report_submitted') || 'Bug report submitted successfully',
