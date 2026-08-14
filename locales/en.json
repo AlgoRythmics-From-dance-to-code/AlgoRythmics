@@ -827,6 +827,25 @@
       "speed": "Playback speed {speed}x"
     }
   },
+  "sandbox": {
+    "title": "Your Code Result (Live Preview)",
+    "subtitle": "Instant simulation on the test array",
+    "original": "Initial:",
+    "output": "Output:",
+    "status_success": "Sorted (Ascending)",
+    "status_reversed": "Reversed (Descending)",
+    "status_wrong": "Incorrect value",
+    "status_incomplete": "Awaiting completion ({filled}/{total})",
+    "status_error": "Error",
+    "feedback_empty": "Fill in the blanks to build the algorithm logic!",
+    "feedback_reversed": "Your code sorts in DESCENDING order due to the \"<\" operator! Use \">\" for ascending order.",
+    "feedback_wrong": "The entered \"{value}\" is incorrect for this slot.",
+    "feedback_progress": "Looking good so far! {remaining} more blanks needed to complete the algorithm.",
+    "feedback_success_sort": "Congratulations! Your algorithm correctly sorted the array in ascending order.",
+    "feedback_success_linear": "Perfect! Linear search successfully found target {target} at index {index}!",
+    "feedback_success_binary": "Perfect! Binary search successfully found the target in the sorted array.",
+    "feedback_success_queens": "Excellent! The backtracking algorithm successfully placed all 4 queens without conflicts."
+  },
   "control": {
     "select_pair": "Select two adjacent elements to compare",
     "correct": "Correct!",

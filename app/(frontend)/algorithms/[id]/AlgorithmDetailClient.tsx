@@ -243,7 +243,9 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
         if (algoHasFullContent) {
           return (
             <Suspense fallback={<TabLoader />}>
-              <CodeExercise algorithmId={id} />
+              <div className="max-w-6xl mx-auto">
+                <CodeExercise algorithmId={id} />
+              </div>
             </Suspense>
           );
         }
@@ -366,6 +368,7 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
                 alt={data.name}
                 width={330}
                 height={330}
+                priority
                 className="w-full h-auto dark:invert dark:hue-rotate-180 drop-shadow-2xl"
                 style={{ width: 'auto', height: 'auto' }}
               />

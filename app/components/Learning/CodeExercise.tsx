@@ -2,11 +2,13 @@
 
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, HelpCircle, RotateCcw, Check } from 'lucide-react';
+import { HelpCircle, RotateCcw } from 'lucide-react';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { getCodeTemplate, type BlankSlot } from '../../../lib/algorithms/codeTemplates';
+import { simulateCreateTemplate } from '../../../lib/algorithms/liveSimulator';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import LiveSandboxVisualizer from './LiveSandboxVisualizer';
 
 interface CodeExerciseProps {
   algorithmId: string;
@@ -74,6 +76,19 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
   }, [template]);
 
   const totalBlanks = template?.blanks.length || 0;
+
+  // Compute live simulation based on current values
+  const blankValues = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const [id, state] of Object.entries(blankStates)) {
+      map[id] = state.value;
+    }
+    return map;
+  }, [blankStates]);
+
+  const simulation = useMemo(() => {
+    return simulateCreateTemplate(algorithmId, blankValues);
+  }, [algorithmId, blankValues]);
 
   // Check a single blank
   const checkBlank = useCallback(
@@ -238,6 +253,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
       checkBlank(blankId, optionValue);
     }
   };
+
   // Reset
   const handleReset = () => {
     const initial: Record<string, { value: string; isCorrect: boolean | null; attempts: number }> =
@@ -296,7 +312,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
               if (!blank || !state) return null;
 
               return (
-                <span key={partIdx} className="inline-flex items-center mx-1 group/blank relative">
+                <span key={partIdx} className="inline-flex items-center mx-1">
                   <input
                     type="text"
                     value={state.value}
@@ -314,24 +330,6 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
                     }`}
                     style={{ width: `${blank.widthCh + 2}ch` }}
                   />
-                  {/* Floating Action/Feedback Icon */}
-                  <div className="absolute left-full ml-1 flex items-center">
-                    {state.isCorrect === true ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <button
-                        onClick={() => checkBlank(blankId)}
-                        title={t('create.check')}
-                        className={`p-1 rounded-md transition-all ${
-                          state.value.trim()
-                            ? 'text-[#269984] hover:bg-[#269984]/10 opacity-100'
-                            : 'text-gray-300 opacity-0 group-hover/blank:opacity-100'
-                        }`}
-                      >
-                        <Check className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
                 </span>
               );
             }
@@ -349,7 +347,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col gap-6">
+    <div className="w-full flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="font-montserrat font-bold text-lg text-black dark:text-white">
@@ -358,6 +356,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
         <div className="flex items-center gap-3">
           {!helpActive && (
             <button
+              type="button"
               onClick={handleHelp}
               className="flex items-center gap-2 px-4 py-2 rounded-xl font-montserrat font-bold text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all"
             >
@@ -366,6 +365,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
             </button>
           )}
           <button
+            type="button"
             onClick={handleReset}
             className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 transition-all"
           >
@@ -397,64 +397,75 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
         </div>
       )}
 
-      {/* Code Editor */}
-      <div className="rounded-2xl bg-[#1e1e2e] dark:bg-[#0d0d0d] border border-gray-200 dark:border-white/5 shadow-xl overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 bg-[#181825] dark:bg-[#080808] border-b border-white/5">
-          <div className="w-3 h-3 rounded-full bg-red-500/60" />
-          <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-          <div className="w-3 h-3 rounded-full bg-green-500/60" />
-          <span className="ml-3 text-xs font-mono text-gray-500">{template.language}</span>
+      {/* Main 2-column Workspace: Code Editor (left) & Live Simulation Sandbox (right) */}
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Code Editor Column */}
+        <div className="lg:col-span-7 flex flex-col gap-4">
+          <div className="rounded-2xl bg-[#1e1e2e] dark:bg-[#0d0d0d] border border-gray-200 dark:border-white/5 shadow-xl overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 bg-[#181825] dark:bg-[#080808] border-b border-white/5">
+              <div className="w-3 h-3 rounded-full bg-red-500/60" />
+              <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+              <div className="w-3 h-3 rounded-full bg-green-500/60" />
+              <span className="ml-3 text-xs font-mono text-gray-500">{template.language}</span>
+            </div>
+            <div className="p-4 sm:p-6 overflow-x-auto">
+              {template.lines.map((line, idx) => renderLine(line.text, line.indent, idx))}
+            </div>
+          </div>
+
+          {/* Help Cards — shown when help is active */}
+          <AnimatePresence>
+            {helpActive && activeBlank && dragCards[activeBlank] && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="flex flex-wrap gap-2 p-4 rounded-2xl bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-white/5 shadow-lg"
+              >
+                <div className="w-full flex items-center justify-between mb-2">
+                  <span className="font-montserrat text-xs font-bold text-gray-500 uppercase tracking-widest">
+                    {t('create.choose_correct')}
+                  </span>
+                  <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded">
+                    Help Mode
+                  </span>
+                </div>
+                {dragCards[activeBlank].map((option) => {
+                  const isCorrect =
+                    blankStates[activeBlank]?.value === option &&
+                    blankStates[activeBlank]?.isCorrect === true;
+                  const isWrong = activeWrongOptions[activeBlank]?.has(option);
+
+                  return (
+                    <motion.button
+                      key={option}
+                      type="button"
+                      whileHover={!isCorrect ? { scale: 1.02 } : {}}
+                      whileTap={!isCorrect ? { scale: 0.98 } : {}}
+                      onClick={() => handleOptionClick(activeBlank, option)}
+                      disabled={isCorrect}
+                      className={`px-4 py-2 rounded-xl font-mono text-sm border-2 transition-all flex-1 min-w-[120px] text-center ${
+                        isCorrect
+                          ? 'border-green-500 bg-green-500/10 text-green-600 dark:text-green-400 cursor-default'
+                          : isWrong
+                            ? 'border-red-500 bg-red-500/10 text-red-600 dark:text-red-400'
+                            : 'border-[#269984]/20 bg-[#269984]/5 text-[#269984] hover:border-[#269984] hover:bg-[#269984]/10'
+                      }`}
+                    >
+                      {option}
+                    </motion.button>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-        <div className="p-4 sm:p-6 overflow-x-auto">
-          {template.lines.map((line, idx) => renderLine(line.text, line.indent, idx))}
+
+        {/* Live Simulation Sandbox Column */}
+        <div className="lg:col-span-5 flex flex-col gap-4">
+          <LiveSandboxVisualizer simulation={simulation} />
         </div>
       </div>
-
-      {/* Help Cards — shown when help is active */}
-      <AnimatePresence>
-        {helpActive && activeBlank && dragCards[activeBlank] && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="flex flex-wrap gap-2 p-4 rounded-2xl bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-white/5 shadow-lg"
-          >
-            <div className="w-full flex items-center justify-between mb-2">
-              <span className="font-montserrat text-xs font-bold text-gray-500 uppercase tracking-widest">
-                {t('create.choose_correct')}
-              </span>
-              <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded">
-                Help Mode
-              </span>
-            </div>
-            {dragCards[activeBlank].map((option) => {
-              const isCorrect =
-                blankStates[activeBlank]?.value === option &&
-                blankStates[activeBlank]?.isCorrect === true;
-              const isWrong = activeWrongOptions[activeBlank]?.has(option);
-
-              return (
-                <motion.button
-                  key={option}
-                  whileHover={!isCorrect ? { scale: 1.02 } : {}}
-                  whileTap={!isCorrect ? { scale: 0.98 } : {}}
-                  onClick={() => handleOptionClick(activeBlank, option)}
-                  disabled={isCorrect}
-                  className={`px-4 py-2 rounded-xl font-mono text-sm border-2 transition-all flex-1 min-w-[120px] text-center ${
-                    isCorrect
-                      ? 'border-green-500 bg-green-500/10 text-green-600 dark:text-green-400 cursor-default'
-                      : isWrong
-                        ? 'border-red-500 bg-red-500/10 text-red-600 dark:text-red-400'
-                        : 'border-[#269984]/20 bg-[#269984]/5 text-[#269984] hover:border-[#269984] hover:bg-[#269984]/10'
-                  }`}
-                >
-                  {option}
-                </motion.button>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Completion */}
       {isComplete && (

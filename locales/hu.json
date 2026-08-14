@@ -826,6 +826,25 @@
       "speed": "Lejátszási sebesség: {speed}x"
     }
   },
+  "sandbox": {
+    "title": "A kódod eredménye (Élő előnézet)",
+    "subtitle": "Azonnali szimuláció a teszttömbön",
+    "original": "Kezdeti:",
+    "output": "Kimenet:",
+    "status_success": "Rendezve (Növekvő)",
+    "status_reversed": "Fordított sorrend (Csökkenő)",
+    "status_wrong": "Hibás érték",
+    "status_incomplete": "Kitöltésre vár ({filled}/{total})",
+    "status_error": "Hiba",
+    "feedback_empty": "Töltsd ki a hiányzó mezőket a kód logikájának megépítéséhez!",
+    "feedback_reversed": "A kódod CSÖKKENŐ sorrendbe rendez a \"<\" reláció miatt! A növekvő sorrendhez a \">\" reláció szükséges.",
+    "feedback_wrong": "A beírt \"{value}\" nem megfelelő ebben a mezőben.",
+    "feedback_progress": "Eddig jó! Még {remaining} mező kitöltése szükséges a teljes algoritmushoz.",
+    "feedback_success_sort": "Gratulálunk! Az algoritmusod hibátlanul növekvő sorrendbe rendezte a számokat.",
+    "feedback_success_linear": "Tökéletes! A lineáris keresés sikeresen megtalálta a keresett {target}-as elemet az indexen: {index}!",
+    "feedback_success_binary": "Tökéletes! A bináris keresés sikeresen megtalálta a keresett elemet a rendezett tömbben.",
+    "feedback_success_queens": "Kiváló! A backtracking algoritmus sikeresen elhelyezte a 4 királynőt ütközésmentesen."
+  },
   "control": {
     "select_pair": "Válassz ki két szomszédos elemet az összehasonlításhoz",
     "correct": "Helyes!",

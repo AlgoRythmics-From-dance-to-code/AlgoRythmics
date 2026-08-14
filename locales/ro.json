@@ -827,6 +827,25 @@
       "speed": "Viteza de redare {speed}x"
     }
   },
+  "sandbox": {
+    "title": "Rezultatul codului tău (Previzualizare în direct)",
+    "subtitle": "Simulare instantanee pe tabloul de test",
+    "original": "Inițial:",
+    "output": "Ieșire:",
+    "status_success": "Sortat (Crescător)",
+    "status_reversed": "Ordine inversată (Descrescător)",
+    "status_wrong": "Valoare incorectă",
+    "status_incomplete": "În așteptarea completării ({filled}/{total})",
+    "status_error": "Eroare",
+    "feedback_empty": "Completează spațiile libere pentru a construi logica algoritmului!",
+    "feedback_reversed": "Codul tău sortează în ordine DESCRESCĂTOARE din cauza operatorului \"<\"! Folosește \">\" pentru ordine crescătoare.",
+    "feedback_wrong": "Valoarea introdusă \"{value}\" nu este corectă pentru acest câmp.",
+    "feedback_progress": "Arată bine până acum! Mai sunt necesare {remaining} câmpuri pentru a finaliza algoritmul.",
+    "feedback_success_sort": "Felicitări! Algoritmul tău a sortat corect tabloul în ordine crescătoare.",
+    "feedback_success_linear": "Perfect! Căutarea liniară a găsit elementul {target} la indexul {index}!",
+    "feedback_success_binary": "Perfect! Căutarea binară a găsit cu succes elementul căutat în vectorul sortat.",
+    "feedback_success_queens": "Excelent! Algoritmul backtracking a plasat cu succes cele 4 regine fără conflicte."
+  },
   "control": {
     "select_pair": "Selectează două elemente adiacente pentru comparare",
     "correct": "Corect!",

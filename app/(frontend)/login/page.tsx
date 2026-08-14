@@ -133,6 +133,7 @@ export default function LoginPage() {
               alt="Login illustration"
               width={420}
               height={420}
+              priority
               className="opacity-90 lg:opacity-100 translate-x-[22px]"
               style={{ width: '100%', height: 'auto' }}
             />
