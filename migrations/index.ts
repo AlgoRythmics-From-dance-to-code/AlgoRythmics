@@ -82,6 +82,6 @@ export const migrations = [
   {
     up: migration_20260726_081627_add_bug_reports.up,
     down: migration_20260726_081627_add_bug_reports.down,
-    name: '20260726_081627_add_bug_reports'
+    name: '20260726_081627_add_bug_reports',
   },
 ];

@@ -1,12 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Check, X } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
+import {
+  evaluateConfidence,
+  type ConfidenceLevel,
+  type ConfidenceEvaluationResult,
+} from '../../../lib/courses/confidenceEngine';
+import ConfidenceSelector from './ConfidenceSelector';
+import AdaptiveFeedbackCard from './AdaptiveFeedbackCard';
 
 interface GapFillComponentProps {
   phase: CoursePhase;
@@ -35,10 +40,13 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
 
   const [choices, setChoices] = useState<string[]>(new Array(blankCount).fill(''));
   const [showFeedback, setShowFeedback] = useState(false);
-  const [correctCount, setCorrectCount] = useState(0);
+  const [confidence, setConfidence] = useState<ConfidenceLevel>('high');
+  const [evaluation, setEvaluation] = useState<ConfidenceEvaluationResult | null>(null);
+
+  const { setCourseConfidenceRating } = useAlgorithmStore();
 
   const handleSelect = (blankIdx: number, val: string) => {
-    if (isDone || showFeedback) return;
+    if (isDone || showFeedback || evaluation) return;
     const newChoices = [...choices];
     newChoices[blankIdx] = val;
     setChoices(newChoices);
@@ -59,17 +67,27 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
       correct = blankCount;
     }
 
-    setCorrectCount(correct);
     setShowFeedback(true);
 
     const allCorrect = correct === blankCount;
     if (!allCorrect) onMistake?.();
+
+    const maxPoints = phase.maxPoints ?? 10;
+    const evalResult = evaluateConfidence({
+      isCorrect: allCorrect,
+      confidence,
+      basePoints: maxPoints,
+      hintCopy: phase.hintCopy,
+      summary: phase.summary,
+    });
+    setEvaluation(evalResult);
 
     trackEvent('gap_fill_checked', {
       phaseId: phase.phaseId,
       allCorrect,
       correctCount: correct,
       totalCount: blankCount,
+      confidence,
       choices: choices.map((c, i) => ({
         index: i,
         value: c,
@@ -77,9 +95,13 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
       })),
     });
 
-    // Scale points to phase maxPoints
-    const maxPoints = phase.maxPoints ?? 10;
-    const earnedPoints = blankCount === 0 ? 0 : Math.round((correct / blankCount) * maxPoints);
+    const baseEarned = blankCount === 0 ? 0 : Math.round((correct / blankCount) * maxPoints);
+    const earnedPoints = allCorrect
+      ? Math.min(
+          maxPoints + evalResult.bonusPoints,
+          Math.round(baseEarned * evalResult.scoreMultiplier) + evalResult.bonusPoints,
+        )
+      : Math.round(baseEarned * evalResult.scoreMultiplier);
 
     // Set points immediately
     setCoursePhasePoints(courseId, phase.phaseId, {
@@ -90,36 +112,55 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
     });
 
     setCoursePhaseResult(courseId, phase.phaseId, allCorrect ? 'success' : 'fail');
-    markCoursePhaseComplete(courseId, phase.phaseId);
+    setCourseConfidenceRating(courseId, phase.phaseId, confidence);
+
+    if (allCorrect || !evalResult.canRetry) {
+      markCoursePhaseComplete(courseId, phase.phaseId);
+    }
 
     // Sync to backend immediately
     setTimeout(() => syncProgress(), 0);
   };
 
+  const handleRetry = () => {
+    // Keep correct choices and reset incorrect choices for true scaffolding
+    if (solutions.length > 0) {
+      setChoices((prev) => prev.map((c, i) => (c === solutions[i] ? c : '')));
+    }
+    setShowFeedback(false);
+    setEvaluation(null);
+  };
+
+  const isConfidenceEnabled = phase.askConfidence !== false;
   let blankIdx = 0;
 
   return (
     <div className="flex flex-col items-center gap-10 p-4">
-      <div className="w-full max-w-2xl bg-gray-50/50 dark:bg-white/5 border border-gray-100 dark:border-white/10 p-10 rounded-3xl shadow-inner">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-6 text-xl leading-relaxed text-gray-700 dark:text-gray-200">
+      <div className="w-full max-w-2xl bg-gray-50/70 dark:bg-white/[0.03] border border-gray-200/80 dark:border-white/10 p-6 sm:p-10 rounded-3xl shadow-sm">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-6 text-lg sm:text-xl leading-relaxed text-gray-800 dark:text-gray-100">
           {parts.map((part, i) => {
             if (part === '[blank]') {
               const currentBlank = blankIdx++;
+              const isFilled = !!choices[currentBlank];
               return (
-                <div key={i} className="relative inline-block min-w-[120px]">
+                <div key={i} className="relative inline-block min-w-[130px]">
                   <select
-                    disabled={isDone || showFeedback}
+                    disabled={isDone || showFeedback || !!evaluation}
                     value={choices[currentBlank]}
                     onChange={(e) => handleSelect(currentBlank, e.target.value)}
-                    className={`w-full appearance-none px-4 py-2 rounded-xl border-2 font-bold text-sm bg-white cursor-pointer transition-all ${
-                      choices[currentBlank]
-                        ? 'border-[#269984] text-[#269984]'
-                        : 'border-gray-200 text-gray-400'
+                    className={`w-full appearance-none px-4 py-2.5 rounded-xl border-2 font-bold text-sm bg-white dark:bg-[#181824] dark:text-gray-100 cursor-pointer transition-all ${
+                      isFilled
+                        ? 'border-[#269984] text-[#269984] dark:text-[#36D6BA] ring-1 ring-[#269984]/20'
+                        : 'border-gray-200 dark:border-white/15 text-gray-400 dark:text-gray-500'
                     } focus:ring-2 focus:ring-[#269984]/20 outline-none`}
                   >
                     <option value="">...</option>
                     {options.map((opt, oIdx) => (
-                      <option key={oIdx} value={opt}>
+                      <option
+                        key={oIdx}
+                        value={opt}
+                        className="bg-white dark:bg-[#181824] text-gray-800 dark:text-gray-100"
+                      >
                         {opt}
                       </option>
                     ))}
@@ -137,52 +178,30 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
       </div>
 
       {!showFeedback && !isDone && (
-        <button
-          disabled={choices.some((c) => c === '')}
-          onClick={checkGaps}
-          className="px-10 py-4 bg-[#269984] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#269984]/30 hover:scale-105 transition-all disabled:opacity-30 disabled:scale-100"
-        >
-          {t('course.quiz.check')}
-        </button>
+        <div className="flex flex-col items-center gap-6 w-full max-w-xl">
+          {isConfidenceEnabled && (
+            <ConfidenceSelector
+              selected={confidence}
+              onChange={(lvl) => setConfidence(lvl)}
+              className="w-full"
+            />
+          )}
+
+          <button
+            type="button"
+            disabled={choices.some((c) => c === '')}
+            onClick={checkGaps}
+            className="w-full sm:w-auto px-10 py-4 bg-[#269984] hover:bg-[#208270] text-white rounded-2xl font-montserrat font-black uppercase tracking-widest shadow-xl shadow-[#269984]/25 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 disabled:scale-100 cursor-pointer disabled:cursor-not-allowed"
+          >
+            {t('course.quiz.check') || 'Kitöltés ellenőrzése'}
+          </button>
+        </div>
       )}
 
-      {showFeedback && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className={`p-6 rounded-3xl border-2 text-center flex flex-col items-center gap-3 w-full max-w-md ${
-            correctCount === blankCount
-              ? 'border-green-500 bg-green-500/5'
-              : 'border-red-500 bg-red-500/5'
-          }`}
-        >
-          <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              correctCount === blankCount ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-            }`}
-          >
-            {correctCount === blankCount ? <Check /> : <X />}
-          </div>
-          <h5
-            className={`font-black uppercase tracking-[0.2em] text-xs ${
-              correctCount === blankCount ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            {correctCount === blankCount
-              ? t('course.quiz.gapfill_success')
-              : t('course.quiz.gapfill_fail')}
-          </h5>
-          <p className="text-sm font-medium text-gray-500">
-            {correctCount === blankCount
-              ? t('course.quiz.gapfill_success_desc')
-              : t('course.quiz.gapfill_fail_desc')}
-          </p>
-          {correctCount < blankCount && (
-            <p className="text-xs font-bold text-gray-400">
-              {correctCount} / {blankCount} {t('courses.summary.earned')}
-            </p>
-          )}
-        </motion.div>
+      {evaluation && (
+        <div className="w-full max-w-xl">
+          <AdaptiveFeedbackCard evaluation={evaluation} onRetry={handleRetry} />
+        </div>
       )}
     </div>
   );

@@ -1,12 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Check, X, Bug } from 'lucide-react';
+import { Bug } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
+import {
+  evaluateConfidence,
+  type ConfidenceLevel,
+  type ConfidenceEvaluationResult,
+} from '../../../lib/courses/confidenceEngine';
+import ConfidenceSelector from './ConfidenceSelector';
+import AdaptiveFeedbackCard from './AdaptiveFeedbackCard';
 
 interface DebugComponentProps {
   phase: CoursePhase;
@@ -32,10 +38,13 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
+  const [confidence, setConfidence] = useState<ConfidenceLevel>('high');
+  const [evaluation, setEvaluation] = useState<ConfidenceEvaluationResult | null>(null);
+
+  const { setCourseConfidenceRating } = useAlgorithmStore();
 
   const handleLineClick = (idx: number) => {
-    if (isDone || showFeedback) return;
+    if (isDone || showFeedback || evaluation) return;
     setSelectedIndex(idx);
     trackEvent('debug_line_click', { lineIndex: idx, lineText: debugLines[idx] });
   };
@@ -44,32 +53,64 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
     if (selectedIndex === null) return;
 
     const correct = selectedIndex === bugLineIndex;
-    setIsCorrect(correct);
     if (!correct) onMistake?.();
+
+    const maxPoints = phase.maxPoints ?? 10;
+    const selectedLineText = debugLines[selectedIndex]?.trim();
+    const correctLineText = debugLines[bugLineIndex]?.trim();
+
+    const evalResult = evaluateConfidence({
+      isCorrect: correct,
+      confidence,
+      basePoints: maxPoints,
+      hintCopy: phase.hintCopy,
+      summary: phase.summary,
+      selectedAnswerText: selectedLineText,
+      correctAnswerText: correctLineText,
+    });
+    setEvaluation(evalResult);
 
     trackEvent('debug_checked', {
       phaseId: phase.phaseId,
       correct,
       selectedIndex,
       bugLineIndex,
+      confidence,
       selectedLineText: debugLines[selectedIndex],
     });
 
-    // Set points immediately (100% or 0%)
+    const baseEarned = correct ? maxPoints : 0;
+    const earnedPoints = correct
+      ? Math.min(
+          maxPoints + evalResult.bonusPoints,
+          Math.round(baseEarned * evalResult.scoreMultiplier) + evalResult.bonusPoints,
+        )
+      : Math.round(baseEarned * evalResult.scoreMultiplier);
+
+    // Set points immediately
     setCoursePhasePoints(courseId, phase.phaseId, {
-      earned: correct ? (phase.maxPoints ?? 10) : 0,
-      max: phase.maxPoints ?? 10,
+      earned: earnedPoints,
+      max: maxPoints,
       helpUsed: false,
       partial: false,
     });
 
     setShowFeedback(true);
-
     setCoursePhaseResult(courseId, phase.phaseId, correct ? 'success' : 'fail');
-    markCoursePhaseComplete(courseId, phase.phaseId);
+    setCourseConfidenceRating(courseId, phase.phaseId, confidence);
+
+    if (correct || !evalResult.canRetry) {
+      markCoursePhaseComplete(courseId, phase.phaseId);
+    }
 
     // Sync to backend immediately
     setTimeout(() => syncProgress(), 0);
+  };
+
+  const handleRetry = () => {
+    setShowFeedback(false);
+    setEvaluation(null);
+    setSelectedIndex(null);
   };
 
   return (
@@ -122,41 +163,30 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
       </div>
 
       {!showFeedback && !isDone && (
-        <button
-          disabled={selectedIndex === null}
-          onClick={checkBug}
-          className="px-10 py-4 bg-[#269984] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#269984]/30 hover:scale-105 transition-all disabled:opacity-30 disabled:scale-100"
-        >
-          {t('course.quiz.debug_title')}
-        </button>
+        <div className="flex flex-col items-center gap-6 w-full max-w-xl">
+          {phase.askConfidence !== false && (
+            <ConfidenceSelector
+              selected={confidence}
+              onChange={(lvl) => setConfidence(lvl)}
+              className="w-full"
+            />
+          )}
+
+          <button
+            type="button"
+            disabled={selectedIndex === null}
+            onClick={checkBug}
+            className="w-full sm:w-auto px-10 py-4 bg-[#269984] hover:bg-[#208270] text-white rounded-2xl font-montserrat font-black uppercase tracking-widest shadow-xl shadow-[#269984]/25 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 disabled:scale-100 cursor-pointer disabled:cursor-not-allowed"
+          >
+            {t('course.quiz.debug_title') || 'Hiba megjelölése és ellenőrzése'}
+          </button>
+        </div>
       )}
 
-      {showFeedback && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className={`p-6 rounded-3xl border-2 text-center flex flex-col items-center gap-3 w-full max-w-md ${
-            isCorrect ? 'border-green-500 bg-green-500/5' : 'border-red-500 bg-red-500/5'
-          }`}
-        >
-          <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-            }`}
-          >
-            {isCorrect ? <Check /> : <X />}
-          </div>
-          <h5
-            className={`font-black uppercase tracking-[0.2em] text-xs ${
-              isCorrect ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            {isCorrect ? t('course.quiz.debug_success') : t('course.quiz.debug_fail')}
-          </h5>
-          <p className="text-sm font-medium text-gray-500">
-            {isCorrect ? t('course.quiz.debug_success_desc') : t('course.quiz.debug_fail_desc')}
-          </p>
-        </motion.div>
+      {evaluation && (
+        <div className="w-full max-w-xl">
+          <AdaptiveFeedbackCard evaluation={evaluation} onRetry={handleRetry} />
+        </div>
       )}
     </div>
   );

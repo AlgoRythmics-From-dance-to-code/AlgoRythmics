@@ -56,6 +56,7 @@ export default function AboutPage() {
               alt={t('about.mission_alt')}
               width={400}
               height={400}
+              priority
               className="w-full h-auto dark:invert dark:hue-rotate-180"
               style={{ width: 'auto', height: 'auto' }}
             />

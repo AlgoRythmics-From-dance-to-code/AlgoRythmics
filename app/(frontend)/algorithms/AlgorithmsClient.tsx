@@ -178,18 +178,11 @@ export default function AlgorithmsClient() {
           {isAuthenticated && (
             <div className="flex flex-wrap items-center gap-3 flex-shrink-0 animate-in fade-in slide-in-from-right-4 duration-1000">
               <Link
-                href={`${ROUTES.BIG_O}#graph`}
+                href={ROUTES.BIG_O}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#269984]/10 hover:bg-[#269984]/20 border border-[#269984]/25 text-[#269984] hover:text-[#269984] font-montserrat font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 duration-300"
               >
                 <Activity className="w-4 h-4" />
-                {t('big_o.tab_graph') || 'Interactive Graph'}
-              </Link>
-              <Link
-                href={`${ROUTES.BIG_O}#race`}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#269984]/10 hover:bg-[#269984]/20 border border-[#269984]/25 text-[#269984] hover:text-[#269984] font-montserrat font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 duration-300"
-              >
-                <BarChart3 className="w-4 h-4" />
-                {t('big_o.tab_race') || 'Race Mode'}
+                {t('big_o.visualization') || 'Vizualizáció'}
               </Link>
             </div>
           )}

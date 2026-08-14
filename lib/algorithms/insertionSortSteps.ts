@@ -18,6 +18,8 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
       comparisons: 0,
       swapCount: 0,
       pass: 0,
+      highlightLine: 1,
+      variables: { n: arr.length, comparisons: 0, shifts: 0 },
     },
   ];
 
@@ -27,17 +29,26 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
   for (let i = 1; i < arr.length; i++) {
     // Current element being "inserted"
     let j = i;
+    const currentKey = arr[i].val;
 
     // Step: Pick element
     result.push({
       array: [...arr],
-      activeIndices: [],
+      activeIndices: [i],
       swapping: false,
       sortedIndices: Array.from({ length: i }, (_, k) => k),
       description: `Picking ${arr[j].val} to insert into the sorted part`,
       comparisons,
       swapCount: moveCount,
       pass: i - 1,
+      highlightLine: 3,
+      variables: {
+        i,
+        key: currentKey,
+        j: i - 1,
+        comparisons,
+        shifts: moveCount,
+      },
     });
 
     // Move the element left until it's in the correct relative position
@@ -56,6 +67,16 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
         comparisons,
         swapCount: moveCount,
         pass: i - 1,
+        highlightLine: 5,
+        variables: {
+          i,
+          j: j - 1,
+          key: arr[j].val,
+          'arr[j]': arr[j - 1].val,
+          'arr[j] > key': arr[j - 1].val > arr[j].val,
+          comparisons,
+          shifts: moveCount,
+        },
       });
 
       if (arr[j - 1].val > arr[j].val) {
@@ -77,6 +98,14 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
           comparisons,
           swapCount: moveCount,
           pass: i - 1,
+          highlightLine: 6,
+          variables: {
+            i,
+            j: j - 1,
+            shiftedVal: arr[j].val,
+            comparisons,
+            shifts: moveCount,
+          },
         });
 
         j--;
@@ -96,6 +125,14 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
       comparisons,
       swapCount: moveCount,
       pass: i - 1,
+      highlightLine: 8,
+      variables: {
+        i,
+        placedAt: j,
+        key: arr[j].val,
+        comparisons,
+        shifts: moveCount,
+      },
     });
   }
 
@@ -110,6 +147,12 @@ export function generateInsertionSortSteps(initialValues: number[]): SortStep[] 
     comparisons,
     swapCount: moveCount,
     pass: arr.length - 1,
+    highlightLine: 9,
+    variables: {
+      comparisons,
+      shifts: moveCount,
+      status: 'Sorted',
+    },
   });
 
   return result;

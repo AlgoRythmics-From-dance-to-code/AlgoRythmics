@@ -1,6 +1,6 @@
 /**
  * Central algorithm registry — provides a unified lookup for
- * step generators, code templates, node definitions, and analysis patterns.
+ * step generators, code templates, node definitions, code definitions, and analysis patterns.
  * Designed for reuse across algorithm detail pages and courses.
  */
 
@@ -22,12 +22,14 @@ import { generateNQueensSteps, N_QUEENS_DEFAULT_N } from './nQueensSteps';
 import { getCodeTemplate, type CodeTemplate } from './codeTemplates';
 import { getAlgorithmNodes, type AlgorithmNode } from './nodeDefinitions';
 import { getCodePatterns, type CodePattern } from './codeAnalysis';
+import { getAlgorithmCode, type AlgorithmCodeDefinition } from './codeDefinitions';
 
 export interface AlgorithmDefinition {
   id: string;
-  generateSteps: (values: number[]) => SortStep[];
+  generateSteps: (values: number[], target?: number) => SortStep[];
   defaultArray: number[];
   codeTemplate?: CodeTemplate;
+  codeDefinition?: AlgorithmCodeDefinition;
   nodes?: AlgorithmNode[];
   codePatterns?: CodePattern[];
   legend: { color: string; labelKey: string }[];
@@ -43,6 +45,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateBubbleSortSteps,
     defaultArray: BUBBLE_SORT_DEFAULT_ARRAY,
     codeTemplate: getCodeTemplate('bubble-sort'),
+    codeDefinition: getAlgorithmCode('bubble-sort'),
     nodes: getAlgorithmNodes('bubble-sort'),
     codePatterns: getCodePatterns('bubble-sort'),
     category: 'sorting',
@@ -64,6 +67,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateInsertionSortSteps,
     defaultArray: INSERTION_SORT_DEFAULT_ARRAY,
     codeTemplate: getCodeTemplate('insertion-sort'),
+    codeDefinition: getAlgorithmCode('insertion-sort'),
     nodes: getAlgorithmNodes('insertion-sort'),
     codePatterns: getCodePatterns('insertion-sort'),
     category: 'sorting',
@@ -85,6 +89,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateSelectionSortSteps,
     defaultArray: SELECTION_SORT_DEFAULT_ARRAY,
     codeTemplate: getCodeTemplate('selection-sort'),
+    codeDefinition: getAlgorithmCode('selection-sort'),
     nodes: getAlgorithmNodes('selection-sort'),
     codePatterns: getCodePatterns('selection-sort'),
     category: 'sorting',
@@ -99,6 +104,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateMergeSortSteps,
     defaultArray: MERGE_SORT_DEFAULT_ARRAY,
     codeTemplate: getCodeTemplate('merge-sort'),
+    codeDefinition: getAlgorithmCode('merge-sort'),
     nodes: getAlgorithmNodes('merge-sort'),
     codePatterns: getCodePatterns('merge-sort'),
     category: 'sorting',
@@ -113,6 +119,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateQuickSortSteps,
     defaultArray: QUICK_SORT_DEFAULT_ARRAY,
     codeTemplate: getCodeTemplate('quick-sort'),
+    codeDefinition: getAlgorithmCode('quick-sort'),
     nodes: getAlgorithmNodes('quick-sort'),
     codePatterns: getCodePatterns('quick-sort'),
     category: 'sorting',
@@ -128,6 +135,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateLinearSearchSteps,
     defaultArray: LINEAR_SEARCH_DEFAULT_ARRAY,
     codeTemplate: getCodeTemplate('linear-search'),
+    codeDefinition: getAlgorithmCode('linear-search'),
     nodes: getAlgorithmNodes('linear-search'),
     codePatterns: getCodePatterns('linear-search'),
     category: 'searching',
@@ -138,6 +146,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateBinarySearchSteps,
     defaultArray: BINARY_SEARCH_DEFAULT_ARRAY,
     codeTemplate: getCodeTemplate('binary-search'),
+    codeDefinition: getAlgorithmCode('binary-search'),
     nodes: getAlgorithmNodes('binary-search'),
     codePatterns: getCodePatterns('binary-search'),
     category: 'searching',
@@ -148,6 +157,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateShellSortSteps,
     defaultArray: SHELL_SORT_DEFAULT_ARRAY,
     codeTemplate: getCodeTemplate('shell-sort'),
+    codeDefinition: getAlgorithmCode('shell-sort'),
     nodes: getAlgorithmNodes('shell-sort'),
     codePatterns: getCodePatterns('shell-sort'),
     category: 'sorting',
@@ -162,6 +172,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateHeapSortSteps,
     defaultArray: HEAP_SORT_DEFAULT_ARRAY,
     codeTemplate: getCodeTemplate('heap-sort'),
+    codeDefinition: getAlgorithmCode('heap-sort'),
     nodes: getAlgorithmNodes('heap-sort'),
     codePatterns: getCodePatterns('heap-sort'),
     category: 'sorting',
@@ -176,6 +187,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateBogosortSteps,
     defaultArray: BOGOSORT_DEFAULT_ARRAY,
     codeTemplate: getCodeTemplate('bogosort'),
+    codeDefinition: getAlgorithmCode('bogosort'),
     nodes: getAlgorithmNodes('bogosort'),
     codePatterns: getCodePatterns('bogosort'),
     category: 'fun',
@@ -190,6 +202,7 @@ const registry: Record<string, AlgorithmDefinition> = {
     generateSteps: generateNQueensSteps,
     defaultArray: N_QUEENS_DEFAULT_N,
     codeTemplate: getCodeTemplate('n-queens'),
+    codeDefinition: getAlgorithmCode('n-queens'),
     nodes: getAlgorithmNodes('n-queens'),
     codePatterns: getCodePatterns('n-queens'),
     category: 'backtracking',
@@ -218,3 +231,4 @@ export { type SortStep, type SortItem } from './bubbleSortSteps';
 export { type CodeTemplate, type BlankSlot } from './codeTemplates';
 export { type AlgorithmNode } from './nodeDefinitions';
 export { type CodeAnalysisResult, analyzeCode } from './codeAnalysis';
+export { type AlgorithmCodeDefinition, type CodeLineItem } from './codeDefinitions';

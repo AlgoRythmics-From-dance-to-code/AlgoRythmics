@@ -4,6 +4,8 @@ import { headers as getHeaders } from 'next/headers';
 import { markdownToLexical } from '@/lib/courses/lexicalConverter';
 import type { Course } from '../../../../payload-types';
 
+export const maxDuration = 60;
+
 // ── Types for AI-generated course data ──
 interface LocalizedField {
   hu: string;
@@ -815,7 +817,7 @@ CRITICAL REQUIREMENTS:
           mascotMistakeLine: phase.mascotMistakeLine, // {hu, en, ro}
           hintCopy: phase.hintCopy, // {hu, en, ro}
           idleHelp: phase.idleHelp, // {hu, en, ro}
-          askConfidence: phase.askConfidence ?? false,
+          askConfidence: phase.askConfidence ?? true,
           maxPoints: phase.maxPoints ?? 10,
           infoContent: phase.infoContent, // {hu: LexicalObj, en: LexicalObj, ro: LexicalObj}
           customVideoId: phase.customVideoId,

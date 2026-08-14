@@ -2,7 +2,17 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Copy, Check, Printer, ArrowLeft, Award, ShieldCheck, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import {
+  Copy,
+  Check,
+  Printer,
+  ArrowLeft,
+  Award,
+  ShieldCheck,
+  Sparkles,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CertificateData {
@@ -100,7 +110,9 @@ export default function CertificatePage() {
         <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 max-w-md text-center shadow-2xl">
           <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Certificate Not Found</h2>
-          <p className="text-gray-400 text-sm mb-6">The requested certificate does not exist or has an invalid ID.</p>
+          <p className="text-gray-400 text-sm mb-6">
+            The requested certificate does not exist or has an invalid ID.
+          </p>
           <button
             onClick={() => router.push('/profil')}
             className="inline-flex items-center gap-2 bg-[#269984] hover:bg-[#1f7c6b] text-white font-bold px-6 py-3 rounded-xl transition-all shadow-lg text-sm"
@@ -117,10 +129,14 @@ export default function CertificatePage() {
     <>
       <style jsx global>{`
         @media print {
-          header, footer, nav, .no-print {
+          header,
+          footer,
+          nav,
+          .no-print {
             display: none !important;
           }
-          html, body {
+          html,
+          body {
             height: 100vh !important;
             margin: 0 !important;
             padding: 0 !important;

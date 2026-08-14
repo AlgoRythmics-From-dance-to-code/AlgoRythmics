@@ -31,6 +31,10 @@ export interface SortStep {
   discardedIndices?: number[];
   /** Special index for the pivot (Quick Sort) */
   pivotIndex?: number;
+  /** 1-based line number for code tracing in pseudocode/code viewer */
+  highlightLine?: number;
+  /** Live snapshot of variables for Variable Watch panel */
+  variables?: Record<string, string | number | boolean | null | undefined>;
 }
 
 /**
@@ -50,6 +54,8 @@ export function generateBubbleSortSteps(initialValues: number[]): SortStep[] {
       comparisons: 0,
       swapCount: 0,
       pass: 0,
+      highlightLine: 1,
+      variables: { n: arr.length, comparisons: 0, swaps: 0 },
     },
   ];
 
@@ -73,6 +79,16 @@ export function generateBubbleSortSteps(initialValues: number[]): SortStep[] {
         comparisons,
         swapCount,
         pass: i,
+        highlightLine: 4,
+        variables: {
+          i,
+          j,
+          'arr[j]': arr[j].val,
+          'arr[j+1]': arr[j + 1].val,
+          'arr[j] > arr[j+1]': arr[j].val > arr[j + 1].val,
+          comparisons,
+          swaps: swapCount,
+        },
       });
 
       if (arr[j].val > arr[j + 1].val) {
@@ -93,6 +109,16 @@ export function generateBubbleSortSteps(initialValues: number[]): SortStep[] {
           comparisons,
           swapCount,
           pass: i,
+          highlightLine: 5,
+          variables: {
+            i,
+            j,
+            temp: temp.val,
+            'arr[j]': arr[j].val,
+            'arr[j+1]': arr[j + 1].val,
+            comparisons,
+            swaps: swapCount,
+          },
         });
       }
     }
@@ -110,8 +136,34 @@ export function generateBubbleSortSteps(initialValues: number[]): SortStep[] {
       comparisons,
       swapCount,
       pass: i,
+      highlightLine: 2,
+      variables: {
+        i,
+        sortedVal: arr[arr.length - i - 1].val,
+        comparisons,
+        swaps: swapCount,
+      },
     });
   }
+
+  // Final step
+  result.push({
+    array: [...arr],
+    activeIndices: [],
+    swapping: false,
+    sortedIndices: arr.map((_, idx) => idx),
+    description: 'Array sorted!',
+    descriptionKey: 'visualizer.sorted_complete',
+    comparisons,
+    swapCount,
+    pass: arr.length - 1,
+    highlightLine: 6,
+    variables: {
+      comparisons,
+      swaps: swapCount,
+      status: 'Sorted',
+    },
+  });
 
   return result;
 }

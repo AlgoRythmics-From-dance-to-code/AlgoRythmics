@@ -80,7 +80,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <head>
+      <head data-clarity-unmask="true">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
