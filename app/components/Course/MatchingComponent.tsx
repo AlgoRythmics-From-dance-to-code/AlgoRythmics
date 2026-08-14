@@ -132,13 +132,16 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
     setCoursePhasePoints(courseId, phase.phaseId, {
       earned: earnedPoints,
       max: maxPoints,
-      helpUsed: evalResult.category === 'doubt' || evalResult.category === 'misconception',
+      helpUsed: false,
       partial: correctCount > 0 && correctCount < totalCount,
     });
 
     setCoursePhaseResult(courseId, phase.phaseId, allCorrect ? 'success' : 'fail');
     setCourseConfidenceRating(courseId, phase.phaseId, confidence);
-    markCoursePhaseComplete(courseId, phase.phaseId);
+
+    if (allCorrect || !evalResult.canRetry) {
+      markCoursePhaseComplete(courseId, phase.phaseId);
+    }
 
     // Sync to backend immediately
     setTimeout(() => syncProgress(), 0);

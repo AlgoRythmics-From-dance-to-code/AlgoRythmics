@@ -205,10 +205,14 @@ function QuizComponent({
     setCoursePhasePoints(courseId, phase.phaseId, {
       earned,
       max: maxPoints,
-      helpUsed: evalResult.category === 'doubt' || evalResult.category === 'misconception',
+      helpUsed: false,
       partial: !isCorrect,
     });
-    markCoursePhaseComplete(courseId, phase.phaseId);
+
+    if (isCorrect || !evalResult.canRetry) {
+      markCoursePhaseComplete(courseId, phase.phaseId);
+    }
+
     setTimeout(() => syncProgress(), 0);
   };
 

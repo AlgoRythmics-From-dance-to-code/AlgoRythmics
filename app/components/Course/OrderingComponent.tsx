@@ -82,14 +82,17 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
     setCoursePhasePoints(courseId, phase.phaseId, {
       earned: earnedPoints,
       max: maxPoints,
-      helpUsed: evalResult.category === 'doubt' || evalResult.category === 'misconception',
+      helpUsed: false,
       partial: correctCount > 0 && correctCount < totalCount,
     });
 
     setShowFeedback(true);
     setCoursePhaseResult(courseId, phase.phaseId, matchesOriginal ? 'success' : 'fail');
     setCourseConfidenceRating(courseId, phase.phaseId, confidence);
-    markCoursePhaseComplete(courseId, phase.phaseId);
+
+    if (matchesOriginal || !evalResult.canRetry) {
+      markCoursePhaseComplete(courseId, phase.phaseId);
+    }
 
     // Sync to backend immediately
     setTimeout(() => syncProgress(), 0);

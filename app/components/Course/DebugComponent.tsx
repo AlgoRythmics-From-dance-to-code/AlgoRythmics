@@ -91,14 +91,17 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
     setCoursePhasePoints(courseId, phase.phaseId, {
       earned: earnedPoints,
       max: maxPoints,
-      helpUsed: evalResult.category === 'doubt' || evalResult.category === 'misconception',
+      helpUsed: false,
       partial: false,
     });
 
     setShowFeedback(true);
     setCoursePhaseResult(courseId, phase.phaseId, correct ? 'success' : 'fail');
     setCourseConfidenceRating(courseId, phase.phaseId, confidence);
-    markCoursePhaseComplete(courseId, phase.phaseId);
+
+    if (correct || !evalResult.canRetry) {
+      markCoursePhaseComplete(courseId, phase.phaseId);
+    }
 
     // Sync to backend immediately
     setTimeout(() => syncProgress(), 0);

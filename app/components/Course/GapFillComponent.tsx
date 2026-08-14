@@ -107,13 +107,16 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
     setCoursePhasePoints(courseId, phase.phaseId, {
       earned: earnedPoints,
       max: maxPoints,
-      helpUsed: evalResult.category === 'doubt' || evalResult.category === 'misconception',
+      helpUsed: false,
       partial: correct > 0 && correct < blankCount,
     });
 
     setCoursePhaseResult(courseId, phase.phaseId, allCorrect ? 'success' : 'fail');
     setCourseConfidenceRating(courseId, phase.phaseId, confidence);
-    markCoursePhaseComplete(courseId, phase.phaseId);
+
+    if (allCorrect || !evalResult.canRetry) {
+      markCoursePhaseComplete(courseId, phase.phaseId);
+    }
 
     // Sync to backend immediately
     setTimeout(() => syncProgress(), 0);
