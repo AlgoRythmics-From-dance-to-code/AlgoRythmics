@@ -367,10 +367,10 @@ export const Courses: CollectionConfig = {
                 {
                   name: 'askConfidence',
                   type: 'checkbox',
-                  defaultValue: false,
+                  defaultValue: true,
                   admin: {
                     description:
-                      'Legyen-e magabiztosság ellenőrzés (kérdőív) a fázis befejezése után?',
+                      'Magabiztosság-alapú pontozás (CBL) és adaptív visszajelzés engedélyezése ennél a fázisnál.',
                   },
                 },
                 {

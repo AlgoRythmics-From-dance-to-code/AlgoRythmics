@@ -146,7 +146,7 @@ function toPhases(value: unknown): CoursePhase[] {
         mascotMistakeLine: (current.mascotMistakeLine as string) || '',
         hintCopy: (current.hintCopy as string) || '',
         idleHelp: (current.idleHelp as string) || '',
-        askConfidence: !!current.askConfidence,
+        askConfidence: current.askConfidence !== false,
         maxPoints: typeof current.maxPoints === 'number' ? current.maxPoints : 10,
         quiz,
         infoContent: current.infoContent,

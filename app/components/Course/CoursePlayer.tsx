@@ -29,11 +29,17 @@ const MatchingComponent = dynamic(() => import('./MatchingComponent'));
 const OrderingComponent = dynamic(() => import('./OrderingComponent'));
 const GapFillComponent = dynamic(() => import('./GapFillComponent'));
 const DebugComponent = dynamic(() => import('./DebugComponent'));
+const ConfidenceSelector = dynamic(() => import('./ConfidenceSelector'));
+const AdaptiveFeedbackCard = dynamic(() => import('./AdaptiveFeedbackCard'));
 
-type ConfidenceLevel = 'very-sure' | 'sure' | 'unsure' | 'guess';
-type PendingAdvance = {
-  phaseId: string;
-};
+import {
+  evaluateConfidence,
+  computeCourseConfidenceSummary,
+  type ConfidenceLevel,
+  type ConfidenceEvaluationResult,
+} from '../../../lib/courses/confidenceEngine';
+
+type LegacyConfidenceLevel = 'very-sure' | 'sure' | 'unsure' | 'guess' | ConfidenceLevel;
 
 function getCompletionFlag(
   progress: ReturnType<typeof useAlgorithmStore.getState>['algorithmProgress'][string],
@@ -131,7 +137,7 @@ function InfoComponent({
 function QuizComponent({
   phase,
   courseId,
-  accentColor,
+  accentColor: _accentColor,
   onMistake,
 }: {
   phase: CoursePhase;
@@ -140,17 +146,25 @@ function QuizComponent({
   onMistake?: () => void;
 }) {
   const { t } = useLocale();
-  const { markCoursePhaseComplete, setCoursePhasePoints, setCoursePhaseResult, syncProgress } =
-    useAlgorithmStore(
-      useShallow((state) => ({
-        markCoursePhaseComplete: state.markCoursePhaseComplete,
-        setCoursePhasePoints: state.setCoursePhasePoints,
-        setCoursePhaseResult: state.setCoursePhaseResult,
-        syncProgress: state.syncProgress,
-      })),
-    );
+  const {
+    markCoursePhaseComplete,
+    setCoursePhasePoints,
+    setCoursePhaseResult,
+    setCourseConfidenceRating,
+    syncProgress,
+  } = useAlgorithmStore(
+    useShallow((state) => ({
+      markCoursePhaseComplete: state.markCoursePhaseComplete,
+      setCoursePhasePoints: state.setCoursePhasePoints,
+      setCoursePhaseResult: state.setCoursePhaseResult,
+      setCourseConfidenceRating: state.setCourseConfidenceRating,
+      syncProgress: state.syncProgress,
+    })),
+  );
+  const [tentativeIdx, setTentativeIdx] = useState<number | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [confidence, setConfidence] = useState<ConfidenceLevel>('high');
+  const [evaluation, setEvaluation] = useState<ConfidenceEvaluationResult | null>(null);
   const isDone = useAlgorithmStore((state) =>
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
@@ -160,95 +174,144 @@ function QuizComponent({
 
   if (!q) return null;
 
-  const handleSelect = (idx: number) => {
-    if (isDone) return;
-    setSelectedIdx(idx);
-    setShowFeedback(true);
+  const handleSubmit = (idxToSubmit: number) => {
+    if (isDone || evaluation) return;
+    setSelectedIdx(idxToSubmit);
 
-    const isCorrect = idx === q.correctIndex;
+    const isCorrect = idxToSubmit === q.correctIndex;
+    const evalResult = evaluateConfidence({
+      isCorrect,
+      confidence,
+      basePoints: phase.maxPoints || 10,
+      explanation: q.explanation,
+      selectedAnswerText: q.options[idxToSubmit],
+      correctAnswerText: q.options[q.correctIndex],
+      hintCopy: phase.hintCopy,
+      summary: phase.summary,
+    });
+
+    setEvaluation(evalResult);
+
     if (!isCorrect) onMistake?.();
     setCoursePhaseResult(courseId, phase.phaseId, isCorrect ? 'success' : 'fail');
+    setCourseConfidenceRating(courseId, phase.phaseId, confidence);
+
     const maxPoints = phase.maxPoints || 10;
+    const earned = Math.min(
+      maxPoints + evalResult.bonusPoints,
+      Math.round(maxPoints * evalResult.scoreMultiplier) + evalResult.bonusPoints,
+    );
+
     setCoursePhasePoints(courseId, phase.phaseId, {
-      earned: isCorrect ? maxPoints : 0,
+      earned,
       max: maxPoints,
-      helpUsed: false,
-      partial: false,
+      helpUsed: evalResult.category === 'doubt' || evalResult.category === 'misconception',
+      partial: !isCorrect,
     });
     markCoursePhaseComplete(courseId, phase.phaseId);
     setTimeout(() => syncProgress(), 0);
   };
 
+  const handleRetry = () => {
+    setSelectedIdx(null);
+    setTentativeIdx(null);
+    setEvaluation(null);
+  };
+
   return (
     <div className="flex flex-col gap-6 p-4">
       <h3 className="text-xl font-bold text-black dark:text-white leading-snug">{q.question}</h3>
+
+      {/* Options List */}
       <div className="grid gap-3">
         {q.options.map((option, idx) => {
-          const isSelected = selectedIdx === idx;
+          const isTentative = tentativeIdx === idx && !evaluation && !isDone;
+          const isFinalSelected = selectedIdx === idx;
           const isCorrect = idx === q.correctIndex;
 
-          let borderClass = 'border-gray-100 dark:border-white/10';
+          let borderClass = 'border-gray-200/80 dark:border-white/10';
           let bgClass = 'bg-white dark:bg-white/5';
           let textClass = 'text-gray-700 dark:text-gray-300';
 
-          if (showFeedback || isDone) {
+          if (evaluation || isDone) {
             if (isCorrect) {
-              borderClass = 'border-green-500';
-              bgClass = 'bg-green-500/5';
-              textClass = 'text-green-700 dark:text-green-400';
-            } else if (isSelected) {
-              borderClass = 'border-red-500';
-              bgClass = 'bg-red-500/5';
-              textClass = 'text-red-700 dark:text-red-400';
+              borderClass = 'border-emerald-500 ring-2 ring-emerald-500/20';
+              bgClass = 'bg-emerald-500/10 dark:bg-emerald-500/20';
+              textClass = 'text-emerald-700 dark:text-emerald-300 font-bold';
+            } else if (isFinalSelected) {
+              borderClass = 'border-rose-500 ring-2 ring-rose-500/20';
+              bgClass = 'bg-rose-500/10 dark:bg-rose-500/20';
+              textClass = 'text-rose-700 dark:text-rose-300';
             }
+          } else if (isTentative) {
+            borderClass = 'border-[#269984] ring-2 ring-[#269984]/25 shadow-md';
+            bgClass = 'bg-[#269984]/10 dark:bg-[#269984]/20';
+            textClass = 'text-[#269984] dark:text-[#36D6BA] font-bold';
           }
 
           return (
             <button
               key={idx}
-              disabled={isDone || showFeedback}
-              onClick={() => handleSelect(idx)}
-              className={`flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all ${borderClass} ${bgClass} ${textClass}`}
-              style={
-                !showFeedback && !isDone && isSelected
-                  ? {
-                      borderColor: accentColor,
-                      backgroundColor: `${accentColor}10`,
-                      color: accentColor,
-                    }
-                  : {}
-              }
-              onMouseEnter={(e) => {
-                if (!isDone && !showFeedback && !isSelected) {
-                  e.currentTarget.style.borderColor = accentColor;
-                  e.currentTarget.style.backgroundColor = `${accentColor}05`;
-                }
+              type="button"
+              disabled={isDone || !!evaluation}
+              onClick={() => {
+                if (isDone || evaluation) return;
+                setTentativeIdx(idx);
               }}
-              onMouseLeave={(e) => {
-                if (!isDone && !showFeedback && !isSelected) {
-                  e.currentTarget.style.borderColor = '';
-                  e.currentTarget.style.backgroundColor = '';
-                }
-              }}
+              className={`flex items-center gap-4 p-4 sm:p-5 rounded-2xl border-2 text-left transition-all hover:scale-[1.005] active:scale-[0.995] ${borderClass} ${bgClass} ${textClass}`}
             >
               <div
-                className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold shrink-0 ${isSelected ? 'border-current' : 'border-gray-200 dark:border-white/10'}`}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-2 flex items-center justify-center font-black text-sm shrink-0 transition-colors ${
+                  isTentative
+                    ? 'border-[#269984] bg-[#269984] text-white shadow-sm'
+                    : isFinalSelected
+                      ? 'border-current text-white'
+                      : 'border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400'
+                }`}
               >
                 {String.fromCharCode(65 + idx)}
               </div>
-              <span className="flex-1 font-bold text-sm tracking-tight">{option}</span>
-              {(showFeedback || isDone) && isCorrect && (
-                <Check className="w-5 h-5 text-green-500" />
+              <span className="flex-1 font-semibold text-sm sm:text-base tracking-tight leading-snug">
+                {option}
+              </span>
+              {(evaluation || isDone) && isCorrect && (
+                <Check className="w-5 h-5 text-emerald-500 stroke-[3]" />
               )}
             </button>
           );
         })}
       </div>
-      {(showFeedback || isDone) && (
+
+      {/* Confidence Level Selector & Submit Action */}
+      {!evaluation && !isDone && (
+        <div className="flex flex-col gap-4 p-4 sm:p-5 rounded-2xl bg-gray-50/80 dark:bg-white/[0.03] border border-gray-200/80 dark:border-white/10 shadow-sm">
+          <ConfidenceSelector selected={confidence} onChange={(level) => setConfidence(level)} />
+
+          <button
+            type="button"
+            disabled={tentativeIdx === null}
+            onClick={() => tentativeIdx !== null && handleSubmit(tentativeIdx)}
+            className={`w-full py-4 rounded-xl font-montserrat font-black text-sm uppercase tracking-widest text-white shadow-lg transition-all flex items-center justify-center gap-2 ${
+              tentativeIdx !== null
+                ? 'bg-[#269984] hover:bg-[#208270] shadow-[#269984]/25 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer'
+                : 'bg-gray-300 dark:bg-white/10 text-gray-400 cursor-not-allowed shadow-none'
+            }`}
+          >
+            <span>{t('confidence.submit_answer') || 'Válasz megerősítése'}</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Adaptive Feedback Card */}
+      {evaluation && <AdaptiveFeedbackCard evaluation={evaluation} onRetry={handleRetry} />}
+
+      {/* Legacy/Default Done Feedback if opened after completion */}
+      {!evaluation && isDone && (
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={`p-5 rounded-2xl border-l-4 ${selectedIdx === q.correctIndex || (isDone && selectedIdx === null) ? 'bg-green-500/5 border-green-500 text-green-800 dark:text-green-400' : 'bg-red-500/5 border-red-500 text-red-800 dark:text-red-400'}`}
+          className="p-5 rounded-2xl border-l-4 bg-green-500/5 border-green-500 text-green-800 dark:text-green-400"
         >
           <p className="font-black uppercase tracking-widest text-[10px] mb-2 opacity-60">
             {t('course.quiz_explanation')}
@@ -432,8 +495,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const [mascotActions, setMascotActions] = useState<boolean>(false);
   const [streak, setStreak] = useState(0);
   const [phaseKey, setPhaseKey] = useState(0);
-  const [pendingAdvance, setPendingAdvance] = useState<PendingAdvance | null>(null);
-  const [showConfidenceModal, setShowConfidenceModal] = useState(false);
   const [isFinished, setIsFinished] = useState(!!courseProgress[course.slug]?.isCompleted);
   const [showRestartModal, setShowRestartModal] = useState(false);
   const [isInternalReset, setIsInternalReset] = useState(false);
@@ -481,8 +542,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       setIsFinished(false);
       setPhaseKey((v) => v + 1);
       setMascotVisible(false);
-      setPendingAdvance(null);
-      setShowConfidenceModal(false);
       syncProgress();
     } else if (modalMode === 'checkpoint' && pendingPhaseIndex !== null) {
       resetFutureProgressFrom(pendingPhaseIndex);
@@ -659,7 +718,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     setActivePhaseIndex(phaseIndex);
   };
 
-  const applyAdvance = (level?: ConfidenceLevel) => {
+  const applyAdvance = (level?: LegacyConfidenceLevel) => {
     if (!activePhase) return;
     const result = courseProgress[course.slug]?.phaseResults?.[activePhase.phaseId];
     const hasPointsForThisPhase = !!courseProgress[course.slug]?.phasePoints?.[activePhase.phaseId];
@@ -668,7 +727,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     if (!hasPointsForThisPhase) {
       if (isFailure) {
         setStreak(0);
-        if (level === 'very-sure' && course.mascot.enabled) {
+        if ((level === 'very-sure' || level === 'high') && course.mascot.enabled) {
           setMascotMood('overconfident');
           setMascotMessage(getRandomMessage(course.mascot.overconfidentMessages));
           if (mascotEnabled) setMascotVisible(true);
@@ -775,7 +834,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       promptShownRef.current = true;
       trackEvent('course_completed', { courseId: course.slug, totalTimeMs: elapsed });
     }
-    setPendingAdvance(null);
     setTimeout(() => syncProgress(), 0);
   };
 
@@ -784,15 +842,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     const nextPhaseIndex =
       activePhaseIndex < course.phases.length - 1 ? activePhaseIndex + 1 : null;
     if (nextPhaseIndex !== null && !canOpenPhase(nextPhaseIndex)) return;
-    if (activePhase.askConfidence) {
-      if (course.mascot.enabled) {
-        setMascotMood('confidence');
-        setMascotMessage(t('course.confidence_prompt'));
-        if (mascotEnabled) setMascotVisible(true);
-      }
-      setShowConfidenceModal(true);
-      return;
-    }
     applyAdvance();
   };
 
@@ -950,6 +999,63 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   </div>
                 </div>
               </div>
+
+              {/* Confidence & Mastery Profile Summary */}
+              {(() => {
+                const confSummary = computeCourseConfidenceSummary(
+                  courseProgress[course.slug]?.confidenceResults,
+                  courseProgress[course.slug]?.phaseResults,
+                );
+                if (confSummary.totalEvaluated === 0) return null;
+                return (
+                  <div className="w-full mb-6 p-5 rounded-2xl border border-gray-100 dark:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-sm text-left shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-gray-800 dark:text-gray-200 flex items-center gap-1.5 font-montserrat">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-current" />
+                        {t('confidence.matrix_title') || 'Tudás & Magabiztosság Elemzés'}
+                      </span>
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-montserrat">
+                        {confSummary.masteryRate}% Mester arány
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col">
+                        <span className="text-[9px] font-black uppercase tracking-tight text-emerald-700 dark:text-emerald-400 font-montserrat">
+                          🟢 Mesterfok
+                        </span>
+                        <span className="text-xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums mt-0.5">
+                          {confSummary.masteryCount}
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 flex flex-col">
+                        <span className="text-[9px] font-black uppercase tracking-tight text-teal-700 dark:text-teal-400 font-montserrat">
+                          🟡 Megerősítve
+                        </span>
+                        <span className="text-xl font-black text-teal-700 dark:text-teal-300 tabular-nums mt-0.5">
+                          {confSummary.luckyCount}
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex flex-col">
+                        <span className="text-[9px] font-black uppercase tracking-tight text-rose-700 dark:text-rose-400 font-montserrat">
+                          🔴 Tévhitek
+                        </span>
+                        <span className="text-xl font-black text-rose-700 dark:text-rose-300 tabular-nums mt-0.5">
+                          {confSummary.misconceptionCount}
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex flex-col">
+                        <span className="text-[9px] font-black uppercase tracking-tight text-amber-700 dark:text-amber-400 font-montserrat">
+                          💡 Rávezetés
+                        </span>
+                        <span className="text-xl font-black text-amber-700 dark:text-amber-300 tabular-nums mt-0.5">
+                          {confSummary.doubtCount}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Phase-by-phase breakdown */}
               <div className="w-full mb-8 rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden">
                 <div className="bg-gray-50 dark:bg-white/5 px-4 py-3 border-b border-gray-100 dark:border-white/10">
@@ -1506,121 +1612,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             </div>
           </div>
         </div>
-
-        {/* Confidence modal & mascot */}
-        <AnimatePresence>
-          {pendingAdvance && (
-            <div className="rounded-[2rem] border border-[#269984]/20 bg-[#f0fbf9] p-5 shadow-sm dark:bg-black/20">
-              <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#269984]">
-                {t('courses.confidence_check')}
-              </div>
-              <p className="mt-2 text-sm leading-7 text-[#444] dark:text-gray-300">
-                {t('course.confidence_prompt')}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                {(
-                  [
-                    ['very-sure', t('course.confidence_very_sure')],
-                    ['sure', t('course.confidence_sure')],
-                    ['unsure', t('course.confidence_unsure')],
-                    ['guess', t('course.confidence_guess')],
-                  ] as const
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    onClick={() => applyAdvance(value)}
-                    className="rounded-full border bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] transition-colors dark:bg-black/20 dark:text-white"
-                    style={{ borderColor: `${course.accentColor}33`, color: course.accentColor }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = `${course.accentColor}10`)
-                    }
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '')}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {showConfidenceModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-12">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={() => setShowConfidenceModal(false)}
-              />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] bg-white p-8 shadow-2xl dark:bg-gray-900"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
-                    style={{ backgroundColor: `${course.accentColor}15` }}
-                  >
-                    <Sparkles className="w-8 h-8" style={{ color: course.accentColor }} />
-                  </div>
-                  <h3 className="mb-3 text-2xl font-bold text-black dark:text-white">
-                    {t('course.confidence_title')}
-                  </h3>
-                  <p className="mb-8 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                    {t('course.confidence_desc')}
-                  </p>
-                  <div className="grid w-full gap-3">
-                    {(
-                      [
-                        ['very-sure', t('course.confidence_very_sure_desc')],
-                        ['sure', t('course.confidence_sure_desc')],
-                        ['unsure', t('course.confidence_unsure_desc')],
-                        ['guess', t('course.confidence_guess_desc')],
-                      ] as const
-                    ).map(([value, label]) => (
-                      <button
-                        key={value}
-                        onClick={() => {
-                          setShowConfidenceModal(false);
-                          applyAdvance(value);
-                        }}
-                        className="group flex items-center justify-between rounded-2xl border-2 border-gray-100 bg-gray-50 px-6 py-4 text-left transition-all dark:border-white/5 dark:bg-white/5"
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = course.accentColor;
-                          e.currentTarget.style.backgroundColor = `${course.accentColor}05`;
-                          const s = e.currentTarget.querySelector('span');
-                          const i = e.currentTarget.querySelector('svg');
-                          if (s) s.style.color = course.accentColor;
-                          if (i) i.style.color = course.accentColor;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = '';
-                          e.currentTarget.style.backgroundColor = '';
-                          const s = e.currentTarget.querySelector('span');
-                          const i = e.currentTarget.querySelector('svg');
-                          if (s) s.style.color = '';
-                          if (i) i.style.color = '';
-                        }}
-                      >
-                        <span className="font-bold text-gray-700 dark:text-gray-300 transition-colors">
-                          {label}
-                        </span>
-                        <ChevronRight className="h-5 w-5 text-gray-300 transition-colors" />
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => setShowConfidenceModal(false)}
-                    className="mt-6 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-600"
-                  >
-                    {t('course.confidence_later')}
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
 
         {course.mascot.enabled && mascotEnabled && (
           <motion.div

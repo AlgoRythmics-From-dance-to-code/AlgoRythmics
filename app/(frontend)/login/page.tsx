@@ -47,6 +47,7 @@ export default function LoginPage() {
     // Proactively clear stale state when arrival at login page
     clearAuthCookies();
     clearStore();
+    router.prefetch(ROUTES.HOME);
 
     const error = searchParams.get('error');
     if (error) {
@@ -62,7 +63,7 @@ export default function LoginPage() {
         id: 'login-required-toast',
       });
     }
-  }, [searchParams, t, clearStore]);
+  }, [searchParams, t, clearStore, router]);
 
   const socialLogin = (provider: string) => {
     setIsRedirecting(true);
@@ -101,6 +102,7 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
+        setIsLoading(false);
         setSystemError(t('login.errors.auth_failed'));
         toast.error(t('toasts.login_error'), {
           description: t('toasts.login_error_desc'),
@@ -108,16 +110,16 @@ export default function LoginPage() {
         return;
       }
 
+      setIsRedirecting(true);
       toast.success(t('toasts.login_success'));
-      router.push(ROUTES.HOME);
-      router.refresh();
+      window.location.href = ROUTES.HOME;
     } catch {
+      setIsLoading(false);
+      setIsRedirecting(false);
       setSystemError(t('toasts.unexpected_error'));
       toast.error(t('toasts.unexpected_error'), {
         description: t('toasts.unexpected_error_desc'),
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 

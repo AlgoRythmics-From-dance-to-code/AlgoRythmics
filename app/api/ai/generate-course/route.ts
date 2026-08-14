@@ -815,7 +815,7 @@ CRITICAL REQUIREMENTS:
           mascotMistakeLine: phase.mascotMistakeLine, // {hu, en, ro}
           hintCopy: phase.hintCopy, // {hu, en, ro}
           idleHelp: phase.idleHelp, // {hu, en, ro}
-          askConfidence: phase.askConfidence ?? false,
+          askConfidence: phase.askConfidence ?? true,
           maxPoints: phase.maxPoints ?? 10,
           infoContent: phase.infoContent, // {hu: LexicalObj, en: LexicalObj, ro: LexicalObj}
           customVideoId: phase.customVideoId,

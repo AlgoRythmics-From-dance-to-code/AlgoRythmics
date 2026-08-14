@@ -2,10 +2,17 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { useLocale } from '../../i18n/LocaleProvider';
 import type { CoursePhase } from '../../../lib/courses/courseCatalog';
+import {
+  evaluateConfidence,
+  type ConfidenceLevel,
+  type ConfidenceEvaluationResult,
+} from '../../../lib/courses/confidenceEngine';
+import ConfidenceSelector from './ConfidenceSelector';
+import AdaptiveFeedbackCard from './AdaptiveFeedbackCard';
 
 import { useAnalytics } from '../../hooks/useAnalytics';
 
@@ -42,15 +49,19 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
   );
 
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+  const [confidence, setConfidence] = useState<ConfidenceLevel>('high');
+  const [evaluation, setEvaluation] = useState<ConfidenceEvaluationResult | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
 
+  const { setCourseConfidenceRating } = useAlgorithmStore();
+
   const handleLeftSelect = (id: string) => {
-    if (isDone || showFeedback) return;
+    if (isDone || showFeedback || evaluation) return;
     setSelectedLeft(id);
   };
 
   const handleRightSelect = (id: string) => {
-    if (isDone || showFeedback || !selectedLeft) return;
+    if (isDone || showFeedback || evaluation || !selectedLeft) return;
 
     const leftText = initialLeft.find((l) => l.id === selectedLeft)?.text;
     const rightText = shuffledRight.find((r) => r.id === id)?.text;
@@ -85,11 +96,22 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
     const totalCount = results.length;
     const allCorrect = correctCount === totalCount;
 
+    const maxPoints = phase.maxPoints ?? 10;
+    const evalResult = evaluateConfidence({
+      isCorrect: allCorrect,
+      confidence,
+      basePoints: maxPoints,
+      hintCopy: phase.hintCopy,
+      summary: phase.summary,
+    });
+    setEvaluation(evalResult);
+
     trackEvent('matching_checked', {
       phaseId: phase.phaseId,
       correctCount,
       totalCount,
       allCorrect,
+      confidence,
       matrix: results.map((r) => ({
         left: initialLeft.find((l) => l.id === r.leftId)?.text,
         right: shuffledRight.find((right) => right.id === r.rightId)?.text,
@@ -99,28 +121,43 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
 
     if (!allCorrect) onMistake?.();
 
-    // Scale points to phase maxPoints
-    const maxPoints = phase.maxPoints ?? 10;
-    const earnedPoints = totalCount === 0 ? 0 : Math.round((correctCount / totalCount) * maxPoints);
+    const baseEarned = totalCount === 0 ? 0 : Math.round((correctCount / totalCount) * maxPoints);
+    const earnedPoints = allCorrect
+      ? Math.min(
+          maxPoints + evalResult.bonusPoints,
+          Math.round(baseEarned * evalResult.scoreMultiplier) + evalResult.bonusPoints,
+        )
+      : Math.round(baseEarned * evalResult.scoreMultiplier);
 
-    // Set points immediately for custom components
     setCoursePhasePoints(courseId, phase.phaseId, {
       earned: earnedPoints,
       max: maxPoints,
-      helpUsed: false,
+      helpUsed: evalResult.category === 'doubt' || evalResult.category === 'misconception',
       partial: correctCount > 0 && correctCount < totalCount,
     });
 
     setCoursePhaseResult(courseId, phase.phaseId, allCorrect ? 'success' : 'fail');
+    setCourseConfidenceRating(courseId, phase.phaseId, confidence);
     markCoursePhaseComplete(courseId, phase.phaseId);
 
     // Sync to backend immediately
     setTimeout(() => syncProgress(), 0);
   };
 
+  const handleRetry = () => {
+    // Keep correct matches and reset incorrect matches for true scaffolding
+    setMatches((prev) =>
+      prev.map((m) => (m.isCorrect ? m : { ...m, rightId: null, isCorrect: undefined })),
+    );
+    setShowFeedback(false);
+    setEvaluation(null);
+  };
+
+  const isConfidenceEnabled = phase.askConfidence !== false;
+
   return (
     <div className="flex flex-col gap-8 p-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 relative">
         {/* Left Side (Labels) */}
         <div className="space-y-4">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">
@@ -134,14 +171,15 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
             return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => handleLeftSelect(item.id)}
-                className={`w-full group relative flex items-center justify-between p-5 rounded-2xl border-2 transition-all ${
+                className={`w-full group relative flex items-center justify-between p-4 sm:p-5 rounded-2xl border-2 transition-all text-left ${
                   isSelected
-                    ? 'border-[#269984] bg-[#269984]/5 shadow-md'
-                    : 'border-gray-100 bg-white/50 hover:border-[#269984]/30'
+                    ? 'border-[#269984] bg-[#269984]/10 dark:bg-[#269984]/20 shadow-md ring-2 ring-[#269984]/20'
+                    : 'border-gray-200/80 dark:border-white/10 bg-white dark:bg-white/5 hover:border-[#269984]/40'
                 }`}
               >
-                <span className="font-bold text-sm text-gray-700 dark:text-gray-200">
+                <span className="font-bold text-sm text-gray-800 dark:text-gray-200">
                   {item.text}
                 </span>
                 <AnimatePresence>
@@ -149,16 +187,16 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
                     <motion.div
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className={`flex items-center gap-3 px-4 py-2 rounded-xl text-xs font-black ${
+                      className={`flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl text-xs font-black ${
                         showFeedback
                           ? match?.isCorrect
-                            ? 'bg-green-500 text-white'
-                            : 'bg-red-500 text-white'
-                          : 'bg-[#269984]/10 text-[#269984]'
+                            ? 'bg-emerald-500 text-white shadow-sm'
+                            : 'bg-rose-500 text-white shadow-sm'
+                          : 'bg-[#269984]/15 text-[#269984] dark:text-[#36D6BA]'
                       }`}
                     >
                       <ArrowRight className="w-3 h-3" />
-                      {rightItem.text}
+                      <span>{rightItem.text}</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -178,12 +216,13 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
               return (
                 <button
                   key={item.id}
+                  type="button"
                   disabled={isDone || showFeedback || isUsed}
                   onClick={() => handleRightSelect(item.id)}
-                  className={`p-5 rounded-2xl border-2 font-bold text-sm transition-all ${
+                  className={`p-4 sm:p-5 rounded-2xl border-2 font-bold text-sm transition-all text-left ${
                     isUsed
-                      ? 'border-transparent bg-gray-50 text-gray-300 opacity-50 cursor-not-allowed'
-                      : 'border-gray-100 bg-white hover:border-[#269984] hover:shadow-lg'
+                      ? 'border-transparent bg-gray-100/50 dark:bg-white/[0.02] text-gray-400 dark:text-gray-600 opacity-40 cursor-not-allowed'
+                      : 'border-gray-200/80 dark:border-white/10 bg-white dark:bg-white/5 text-gray-800 dark:text-gray-200 hover:border-[#269984] hover:shadow-lg active:scale-[0.99]'
                   }`}
                 >
                   {item.text}
@@ -195,49 +234,30 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
       </div>
 
       {!showFeedback && !isDone && (
-        <button
-          disabled={matches.some((m) => m.rightId === null)}
-          onClick={checkMatches}
-          className="self-center mt-8 px-10 py-4 bg-[#269984] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#269984]/30 hover:scale-105 transition-all disabled:opacity-30 disabled:scale-100"
-        >
-          {t('course.quiz.check')}
-        </button>
+        <div className="flex flex-col items-center gap-6 mt-4 w-full max-w-xl mx-auto">
+          {isConfidenceEnabled && (
+            <ConfidenceSelector
+              selected={confidence}
+              onChange={(lvl) => setConfidence(lvl)}
+              className="w-full"
+            />
+          )}
+
+          <button
+            type="button"
+            disabled={matches.some((m) => m.rightId === null)}
+            onClick={checkMatches}
+            className="w-full sm:w-auto px-10 py-4 bg-[#269984] hover:bg-[#208270] text-white rounded-2xl font-montserrat font-black uppercase tracking-widest shadow-xl shadow-[#269984]/25 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 disabled:scale-100 cursor-pointer disabled:cursor-not-allowed"
+          >
+            {t('course.quiz.check') || 'Párosítás ellenőrzése'}
+          </button>
+        </div>
       )}
 
-      {showFeedback && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`p-6 rounded-3xl border-2 text-center flex flex-col items-center gap-3 ${
-            matches.every((m) => m.isCorrect)
-              ? 'border-green-500 bg-green-500/5'
-              : 'border-red-500 bg-red-500/5'
-          }`}
-        >
-          <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              matches.every((m) => m.isCorrect)
-                ? 'bg-green-500 text-white'
-                : 'bg-red-500 text-white'
-            }`}
-          >
-            {matches.every((m) => m.isCorrect) ? <Check /> : <X />}
-          </div>
-          <h5
-            className={`font-black uppercase tracking-[0.2em] text-xs ${
-              matches.every((m) => m.isCorrect) ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            {matches.every((m) => m.isCorrect)
-              ? t('course.quiz.correct')
-              : t('course.quiz.incorrect')}
-          </h5>
-          <p className="text-sm font-medium text-gray-500">
-            {matches.every((m) => m.isCorrect)
-              ? t('course.quiz.matching_success_desc')
-              : t('course.quiz.matching_fail_desc')}
-          </p>
-        </motion.div>
+      {evaluation && (
+        <div className="mt-4 max-w-xl mx-auto w-full">
+          <AdaptiveFeedbackCard evaluation={evaluation} onRetry={handleRetry} />
+        </div>
       )}
     </div>
   );

@@ -109,7 +109,9 @@ export default function CodeTracingPanel({
                 key={idx}
                 ref={isHighlighted ? activeLineRef : null}
                 animate={{
-                  backgroundColor: isHighlighted ? 'rgba(38, 153, 132, 0.25)' : 'transparent',
+                  backgroundColor: isHighlighted
+                    ? 'rgba(38, 153, 132, 0.25)'
+                    : 'rgba(38, 153, 132, 0)',
                 }}
                 transition={{ duration: 0.2 }}
                 className={`flex items-center gap-3 px-2.5 py-1 rounded-lg transition-all relative ${
