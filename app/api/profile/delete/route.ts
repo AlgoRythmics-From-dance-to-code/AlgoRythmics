@@ -27,11 +27,39 @@ export async function DELETE(_req: Request) {
     }
 
     const dbUser = result.docs[0];
+    const userId = dbUser.id;
+
+    // Cascade delete user progress & analytics records to prevent orphan data
+    try {
+      await payload.delete({
+        collection: 'algorithm-progress',
+        where: { user: { equals: userId } },
+        overrideAccess: true,
+      });
+      await payload.delete({
+        collection: 'course-progress',
+        where: { user: { equals: userId } },
+        overrideAccess: true,
+      });
+      await payload.delete({
+        collection: 'learning-events',
+        where: { user: { equals: userId } },
+        overrideAccess: true,
+      });
+      await payload.delete({
+        collection: 'bug-reports',
+        where: { user: { equals: userId } },
+        overrideAccess: true,
+      });
+    } catch (cleanupErr) {
+      logger.warn({ userId, error: cleanupErr }, 'Non-fatal error during user cascade deletion');
+    }
 
     // Delete the user
     await payload.delete({
       collection: 'users',
-      id: dbUser.id,
+      id: userId,
+      overrideAccess: true,
     });
 
     logger.info({ userId: dbUser.id }, t('toasts.account_deleted'));

@@ -34,12 +34,16 @@ export default buildConfig({
     defaultLocale: 'hu',
     fallback: true,
   },
-  serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
+  serverURL:
+    process.env.PAYLOAD_PUBLIC_SERVER_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    'http://localhost:3000',
   csrf: [
-    process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
-    'https://nextjs-frontend-three-eta.vercel.app',
-  ].filter(Boolean),
+    process.env.PAYLOAD_PUBLIC_SERVER_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+    'http://localhost:3000',
+  ].filter((url): url is string => Boolean(url)),
   cookiePrefix: 'algorythmics-admin',
   collections: [
     Courses,
@@ -52,7 +56,15 @@ export default buildConfig({
     BugReports,
   ],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || 'fallback-secret',
+  secret:
+    process.env.PAYLOAD_SECRET ||
+    (process.env.NODE_ENV === 'production'
+      ? (() => {
+          throw new Error(
+            'CRITICAL: PAYLOAD_SECRET environment variable is missing in production!',
+          );
+        })()
+      : 'dev-fallback-secret-algorythmics-12345'),
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },

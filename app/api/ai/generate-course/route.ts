@@ -4,6 +4,8 @@ import { headers as getHeaders } from 'next/headers';
 import { markdownToLexical } from '@/lib/courses/lexicalConverter';
 import type { Course } from '../../../../payload-types';
 
+export const maxDuration = 60;
+
 // ── Types for AI-generated course data ──
 interface LocalizedField {
   hu: string;
