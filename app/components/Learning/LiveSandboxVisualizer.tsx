@@ -31,7 +31,7 @@ export default function LiveSandboxVisualizer({
     let msg = t(simulation.feedbackKey) || '';
     if (simulation.feedbackParams) {
       for (const [k, v] of Object.entries(simulation.feedbackParams)) {
-        msg = msg.replace(`{${k}}`, String(v));
+        msg = msg.split(`{${k}}`).join(String(v));
       }
     }
     return msg;

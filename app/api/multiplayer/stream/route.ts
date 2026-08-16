@@ -77,10 +77,26 @@ export async function GET(request: Request) {
         controller.enqueue(encoder.encode(initialPayload));
       }
 
-      // Send initial keepalive
+      // Send initial keepalive and set up periodic keepalive (every 15s) to prevent proxy timeouts
       controller.enqueue(encoder.encode(': keepalive\n\n'));
+      const keepAliveTimer = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(': keepalive\n\n'));
+        } catch {
+          clearInterval(keepAliveTimer);
+        }
+      }, 15000);
+
+      // Store timer for cleanup
+      (controller as unknown as { _keepAliveTimer?: NodeJS.Timeout })._keepAliveTimer =
+        keepAliveTimer;
     },
     cancel() {
+      if (streamController) {
+        const timer = (streamController as unknown as { _keepAliveTimer?: NodeJS.Timeout })
+          ._keepAliveTimer;
+        if (timer) clearInterval(timer);
+      }
       const roomSubscribers = subscribers.get(roomId);
       if (roomSubscribers && streamController) {
         roomSubscribers.delete(streamController);

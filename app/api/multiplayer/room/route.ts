@@ -18,6 +18,9 @@ if (!globalRooms.__ALGORHYTHMICS_ROOMS__) {
 }
 
 const rooms = globalRooms.__ALGORHYTHMICS_ROOMS__;
+const MAX_CONCURRENT_ROOMS = 200;
+const MAX_PAYLOAD_SIZE = 64 * 1024; // 64 KB limit
+const ROOM_ID_REGEX = /^[A-Z0-9_-]{3,24}$/i;
 
 // Helper: Clean up expired rooms (> 4 hours inactive)
 function cleanupStaleRooms() {
@@ -34,8 +37,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const roomId = searchParams.get('roomId')?.toUpperCase().trim();
 
-  if (!roomId) {
-    return NextResponse.json({ error: 'Room ID is required' }, { status: 400 });
+  if (!roomId || !ROOM_ID_REGEX.test(roomId)) {
+    return NextResponse.json({ error: 'Valid Room ID is required' }, { status: 400 });
   }
 
   const record = rooms.get(roomId);
@@ -49,23 +52,49 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   cleanupStaleRooms();
   try {
-    const body = await request.json();
+    const rawBody = await request.text();
+
+    // Payload size guard to prevent DoS via huge bodies
+    if (rawBody.length > MAX_PAYLOAD_SIZE) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
+    const body = JSON.parse(rawBody);
     const { action, roomId, player, roomState } = body;
 
     const cleanRoomId = (roomId || roomState?.roomId)?.toUpperCase().trim();
 
-    if (!cleanRoomId) {
-      return NextResponse.json({ error: 'Room ID is required' }, { status: 400 });
+    if (!cleanRoomId || !ROOM_ID_REGEX.test(cleanRoomId)) {
+      return NextResponse.json(
+        { error: 'Valid Room ID is required (3-24 alphanumeric chars)' },
+        { status: 400 },
+      );
     }
 
     if (action === 'CREATE_ROOM') {
+      if (rooms.size >= MAX_CONCURRENT_ROOMS && !rooms.has(cleanRoomId)) {
+        cleanupStaleRooms();
+        if (rooms.size >= MAX_CONCURRENT_ROOMS) {
+          return NextResponse.json(
+            { error: 'Server room capacity reached. Try again shortly.' },
+            { status: 429 },
+          );
+        }
+      }
+
       const initialRoom: MultiplayerRoomState = roomState
-        ? { ...roomState, version: 1 }
+        ? {
+            ...roomState,
+            roomId: cleanRoomId,
+            players: (roomState.players || []).slice(0, 16),
+            array: (roomState.array || []).slice(0, 32),
+            version: 1,
+          }
         : {
             roomId: cleanRoomId,
             status: 'lobby',
             mode: 'bubble_sort',
-            controlStyle: 'spatial',
+            controlStyle: 'physical',
             teamSize: 4,
             players: player ? [player] : [],
             array: [],
@@ -88,11 +117,14 @@ export async function POST(request: Request) {
 
       // If room doesn't exist yet on server, initialize it
       if (!record) {
+        if (rooms.size >= MAX_CONCURRENT_ROOMS) {
+          return NextResponse.json({ error: 'Server room capacity reached.' }, { status: 429 });
+        }
         const createdRoom: MultiplayerRoomState = {
           roomId: cleanRoomId,
           status: 'lobby',
           mode: 'bubble_sort',
-          controlStyle: 'spatial',
+          controlStyle: 'physical',
           teamSize: 4,
           players: player ? [{ ...player, isHost: false, currentSlot: 0 }] : [],
           array: [],
@@ -109,8 +141,8 @@ export async function POST(request: Request) {
       const currentRoom = record.state;
       const joiningPlayer = player as Player;
 
-      if (!joiningPlayer) {
-        return NextResponse.json({ error: 'Player data is required' }, { status: 400 });
+      if (!joiningPlayer || !joiningPlayer.id || !joiningPlayer.name) {
+        return NextResponse.json({ error: 'Valid player data is required' }, { status: 400 });
       }
 
       // Check if player is already in room
@@ -126,6 +158,10 @@ export async function POST(request: Request) {
           ...joiningPlayer,
         };
       } else {
+        // Enforce maximum players limit (16)
+        if (updatedPlayers.length >= 16) {
+          return NextResponse.json({ error: 'Room is full (max 16 players)' }, { status: 400 });
+        }
         // Append new player to next slot
         const newPlayerWithSlot: Player = {
           ...joiningPlayer,
@@ -155,19 +191,27 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'roomState is required' }, { status: 400 });
       }
 
-      const prevVersion = rooms.get(cleanRoomId)?.state.version || 0;
-      const updatedRoom: MultiplayerRoomState = {
+      const existingRecord = rooms.get(cleanRoomId);
+      if (!existingRecord) {
+        return NextResponse.json({ error: 'Cannot update non-existent room' }, { status: 404 });
+      }
+
+      // Sanitize roomState arrays and lengths
+      const sanitizedState: MultiplayerRoomState = {
         ...roomState,
-        version: prevVersion + 1,
+        roomId: cleanRoomId,
+        players: (roomState.players || []).slice(0, 16),
+        array: (roomState.array || []).slice(0, 32),
+        version: (existingRecord.state.version || 0) + 1,
       };
 
       rooms.set(cleanRoomId, {
-        state: updatedRoom,
+        state: sanitizedState,
         lastUpdated: Date.now(),
       });
 
-      broadcastRoomUpdate(cleanRoomId, updatedRoom);
-      return NextResponse.json({ success: true, room: updatedRoom });
+      broadcastRoomUpdate(cleanRoomId, sanitizedState);
+      return NextResponse.json({ success: true, room: sanitizedState });
     }
 
     if (action === 'PLAYER_MOVE') {
