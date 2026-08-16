@@ -22,6 +22,7 @@ export const ROUTES = {
   ALGORITHMS: '/algorithms',
   BIG_O: '/big-o',
   COURSES: '/courses',
+  MULTIPLAYER: '/multiplayer',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
   LEADERBOARD: '/leaderboard',

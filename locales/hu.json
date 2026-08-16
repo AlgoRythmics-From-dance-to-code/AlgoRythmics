@@ -42,7 +42,8 @@
     "about": "Rólunk",
     "terms": "Felhasználási feltételek",
     "privacy": "Adatvédelmi irányelvek",
-    "leaderboard": "Ranglista"
+    "leaderboard": "Ranglista",
+    "multiplayer": "Multiplayer"
   },
   "aria": {
     "go_home": "Ugrás a kezdőlapra",
@@ -1069,5 +1070,150 @@
     "submit_answer": "Válasz megerősítése",
     "matrix_title": "Tudás & Magabiztosság Elemzés",
     "matrix_desc": "A kurzus során elért eredményeid és önértékelésed összefoglalója."
+  },
+  "multiplayer": {
+    "title": "Többjátékos Aréna",
+    "subtitle": "Irányítsátok a köreiteket együtt, tanuljatok algoritmusokat mozgással vagy diszkrét gombokkal valós időben!",
+    "badge": "AlgoRythmics Valós Idejű Multiplayer",
+    "room_code": "Szoba Kód",
+    "share_link": "Link Megosztása",
+    "link_copied": "Link Másolva!",
+    "copy_result": "Eredmény Másolása",
+    "copied": "Másolva!",
+    "auth_required_title": "Bejelentkezés Szükséges",
+    "auth_required_desc": "A többjátékos aréna használatához, a saját neved betöltéséhez és a mérkőzés statisztikáid rögzítéséhez kérjük, jelentkezz be a fiókodba!",
+    "login_btn": "Bejelentkezés",
+    "register_btn": "Új Fiók Regisztrációja",
+    "back_to_algorithms": "Vissza az Algoritmusokhoz",
+    "live_game": "Élő Játék",
+    "step_1_title": "1. Irányítási Stílus Kiválasztása",
+    "step_2_title": "2. Algoritmus Feladvány Kiválasztása",
+    "profile_title": "Saját Profil",
+    "logged_in_as": "Bejelentkezve",
+    "player_name": "Játékos Név",
+    "auto_filled": "Automatikusan a bejelentkezett fiókodból betöltve.",
+    "neon_color": "Kör Neon Színe",
+    "team_size": "Csapat Létszám",
+    "players_count": "{count} Fő",
+    "team_members": "Csapattagok",
+    "add_student": "+ Tanuló",
+    "add_student_placeholder": "Diák hozzáadása...",
+    "start_game": "Játék Indítása ({count} játékossal)",
+    "match_history": "Korábbi Meccsek & Statisztikák",
+    "controls": {
+      "spatial": {
+        "title": "AlgoMatrix: Kvantum Hacker Váltó",
+        "desc": "Aszimmetrikus Co-Op akciójáték! A Szkennelő célba veszi az anomáliákat, a Reaktor Operátor végrehajtja a kvantum átkapcsolást!",
+        "selected": "Kiválasztva"
+      },
+      "discrete": {
+        "title": "Gombos / Diszkrét",
+        "desc": "Rögzített kártya slotok, Space / kattintásos csere, tiszta algoritmus-logika és reakcióidő.",
+        "selected": "Kiválasztva"
+      },
+      "physical": {
+        "title": "Tantermi Élő Mozgás",
+        "desc": "Fizikai felállás a teremben, zéró padlópont, telefonos koccintás / rázás és szinkronizáció.",
+        "selected": "Kiválasztva"
+      }
+    },
+    "modes": {
+      "bubble_sort": {
+        "name": "Bubble Sort Váltó",
+        "desc": "Szomszédos elemek összehasonlítása és térbeli/gombos cseréje.",
+        "tag": "Rendezés • O(N²)"
+      },
+      "quick_sort": {
+        "name": "QuickSort Pivot Vihar",
+        "desc": "Pivot alapú térfél-választás és particionálás.",
+        "tag": "Oszd meg és uralkodj • O(N log N)"
+      },
+      "binary_search": {
+        "name": "Bináris Kereső Csipesz",
+        "desc": "Bal és Jobb mutatók közös szűkítése a felezőpont alapján.",
+        "tag": "Keresés • O(log N)"
+      },
+      "merge_sort": {
+        "name": "Merge Sort Futószalag",
+        "desc": "Két rendezett részsorozat párhuzamos összefésülése.",
+        "tag": "Két-mutatós • O(N log N)"
+      }
+    },
+    "hud": {
+      "elapsed_time": "Eltelt Idő",
+      "comparisons": "Összehasonlítások",
+      "swaps": "Cserék",
+      "choreography": "Koreográfia Szinkron",
+      "errors": "Hibás Lépések",
+      "room_code": "Szoba Kód"
+    },
+    "spatial_arena": {
+      "control_hint": "Húzd a kártyádat a partnerre, vagy használd a **Space** és **Enter** billentyűket!",
+      "compare_btn": "Jóváhagyás (Enter)",
+      "swap_btn": "Tánclépés: Csere (Space)"
+    },
+    "discrete_arena": {
+      "swap_alert": "Figyelem: [{valA}] > [{valB}]! Cseréld ki az elemeket!",
+      "ok_alert": "[{valA}] és [{valB}] rendben van, kattints az Összehasonlításra a továbblépéshez.",
+      "space_hint": "Space = Csere",
+      "enter_hint": "Enter = Tovább",
+      "you_badge": "Te",
+      "compare_btn": "Összehasonlítás (Enter)",
+      "swap_btn": "Csere (Space)"
+    },
+    "physical_arena": {
+      "banner_badge": "Tantermi Mozgásérzékelős Mód",
+      "banner_title": "Sétáljatok a teremben & Koccintsatok cseréhez!",
+      "banner_desc": "Elhaladáskor koccintsátok össze finoman a telefonjaitokat a cseréhez – vagy nyomjátok meg a gombot!",
+      "your_turn": "🔥 TE VAGY SORON A TEREMBEN!",
+      "watch_others": "👀 Figyeld a többiek mozgását a sorban",
+      "sensor_title": "Mozgás & Koccintás Érzékelő",
+      "bump_detected": "💥 KOCCINTÁS ÉSZLELVE!",
+      "active": "Aktív",
+      "steps_count": "Lépések: {count} • Rázd meg vagy koccints a csere aktiválásához!",
+      "enable_sensors": "Engedélyezés",
+      "living_order": "A Tantermi Élő Sorrend (Balról Jobbra)",
+      "students_in_room": "{count} Tanuló a teremben",
+      "pos_in_line": "{pos}. Hely a sorban",
+      "action_badge": "AKCIÓ",
+      "you_are": "Te Vagy",
+      "current_task": "Jelenlegi Terembéli Feladat",
+      "swap_needed_desc": "👉 {playerA} és {playerB}: Sétáljatok át egymás mellett a teremben és koccintsatok (vagy nyomjátok meg az alábbi gombot)!",
+      "ok_desc": "✅ {playerA} és {playerB} már jó sorrendben áll a teremben! Nyomjátok meg a Megkérdeztük gombot a továbblépéshez.",
+      "button_ok": "1. Megkérdeztük Egymást (OK)",
+      "button_swap": "2. Koccintottunk / Helyet Cseréltünk!"
+    },
+    "post_match": {
+      "title": "Algoritmus Sikeresen Teljesítve!",
+      "subtitle": "{mode} • {teamSize} Fős Csapat • {control}",
+      "tab_overview": "Összegzés & Statisztika",
+      "tab_players": "Játékosok ({count})",
+      "tab_steps": "Lépés Napló ({count})",
+      "time": "Idő",
+      "accuracy": "Pontosság",
+      "choreography": "Koreográfia",
+      "complexity": "Bonyolultság",
+      "analysis_title": "🧠 Algoritmus Elemzés & Hatékonyság",
+      "total_steps": "Összes Lépés: {count}",
+      "analysis_text": "A csapat összesen {comparisons} összehasonlítást és {swaps} cserét hajtott végre. Az elméleti {complexity} korlátok között maradtatok, minimalizálva a felesleges lépéseket.",
+      "success_ratio": "Sikeres lépések aránya",
+      "mvp_badge": "Csapat MVP (Legaktívabb)",
+      "contribution_points": "Hozzájárulási pont",
+      "accuracy_label": "{accuracy}% pontosság",
+      "points_label": "{points} pont",
+      "no_steps": "Nincsenek rögzített lépések.",
+      "play_again": "Újra Játék",
+      "back_to_lobby": "Vissza a Lobbyba"
+    },
+    "history": {
+      "title": "Multiplayer Mérkőzés Előzmények",
+      "subtitle": "Rögzített lépések, idők és statisztikák",
+      "total_games": "Összes Meccs",
+      "avg_accuracy": "Átlagos Pontosság",
+      "avg_choreography": "Átlag Koreográfia",
+      "total_swaps": "Összes Csere",
+      "no_history": "Még nincsenek rögzített többjátékos meccseid. Indíts el egyet a lobbyból!",
+      "close": "Bezárás"
+    }
   }
 }

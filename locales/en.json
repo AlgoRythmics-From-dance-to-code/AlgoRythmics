@@ -42,7 +42,8 @@
     "about": "About Us",
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
-    "leaderboard": "Leaderboard"
+    "leaderboard": "Leaderboard",
+    "multiplayer": "Multiplayer"
   },
   "aria": {
     "go_home": "Go to homepage",
@@ -1070,5 +1071,150 @@
     "submit_answer": "Confirm & Submit",
     "matrix_title": "Knowledge & Confidence Matrix",
     "matrix_desc": "Summary of your answers and self-assessments throughout the course."
+  },
+  "multiplayer": {
+    "title": "Multiplayer Arena",
+    "subtitle": "Control your nodes collaboratively, learning algorithms via motion or discrete keys in real time!",
+    "badge": "AlgoRythmics Real-time Multiplayer",
+    "room_code": "Room Code",
+    "share_link": "Share Link",
+    "link_copied": "Link Copied!",
+    "copy_result": "Copy Result",
+    "copied": "Copied!",
+    "auth_required_title": "Authentication Required",
+    "auth_required_desc": "To access the multiplayer arena, load your profile, and record your match analytics, please log in to your account!",
+    "login_btn": "Log In",
+    "register_btn": "Create New Account",
+    "back_to_algorithms": "Back to Algorithms",
+    "live_game": "Live Match",
+    "step_1_title": "1. Select Control Style",
+    "step_2_title": "2. Select Algorithm Challenge",
+    "profile_title": "Player Profile",
+    "logged_in_as": "Logged In",
+    "player_name": "Player Name",
+    "auto_filled": "Automatically loaded from your account.",
+    "neon_color": "Neon Circle Color",
+    "team_size": "Team Size",
+    "players_count": "{count} Players",
+    "team_members": "Team Roster",
+    "add_student": "+ Student",
+    "add_student_placeholder": "Add student name...",
+    "start_game": "Start Game ({count} players)",
+    "match_history": "Match History & Analytics",
+    "controls": {
+      "spatial": {
+        "title": "AlgoMatrix: Quantum Hacker Relay",
+        "desc": "Asymmetric Co-Op action! The Scanner locks anomaly targets, while the Reactor Operator pulls the quantum swap thruster!",
+        "selected": "Selected"
+      },
+      "discrete": {
+        "title": "Button / Discrete",
+        "desc": "Fixed card slots, Space / click swapping, focused algorithm logic and quick reaction.",
+        "selected": "Selected"
+      },
+      "physical": {
+        "title": "Classroom Living Movement",
+        "desc": "Physical line in the room, zero floor markers, mobile bump / shake and live synchronization.",
+        "selected": "Selected"
+      }
+    },
+    "modes": {
+      "bubble_sort": {
+        "name": "Bubble Sort Relay",
+        "desc": "Adjacent element comparison and spatial/button swapping.",
+        "tag": "Sorting • O(N²)"
+      },
+      "quick_sort": {
+        "name": "QuickSort Pivot Storm",
+        "desc": "Pivot-based boundary splitting and kinetic partitioning.",
+        "tag": "Divide & Conquer • O(N log N)"
+      },
+      "binary_search": {
+        "name": "Binary Search Caliper",
+        "desc": "Collaborative left and right pointer squeezing around midpoint.",
+        "tag": "Search • O(log N)"
+      },
+      "merge_sort": {
+        "name": "Merge Sort Conveyor",
+        "desc": "Parallel interleaving of two sorted subarrays onto a main track.",
+        "tag": "Two-Pointer • O(N log N)"
+      }
+    },
+    "hud": {
+      "elapsed_time": "Elapsed Time",
+      "comparisons": "Comparisons",
+      "swaps": "Swaps",
+      "choreography": "Choreography Sync",
+      "errors": "Invalid Moves",
+      "room_code": "Room Code"
+    },
+    "spatial_arena": {
+      "control_hint": "Drag your dancer card onto the partner, or use **Space** and **Enter**!",
+      "compare_btn": "Confirm (Enter)",
+      "swap_btn": "Dance Step: Swap (Space)"
+    },
+    "discrete_arena": {
+      "swap_alert": "Attention: [{valA}] > [{valB}]! Swap the elements!",
+      "ok_alert": "[{valA}] and [{valB}] are in order, click Compare to advance.",
+      "space_hint": "Space = Swap",
+      "enter_hint": "Enter = Next",
+      "you_badge": "You",
+      "compare_btn": "Compare (Enter)",
+      "swap_btn": "Swap (Space)"
+    },
+    "physical_arena": {
+      "banner_badge": "Classroom Motion Sensor Mode",
+      "banner_title": "Walk across the room & Bump phones to swap!",
+      "banner_desc": "When crossing paths, gently bump your phones together to swap – or press the button below!",
+      "your_turn": "🔥 IT'S YOUR TURN IN THE ROOM!",
+      "watch_others": "👀 Watch the formation progress",
+      "sensor_title": "Motion & Bump Sensor",
+      "bump_detected": "💥 BUMP DETECTED!",
+      "active": "Active",
+      "steps_count": "Steps: {count} • Shake or bump to trigger swap!",
+      "enable_sensors": "Enable Sensors",
+      "living_order": "Living Line Formation (Left to Right)",
+      "students_in_room": "{count} Students in room",
+      "pos_in_line": "Slot #{pos} in line",
+      "action_badge": "ACTION",
+      "you_are": "You",
+      "current_task": "Current Classroom Task",
+      "swap_needed_desc": "👉 {playerA} and {playerB}: Walk across each other and bump phones (or click the button below)!",
+      "ok_desc": "✅ {playerA} and {playerB} are already in sorted order! Click Compared to proceed.",
+      "button_ok": "1. Compared (In Order)",
+      "button_swap": "2. Bumped / Swapped Positions!"
+    },
+    "post_match": {
+      "title": "Algorithm Successfully Completed!",
+      "subtitle": "{mode} • {teamSize} Player Team • {control}",
+      "tab_overview": "Overview & Analytics",
+      "tab_players": "Players ({count})",
+      "tab_steps": "Step Log ({count})",
+      "time": "Time",
+      "accuracy": "Accuracy",
+      "choreography": "Choreography",
+      "complexity": "Complexity",
+      "analysis_title": "🧠 Algorithm Analytics & Efficiency",
+      "total_steps": "Total Steps: {count}",
+      "analysis_text": "The team executed a total of {comparisons} comparisons and {swaps} swaps. You operated within theoretical {complexity} bounds, minimizing unnecessary operations.",
+      "success_ratio": "Success Ratio",
+      "mvp_badge": "Team MVP (Most Active)",
+      "contribution_points": "Contribution points",
+      "accuracy_label": "{accuracy}% accuracy",
+      "points_label": "{points} pts",
+      "no_steps": "No recorded steps.",
+      "play_again": "Play Again",
+      "back_to_lobby": "Back to Lobby"
+    },
+    "history": {
+      "title": "Multiplayer Match History",
+      "subtitle": "Recorded steps, durations, and performance metrics",
+      "total_games": "Total Matches",
+      "avg_accuracy": "Avg Accuracy",
+      "avg_choreography": "Avg Choreography",
+      "total_swaps": "Total Swaps",
+      "no_history": "No recorded multiplayer matches yet. Start one from the lobby!",
+      "close": "Close"
+    }
   }
 }

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
 import Link from 'next/link';
-import { Search, Grid2X2, X, BarChart3, Activity, ArrowRight, Smile } from 'lucide-react';
+import { Search, Grid2X2, X, BarChart3, Activity, ArrowRight, Smile, Users } from 'lucide-react';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { ALGORITHMS, ROUTES } from '../../../lib/constants';
 import AlgorithmCard from '../../components/AlgorithmCard';
@@ -177,6 +177,13 @@ export default function AlgorithmsClient() {
 
           {isAuthenticated && (
             <div className="flex flex-wrap items-center gap-3 flex-shrink-0 animate-in fade-in slide-in-from-right-4 duration-1000">
+              <Link
+                href={ROUTES.MULTIPLAYER}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-montserrat font-bold text-xs sm:text-sm shadow-md shadow-teal-500/20 transition-all active:scale-95 duration-300"
+              >
+                <Users className="w-4 h-4" />
+                Multiplayer Aréna
+              </Link>
               <Link
                 href={ROUTES.BIG_O}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#269984]/10 hover:bg-[#269984]/20 border border-[#269984]/25 text-[#269984] hover:text-[#269984] font-montserrat font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 duration-300"

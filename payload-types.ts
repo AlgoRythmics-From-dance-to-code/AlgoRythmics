@@ -296,7 +296,7 @@ export interface Course {
          */
         idleHelp?: string | null;
         /**
-         * Legyen-e magabiztosság ellenőrzés (kérdőív) a fázis befejezése után?
+         * Magabiztosság-alapú pontozás (CBL) és adaptív visszajelzés engedélyezése ennél a fázisnál.
          */
         askConfidence?: boolean | null;
         /**

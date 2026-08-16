@@ -14,6 +14,7 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['192.168.1.137', '192.168.1.137:3000', 'localhost:3000', '*.local'],
   experimental: {
     inlineCss: true,
   },
