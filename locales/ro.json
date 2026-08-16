@@ -1065,8 +1065,8 @@
     "reward_medium": "XP Standard",
     "reward_low": "Ghicire Sigură",
     "submit_answer": "Confirmă Răspunsul",
-    "matrix_title": "Analiza Cunoștințelor & Încrederii",
-    "matrix_desc": "Rezumatul performanței și autoevaluării tale de-a lungul cursului."
+    "matrix_title": "Matrice Cunoștințe & Încredere",
+    "matrix_desc": "Rezumatul răspunsurilor și autoevaluărilor tale pe parcursul cursului."
   },
   "multiplayer": {
     "title": "Arenă Multiplayer",
