@@ -114,6 +114,12 @@ export default function Header() {
                 prefetch={true}
               />
               <NavLink
+                href={ROUTES.MULTIPLAYER}
+                label={t('nav.multiplayer') || 'Multiplayer'}
+                active={pathname?.startsWith(ROUTES.MULTIPLAYER) ?? false}
+                prefetch={true}
+              />
+              <NavLink
                 href={ROUTES.COURSES}
                 label={t('nav.courses')}
                 active={pathname === ROUTES.COURSES}
@@ -338,6 +344,13 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.algorithms')}
+                </Link>
+                <Link
+                  href={ROUTES.MULTIPLAYER}
+                  className={`font-montserrat text-xl ${pathname?.startsWith(ROUTES.MULTIPLAYER) ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('nav.multiplayer') || 'Multiplayer'}
                 </Link>
                 <Link
                   href={ROUTES.COURSES}

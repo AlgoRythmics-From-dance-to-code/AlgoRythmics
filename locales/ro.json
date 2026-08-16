@@ -42,7 +42,8 @@
     "about": "Despre noi",
     "terms": "Termenii și condițiile",
     "privacy": "Politica de confidențialitate",
-    "leaderboard": "Clasament"
+    "leaderboard": "Clasament",
+    "multiplayer": "Multiplayer"
   },
   "aria": {
     "go_home": "Mergi la pagina principală",
@@ -1064,7 +1065,152 @@
     "reward_medium": "XP Standard",
     "reward_low": "Ghicire Sigură",
     "submit_answer": "Confirmă Răspunsul",
-    "matrix_title": "Analiza Cunoștințelor & Încrederii",
-    "matrix_desc": "Rezumatul performanței și autoevaluării tale de-a lungul cursului."
+    "matrix_title": "Matrice Cunoștințe & Încredere",
+    "matrix_desc": "Rezumatul răspunsurilor și autoevaluărilor tale pe parcursul cursului."
+  },
+  "multiplayer": {
+    "title": "Arenă Multiplayer",
+    "subtitle": "Coordonați-vă nodurile împreună, învățați algoritmi prin mișcare sau butoane discrete în timp real!",
+    "badge": "AlgoRythmics Multiplayer în Timp Real",
+    "room_code": "Cod Cameră",
+    "share_link": "Distribuie Link",
+    "link_copied": "Link Copiat!",
+    "copy_result": "Copiază Rezultat",
+    "copied": "Copiat!",
+    "auth_required_title": "Autentificare Necesară",
+    "auth_required_desc": "Pentru a accesa arena multiplayer, a încărca profilul și a salva statisticile meciului, te rugăm să te autentifici în contul tău!",
+    "login_btn": "Autentificare",
+    "register_btn": "Creează Cont Nou",
+    "back_to_algorithms": "Înapoi la Algoritmi",
+    "live_game": "Meci în Direct",
+    "step_1_title": "1. Selectează Stilul de Control",
+    "step_2_title": "2. Selectează Algoritmul",
+    "profile_title": "Profil Jucător",
+    "logged_in_as": "Autentificat",
+    "player_name": "Nume Jucător",
+    "auto_filled": "Încărcat automat din contul tău.",
+    "neon_color": "Culoare Neon Cerc",
+    "team_size": "Dimensiune Echipă",
+    "players_count": "{count} Jucători",
+    "team_members": "Membri Echipă",
+    "add_student": "+ Elev",
+    "add_student_placeholder": "Adaugă elev...",
+    "start_game": "Începe Jocul ({count} jucători)",
+    "match_history": "Istoric Meciuri & Statistici",
+    "controls": {
+      "spatial": {
+        "title": "AlgoMatrix: Ștafeta Hacker Cuantic",
+        "desc": "Joc Co-Op asimetric de acțiune! Scanerul blochează anomaliile, iar Operatorul de Reactor execută schimbarea cuantică!",
+        "selected": "Selectat"
+      },
+      "discrete": {
+        "title": "Butoane / Discret",
+        "desc": "Sloturi fixe de carduri, schimbare prin Space / click, logică algoritmică și reflexe rapide.",
+        "selected": "Selectat"
+      },
+      "physical": {
+        "title": "Mișcare în Sala de Clasă",
+        "desc": "Formație fizică în clasă, zero marcaje pe podea, ciocnire telefoane / scuturare și sincronizare.",
+        "selected": "Selectat"
+      }
+    },
+    "modes": {
+      "bubble_sort": {
+        "name": "Ștafeta Bubble Sort",
+        "desc": "Compararea elementelor adiacente și schimbarea lor spațială sau prin butoane.",
+        "tag": "Sortare • O(N²)"
+      },
+      "quick_sort": {
+        "name": "Furtuna Pivot QuickSort",
+        "desc": "Împărțirea pe zone pe baza pivotului și partiționare cinetică.",
+        "tag": "Divide & Conquer • O(N log N)"
+      },
+      "binary_search": {
+        "name": "Compasul Căutării Binare",
+        "desc": "Apropierea indicatoarelor Stânga și Dreapta în jurul punctului de mijloc.",
+        "tag": "Căutare • O(log N)"
+      },
+      "merge_sort": {
+        "name": "Banda Merge Sort",
+        "desc": "Îmbinarea paralelă a două subșiruri sortate pe banda principală.",
+        "tag": "Două-Indicatoare • O(N log N)"
+      }
+    },
+    "hud": {
+      "elapsed_time": "Timp Scurs",
+      "comparisons": "Comparații",
+      "swaps": "Schimbări",
+      "choreography": "Sincronizare Coregrafie",
+      "errors": "Mutări Incorecte",
+      "room_code": "Cod Cameră"
+    },
+    "spatial_arena": {
+      "control_hint": "Trage cardul tău peste partener, sau folosește tastele **Space** și **Enter**!",
+      "compare_btn": "Confirmă (Enter)",
+      "swap_btn": "Pas de Dans: Schimbare (Space)"
+    },
+    "discrete_arena": {
+      "swap_alert": "Atenție: [{valA}] > [{valB}]! Schimbă elementele!",
+      "ok_alert": "[{valA}] și [{valB}] sunt în ordine, apasă Compară pentru a continua.",
+      "space_hint": "Space = Schimbă",
+      "enter_hint": "Enter = Următorul",
+      "you_badge": "Tu",
+      "compare_btn": "Compară (Enter)",
+      "swap_btn": "Schimbă (Space)"
+    },
+    "physical_arena": {
+      "banner_badge": "Mod Senzori de Mișcare în Clasă",
+      "banner_title": "Mergeți prin clasă & Ciocniți telefoanele pentru schimbare!",
+      "banner_desc": "La trecerea unul pe lângă celălalt, atingeți ușor telefoanele pentru schimbare – sau apăsați butonul!",
+      "your_turn": "🔥 E RÂNDUL TĂU ÎN SALĂ!",
+      "watch_others": "👀 Urmărește progresul formației",
+      "sensor_title": "Senzor Mișcare & Ciocnire",
+      "bump_detected": "💥 CIOCNIRE DETECTATĂ!",
+      "active": "Activ",
+      "steps_count": "Pași: {count} • Scutură sau atinge pentru a activa schimbarea!",
+      "enable_sensors": "Activează Senzorii",
+      "living_order": "Formația din Sală (De la Stânga la Dreapta)",
+      "students_in_room": "{count} Elevi în clasă",
+      "pos_in_line": "Poziția #{pos} în rând",
+      "action_badge": "ACȚIUNE",
+      "you_are": "Ești Tu",
+      "current_task": "Sarcina Curentă din Clasă",
+      "swap_needed_desc": "👉 {playerA} și {playerB}: Treceți unul pe lângă celălalt și atingeți telefoanele (sau apăsați butonul de mai jos)!",
+      "ok_desc": "✅ {playerA} și {playerB} sunt deja în ordine sortată! Apăsați Am Comparat pentru a continua.",
+      "button_ok": "1. Am Comparat (În Ordine)",
+      "button_swap": "2. Am Ciocnit / Am Schimbat Locurile!"
+    },
+    "post_match": {
+      "title": "Algoritm Finalizat cu Succes!",
+      "subtitle": "{mode} • Echipă de {teamSize} Jucători • {control}",
+      "tab_overview": "Rezumat & Statistici",
+      "tab_players": "Jucători ({count})",
+      "tab_steps": "Jurnal Pași ({count})",
+      "time": "Timp",
+      "accuracy": "Acuratețe",
+      "choreography": "Coregrafie",
+      "complexity": "Complexitate",
+      "analysis_title": "🧠 Analiză Algoritmică & Eficiență",
+      "total_steps": "Total Pași: {count}",
+      "analysis_text": "Echipa a efectuat un total de {comparisons} comparații și {swaps} schimbări. V-ați încadrat în limitele teoretice {complexity}, minimizând operațiile inutile.",
+      "success_ratio": "Rată pași corecți",
+      "mvp_badge": "MVP Echipă (Cel mai activ)",
+      "contribution_points": "Puncte de contribuție",
+      "accuracy_label": "{accuracy}% acuratețe",
+      "points_label": "{points} pct",
+      "no_steps": "Niciun pas înregistrat.",
+      "play_again": "Joacă din Nou",
+      "back_to_lobby": "Înapoi în Lobby"
+    },
+    "history": {
+      "title": "Istoric Meciuri Multiplayer",
+      "subtitle": "Pași înregistrați, durate și metrici de performanță",
+      "total_games": "Total Meciuri",
+      "avg_accuracy": "Acuratețe Medie",
+      "avg_choreography": "Coregrafie Medie",
+      "total_swaps": "Total Schimbări",
+      "no_history": "Nu există meciuri multiplayer înregistrate încă. Începe unul din lobby!",
+      "close": "Închide"
+    }
   }
 }

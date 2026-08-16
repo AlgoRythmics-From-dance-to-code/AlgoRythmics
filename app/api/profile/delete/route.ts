@@ -62,7 +62,7 @@ export async function DELETE(_req: Request) {
       overrideAccess: true,
     });
 
-    logger.info({ userId: dbUser.id }, t('toasts.account_deleted'));
+    logger.info({ userId }, t('toasts.account_deleted'));
     return NextResponse.json({ message: t('toasts.account_deleted') });
   } catch (error) {
     const message = error instanceof Error ? error.message : t('toasts.delete_error');
