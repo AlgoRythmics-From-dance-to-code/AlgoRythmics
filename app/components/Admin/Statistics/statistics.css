@@ -1,0 +1,193 @@
+/* Scoped CSS for AlgoRythmics Admin Statistics (100% isolated from Payload Admin) */
+
+.algo-stats-root {
+  --stats-bg: #f8fafc;
+  --stats-card-bg: rgba(255, 255, 255, 0.85);
+  --stats-card-border: rgba(226, 232, 240, 0.9);
+  --stats-text-main: #0f172a;
+  --stats-text-muted: #64748b;
+  --stats-subcard-bg: #f1f5f9;
+  --stats-subcard-border: #e2e8f0;
+  --stats-teal: #269984;
+  --stats-teal-hover: #1e7e6d;
+  --stats-emerald: #10b981;
+  --stats-indigo: #6366f1;
+  --stats-rose: #f43f5e;
+  --stats-amber: #f59e0b;
+  --stats-purple: #a855f7;
+
+  font-family:
+    'Montserrat',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  color: var(--stats-text-main);
+  background: transparent;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Dark mode overrides (inherits Payload or system dark mode) */
+:root[data-theme='dark'] .algo-stats-root,
+.dark .algo-stats-root,
+[data-theme='dark'] .algo-stats-root {
+  --stats-bg: #090d16;
+  --stats-card-bg: rgba(15, 23, 42, 0.75);
+  --stats-card-border: rgba(51, 65, 85, 0.7);
+  --stats-text-main: #f8fafc;
+  --stats-text-muted: #94a3b8;
+  --stats-subcard-bg: rgba(30, 41, 59, 0.6);
+  --stats-subcard-border: rgba(51, 65, 85, 0.6);
+}
+
+.algo-stats-root *,
+.algo-stats-root *::before,
+.algo-stats-root *::after {
+  box-sizing: border-box;
+}
+
+/* Layout Utilities */
+.algo-stats-grid-cols-1 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.algo-stats-grid-cols-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.algo-stats-grid-cols-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.algo-stats-grid-cols-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.algo-stats-grid-cols-7 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+@media (max-width: 1024px) {
+  .algo-stats-grid-cols-4,
+  .algo-stats-grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .algo-stats-grid-cols-4,
+  .algo-stats-grid-cols-3,
+  .algo-stats-grid-cols-2 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+
+/* Glassmorphic Cards */
+.algo-stats-card {
+  background: var(--stats-card-bg);
+  border: 1px solid var(--stats-card-border);
+  border-radius: 24px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.05),
+    0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.algo-stats-subcard {
+  background: var(--stats-subcard-bg);
+  border: 1px solid var(--stats-subcard-border);
+  border-radius: 16px;
+}
+
+/* Tabs Navigation Styling */
+.algo-stats-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px;
+  background: var(--stats-subcard-bg);
+  border: 1px solid var(--stats-subcard-border);
+  border-radius: 20px;
+  scrollbar-width: none;
+}
+.algo-stats-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.algo-stats-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--stats-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.algo-stats-tab-btn:hover {
+  color: var(--stats-text-main);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+:root[data-theme='dark'] .algo-stats-tab-btn:hover,
+.dark .algo-stats-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.algo-stats-tab-btn.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #269984, #10b981);
+  box-shadow: 0 4px 12px rgba(38, 153, 132, 0.3);
+}
+
+/* Badge Indicators */
+.algo-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.algo-badge-teal {
+  background: rgba(38, 153, 132, 0.12);
+  color: #269984;
+  border: 1px solid rgba(38, 153, 132, 0.25);
+}
+.algo-badge-emerald {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.algo-badge-indigo {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+.algo-badge-rose {
+  background: rgba(244, 63, 94, 0.12);
+  color: #f43f5e;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+}
+.algo-badge-amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.algo-badge-purple {
+  background: rgba(168, 85, 247, 0.12);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}

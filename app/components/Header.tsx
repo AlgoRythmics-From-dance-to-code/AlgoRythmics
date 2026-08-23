@@ -7,9 +7,9 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useLocale, Locale } from '../i18n/LocaleProvider';
 import ThemeToggle from './ThemeToggle';
-import { User as UserIcon } from 'lucide-react';
+import { User as UserIcon, BarChart3, Shield } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
-import { ROUTES, API_ROUTES } from '../../lib/constants';
+import { ROUTES, API_ROUTES, ROLES } from '../../lib/constants';
 import { useAlgorithmStore } from '../store/useAlgorithmStore';
 import { useGlobalAnalytics } from '../hooks/useGlobalAnalytics';
 
@@ -20,8 +20,15 @@ export default function Header() {
 
   const isAuthenticated = !!session;
   const user = session?.user as
-    | { firstName?: string; lastName?: string; imageUrl?: string; image?: string | null }
+    | {
+        firstName?: string;
+        lastName?: string;
+        imageUrl?: string;
+        image?: string | null;
+        role?: string;
+      }
     | undefined;
+  const isAdminOrEditor = user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR;
   const firstName = user?.firstName || '';
   const lastName = user?.lastName || '';
   const avatarUrl = user?.imageUrl || user?.image || null;
@@ -254,11 +261,11 @@ export default function Header() {
               </button>
 
               {profileDropdownOpen && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl overflow-hidden py-2 border border-blue-50/50 transform origin-top-right transition-all animate-in fade-in zoom-in duration-200">
+                <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl overflow-hidden py-2 border border-blue-50/50 transform origin-top-right transition-all animate-in fade-in zoom-in duration-200">
                   <Link
                     href={ROUTES.PROFILE}
                     onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50/50 transition-colors group"
+                    className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50/50 transition-colors group"
                   >
                     <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                       <UserIcon className="w-4 h-4 text-[#269984]" />
@@ -267,6 +274,37 @@ export default function Header() {
                       {t('nav.profile')}
                     </span>
                   </Link>
+
+                  {isAdminOrEditor && (
+                    <>
+                      <Link
+                        href={ROUTES.ADMIN_STATISTICS}
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-teal-50/60 transition-colors group"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center group-hover:bg-teal-100 transition-colors">
+                          <BarChart3 className="w-4 h-4 text-[#269984]" />
+                        </div>
+                        <span className="font-montserrat text-sm font-semibold text-[#269984]">
+                          Statisztikák
+                        </span>
+                      </Link>
+
+                      <Link
+                        href={ROUTES.ADMIN}
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-purple-50/60 transition-colors group"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                          <Shield className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <span className="font-montserrat text-sm font-semibold text-purple-600">
+                          Admin Panel
+                        </span>
+                      </Link>
+                    </>
+                  )}
+
                   <div className="h-px bg-gray-100 my-1 mx-4" />
                   <button
                     onClick={async () => {
@@ -482,6 +520,28 @@ export default function Header() {
                     </p>
                   </div>
                 </Link>
+
+                {isAdminOrEditor && (
+                  <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
+                    <Link
+                      href={ROUTES.ADMIN_STATISTICS}
+                      className="flex items-center gap-3 font-montserrat text-teal-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <BarChart3 className="w-4 h-4 text-teal-200" />
+                      <span>Admin Statisztikák</span>
+                    </Link>
+                    <Link
+                      href={ROUTES.ADMIN}
+                      className="flex items-center gap-3 font-montserrat text-purple-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <Shield className="w-4 h-4 text-purple-200" />
+                      <span>Payload Admin Panel</span>
+                    </Link>
+                  </div>
+                )}
+
                 <button
                   onClick={async () => {
                     setMenuOpen(false);

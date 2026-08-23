@@ -22,7 +22,10 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     components: {
-      afterNav: ['./app/components/Payload/RoleBodyClass#default'],
+      afterNav: [
+        './app/components/Payload/RoleBodyClass#default',
+        './app/components/Payload/AdminStatsNavLink#default',
+      ],
     },
   },
   localization: {

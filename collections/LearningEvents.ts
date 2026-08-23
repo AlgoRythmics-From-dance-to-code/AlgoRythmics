@@ -57,6 +57,7 @@ export const LearningEvents: CollectionConfig = {
       name: 'tab',
       type: 'select',
       required: false,
+      index: true,
       options: [
         { label: 'Video', value: 'video' },
         { label: 'Animation', value: 'animation' },

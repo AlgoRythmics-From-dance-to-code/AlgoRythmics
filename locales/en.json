@@ -43,7 +43,8 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "leaderboard": "Leaderboard",
-    "multiplayer": "Multiplayer"
+    "multiplayer": "Multiplayer",
+    "admin_statistics": "Analytics"
   },
   "aria": {
     "go_home": "Go to homepage",
