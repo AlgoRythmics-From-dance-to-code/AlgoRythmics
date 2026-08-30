@@ -43,7 +43,7 @@ export default function Header() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -56,9 +56,19 @@ export default function Header() {
         setProfileDropdownOpen(false);
       }
     }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setLangDropdownOpen(false);
+        setProfileDropdownOpen(false);
+      }
+    }
+
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -168,6 +178,8 @@ export default function Header() {
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity p-2"
               aria-label={t('nav.language')}
+              aria-expanded={langDropdownOpen}
+              aria-haspopup="menu"
             >
               <Image
                 src={currentLang.flag}
@@ -198,10 +210,14 @@ export default function Header() {
 
             {/* Language Selection Menu */}
             {langDropdownOpen && (
-              <div className="absolute top-full right-0 mt-2 w-32 bg-white rounded-lg shadow-xl overflow-hidden py-1 border border-gray-100">
+              <div
+                className="absolute top-full right-0 mt-2 w-32 bg-white rounded-lg shadow-xl overflow-hidden py-1 border border-gray-100"
+                role="menu"
+              >
                 {languages.map((lang) => (
                   <button
                     key={lang.code}
+                    role="menuitem"
                     onClick={() => {
                       const oldLocale = locale;
                       setLocale(lang.code);
@@ -235,6 +251,9 @@ export default function Header() {
             <div className="relative" ref={profileDropdownRef}>
               <button
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                aria-label={t('nav.profile')}
+                aria-expanded={profileDropdownOpen}
+                aria-haspopup="menu"
                 className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white/20 hover:border-white/50 transition-colors overflow-hidden bg-white/10"
               >
                 {avatarUrl ? (

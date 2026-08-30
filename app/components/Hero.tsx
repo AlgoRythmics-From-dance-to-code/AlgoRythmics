@@ -39,6 +39,7 @@ export default function Hero() {
             alt="Decorative algorithmic pattern"
             width={186}
             height={361}
+            priority
             sizes="200px"
             aria-hidden={true}
             className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180"

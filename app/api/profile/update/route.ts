@@ -13,7 +13,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: t('errors.unauthorized') }, { status: 401 });
     }
 
-    const { firstName, lastName, bio, mascotEnabled } = await req.json();
+    const body = await req.json();
+    const cleanFirstName =
+      typeof body.firstName === 'string' ? body.firstName.trim().slice(0, 50) : undefined;
+    const cleanLastName =
+      typeof body.lastName === 'string' ? body.lastName.trim().slice(0, 50) : undefined;
+    const cleanBio = typeof body.bio === 'string' ? body.bio.trim().slice(0, 500) : undefined;
+    const mascotEnabled = body.mascotEnabled;
+
     const payload = await getPayload({ config: configPromise });
     const userId = session.user.id;
 
@@ -25,9 +32,9 @@ export async function POST(req: Request) {
       collection: 'users',
       id: userId,
       data: {
-        firstName,
-        lastName,
-        bio,
+        ...(cleanFirstName !== undefined && { firstName: cleanFirstName }),
+        ...(cleanLastName !== undefined && { lastName: cleanLastName }),
+        ...(cleanBio !== undefined && { bio: cleanBio }),
         ...(mascotEnabled !== undefined && { mascotEnabled: Boolean(mascotEnabled) }),
       },
       overrideAccess: true,

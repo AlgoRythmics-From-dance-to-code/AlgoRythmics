@@ -67,6 +67,13 @@
   },
   "overrides": {
     "@esbuild-kit/esm-loader": "npm:tsx@^4",
-    "@esbuild-kit/core-utils": "npm:tsx@^4"
+    "@esbuild-kit/core-utils": "npm:tsx@^4",
+    "dompurify": "^3.2.4",
+    "uuid": "^11.1.1",
+    "serialize-javascript": "^7.0.4",
+    "undici": "^7.28.0",
+    "drizzle-orm": "^0.45.2",
+    "esbuild": "^0.28.2",
+    "image-size": "^2.0.2"
   }
 }

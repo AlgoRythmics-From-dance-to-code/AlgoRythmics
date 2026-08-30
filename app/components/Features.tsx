@@ -2,68 +2,103 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocale } from '../i18n/LocaleProvider';
+
+interface FeatureItemConfig {
+  id: string;
+  src: string;
+  gifSrc: string;
+  translationKey: string;
+  width: number;
+  height: number;
+}
+
+const FEATURE_ITEMS: readonly FeatureItemConfig[] = [
+  {
+    id: 'video',
+    src: '/assets/group_28.svg',
+    gifSrc: '/assets/design/gifs/steps/Video_turquoise.gif',
+    translationKey: 'features.video',
+    width: 330,
+    height: 330,
+  },
+  {
+    id: 'animation',
+    src: '/assets/group_34.svg',
+    gifSrc: '/assets/design/gifs/steps/Animation_turquoise.gif',
+    translationKey: 'features.animation',
+    width: 330,
+    height: 330,
+  },
+  {
+    id: 'control',
+    src: '/assets/group_38.svg',
+    gifSrc: '/assets/design/gifs/steps/Control_turquoise.gif',
+    translationKey: 'features.control',
+    width: 330,
+    height: 330,
+  },
+  {
+    id: 'create_code',
+    src: '/assets/group_43.svg',
+    gifSrc: '/assets/design/gifs/steps/Create_code_turquoise.gif',
+    translationKey: 'features.create_code',
+    width: 330,
+    height: 330,
+  },
+  {
+    id: 'live_code',
+    src: '/assets/group_47.svg',
+    gifSrc: '/assets/design/gifs/steps/Live_code_turquoise.gif',
+    translationKey: 'features.live_code',
+    width: 331,
+    height: 331,
+  },
+  {
+    id: 'quiz',
+    src: '/assets/group_51.svg',
+    gifSrc: '/assets/design/gifs/steps/Quiz_turquoise.gif',
+    translationKey: 'features.quiz',
+    width: 331,
+    height: 331,
+  },
+] as const;
+
+const FEATURE_GIF_PATHS = FEATURE_ITEMS.map((f) => f.gifSrc);
 
 export default function Features() {
   const { t } = useLocale();
 
-  const features = [
-    {
-      id: 'video',
-      src: '/assets/group_28.svg',
-      gifSrc: '/assets/design/gifs/steps/Video_turquoise.gif',
-      alt: t('features.video'),
-      label: t('features.video'),
-      width: 330,
-      height: 330,
-    },
-    {
-      id: 'animation',
-      src: '/assets/group_34.svg',
-      gifSrc: '/assets/design/gifs/steps/Animation_turquoise.gif',
-      alt: t('features.animation'),
-      label: t('features.animation'),
-      width: 330,
-      height: 330,
-    },
-    {
-      id: 'control',
-      src: '/assets/group_38.svg',
-      gifSrc: '/assets/design/gifs/steps/Control_turquoise.gif',
-      alt: t('features.control'),
-      label: t('features.control'),
-      width: 330,
-      height: 330,
-    },
-    {
-      id: 'create_code',
-      src: '/assets/group_43.svg',
-      gifSrc: '/assets/design/gifs/steps/Create_code_turquoise.gif',
-      alt: t('features.create_code'),
-      label: t('features.create_code'),
-      width: 330,
-      height: 330,
-    },
-    {
-      id: 'live_code',
-      src: '/assets/group_47.svg',
-      gifSrc: '/assets/design/gifs/steps/Live_code_turquoise.gif',
-      alt: t('features.live_code'),
-      label: t('features.live_code'),
-      width: 331,
-      height: 331,
-    },
-    {
-      id: 'quiz',
-      src: '/assets/group_51.svg',
-      gifSrc: '/assets/design/gifs/steps/Quiz_turquoise.gif',
-      alt: t('features.quiz'),
-      label: t('features.quiz'),
-      width: 331,
-      height: 331,
-    },
-  ];
+  // Preload hover GIFs in idle time so initial SVG loading is instantaneous without network contention
+  useEffect(() => {
+    const preloadGifs = () => {
+      FEATURE_GIF_PATHS.forEach((gifPath) => {
+        const img = new window.Image();
+        img.src = gifPath;
+      });
+    };
+
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        const id = (
+          window as unknown as {
+            requestIdleCallback: (cb: () => void, opts: { timeout: number }) => number;
+          }
+        ).requestIdleCallback(preloadGifs, { timeout: 2500 });
+        return () => {
+          if ('cancelIdleCallback' in window) {
+            (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(
+              id,
+            );
+          }
+        };
+      } else {
+        const timer = setTimeout(preloadGifs, 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
 
   return (
     <section className="w-full bg-white dark:bg-[#0a0a0a] py-10 md:py-16">
@@ -79,23 +114,16 @@ export default function Features() {
           className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 mx-auto"
           style={{ gap: '30px', maxWidth: '1000px' }}
         >
-          {features.map((feature) => (
+          {FEATURE_ITEMS.map((feature) => (
             <Link key={feature.id} href="/algorithms">
               <FeatureCard
                 src={feature.src}
                 gifSrc={feature.gifSrc}
-                label={feature.label}
+                label={t(feature.translationKey)}
                 width={feature.width}
                 height={feature.height}
               />
             </Link>
-          ))}
-        </div>
-
-        {/* Background GIFs Preloader */}
-        <div className="hidden" aria-hidden="true">
-          {features.map((f) => (
-            <Image key={`preload-${f.id}`} src={f.gifSrc} alt="" width={1} height={1} unoptimized />
           ))}
         </div>
       </div>
@@ -131,6 +159,7 @@ function FeatureCard({
           alt={`Illustration for ${label}`}
           width={width}
           height={height}
+          priority
           sizes="(max-width: 768px) 100vw, 280px"
           className="w-full h-auto pointer-events-none select-none transition-all duration-300 ease-out dark:invert dark:hue-rotate-180 group-hover:opacity-20 group-hover:blur-md group-hover:scale-90"
           style={{ maxWidth: '280px', width: '100%', height: 'auto' }}
