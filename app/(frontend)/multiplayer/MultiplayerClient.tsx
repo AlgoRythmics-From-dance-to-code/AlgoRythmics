@@ -39,6 +39,8 @@ export default function MultiplayerClient() {
     executeSwap,
     executeCompare,
     confirmPosition,
+    addBot,
+    removePlayer,
     broadcastState,
     setRoom,
   } = useMultiplayerEngine(roomParam);
@@ -231,6 +233,8 @@ export default function MultiplayerClient() {
             onSelectControl={handleSelectControl}
             onSetTeamSize={handleSetTeamSize}
             onJoinRoom={joinRoomWithCode}
+            onAddBot={addBot}
+            onRemovePlayer={removePlayer}
             onStart={startGame}
             onOpenHistory={() => setIsHistoryOpen(true)}
           />

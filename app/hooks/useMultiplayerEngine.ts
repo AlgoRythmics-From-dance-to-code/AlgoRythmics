@@ -80,6 +80,8 @@ export function useMultiplayerEngine(initialRoomId?: string): {
   sendTacticalPing: (type: TacticalPing['type'], message: string, targetIndices?: number[]) => void;
   sendReaction: (emoji: string) => void;
   updatePlayerPosition: (x: number, y: number) => void;
+  addBot: () => void;
+  removePlayer: (playerId: string) => void;
   broadcastState: (updatedRoom: MultiplayerRoomState) => void;
   setRoom: Dispatch<SetStateAction<MultiplayerRoomState>>;
 } {
@@ -1374,6 +1376,62 @@ export function useMultiplayerEngine(initialRoomId?: string): {
     [broadcastState, completeGame, localPlayerId, playSuccessChord, playTone],
   );
 
+  const addBot = useCallback(() => {
+    setRoom((prev: MultiplayerRoomState) => {
+      if (prev.players.length >= 8) return prev;
+      const botIdx = prev.players.length;
+      const usedColors = prev.players.map((p) => p.color);
+      const botColor = getRandomNeonColor(usedColors);
+      const botName = BOT_NAMES[botIdx % BOT_NAMES.length];
+
+      const newBot: Player = {
+        id: `bot-${botIdx}-${Math.random().toString(36).slice(2, 6)}`,
+        name: botName,
+        color: botColor,
+        value: 0,
+        currentSlot: botIdx,
+        isHost: false,
+        isBot: true,
+        x: 120 + botIdx * 150,
+        y: 250,
+        vx: 0,
+        vy: 0,
+        radius: 36,
+        trail: [],
+        swapsCount: 0,
+        comparisonsCount: 0,
+        errorsCount: 0,
+        score: 0,
+      };
+
+      const updated: MultiplayerRoomState = {
+        ...prev,
+        players: [...prev.players, newBot],
+        teamSize: Math.max(prev.teamSize, prev.players.length + 1),
+        lastActionMessage: `${newBot.name} csatlakozott a csapathoz!`,
+      };
+      broadcastState(updated);
+      return updated;
+    });
+  }, [broadcastState]);
+
+  const removePlayer = useCallback(
+    (playerId: string) => {
+      setRoom((prev: MultiplayerRoomState) => {
+        const remaining = prev.players.filter((p) => p.id !== playerId);
+        if (remaining.length === 0) return prev;
+        const updated: MultiplayerRoomState = {
+          ...prev,
+          players: remaining.map((p, idx) => ({ ...p, currentSlot: idx })),
+          teamSize: Math.max(2, remaining.length),
+        };
+        broadcastState(updated);
+        return updated;
+      });
+    },
+    [broadcastState],
+  );
+
   return {
     room,
     localPlayerId,
@@ -1394,6 +1452,8 @@ export function useMultiplayerEngine(initialRoomId?: string): {
     sendTacticalPing,
     sendReaction,
     updatePlayerPosition,
+    addBot,
+    removePlayer,
     broadcastState,
     setRoom,
   };
