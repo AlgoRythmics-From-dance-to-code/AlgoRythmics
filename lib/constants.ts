@@ -27,7 +27,7 @@ export const ROUTES = {
   RESET_PASSWORD: '/reset-password',
   LEADERBOARD: '/leaderboard',
   ADMIN: '/admin',
-  ADMIN_STATISTICS: '/admin/statistics',
+  ADMIN_STATISTICS: '/admin-statistics',
 } as const;
 
 export const API_ROUTES = {

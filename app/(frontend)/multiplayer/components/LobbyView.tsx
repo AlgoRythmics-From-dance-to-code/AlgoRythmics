@@ -152,11 +152,11 @@ export default function LobbyView({
               <span>{t('multiplayer.badge') || 'AlgoRythmics Valós Idejű Multiplayer'}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white font-montserrat tracking-tight">
-              Többjátékos Aréna
+              {t('multiplayer.lobby.title') || 'Többjátékos Aréna'}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base max-w-xl mx-auto">
-              Táncoljatok és tanuljatok algoritmusokat együtt, valós időben a böngészőből vagy
-              okostelefonról!
+              {t('multiplayer.lobby.subtitle') ||
+                'Táncoljatok és tanuljatok algoritmusokat együtt, valós időben a böngészőből vagy okostelefonról!'}
             </p>
           </div>
 
@@ -175,17 +175,19 @@ export default function LobbyView({
                 </div>
                 <div>
                   <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white font-montserrat flex items-center gap-2">
-                    👑 Új Szoba Nyitása
+                    {t('multiplayer.lobby.host_room_title') || '👑 Új Szoba Nyitása'}
                   </h3>
                   <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm mt-2 leading-relaxed">
-                    Te vagy a gazda: válaszd ki az algoritmust, hívd meg a társaidat 1-kattintásos
-                    linkkel vagy indíts tesztet botokkal!
+                    {t('multiplayer.lobby.host_room_desc') ||
+                      'Te vagy a gazda: válaszd ki az algoritmust, hívd meg a társaidat 1-kattintásos linkkel vagy indíts tesztet botokkal!'}
                   </p>
                 </div>
               </div>
 
               <div className="mt-8 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-sm font-bold text-[#269984] font-montserrat">
-                <span>Belépés a Várakozóterembe</span>
+                <span>
+                  {t('multiplayer.lobby.enter_waiting_room') || 'Belépés a Várakozóterembe'}
+                </span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
@@ -203,17 +205,17 @@ export default function LobbyView({
                 </div>
                 <div>
                   <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white font-montserrat flex items-center gap-2">
-                    🔗 Csatlakozás Kóddal
+                    {t('multiplayer.lobby.join_code_title') || '🔗 Csatlakozás Kóddal'}
                   </h3>
                   <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm mt-2 leading-relaxed">
-                    Megkaptad a 6 karakteres szobakódot a tanárodtól vagy csapattársadtól?
-                    Csatlakozz közvetlenül a meccshez!
+                    {t('multiplayer.lobby.join_code_desc') ||
+                      'Megkaptad a 6 karakteres szobakódot a tanárodtól vagy csapattársadtól? Csatlakozz közvetlenül a meccshez!'}
                   </p>
                 </div>
               </div>
 
               <div className="mt-8 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-sm font-bold text-cyan-600 dark:text-cyan-400 font-montserrat">
-                <span>Szobakód Megadása</span>
+                <span>{t('multiplayer.lobby.enter_code') || 'Szobakód Megadása'}</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
@@ -245,7 +247,7 @@ export default function LobbyView({
               className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-montserrat transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Vissza a Menübe</span>
+              <span>{t('multiplayer.lobby.back_to_menu') || 'Vissza a Menübe'}</span>
             </button>
           </div>
 
@@ -256,7 +258,7 @@ export default function LobbyView({
 
             <div className="space-y-1">
               <h2 className="text-2xl font-black font-montserrat text-slate-900 dark:text-white">
-                Szobakód Megadása
+                {t('multiplayer.lobby.enter_code') || 'Szobakód Megadása'}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Add meg a kapott szobakódot (pl. ALGO-482 vagy 482)
@@ -285,7 +287,7 @@ export default function LobbyView({
                 ) : (
                   <>
                     <LogIn className="w-4 h-4" />
-                    <span>Csatlakozás a Szobához</span>
+                    <span>{t('multiplayer.lobby.join_room_btn') || 'Csatlakozás a Szobához'}</span>
                   </>
                 )}
               </button>
@@ -305,14 +307,14 @@ export default function LobbyView({
               <button
                 onClick={() => setStep('choose')}
                 className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-colors"
-                title="Vissza"
+                title={t('common.cancel') || 'Vissza'}
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-                    Szobakód
+                    {t('multiplayer.lobby.room_code_label') || 'Szobakód'}
                   </span>
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
@@ -333,12 +335,12 @@ export default function LobbyView({
               {copied ? (
                 <>
                   <Check className="w-4 h-4" />
-                  <span>Meghívó Link Másolva!</span>
+                  <span>{t('multiplayer.lobby.invite_copied') || 'Meghívó Link Másolva!'}</span>
                 </>
               ) : (
                 <>
                   <Share2 className="w-4 h-4" />
-                  <span>Meghívó Link Másolása</span>
+                  <span>{t('multiplayer.lobby.copy_invite') || 'Meghívó Link Másolása'}</span>
                 </>
               )}
             </button>
@@ -350,10 +352,11 @@ export default function LobbyView({
               <div>
                 <h3 className="text-lg font-bold font-montserrat text-slate-900 dark:text-white flex items-center gap-2">
                   <Layers className="w-5 h-5 text-[#269984]" />
-                  <span>Választott Algoritmus</span>
+                  <span>{t('multiplayer.lobby.chosen_algorithm') || 'Választott Algoritmus'}</span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  A gazda bármikor átállíthatja az algoritmust az indítás előtt
+                  {t('multiplayer.lobby.host_can_change_hint') ||
+                    'A gazda bármikor átállíthatja az algoritmust az indítás előtt'}
                 </p>
               </div>
 
@@ -361,7 +364,7 @@ export default function LobbyView({
               {isHost && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                    Létszám:
+                    {t('multiplayer.lobby.team_size_label') || 'Létszám:'}
                   </span>
                   <div className="flex items-center bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
                     {[2, 4, 6, 8].map((size) => (
@@ -397,12 +400,12 @@ export default function LobbyView({
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="font-bold text-sm text-slate-900 dark:text-white font-montserrat">
-                      {mode.name}
+                      {t(`multiplayer.modes.${mode.id}.name`) || mode.name}
                     </span>
                     {selectedMode === mode.id && <Check className="w-4 h-4 text-[#269984]" />}
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                    {mode.desc}
+                    {t(`multiplayer.modes.${mode.id}.desc`) || mode.desc}
                   </p>
                 </div>
               ))}
@@ -418,10 +421,13 @@ export default function LobbyView({
                 </div>
                 <div>
                   <h3 className="text-lg font-bold font-montserrat text-slate-900 dark:text-white">
-                    Csapattagok ({players.length} / {Math.max(teamSize, players.length)})
+                    {(t('multiplayer.lobby.roster_title') || 'Csapattagok ({count} / {max})')
+                      .replace('{count}', String(players.length))
+                      .replace('{max}', String(Math.max(teamSize, players.length)))}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    A mérkőzés indításához legalább 2 játékos vagy bot szükséges
+                    {t('multiplayer.lobby.min_players_hint') ||
+                      'A mérkőzés indításához legalább 2 játékos vagy bot szükséges'}
                   </p>
                 </div>
               </div>
@@ -434,7 +440,7 @@ export default function LobbyView({
                   className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/20 rounded-xl text-xs font-bold font-montserrat transition-colors cursor-pointer"
                 >
                   <Bot className="w-4 h-4" />
-                  <span>+ Bot Hozzáadása</span>
+                  <span>{t('multiplayer.lobby.add_bot') || '+ Bot Hozzáadása'}</span>
                 </button>
               )}
             </div>
@@ -459,7 +465,7 @@ export default function LobbyView({
                           {p.name}
                         </span>
                         {p.isHost && (
-                          <span title="Szoba Gazda">
+                          <span title={t('multiplayer.lobby.host_badge') || 'Szoba Gazda'}>
                             <Crown className="w-3.5 h-3.5 text-amber-500" />
                           </span>
                         )}
@@ -470,7 +476,11 @@ export default function LobbyView({
                         )}
                       </div>
                       <span className="text-[10px] text-slate-400">
-                        {p.id === localPlayerId ? 'Te' : p.isBot ? 'Gyakorló robot' : 'Csapattárs'}
+                        {p.id === localPlayerId
+                          ? t('multiplayer.dance_arena.you') || 'Te'
+                          : p.isBot
+                            ? t('multiplayer.lobby.practice_bot') || 'Gyakorló robot'
+                            : t('multiplayer.lobby.teammate') || 'Csapattárs'}
                       </span>
                     </div>
                   </div>
@@ -480,7 +490,7 @@ export default function LobbyView({
                     <button
                       onClick={() => onRemovePlayer(p.id)}
                       className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-600 transition-colors"
-                      title="Eltávolítás"
+                      title={t('multiplayer.lobby.remove_player') || 'Eltávolítás'}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -501,13 +511,15 @@ export default function LobbyView({
                 <Play className="w-6 h-6 fill-current" />
                 <span>
                   {isReadyToStart
-                    ? 'JÁTÉK INDÍTÁSA MOST'
-                    : 'Adj hozzá még 1 játékost vagy botot az indításhoz'}
+                    ? t('multiplayer.lobby.start_game_now') || 'JÁTÉK INDÍTÁSA MOST'
+                    : t('multiplayer.lobby.need_more_players') ||
+                      'Adj hozzá még 1 játékost vagy botot az indításhoz'}
                 </span>
               </button>
             ) : (
               <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center text-amber-700 dark:text-amber-300 font-montserrat text-sm font-bold animate-pulse">
-                ⏳ Várakozás a szobavezetőre a játék elindításához...
+                {t('multiplayer.lobby.waiting_for_host') ||
+                  '⏳ Várakozás a szobavezetőre a játék elindításához...'}
               </div>
             )}
           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocale } from '../../i18n/LocaleProvider';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
@@ -33,7 +34,7 @@ import {
   Flame,
   Filter,
 } from 'lucide-react';
-import { ROUTES, ROLES, ALGORITHMS } from '../../../../lib/constants';
+import { ROUTES, ROLES, ALGORITHMS } from '../../../lib/constants';
 
 interface CourseEvaluationItem {
   courseId: string;
@@ -209,6 +210,7 @@ interface StatisticsData {
 }
 
 export default function AdminStatisticsClient() {
+  const { t } = useLocale();
   const { data: session, status } = useSession();
   const user = session?.user as { role?: string } | undefined;
   const isAdminOrEditor = user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR;
@@ -347,10 +349,10 @@ export default function AdminStatisticsClient() {
             {/* Time Range Pills */}
             <div className="flex items-center bg-gray-100 dark:bg-white/5 p-1 rounded-xl border border-gray-200 dark:border-white/5">
               {[
-                { id: '7d', label: '7 nap' },
-                { id: '30d', label: '30 nap' },
-                { id: '90d', label: '90 nap' },
-                { id: 'all', label: 'Mind' },
+                { id: '7d', label: t('admin_stats.time_7d') || '7 nap' },
+                { id: '30d', label: t('admin_stats.time_30d') || '30 nap' },
+                { id: '90d', label: t('admin_stats.time_90d') || '90 nap' },
+                { id: 'all', label: t('admin_stats.time_all') || 'Mind' },
               ].map((pill) => (
                 <button
                   key={pill.id}
@@ -370,10 +372,10 @@ export default function AdminStatisticsClient() {
             <select
               value={selectedAlgo}
               onChange={(e) => setSelectedAlgo(e.target.value)}
-              aria-label="Algoritmus szűrő"
+              aria-label={t('admin_stats.algo_filter') || 'Algoritmus szűrő'}
               className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-montserrat font-semibold px-3 py-2 rounded-xl text-gray-700 dark:text-gray-200 outline-none focus:border-[#269984]"
             >
-              <option value="all">Minden algoritmus</option>
+              <option value="all">{t('admin_stats.all_algorithms') || 'Minden algoritmus'}</option>
               {ALGORITHMS.map((algo) => (
                 <option key={algo.id} value={algo.id}>
                   {algo.id}
@@ -386,7 +388,7 @@ export default function AdminStatisticsClient() {
               onClick={fetchStats}
               disabled={loading}
               className="p-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"
-              title="Adatok frissítése"
+              title={t('admin_stats.refresh') || 'Adatok frissítése'}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#269984]' : ''}`} />
             </button>
@@ -398,7 +400,7 @@ export default function AdminStatisticsClient() {
                 className="flex items-center gap-2 px-4 py-2 bg-[#269984] hover:bg-[#208270] text-white rounded-xl text-xs font-bold font-montserrat shadow-md shadow-[#269984]/20 transition-all active:scale-95 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Export</span>
+                <span>{t('admin_stats.export') || 'Export'}</span>
               </button>
 
               {exportDropdownOpen && (
@@ -408,14 +410,14 @@ export default function AdminStatisticsClient() {
                     className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-                    <span>Kurzusok CSV Export</span>
+                    <span>{t('admin_stats.export_csv') || 'Kurzusok CSV Export'}</span>
                   </button>
                   <button
                     onClick={exportJSON}
                     className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer"
                   >
                     <FileCode className="w-4 h-4 text-purple-500" />
-                    <span>Teljes Kutatási JSON</span>
+                    <span>{t('admin_stats.export_json') || 'Teljes Kutatási JSON'}</span>
                   </button>
                 </div>
               )}
@@ -433,36 +435,38 @@ export default function AdminStatisticsClient() {
         {/* ━━━ KPI STATS CARDS ━━━ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <KpiCard
-            title="Aktív Diákok"
+            title={t('admin_stats.kpi_active_learners') || 'Aktív Diákok'}
             value={data?.kpis.activeLearnersCount ?? 0}
-            subtitle="Regisztrált & tanuló felhasználók"
+            subtitle={
+              t('admin_stats.kpi_active_learners_sub') || 'Regisztrált & tanuló felhasználók'
+            }
             icon={<Users className="w-5 h-5 text-blue-500" />}
             accentColor="from-blue-500/20 to-blue-600/5"
             borderColor="border-blue-500/20"
             loading={loading}
           />
           <KpiCard
-            title="Összes Tanulási Idő"
-            value={`${data?.kpis.totalRecordedHours ?? 0} óra`}
-            subtitle="Gyakorlással & kódolással töltve"
+            title={t('admin_stats.kpi_learning_time') || 'Összes Tanulási Idő'}
+            value={`${data?.kpis.totalRecordedHours ?? 0} ${t('admin_stats.hours_unit') || 'óra'}`}
+            subtitle={t('admin_stats.kpi_learning_time_sub') || 'Gyakorlással & kódolással töltve'}
             icon={<Clock className="w-5 h-5 text-[#269984]" />}
             accentColor="from-[#269984]/20 to-[#269984]/5"
             borderColor="border-[#269984]/20"
             loading={loading}
           />
           <KpiCard
-            title="Befejezett Algoritmusok"
+            title={t('admin_stats.kpi_completed_courses') || 'Befejezett Algoritmusok'}
             value={data?.kpis.totalAlgorithmsCompleted ?? 0}
-            subtitle="100%-os elsajátítási arány"
+            subtitle={t('admin_stats.kpi_completed_courses_sub') || '100%-os elsajátítási arány'}
             icon={<CheckCircle2 className="w-5 h-5 text-emerald-500" />}
             accentColor="from-emerald-500/20 to-emerald-600/5"
             borderColor="border-emerald-500/20"
             loading={loading}
           />
           <KpiCard
-            title="Átlagos Gondolkodási Idő"
-            value={`${data?.kpis.avgHesitationSeconds ?? 0} mp`}
-            subtitle="Döntési és lépési reflexió"
+            title={t('admin_stats.kpi_avg_hesitation') || 'Átlagos Gondolkodási Idő'}
+            value={`${data?.kpis.avgHesitationSeconds ?? 0} ${t('admin_stats.sec_unit') || 'mp'}`}
+            subtitle={t('admin_stats.kpi_avg_hesitation_sub') || 'Döntési és lépési reflexió'}
             icon={<Brain className="w-5 h-5 text-purple-500" />}
             accentColor="from-purple-500/20 to-purple-600/5"
             borderColor="border-purple-500/20"
@@ -481,7 +485,7 @@ export default function AdminStatisticsClient() {
             }`}
           >
             <Layers className="w-4 h-4" />
-            <span>Algoritmusok & Hibagócok</span>
+            <span>{t('admin_stats.tab_algorithms') || 'Algoritmusok & Hibagócok'}</span>
           </button>
 
           <button
@@ -493,7 +497,7 @@ export default function AdminStatisticsClient() {
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>📚 Kurzusok Kiértékelése</span>
+            <span>{t('admin_stats.tab_courses') || '📚 Kurzusok Kiértékelése'}</span>
           </button>
 
           <button
@@ -505,7 +509,7 @@ export default function AdminStatisticsClient() {
             }`}
           >
             <GraduationCap className="w-4 h-4" />
-            <span>🎓 5 Kutatási Metrika</span>
+            <span>{t('admin_stats.tab_research') || '🎓 5 Kutatási Metrika'}</span>
           </button>
 
           <button
@@ -517,7 +521,7 @@ export default function AdminStatisticsClient() {
             }`}
           >
             <Brain className="w-4 h-4" />
-            <span>Kognitív & Pedagógiai Elemzés</span>
+            <span>{t('admin_stats.tab_pedagogy') || 'Kognitív & Pedagógiai Elemzés'}</span>
           </button>
 
           <button
@@ -529,7 +533,7 @@ export default function AdminStatisticsClient() {
             }`}
           >
             <Search className="w-4 h-4" />
-            <span>Keresési Elemzés & Hiányok</span>
+            <span>{t('admin_stats.tab_searches') || 'Keresési Elemzés & Hiányok'}</span>
           </button>
         </div>
 
@@ -543,7 +547,10 @@ export default function AdminStatisticsClient() {
               <div>
                 <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-[#269984]" />
-                  <span>Tananyag & Kurzusok Részletes Kiértékelése</span>
+                  <span>
+                    {t('admin_stats.course_eval_title') ||
+                      'Tananyag & Kurzusok Részletes Kiértékelése'}
+                  </span>
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Lemorzsolódási tölcsér, feladattípusok megértési rátája és a kabala megtartási
@@ -558,7 +565,9 @@ export default function AdminStatisticsClient() {
                   onChange={(e) => setSelectedCourseId(e.target.value)}
                   className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-montserrat font-bold px-4 py-2.5 rounded-xl text-gray-700 dark:text-gray-200 outline-none focus:border-[#269984]"
                 >
-                  <option value="all">Minden Kurzus Aggregálva</option>
+                  <option value="all">
+                    {t('admin_stats.all_courses_aggregated') || 'Minden Kurzus Aggregálva'}
+                  </option>
                   {data?.coursesEvaluation?.coursesList.map((c) => (
                     <option key={c.courseId} value={c.courseId}>
                       {c.title}
@@ -581,7 +590,12 @@ export default function AdminStatisticsClient() {
                   {selectedCourse?.completionRate ?? 75}%
                 </div>
                 <p className="text-xs text-gray-500">
-                  {selectedCourse?.completedCount} / {selectedCourse?.enrolledCount} diák végezte el
+                  {(
+                    t('admin_stats.students_completed_label') ||
+                    '{completed} / {enrolled} diák végezte el'
+                  )
+                    .replace('{completed}', String(selectedCourse?.completedCount || 0))
+                    .replace('{enrolled}', String(selectedCourse?.enrolledCount || 0))}
                 </p>
               </div>
 
@@ -628,7 +642,10 @@ export default function AdminStatisticsClient() {
                   {selectedCourse?.qualityIndex ?? 88} / 100
                 </div>
                 <p className="text-xs text-gray-500">
-                  Átlagos pontszám: {selectedCourse?.avgScore} pont
+                  {(t('admin_stats.avg_score_label') || 'Átlagos pontszám: {score} pont').replace(
+                    '{score}',
+                    String(selectedCourse?.avgScore || 0),
+                  )}
                 </p>
               </div>
             </div>
@@ -638,7 +655,12 @@ export default function AdminStatisticsClient() {
               <div>
                 <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
                   <TrendingDown className="w-5 h-5 text-[#269984]" />
-                  <span>1. Fázisonkénti Lemorzsolódási Tölcsér ({selectedCourse?.title})</span>
+                  <span>
+                    {(
+                      t('admin_stats.dropoff_funnel_title') ||
+                      '1. Fázisonkénti Lemorzsolódási Tölcsér ({title})'
+                    ).replace('{title}', selectedCourse?.title || '')}
+                  </span>
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Nyomon követi, hogy a diákok hány százaléka jut el az egyes fázisokig és hol
@@ -722,7 +744,10 @@ export default function AdminStatisticsClient() {
                 <div>
                   <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
                     <Puzzle className="w-5 h-5 text-purple-500" />
-                    <span>2. Interaktív Feladattípusok Hatékonysága</span>
+                    <span>
+                      {t('admin_stats.task_types_title') ||
+                        '2. Interaktív Feladattípusok Hatékonysága'}
+                    </span>
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Összehasonlítás a Kvíz, Debug, Párosítás és Hiánypótlás pontossága között
@@ -769,10 +794,15 @@ export default function AdminStatisticsClient() {
                                 : 'text-rose-600 dark:text-rose-400'
                           }`}
                         >
-                          {pt.avgAccuracy}% pontosság
+                          {(t('admin_stats.accuracy_label') || '{accuracy}% pontosság').replace(
+                            '{accuracy}',
+                            String(pt.avgAccuracy),
+                          )}
                         </span>
                         <span className="block text-[10px] text-gray-400">
-                          {pt.totalMistakes} összes hiba
+                          {(
+                            t('admin_stats.total_mistakes_label') || '{mistakes} összes hiba'
+                          ).replace('{mistakes}', String(pt.totalMistakes))}
                         </span>
                       </div>
                     </div>
@@ -785,7 +815,10 @@ export default function AdminStatisticsClient() {
                 <div>
                   <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
                     <Brain className="w-5 h-5 text-emerald-500" />
-                    <span>3. Magabiztossági Fejlődés a Kurzus Során</span>
+                    <span>
+                      {t('admin_stats.confidence_growth_title') ||
+                        '3. Magabiztossági Fejlődés a Kurzus Során'}
+                    </span>
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     A diákok metakognitív kalibrációjának javulása a kurzus elejétől a zárásig
@@ -823,17 +856,12 @@ export default function AdminStatisticsClient() {
                 </div>
 
                 <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/15">
-                  📈 <strong>Pedagógiai igazolás:</strong> A kurzus végére a téves magabiztosság{' '}
+                  📈{' '}
                   <strong>
-                    {data?.coursesEvaluation?.confidenceTrajectory.overconfidenceDropPercent}%-kal
-                    lecsökkent
-                  </strong>
-                  , miközben a magabiztos és helyes válaszok aránya{' '}
-                  <strong>
-                    {data?.coursesEvaluation?.confidenceTrajectory.finalPhase.mastery}%-ra
-                    emelkedett
-                  </strong>
-                  .
+                    {t('admin_stats.confidence_growth_pedagogy_title') || 'Pedagógiai igazolás:'}
+                  </strong>{' '}
+                  {t('admin_stats.pedagogical_proof_desc') ||
+                    'A kurzus végére a téves magabiztosság lecsökkent, miközben a magabiztos és helyes válaszok aránya megnőtt.'}
                 </p>
               </div>
             </div>
@@ -852,7 +880,8 @@ export default function AdminStatisticsClient() {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
-                      1. A Segítségkérés Hosszú Távú Hatása (Create Help → Alive Performance)
+                      {t('admin_stats.research_metric1_title') ||
+                        '1. A Segítségkérés Hosszú Távú Hatása (Create Help → Alive Performance)'}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Összehasonlítás a kódkiegészítésben segítséget használók vs. önállóan gépelők
@@ -867,10 +896,13 @@ export default function AdminStatisticsClient() {
                 <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                      🧩 Segítséget Használók (Create Help)
+                      {t('admin_stats.help_seekers') || '🧩 Segítséget Használók (Create Help)'}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {data?.research.helpSeekingTransfer.withHelp.count} diák
+                      {(t('admin_stats.students_count') || '{count} diák').replace(
+                        '{count}',
+                        String(data?.research.helpSeekingTransfer.withHelp.count || 0),
+                      )}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-3 text-center">
@@ -905,10 +937,13 @@ export default function AdminStatisticsClient() {
                 <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-emerald-500/20 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                      ⚡ Önállóan Kódolók (No Help)
+                      {t('admin_stats.autonomous_coders') || '⚡ Önállóan Kódolók (No Help)'}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {data?.research.helpSeekingTransfer.autonomous.count} diák
+                      {(t('admin_stats.students_count') || '{count} diák').replace(
+                        '{count}',
+                        String(data?.research.helpSeekingTransfer.autonomous.count || 0),
+                      )}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-3 text-center">
@@ -941,14 +976,12 @@ export default function AdminStatisticsClient() {
               </div>
 
               <div className="p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/15 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                💡 <strong>Kutatási megállapítás:</strong> Azok a diákok, akik a `Create` fázisban
-                önállóan gépelték be a hiányzó sorokat, átlagosan{' '}
+                💡{' '}
                 <strong>
-                  +{data?.research.helpSeekingTransfer.scoreDifferencePercent}%-kal magasabb
-                  pontszámot
+                  {t('admin_stats.research_finding_title') || 'Kutatási megállapítás:'}
                 </strong>{' '}
-                értek el a teljesen szabad `Alive` kódolási feladatban, és feleannyi hibás
-                futtatásra volt szükségük a végső helyes megoldásig.
+                {t('admin_stats.research_finding_create_vs_alive') ||
+                  'Azok a diákok, akik a Create fázisban önállóan gépelték be a hiányzó sorokat, átlagosan magasabb pontszámot értek el az Alive feladatban.'}
               </div>
             </div>
 
@@ -960,7 +993,8 @@ export default function AdminStatisticsClient() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
-                    2. Gyakori Tévképzetek és Logikai Buktatók (Misconceptions Analysis)
+                    {t('admin_stats.misconceptions_title') ||
+                      '2. Gyakori Tévképzetek és Logikai Buktatók (Misconceptions Analysis)'}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     A diákok hibás kód-kiegészítései és összehasonlítási tévedései alapján feltárt
@@ -980,7 +1014,10 @@ export default function AdminStatisticsClient() {
                         {m.algorithmId.replace('-', ' ')}
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-                        {m.affectedPercentage}% diák érintett
+                        {(t('admin_stats.affected_students') || '{percent}% diák érintett').replace(
+                          '{percent}',
+                          String(m.affectedPercentage),
+                        )}
                       </span>
                     </div>
 
@@ -1000,7 +1037,11 @@ export default function AdminStatisticsClient() {
                     </div>
 
                     <div className="text-[11px] text-teal-700 dark:text-teal-300 bg-teal-500/10 p-2.5 rounded-xl border border-teal-500/20">
-                      👨‍🏫 <strong>Tanári javaslat:</strong> {m.recommendation}
+                      👨‍🏫{' '}
+                      <strong>
+                        {t('admin_stats.teacher_recommendation_label') || 'Tanári javaslat:'}
+                      </strong>{' '}
+                      {m.recommendation}
                     </div>
                   </div>
                 ))}
@@ -1015,7 +1056,8 @@ export default function AdminStatisticsClient() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
-                    3. Tanulási Útvonalak és Stratégiák Elemzése (Process Mining)
+                    {t('admin_stats.process_mining_title') ||
+                      '3. Tanulási Útvonalak és Stratégiák Elemzése (Process Mining)'}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     A diákok navigációs szekvenciái és azok összefüggése a sikeres befejezéssel
@@ -1028,7 +1070,7 @@ export default function AdminStatisticsClient() {
                 <div className="p-5 rounded-2xl bg-emerald-500/5 border-2 border-emerald-500/20 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                      🌟 Lineáris / Módszeres
+                      {t('admin_stats.strategy_linear') || '🌟 Lineáris / Módszeres'}
                     </span>
                     <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
                       {data?.research.processMining.linearMethodical.sharePercent}%
@@ -1052,7 +1094,7 @@ export default function AdminStatisticsClient() {
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                      ⚡ Kód-Központú / Ugráló
+                      {t('admin_stats.strategy_code') || '⚡ Kód-Központú / Ugráló'}
                     </span>
                     <span className="text-lg font-black text-amber-600 dark:text-amber-400">
                       {data?.research.processMining.codeFirstExpedited.sharePercent}%
@@ -1076,7 +1118,7 @@ export default function AdminStatisticsClient() {
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                      🔍 Vizuális / Felfedező
+                      {t('admin_stats.strategy_visual') || '🔍 Vizuális / Felfedező'}
                     </span>
                     <span className="text-lg font-black text-blue-600 dark:text-blue-400">
                       {data?.research.processMining.visualExploratory.sharePercent}%
@@ -1108,7 +1150,8 @@ export default function AdminStatisticsClient() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white">
-                      4. Vizuális Blokkokra (Blockly) Váltási Küszöb
+                      {t('admin_stats.visual_threshold_title') ||
+                        '4. Vizuális Blokkokra (Blockly) Váltási Küszöb'}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Frusztrációs küszöb: hány hibás kódküldés után kérnek blokkos segítséget
@@ -1146,16 +1189,12 @@ export default function AdminStatisticsClient() {
                 </div>
 
                 <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-[#269984]/5 p-4 rounded-2xl border border-[#269984]/10">
-                  🎯 <strong>Megállapítás:</strong> A diákok átlagosan{' '}
+                  🎯{' '}
                   <strong>
-                    {data?.research.visualBlocksThreshold.avgFailedAttemptsBeforeFallback} hibás
-                    futtatás
+                    {t('admin_stats.blockly_threshold_finding_title') || 'Megállapítás:'}
                   </strong>{' '}
-                  után nyomnak a „Váltás Vizuális Blokkokra” gombra. A blokkos vizualizáció után{' '}
-                  <strong>
-                    {data?.research.visualBlocksThreshold.successfulReturnToCodeRate}%-uk
-                  </strong>{' '}
-                  sikeresen visszatér és befejezi a gépelt kódot!
+                  {t('admin_stats.blockly_threshold_finding_desc') ||
+                    'A diákok hibás futtatás után nyomnak a gombra, majd sikeresen visszatérnek a kódhoz.'}
                 </p>
               </div>
 
@@ -1167,7 +1206,8 @@ export default function AdminStatisticsClient() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white">
-                      5. Kognitív Terhelés Lépésről Lépésre Helyreállása
+                      {t('admin_stats.cognitive_recovery_title') ||
+                        '5. Kognitív Terhelés Lépésről Lépésre Helyreállása'}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Reakcióidő lecsengése a hiba utáni egymást követő lépésekben
@@ -1178,7 +1218,9 @@ export default function AdminStatisticsClient() {
                 {/* Stepper Timeline */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5">
-                    <span className="text-xs font-bold text-gray-500">Normál alapritmus:</span>
+                    <span className="text-xs font-bold text-gray-500">
+                      {t('admin_stats.normal_rhythm') || 'Normál alapritmus:'}
+                    </span>
                     <span className="text-sm font-black font-montserrat text-gray-900 dark:text-white">
                       {data?.research.cognitiveLoadDynamics.baselineReactionSec} mp
                     </span>
@@ -1237,12 +1279,24 @@ export default function AdminStatisticsClient() {
                 <table className="w-full text-left text-sm font-montserrat">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-white/5 text-gray-400 text-xs uppercase tracking-wider">
-                      <th className="pb-3 font-bold">Algoritmus</th>
-                      <th className="pb-3 font-bold">Hibaarány</th>
-                      <th className="pb-3 font-bold">Gondolkodási Idő</th>
-                      <th className="pb-3 font-bold text-center">Összes Hiba</th>
-                      <th className="pb-3 font-bold text-center">Tippek</th>
-                      <th className="pb-3 font-bold text-right">Befejezve</th>
+                      <th className="pb-3 font-bold">
+                        {t('admin_stats.col_algorithm') || 'Algoritmus'}
+                      </th>
+                      <th className="pb-3 font-bold">
+                        {t('admin_stats.col_error_rate') || 'Hibaarány'}
+                      </th>
+                      <th className="pb-3 font-bold">
+                        {t('admin_stats.col_hesitation') || 'Gondolkodási Idő'}
+                      </th>
+                      <th className="pb-3 font-bold text-center">
+                        {t('admin_stats.col_total_errors') || 'Összes Hiba'}
+                      </th>
+                      <th className="pb-3 font-bold text-center">
+                        {t('admin_stats.col_hints') || 'Tippek'}
+                      </th>
+                      <th className="pb-3 font-bold text-right">
+                        {t('admin_stats.col_completed') || 'Befejezve'}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-white/5">
@@ -1305,7 +1359,9 @@ export default function AdminStatisticsClient() {
               <div className="mb-6">
                 <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-amber-500" />
-                  <span>Leggyakoribb Hibagócok a Tananyagban</span>
+                  <span>
+                    {t('admin_stats.hotspots_title') || 'Leggyakoribb Hibagócok a Tananyagban'}
+                  </span>
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Konkrét algoritmus-lépések és kódkiegészítések, ahol a diákok a leggyakrabban
@@ -1402,10 +1458,12 @@ export default function AdminStatisticsClient() {
                 </div>
 
                 <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-[#269984]/5 p-4 rounded-2xl border border-[#269984]/10">
-                  💡 <strong>Pedagógiai jelentés:</strong> A diákok egy hiba után nem kapkodnak,
-                  hanem átlagosan {data?.pedagogy.pesSlowdownPercentage}%-kal több időt töltenek a
-                  következő lépés átgondolásával. Ennek köszönhetően a javítási kísérletek{' '}
-                  {data?.pedagogy.retrySuccessRate}%-a azonnal sikeres.
+                  💡{' '}
+                  <strong>
+                    {t('admin_stats.pedagogy_pes_report_title') || 'Pedagógiai jelentés:'}
+                  </strong>{' '}
+                  {t('admin_stats.pedagogy_pes_report_desc') ||
+                    'A diákok egy hiba után több időt töltenek a következő lépés átgondolásával.'}
                 </p>
               </div>
 
@@ -1447,10 +1505,12 @@ export default function AdminStatisticsClient() {
                 </div>
 
                 <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-[#269984]/5 p-4 rounded-2xl border border-[#269984]/10">
-                  🎬 <strong>Módszertani igazolás:</strong> Azok a diákok, akik a feladatok előtt
-                  megtekintették a táncos koreográfiát, átlagosan{' '}
-                  {data?.pedagogy.videoErrorReductionPercent}%-kal kevesebb hibát vétettek a lépések
-                  és kódok megírásakor.
+                  🎬{' '}
+                  <strong>
+                    {t('admin_stats.pedagogy_video_proof_title') || 'Módszertani igazolás:'}
+                  </strong>{' '}
+                  {t('admin_stats.pedagogy_video_proof_desc') ||
+                    'Azok a diákok, akik megnézték a táncos koreográfiát, kevesebb hibát vétettek.'}
                 </p>
               </div>
             </div>
@@ -1540,7 +1600,9 @@ export default function AdminStatisticsClient() {
               <div>
                 <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-[#269984]" />
-                  <span>Leggyakoribb Diák Keresések</span>
+                  <span>
+                    {t('admin_stats.top_searches_title') || 'Leggyakoribb Diák Keresések'}
+                  </span>
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Milyen algoritmusokra és témákra keresnek a legtöbben
@@ -1564,9 +1626,17 @@ export default function AdminStatisticsClient() {
                         </span>
                       </div>
                       <div className="text-right">
-                        <span className="text-sm font-bold text-[#269984]">{s.count} keresés</span>
+                        <span className="text-sm font-bold text-[#269984]">
+                          {(t('admin_stats.searches_count') || '{count} keresés').replace(
+                            '{count}',
+                            String(s.count),
+                          )}
+                        </span>
                         <span className="block text-[10px] text-gray-400">
-                          {s.resultsCount} találat
+                          {(t('admin_stats.results_count') || '{count} találat').replace(
+                            '{count}',
+                            String(s.resultsCount),
+                          )}
                         </span>
                       </div>
                     </div>
@@ -1584,7 +1654,10 @@ export default function AdminStatisticsClient() {
               <div>
                 <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
                   <TrendingDown className="w-5 h-5 text-rose-500" />
-                  <span>0 Találatos Keresések (Tananyagfejlesztési Javaslatok)</span>
+                  <span>
+                    {t('admin_stats.zero_searches_title') ||
+                      '0 Találatos Keresések (Tananyagfejlesztési Javaslatok)'}
+                  </span>
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Témák, amikre a diákok kerestek, de még nincs megfelelő tartalom a platformon

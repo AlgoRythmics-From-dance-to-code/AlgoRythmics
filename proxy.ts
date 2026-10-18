@@ -24,7 +24,9 @@ export default function middleware(request: NextRequest) {
     pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname.includes('.');
   const isAdmin = pathname.startsWith('/admin');
   const isProtectedRoute =
-    pathname.startsWith(ROUTES.COURSES) || pathname.startsWith(ROUTES.PROFILE);
+    pathname.startsWith(ROUTES.COURSES) ||
+    pathname.startsWith(ROUTES.PROFILE) ||
+    pathname.startsWith(ROUTES.ADMIN_STATISTICS);
 
   // 3. Bypass static files and API immediately
   if (isApiOrStatic) {

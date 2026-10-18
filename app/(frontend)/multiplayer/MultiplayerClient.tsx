@@ -11,8 +11,7 @@ import type {
   MultiplayerRoomState,
 } from '../../../types/multiplayer';
 import LobbyView from './components/LobbyView';
-import PhysicalClassroomArena from './components/PhysicalClassroomArena';
-import StatsDashboard from './components/StatsDashboard';
+import VisualDanceArena from './components/VisualDanceArena';
 import PostMatchModal from './components/PostMatchModal';
 import MultiplayerHistoryModal from './components/MultiplayerHistoryModal';
 import { ArrowLeft, Lock, LogIn, UserPlus } from 'lucide-react';
@@ -28,7 +27,7 @@ export default function MultiplayerClient() {
   const {
     room,
     localPlayerId,
-    stepLogs,
+    stepLogs: _stepLogs,
     elapsedSeconds,
     choreographyScore,
     audioEnabled,
@@ -38,7 +37,7 @@ export default function MultiplayerClient() {
     startGame,
     executeSwap,
     executeCompare,
-    confirmPosition,
+    confirmPosition: _confirmPosition,
     addBot,
     removePlayer,
     broadcastState,
@@ -239,26 +238,16 @@ export default function MultiplayerClient() {
             onOpenHistory={() => setIsHistoryOpen(true)}
           />
         ) : (
-          <div className="space-y-4">
-            {/* Real-time HUD Dashboard */}
-            <StatsDashboard
-              room={room}
-              elapsedSeconds={elapsedSeconds}
-              choreographyScore={choreographyScore}
-              stepLogs={stepLogs}
-              audioEnabled={audioEnabled}
-              onToggleAudio={() => setAudioEnabled((prev) => !prev)}
-            />
-
-            {/* Real-time Physical Classroom Movement Arena */}
-            <PhysicalClassroomArena
-              room={room}
-              localPlayerId={localPlayerId}
-              onSwap={executeSwap}
-              onCompare={executeCompare}
-              onConfirmPosition={confirmPosition}
-            />
-          </div>
+          <VisualDanceArena
+            room={room}
+            localPlayerId={localPlayerId}
+            elapsedSeconds={elapsedSeconds}
+            choreographyScore={choreographyScore}
+            audioEnabled={audioEnabled}
+            onToggleAudio={() => setAudioEnabled((prev) => !prev)}
+            onSwap={executeSwap}
+            onCompare={executeCompare}
+          />
         )}
       </div>
 

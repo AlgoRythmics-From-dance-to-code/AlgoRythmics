@@ -305,7 +305,7 @@ export default function Header() {
                           <BarChart3 className="w-4 h-4 text-[#269984]" />
                         </div>
                         <span className="font-montserrat text-sm font-semibold text-[#269984]">
-                          Statisztikák
+                          {t('admin.pedagogy_statistics') || 'Statisztikák'}
                         </span>
                       </Link>
 
@@ -548,7 +548,7 @@ export default function Header() {
                       onClick={() => setMenuOpen(false)}
                     >
                       <BarChart3 className="w-4 h-4 text-teal-200" />
-                      <span>Admin Statisztikák</span>
+                      <span>{t('admin.pedagogy_statistics') || 'Admin Statisztikák'}</span>
                     </Link>
                     <Link
                       href={ROUTES.ADMIN}
@@ -556,7 +556,7 @@ export default function Header() {
                       onClick={() => setMenuOpen(false)}
                     >
                       <Shield className="w-4 h-4 text-purple-200" />
-                      <span>Payload Admin Panel</span>
+                      <span>{t('nav.admin') || 'Payload Admin Panel'}</span>
                     </Link>
                   </div>
                 )}

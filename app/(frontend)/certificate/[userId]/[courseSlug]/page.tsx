@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useLocale } from '../../../../i18n/LocaleProvider';
 import {
   Copy,
   Check,
@@ -32,6 +33,7 @@ interface CertificateData {
 }
 
 export default function CertificatePage() {
+  const { t } = useLocale();
   const params = useParams();
   const router = useRouter();
 
@@ -99,7 +101,9 @@ export default function CertificatePage() {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center bg-[#0d1117] text-white">
         <Loader2 className="w-12 h-12 text-[#269984] animate-spin mb-4" />
-        <p className="text-gray-400 font-medium">Loading certificate...</p>
+        <p className="text-gray-400 font-medium">
+          {t('certificate.loading') || 'Loading certificate...'}
+        </p>
       </div>
     );
   }
@@ -109,16 +113,19 @@ export default function CertificatePage() {
       <div className="min-h-[70vh] flex flex-col items-center justify-center bg-[#0d1117] text-white px-4">
         <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 max-w-md text-center shadow-2xl">
           <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Certificate Not Found</h2>
+          <h2 className="text-2xl font-bold mb-2">
+            {t('certificate.not_found_title') || 'Certificate Not Found'}
+          </h2>
           <p className="text-gray-400 text-sm mb-6">
-            The requested certificate does not exist or has an invalid ID.
+            {t('certificate.not_found_desc') ||
+              'The requested certificate does not exist or has an invalid ID.'}
           </p>
           <button
             onClick={() => router.push('/profil')}
             className="inline-flex items-center gap-2 bg-[#269984] hover:bg-[#1f7c6b] text-white font-bold px-6 py-3 rounded-xl transition-all shadow-lg text-sm"
           >
             <ArrowLeft size={18} />
-            Back to Profile
+            {t('certificate.back_to_profile') || 'Back to Profile'}
           </button>
         </div>
       </div>
@@ -174,7 +181,7 @@ export default function CertificatePage() {
             className="flex items-center gap-2 text-gray-300 hover:text-white font-semibold text-sm transition-colors px-3 py-2 rounded-xl hover:bg-neutral-800"
           >
             <ArrowLeft size={18} />
-            <span>Back to Profile</span>
+            <span>{t('certificate.back_to_profile') || 'Back to Profile'}</span>
           </button>
 
           <div className="flex items-center gap-3">
@@ -184,7 +191,11 @@ export default function CertificatePage() {
               className="flex items-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl border border-neutral-700 transition-all hover:scale-105 active:scale-95 shadow-md"
             >
               {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
-              <span>{copied ? 'Copied!' : 'Copy Link'}</span>
+              <span>
+                {copied
+                  ? t('certificate.copied') || 'Copied!'
+                  : t('certificate.share_link') || 'Copy Link'}
+              </span>
             </button>
 
             {/* Print Button */}
@@ -193,7 +204,7 @@ export default function CertificatePage() {
               className="flex items-center gap-2 bg-[#269984] hover:bg-[#1f7c6b] text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-[#269984]/20"
             >
               <Printer size={18} />
-              <span>Print</span>
+              <span>{t('certificate.print') || 'Print'}</span>
             </button>
           </div>
         </div>
@@ -292,7 +303,9 @@ export default function CertificatePage() {
             {/* Security Verification */}
             <div className="mt-6 flex items-center justify-center gap-1.5 text-emerald-400/80 text-[10px] font-medium">
               <ShieldCheck className="w-3.5 h-3.5 text-[#269984]" />
-              <span>Official AlgoRythmics Verified Certificate</span>
+              <span>
+                {t('certificate.verified_badge') || 'Official AlgoRythmics Verified Certificate'}
+              </span>
             </div>
           </div>
         </div>

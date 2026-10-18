@@ -5,20 +5,21 @@ import { useLocale } from '../../../i18n/LocaleProvider';
 import { VIDEOS } from '../../../../lib/constants';
 import LearningLayout from '../../../components/Learning/LearningLayout';
 import VideoPlayer from '../../../components/Learning/VideoPlayer';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
-export default function VideoDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function VideoDetailPage() {
+  const params = useParams();
+  const id = (params?.id as string) || '';
   const { t } = useLocale();
   const router = useRouter();
 
   const video = VIDEOS.find((v) => v.id === id);
 
   useEffect(() => {
-    if (!video) {
+    if (id && !video) {
       router.replace('/videos');
     }
-  }, [video, router]);
+  }, [id, video, router]);
 
   if (!video) {
     return null;
