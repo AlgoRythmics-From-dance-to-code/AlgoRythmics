@@ -1240,7 +1240,15 @@
       "feedback_swap_correct": "🎉 Great move! The larger number moved right.",
       "feedback_swap_incorrect": "⚠️ Notice: these numbers were already in correct order.",
       "feedback_keep_correct": "✨ Excellent! No swap needed, on to the next step.",
-      "feedback_keep_incorrect": "⚠️ Notice: the left number was larger, a swap was required!"
+      "feedback_keep_incorrect": "⚠️ Notice: the left number was larger, a swap was required!",
+      "keyboard_space": "Space",
+      "keyboard_enter": "Enter",
+      "pending_handshake_wait": "🤝 Swap requested! Waiting for partner confirmation...",
+      "pending_handshake_confirm": "🤝 Your partner requested a swap! Confirm with the button!",
+      "stage_preparing": "Dancers are taking the stage...",
+      "waiting_for_partner": "Confirmed! Waiting for your dance partner to confirm the synchronized step...",
+      "partner_requested_action": "Your partner requested an action! Press the button to confirm together!",
+      "synchronizing_pair": "Pair synchronization in progress..."
     },
     "lobby": {
       "enter_waiting_room": "Enter Waiting Room",
@@ -1415,6 +1423,11 @@
     "pedagogy_pes_report_title": "Pedagogical report:",
     "pedagogy_pes_report_desc": "Students do not rush following an error; they spend significantly more time thinking through the next step. Consequently, first-retry corrections are largely successful.",
     "pedagogy_video_proof_title": "Methodological proof:",
-    "pedagogy_video_proof_desc": "Students who watched the dance choreography prior to tasks made substantially fewer errors when formulating steps and writing code."
+    "pedagogy_video_proof_desc": "Students who watched the dance choreography prior to tasks made substantially fewer errors when formulating steps and writing code.",
+    "access_denied_title": "Access Denied",
+    "access_denied_desc": "This statistical interface is accessible exclusively to administrators and instructors.",
+    "back_to_home": "Back to Home",
+    "unauthorized_error": "You are not authorized to view statistics.",
+    "error_title": "Failed to load statistics"
   }
 }

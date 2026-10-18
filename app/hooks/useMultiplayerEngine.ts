@@ -650,6 +650,7 @@ export function useMultiplayerEngine(initialRoomId?: string): {
 
         // Dual-Handshake Check: If both dancers in the pair are human players, both must confirm!
         const isDualHumanPair = Boolean(
+          !actingPlayer.isHost &&
           playerAtA &&
           playerAtB &&
           !playerAtA.isBot &&
@@ -734,11 +735,20 @@ export function useMultiplayerEngine(initialRoomId?: string): {
         newArr[idxA] = valB;
         newArr[idxB] = valA;
 
-        // Reward players
+        // Reward players & SWAP CURRENT SLOTS so visual avatars swap positions!
         const updatedPlayers = prev.players.map((p: Player) => {
-          if (p.currentSlot === idxA || p.currentSlot === idxB) {
+          if (p.currentSlot === idxA) {
             return {
               ...p,
+              currentSlot: idxB,
+              swapsCount: p.swapsCount + 1,
+              score: p.score + 100,
+            };
+          }
+          if (p.currentSlot === idxB) {
+            return {
+              ...p,
+              currentSlot: idxA,
               swapsCount: p.swapsCount + 1,
               score: p.score + 100,
             };
@@ -761,6 +771,9 @@ export function useMultiplayerEngine(initialRoomId?: string): {
 
         const nextVer = (prev.version || 1) + 1;
         const newSynergy = Math.min(100, (prev.teamSynergy || 60) + 8);
+
+        // Advance activeIndices to next comparison pair
+        const nextActive = computeNextActiveIndices(prev.mode, idxA, idxB, newArr.length);
 
         // Initiate Physical Position Verification for classroom line
         const newVerification: PositionVerification = {
@@ -788,20 +801,27 @@ export function useMultiplayerEngine(initialRoomId?: string): {
           ...prev,
           array: newArr,
           players: updatedPlayers,
+          activeIndices: nextActive,
           pendingHandshake: null,
           positionVerification: newVerification,
           teamSynergy: newSynergy,
-          lastActionMessage: `📍 Koccintás rögzítve! ${playerAtA.name} sétál a(z) ${idxB + 1}. helyre, ${playerAtB.name} a(z) ${idxA + 1}. helyre! Igazoljátok a helyeteket!`,
-          currentCodeLine: `swap(arr[${idxA}], arr[${idxB}]); // Helyzet igazolása folyamatban...`,
+          lastActionMessage: `📍 Helycsere sikeres! [${valB}] és [${valA}] helyet cseréltek a parketten!`,
+          currentCodeLine: `swap(arr[${idxA}], arr[${idxB}]); // ${valB} <-> ${valA}`,
           version: nextVer,
         };
 
         versionRef.current = nextVer;
+
+        // Check if array is now completely sorted!
+        if (checkIsSorted(newArr)) {
+          setTimeout(() => completeGame(updatedRoom), 400);
+        }
+
         broadcastState(updatedRoom);
         return updatedRoom;
       });
     },
-    [broadcastState, localPlayerId, logStep, playErrorSound, playTone],
+    [broadcastState, completeGame, localPlayerId, logStep, playErrorSound, playTone],
   );
 
   // Perform Comparison Action (Enforces Dual-Handshake synchronization)
@@ -836,8 +856,9 @@ export function useMultiplayerEngine(initialRoomId?: string): {
           };
         }
 
-        // Dual-Handshake Check for comparisons between two human dancers
+        // Dual-Handshake Check for comparisons between two human dancers (bypassed if host commands)
         const isDualHumanPair = Boolean(
+          !actingPlayer.isHost &&
           playerAtA &&
           playerAtB &&
           !playerAtA.isBot &&
@@ -881,9 +902,42 @@ export function useMultiplayerEngine(initialRoomId?: string): {
           }
         }
 
-        playTone(280 + valA * 3, 'sine', 0.12);
-
         const isOrderCorrect = valA <= valB;
+
+        // If user says "Keep" but valA > valB, it's a mistake! Give feedback and penalize
+        if (!isOrderCorrect) {
+          playErrorSound();
+          setChoreographyScore((s) => Math.max(10, s - 5));
+
+          const updatedPlayers = prev.players.map((p: Player) =>
+            p.id === actingPlayer.id ? { ...p, errorsCount: p.errorsCount + 1 } : p,
+          );
+
+          logStep({
+            playerId: actingPlayer.id,
+            playerName: actingPlayer.name,
+            actionType: 'compare',
+            indices: [idxA, idxB],
+            values: [valA, valB],
+            isSuccess: false,
+            message: `⚠️ Nem megfelelő sorrend: [${valA}] > [${valB}]! Helycsere szükséges!`,
+            codeSnippet: `if (arr[${idxA}] > arr[${idxB}]) // ${valA} > ${valB} -> Csere szükséges!`,
+          });
+
+          const nextVer = (prev.version || 1) + 1;
+          const updatedRoom: MultiplayerRoomState = {
+            ...prev,
+            players: updatedPlayers,
+            pendingHandshake: null,
+            lastActionMessage: `⚠️ ${valA} > ${valB}: A bal oldali szám nagyobb, nem hagyható jóvá! Nyomd meg a CSERE gombot!`,
+            version: nextVer,
+          };
+          versionRef.current = nextVer;
+          broadcastState(updatedRoom);
+          return updatedRoom;
+        }
+
+        playTone(280 + valA * 3, 'sine', 0.12);
 
         // Equal contribution: reward both active players
         const updatedPlayers = prev.players.map((p: Player) =>
@@ -899,14 +953,11 @@ export function useMultiplayerEngine(initialRoomId?: string): {
           indices: [idxA, idxB],
           values: [valA, valB],
           isSuccess: true,
-          message: `Összehasonlítás: [${valA}] és [${valB}] -> ${isOrderCorrect ? 'Rendben van' : 'Csere szükséges!'}`,
-          codeSnippet: `if (arr[${idxA}] > arr[${idxB}]) // ${valA} > ${valB} is ${!isOrderCorrect}`,
+          message: `Összehasonlítás: [${valA}] és [${valB}] -> Rendben van, mehet a következő pár!`,
+          codeSnippet: `if (arr[${idxA}] <= arr[${idxB}]) // ${valA} <= ${valB} is true`,
         });
 
-        let nextActive = [idxA, idxB];
-        if (isOrderCorrect) {
-          nextActive = computeNextActiveIndices(prev.mode, idxA, idxB, prev.array.length);
-        }
+        const nextActive = computeNextActiveIndices(prev.mode, idxA, idxB, prev.array.length);
 
         const nextVer = (prev.version || 1) + 1;
         const newSynergy = Math.min(100, (prev.teamSynergy || 60) + 5);
@@ -917,10 +968,8 @@ export function useMultiplayerEngine(initialRoomId?: string): {
           activeIndices: nextActive,
           pendingHandshake: null,
           teamSynergy: newSynergy,
-          lastActionMessage: isOrderCorrect
-            ? `✅ ${valA} ≤ ${valB}: Szinkronban jóváhagyva, mehetünk tovább!`
-            : `⚠️ ${valA} > ${valB}: Csere szükséges!`,
-          currentCodeLine: `if (arr[${idxA}] > arr[${idxB}]) // ${valA} > ${valB} is ${!isOrderCorrect}`,
+          lastActionMessage: `✅ ${valA} ≤ ${valB}: Szinkronban jóváhagyva, mehetünk tovább!`,
+          currentCodeLine: `if (arr[${idxA}] <= arr[${idxB}]) // Rendben`,
           version: nextVer,
         };
 
@@ -936,6 +985,39 @@ export function useMultiplayerEngine(initialRoomId?: string): {
     },
     [broadcastState, completeGame, localPlayerId, logStep, playErrorSound, playTone],
   );
+
+  // Automated Bot Step when both active dancers are Bots
+  useEffect(() => {
+    if (room.status !== 'playing' || !isHost) return;
+    if (!room.activeIndices || room.activeIndices.length < 2) return;
+
+    const [idxA, idxB] = room.activeIndices;
+    const playerA = room.players.find((p) => p.currentSlot === idxA);
+    const playerB = room.players.find((p) => p.currentSlot === idxB);
+
+    if (playerA?.isBot && playerB?.isBot) {
+      const timer = setTimeout(() => {
+        const valA = room.array[idxA];
+        const valB = room.array[idxB];
+        if (valA !== undefined && valB !== undefined) {
+          if (valA > valB) {
+            executeSwap(idxA, idxB, playerA.id);
+          } else {
+            executeCompare(idxA, idxB, playerA.id);
+          }
+        }
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [
+    room.status,
+    isHost,
+    room.activeIndices,
+    room.players,
+    room.array,
+    executeSwap,
+    executeCompare,
+  ]);
 
   // Send interactive live floating reaction emote
   const sendReaction = useCallback(

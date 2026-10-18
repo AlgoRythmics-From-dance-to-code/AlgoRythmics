@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { headers as getHeaders } from 'next/headers';
 import type { Where } from 'payload';
 import { auth } from '../../../../auth';
 import { getPayloadInstance } from '../../../../lib/payload';
@@ -75,10 +76,34 @@ interface RawCourseDoc {
 }
 
 export async function GET(req: Request) {
-  const session = await auth();
-  const user = session?.user as { role?: string } | undefined;
+  let isAuthorized = false;
 
-  if (!user || (user.role !== ROLES.ADMIN && user.role !== ROLES.EDITOR)) {
+  // 1. Check NextAuth session
+  try {
+    const session = await auth();
+    const user = session?.user as { role?: string } | undefined;
+    if (user && (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR)) {
+      isAuthorized = true;
+    }
+  } catch {
+    // Continue to check Payload CMS token
+  }
+
+  // 2. Check Payload CMS cookie session if not yet authorized
+  const payload = await getPayloadInstance();
+  if (!isAuthorized) {
+    try {
+      const headers = await getHeaders();
+      const { user: payloadUser } = await payload.auth({ headers });
+      if (payloadUser && (payloadUser.role === ROLES.ADMIN || payloadUser.role === ROLES.EDITOR)) {
+        isAuthorized = true;
+      }
+    } catch {
+      // Payload auth check failed
+    }
+  }
+
+  if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }
 
@@ -87,8 +112,6 @@ export async function GET(req: Request) {
   const timeRangeFilter = searchParams.get('timeRange') || '30d';
 
   try {
-    const payload = await getPayloadInstance();
-
     // Time filter cutoff
     let cutoffDate: Date | null = null;
     const now = new Date();

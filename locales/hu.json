@@ -1240,7 +1240,15 @@
       "feedback_swap_correct": "🎉 Helyes döntés! A nagyobb szám jobbra lépett.",
       "feedback_swap_incorrect": "⚠️ Figyelem: ezek a számok már jó sorrendben álltak.",
       "feedback_keep_correct": "✨ Nagyszerű! Nem volt szükség cserére, mehet a következő lépés.",
-      "feedback_keep_incorrect": "⚠️ Figyelem: a bal oldali szám nagyobb volt, helycsere kellett volna!"
+      "feedback_keep_incorrect": "⚠️ Figyelem: a bal oldali szám nagyobb volt, helycsere kellett volna!",
+      "keyboard_space": "Space",
+      "keyboard_enter": "Enter",
+      "pending_handshake_wait": "🤝 Cserét kértél! Várakozás a partner megerősítésére...",
+      "pending_handshake_confirm": "🤝 A partnered cserét kér! Erősítsd meg a gombbal!",
+      "stage_preparing": "A táncosok a színpadra lépnek...",
+      "waiting_for_partner": "Megerősítve! Várakozás a táncpartner jóváhagyására a szinkron lépéshez...",
+      "partner_requested_action": "A partnered lépést kér! Nyomd meg a gombot a közös jóváhagyáshoz!",
+      "synchronizing_pair": "A pár szinkronizációja folyamatban..."
     },
     "lobby": {
       "enter_waiting_room": "Belépés a Várakozóterembe",
@@ -1415,6 +1423,11 @@
     "pedagogy_pes_report_title": "Pedagógiai jelentés:",
     "pedagogy_pes_report_desc": "A diákok egy hiba után nem kapkodnak, hanem átlagosan több időt töltenek a következő lépés átgondolásával. Ennek köszönhetően a javítási kísérletek jelentős része azonnal sikeres.",
     "pedagogy_video_proof_title": "Módszertani igazolás:",
-    "pedagogy_video_proof_desc": "Azok a diákok, akik a feladatok előtt megtekintették a táncos koreográfiát, átlagosan kevesebb hibát vétettek a lépések és kódok megírásakor."
+    "pedagogy_video_proof_desc": "Azok a diákok, akik a feladatok előtt megtekintették a táncos koreográfiát, átlagosan kevesebb hibát vétettek a lépések és kódok megírásakor.",
+    "access_denied_title": "Hozzáférés Megtagadva",
+    "access_denied_desc": "Ez a statisztikai felület kizárólag adminisztrátorok és oktatók számára érhető el.",
+    "back_to_home": "Vissza a Főoldalra",
+    "unauthorized_error": "Nincs jogosultságod a statisztikák megtekintéséhez.",
+    "error_title": "Nem sikerült betölteni a statisztikákat"
   }
 }

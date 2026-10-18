@@ -1240,7 +1240,15 @@
       "feedback_swap_correct": "🎉 Decizie corectă! Numărul mai mare a trecut la dreapta.",
       "feedback_swap_incorrect": "⚠️ Atenție: aceste numere erau deja în ordine corectă.",
       "feedback_keep_correct": "✨ Excelent! Nu a fost nevoie de schimb, trecem la următorul pas.",
-      "feedback_keep_incorrect": "⚠️ Atenție: numărul din stânga era mai mare, trebuia schimbat!"
+      "feedback_keep_incorrect": "⚠️ Atenție: numărul din stânga era mai mare, trebuia schimbat!",
+      "keyboard_space": "Space",
+      "keyboard_enter": "Enter",
+      "pending_handshake_wait": "🤝 Schimbare solicitată! Se așteaptă confirmarea partenerului...",
+      "pending_handshake_confirm": "🤝 Partenerul tău a cerut schimbare! Confirmă apăsând butonul!",
+      "stage_preparing": "Dansatorii intră pe scenă...",
+      "waiting_for_partner": "Confirmat! Se așteaptă confirmarea partenerului pentru pasul sincronizat...",
+      "partner_requested_action": "Partenerul tău a solicitat o acțiune! Apasă butonul pentru confirmare comună!",
+      "synchronizing_pair": "Sincronizarea perechii în curs..."
     },
     "lobby": {
       "enter_waiting_room": "Intră în Camera de Așteptare",
@@ -1415,6 +1423,11 @@
     "pedagogy_pes_report_title": "Raport pedagogic:",
     "pedagogy_pes_report_desc": "Studenții nu se precipită după o eroare; ei petrec considerabil mai mult timp gândind pasul următor. Prin urmare, încercările de corectare la prima reîncercare sunt în mare parte încununate de succes.",
     "pedagogy_video_proof_title": "Dovadă metodologică:",
-    "pedagogy_video_proof_desc": "Studenții care au vizionat coregrafia de dans înainte de sarcini au făcut substanțial mai puține greșeli la pași și la scrierea codului."
+    "pedagogy_video_proof_desc": "Studenții care au vizionat coregrafia de dans înainte de sarcini au făcut substanțial mai puține greșeli la pași și la scrierea codului.",
+    "access_denied_title": "Acces Refuzat",
+    "access_denied_desc": "Această pagină de statistici este accesibilă exclusiv administratorilor și profesorilor.",
+    "back_to_home": "Înapoi la Pagina Principală",
+    "unauthorized_error": "Nu aveți permisiunea de a vizualiza statisticile.",
+    "error_title": "Nu s-au putut încărca statisticile"
   }
 }

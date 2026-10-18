@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPayloadInstance } from '../../../../lib/payload';
 import { headers as getHeaders } from 'next/headers';
+import { auth } from '../../../../auth';
 import { markdownToLexical } from '@/lib/courses/lexicalConverter';
 import type { Course } from '../../../../payload-types';
 
@@ -480,17 +481,45 @@ export async function POST(req: NextRequest) {
     // 1. Authorize user (admin or editor roles only)
     console.log('[AI Course Generation] Authorizing user...');
     const payload = await getPayloadInstance();
-    const headers = await getHeaders();
-    const { user } = await payload.auth({ headers });
+    let authorizedUser: { email?: string; role?: string } | null = null;
 
-    if (!user || (user.role !== 'admin' && user.role !== 'editor')) {
-      console.warn('[AI Course Generation] Authorization failed: User not admin or editor.');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Check Payload CMS token
+    try {
+      const headers = await getHeaders();
+      const { user: payloadUser } = await payload.auth({ headers });
+      if (payloadUser && (payloadUser.role === 'admin' || payloadUser.role === 'editor')) {
+        authorizedUser = payloadUser;
+      }
+    } catch {
+      // Continue to check NextAuth
     }
-    console.log(`[AI Course Generation] Authorized as ${user.email} (Role: ${user.role})`);
+
+    // Check NextAuth session
+    if (!authorizedUser) {
+      try {
+        const session = await auth();
+        const nextAuthUser = session?.user as { email?: string; role?: string } | undefined;
+        if (nextAuthUser && (nextAuthUser.role === 'admin' || nextAuthUser.role === 'editor')) {
+          authorizedUser = nextAuthUser;
+        }
+      } catch {
+        // Fallback
+      }
+    }
+
+    if (!authorizedUser) {
+      console.warn('[AI Course Generation] Authorization failed: User not admin or editor.');
+      return NextResponse.json(
+        { error: 'Unauthorized: Admin or editor access required' },
+        { status: 401 },
+      );
+    }
+    console.log(
+      `[AI Course Generation] Authorized as ${authorizedUser.email} (Role: ${authorizedUser.role})`,
+    );
 
     // Rate limiting: prevent spamming the API
-    const userEmail = user.email || 'unknown';
+    const userEmail = authorizedUser.email || 'unknown';
     const now = Date.now();
     const lastReq = lastRequestMap.get(userEmail) || 0;
     if (now - lastReq < RATE_LIMIT_MS) {
@@ -850,6 +879,25 @@ CRITICAL REQUIREMENTS:
 
       return result;
     };
+
+    // Ensure slug is unique to avoid Payload duplicate unique index failure
+    let finalSlug = courseData.slug;
+    try {
+      const existing = await payload.find({
+        collection: 'courses',
+        where: { slug: { equals: finalSlug } },
+        limit: 1,
+      });
+      if (existing.docs.length > 0) {
+        finalSlug = `${finalSlug}-${Date.now().toString().slice(-4)}`;
+        courseData.slug = finalSlug;
+        console.log(
+          `[AI Course Generation] Slug collision detected. Unique slug assigned: ${finalSlug}`,
+        );
+      }
+    } catch {
+      // Continue
+    }
 
     const payloadData = buildLocalizedPayload(courseData);
 

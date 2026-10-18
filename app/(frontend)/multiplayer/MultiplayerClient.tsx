@@ -205,12 +205,7 @@ export default function MultiplayerClient() {
             <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold font-mono">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               {t('multiplayer.live_game') || 'ÉLŐ JÁTÉK'} (
-              {room.controlStyle === 'spatial'
-                ? t('multiplayer.controls.spatial.title')
-                : room.controlStyle === 'physical'
-                  ? t('multiplayer.controls.physical.title')
-                  : t('multiplayer.controls.discrete.title')}
-              )
+              {t('multiplayer.dance_arena.title') || 'Vizuális Táncaréna'})
             </div>
           )}
         </div>
@@ -256,22 +251,28 @@ export default function MultiplayerClient() {
         <PostMatchModal
           stats={room.stats}
           onRestart={() => {
-            setRoom((prev) => ({
-              ...prev,
+            const nextRoom: MultiplayerRoomState = {
+              ...room,
               status: 'lobby',
               array: [],
               activeIndices: [0, 1],
-              lastActionMessage: 'Új mérkőzés indítása...',
-            }));
+              lastActionMessage: 'Új táncverseny indítása...',
+              version: (room.version || 1) + 1,
+            };
+            setRoom(nextRoom);
+            broadcastState(nextRoom);
           }}
           onBackToLobby={() => {
-            setRoom((prev) => ({
-              ...prev,
+            const nextRoom: MultiplayerRoomState = {
+              ...room,
               status: 'lobby',
               array: [],
               activeIndices: [0, 1],
               lastActionMessage: 'Visszatérés a lobbyba.',
-            }));
+              version: (room.version || 1) + 1,
+            };
+            setRoom(nextRoom);
+            broadcastState(nextRoom);
           }}
         />
       )}

@@ -67,7 +67,7 @@ export default function VisualDanceArena({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const handleSwapClick = () => {
+  const handleSwapClick = React.useCallback(() => {
     if (activeIdxA === undefined || activeIdxB === undefined) return;
     if (isSwapNeeded) {
       setLastActionFeedback(
@@ -81,9 +81,9 @@ export default function VisualDanceArena({
       );
     }
     onSwap(activeIdxA, activeIdxB);
-  };
+  }, [activeIdxA, activeIdxB, isSwapNeeded, onSwap, t]);
 
-  const handleKeepClick = () => {
+  const handleKeepClick = React.useCallback(() => {
     if (activeIdxA === undefined || activeIdxB === undefined) return;
     if (!isSwapNeeded) {
       setLastActionFeedback(
@@ -97,7 +97,26 @@ export default function VisualDanceArena({
       );
     }
     onCompare(activeIdxA, activeIdxB);
-  };
+  }, [activeIdxA, activeIdxB, isSwapNeeded, onCompare, t]);
+
+  // Keyboard shortcut listener (Space = Swap, Enter/ArrowRight = Keep)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+      if (!isLocalInvolved || activeIdxA === undefined || activeIdxB === undefined) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handleSwapClick();
+      } else if (e.code === 'Enter' || e.code === 'ArrowRight') {
+        e.preventDefault();
+        handleKeepClick();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLocalInvolved, activeIdxA, activeIdxB, handleSwapClick, handleKeepClick]);
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
@@ -295,7 +314,29 @@ export default function VisualDanceArena({
           })}
         </div>
 
-        {/* ── 4. Main Action Buttons (Swap vs Keep) ── */}
+        {/* ── 4. Dual Handshake Synchronization Banner ── */}
+        {room.pendingHandshake && (
+          <div className="w-full max-w-xl px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs sm:text-sm font-montserrat font-bold flex items-center justify-between gap-3 shadow-md animate-pulse z-10">
+            <div className="flex items-center gap-2.5">
+              <span className="text-lg">🤝</span>
+              <span>
+                {room.pendingHandshake.readyPlayerIds.includes(localPlayerId)
+                  ? t('multiplayer.dance_arena.waiting_for_partner') ||
+                    'Megerősítve! Várakozás a táncpartner jóváhagyására a szinkron lépéshez...'
+                  : isLocalInvolved
+                    ? t('multiplayer.dance_arena.partner_requested_action') ||
+                      'A partnered lépést kér! Nyomd meg a gombot a közös jóváhagyáshoz!'
+                    : t('multiplayer.dance_arena.synchronizing_pair') ||
+                      'A pár szinkronizációja folyamatban...'}
+              </span>
+            </div>
+            <span className="shrink-0 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-100 font-mono text-xs uppercase tracking-wider">
+              {room.pendingHandshake.action === 'swap' ? 'CSERE' : 'JÓVÁHAGYÁS'}
+            </span>
+          </div>
+        )}
+
+        {/* ── 5. Main Action Buttons (Swap vs Keep) ── */}
         <div className="w-full max-w-xl flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 z-10">
           {/* Swap Button */}
           <button
@@ -309,6 +350,9 @@ export default function VisualDanceArena({
           >
             <ArrowLeftRight className="w-5 h-5" />
             <span>{t('multiplayer.dance_arena.swap_btn') || '🔄 CSERE (Helycsere)'}</span>
+            <kbd className="hidden sm:inline-block ml-1 px-2 py-0.5 text-[10px] font-mono rounded bg-black/20 text-white/90 border border-white/20">
+              Space
+            </kbd>
           </button>
 
           {/* Keep / Next Button */}
@@ -323,10 +367,13 @@ export default function VisualDanceArena({
           >
             <CheckCircle2 className="w-5 h-5 text-emerald-300" />
             <span>{t('multiplayer.dance_arena.keep_btn') || '⏭️ MARAD (Jó sorrend)'}</span>
+            <kbd className="hidden sm:inline-block ml-1 px-2 py-0.5 text-[10px] font-mono rounded bg-black/20 text-white/90 border border-white/20">
+              Enter
+            </kbd>
           </button>
         </div>
 
-        {/* ── 5. Feedback Box ── */}
+        {/* ── 6. Feedback Box ── */}
         {lastActionFeedback && (
           <div className="px-5 py-2.5 rounded-2xl bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-sm border border-slate-200 dark:border-white/10 text-xs sm:text-sm font-montserrat font-bold text-slate-800 dark:text-slate-200 shadow-sm flex items-center gap-2 animate-in fade-in zoom-in-95 z-10">
             <Info className="w-4 h-4 text-[#269984] shrink-0" />

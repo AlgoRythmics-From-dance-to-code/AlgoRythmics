@@ -623,7 +623,13 @@ ${stepsList
           }}
         >
           <Plus size={12} />
-          <span>Add Step / Új lépés hozzáadása</span>
+          <span>
+            {locale === 'hu'
+              ? 'Új lépés hozzáadása'
+              : locale === 'ro'
+                ? 'Adaugă pas nou'
+                : 'Add Step'}
+          </span>
         </button>
       </div>
 
@@ -643,7 +649,13 @@ ${stepsList
           }}
         >
           <Lightbulb size={12} style={{ color: '#269984' }} />
-          <span>💡 Suggestions / Sablonok</span>
+          <span>
+            {locale === 'hu'
+              ? '💡 Sablonok & Ötletek'
+              : locale === 'ro'
+                ? '💡 Sugestii & Șabloane'
+                : '💡 Suggestions & Templates'}
+          </span>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {examples.map((ex, index) => (
@@ -743,12 +755,24 @@ ${stepsList
           {loading ? (
             <>
               <Loader2 size={14} className="animate-spin" />
-              <span>Generating...</span>
+              <span>
+                {locale === 'hu'
+                  ? 'Generálás folyamatban...'
+                  : locale === 'ro'
+                    ? 'Se generează...'
+                    : 'Generating...'}
+              </span>
             </>
           ) : (
             <>
               <Sparkles size={14} />
-              <span>Generate 3-Language Course</span>
+              <span>
+                {locale === 'hu'
+                  ? '3-Nyelvű Kurzus Generálása'
+                  : locale === 'ro'
+                    ? 'Generează Curs în 3 Limbi'
+                    : 'Generate 3-Language Course'}
+              </span>
             </>
           )}
         </button>
@@ -888,7 +912,13 @@ ${stepsList
         >
           <AlertCircle size={16} style={{ marginTop: '2px', flexShrink: 0 }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Generation Failed</span>
+            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>
+              {locale === 'hu'
+                ? 'A generálás sikertelen'
+                : locale === 'ro'
+                  ? 'Generarea a eșuat'
+                  : 'Generation Failed'}
+            </span>
             <span style={{ fontSize: '11px', color: 'var(--theme-elevation-700)' }}>{error}</span>
           </div>
           <button
@@ -921,7 +951,9 @@ ${stepsList
             }}
           >
             <RefreshCw size={12} />
-            <span>Retry</span>
+            <span>
+              {locale === 'hu' ? 'Újrapróbálás' : locale === 'ro' ? 'Reîncearcă' : 'Retry'}
+            </span>
           </button>
         </div>
       )}

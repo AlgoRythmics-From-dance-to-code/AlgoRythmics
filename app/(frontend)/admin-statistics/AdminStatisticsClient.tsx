@@ -223,6 +223,7 @@ export default function AdminStatisticsClient() {
   >('overview');
   const [data, setData] = useState<StatisticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(isAdminOrEditor ? true : null);
   const [error, setError] = useState<string | null>(null);
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
 
@@ -236,24 +237,27 @@ export default function AdminStatisticsClient() {
       );
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
-          throw new Error('Nincs jogosultságod a statisztikák megtekintéséhez.');
+          setIsAuthorized(false);
+          throw new Error(
+            t('admin_stats.unauthorized_error') ||
+              'Nincs jogosultságod a statisztikák megtekintéséhez.',
+          );
         }
         throw new Error('Nem sikerült betölteni az analitikai adatokat.');
       }
       const json: StatisticsData = await res.json();
+      setIsAuthorized(true);
       setData(json);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Váratlan hiba történt.');
     } finally {
       setLoading(false);
     }
-  }, [timeRange, selectedAlgo]);
+  }, [timeRange, selectedAlgo, t]);
 
   useEffect(() => {
-    if (isAdminOrEditor) {
-      fetchStats();
-    }
-  }, [fetchStats, isAdminOrEditor]);
+    fetchStats();
+  }, [fetchStats]);
 
   // Export handlers
   const exportJSON = () => {
@@ -285,7 +289,7 @@ export default function AdminStatisticsClient() {
     setExportDropdownOpen(false);
   };
 
-  if (status === 'loading') {
+  if (status === 'loading' || (loading && !data && isAuthorized !== false)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0a0a0a]">
         <div className="animate-spin rounded-full h-12 w-12 border-3 border-[#269984] border-t-transparent" />
@@ -293,7 +297,7 @@ export default function AdminStatisticsClient() {
     );
   }
 
-  if (!isAdminOrEditor) {
+  if (isAuthorized === false) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4 bg-slate-50 dark:bg-[#0a0a0a]">
         <div className="max-w-md w-full bg-white dark:bg-[#151515] p-8 rounded-3xl border border-gray-200 dark:border-white/10 text-center shadow-xl space-y-4">
@@ -301,17 +305,38 @@ export default function AdminStatisticsClient() {
             <Shield className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-bold font-montserrat text-gray-900 dark:text-white">
-            Hozzáférés Megtagadva
+            {t('admin_stats.access_denied_title') || 'Hozzáférés Megtagadva'}
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Ez a statisztikai felület kizárólag adminisztrátorok és oktatók számára érhető el.
+            {t('admin_stats.access_denied_desc') ||
+              'Ez a statisztikai felület kizárólag adminisztrátorok és oktatók számára érhető el.'}
           </p>
           <Link
             href={ROUTES.HOME}
             className="inline-block mt-4 px-6 py-3 bg-[#269984] text-white rounded-xl font-bold font-montserrat hover:bg-[#208270] transition-colors"
           >
-            Vissza a Főoldalra
+            {t('admin_stats.back_to_home') || 'Vissza a Főoldalra'}
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center p-4 bg-slate-50 dark:bg-[#0a0a0a]">
+        <div className="max-w-md w-full bg-white dark:bg-[#151515] p-8 rounded-3xl border border-red-200 dark:border-red-500/20 text-center shadow-xl space-y-4">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
+          <h2 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
+            {t('admin_stats.error_title') || 'Nem sikerült betölteni a statisztikákat'}
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{error}</p>
+          <button
+            onClick={fetchStats}
+            className="px-6 py-2.5 bg-[#269984] text-white rounded-xl font-bold font-montserrat hover:bg-[#208270] transition-colors cursor-pointer"
+          >
+            {t('common.retry') || 'Újrapróbálkozás'}
+          </button>
         </div>
       </div>
     );
@@ -335,10 +360,11 @@ export default function AdminStatisticsClient() {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black font-montserrat tracking-tight text-gray-900 dark:text-white">
-                  Oktatói & Kurzus Analitika
+                  {t('admin_stats.title') || 'Oktatói & Kurzus Analitika'}
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  Kurzus-kiértékelés, lemorzsolódási tölcsér, kognitív kutatás és diák stratégiák
+                  {t('admin_stats.subtitle') ||
+                    'Kurzus-kiértékelés, lemorzsolódási tölcsér, kognitív kutatás és diák stratégiák'}
                 </p>
               </div>
             </div>

@@ -145,10 +145,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Valid player data is required' }, { status: 400 });
       }
 
-      // Check if player is already in room
-      const existingPlayerIdx = currentRoom.players.findIndex(
-        (p) => p.id === joiningPlayer.id || (p.name === joiningPlayer.name && !p.isHost),
-      );
+      // Check if player is already in room by unique ID
+      const existingPlayerIdx = currentRoom.players.findIndex((p) => p.id === joiningPlayer.id);
 
       const updatedPlayers = [...currentRoom.players];
       if (existingPlayerIdx >= 0) {
@@ -156,15 +154,27 @@ export async function POST(request: Request) {
         updatedPlayers[existingPlayerIdx] = {
           ...updatedPlayers[existingPlayerIdx],
           ...joiningPlayer,
+          currentSlot: updatedPlayers[existingPlayerIdx].currentSlot ?? existingPlayerIdx,
         };
       } else {
         // Enforce maximum players limit (16)
         if (updatedPlayers.length >= 16) {
           return NextResponse.json({ error: 'Room is full (max 16 players)' }, { status: 400 });
         }
+
+        // If duplicate display name exists in room, disambiguate it
+        let uniqueName = joiningPlayer.name;
+        const matchingNamesCount = updatedPlayers.filter(
+          (p) => p.name === joiningPlayer.name || p.name.startsWith(`${joiningPlayer.name} (`),
+        ).length;
+        if (matchingNamesCount > 0) {
+          uniqueName = `${joiningPlayer.name} (${matchingNamesCount + 1})`;
+        }
+
         // Append new player to next slot
         const newPlayerWithSlot: Player = {
           ...joiningPlayer,
+          name: uniqueName,
           isHost: false,
           currentSlot: updatedPlayers.length,
         };
@@ -192,17 +202,15 @@ export async function POST(request: Request) {
       }
 
       const existingRecord = rooms.get(cleanRoomId);
-      if (!existingRecord) {
-        return NextResponse.json({ error: 'Cannot update non-existent room' }, { status: 404 });
-      }
 
-      // Sanitize roomState arrays and lengths
+      // Auto-heal / re-create room if server state was reset or worker changed
+      const nextVersion = existingRecord ? (existingRecord.state.version || 0) + 1 : 1;
       const sanitizedState: MultiplayerRoomState = {
         ...roomState,
         roomId: cleanRoomId,
         players: (roomState.players || []).slice(0, 16),
         array: (roomState.array || []).slice(0, 32),
-        version: (existingRecord.state.version || 0) + 1,
+        version: nextVersion,
       };
 
       rooms.set(cleanRoomId, {
