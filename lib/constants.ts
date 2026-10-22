@@ -28,6 +28,7 @@ export const ROUTES = {
   LEADERBOARD: '/leaderboard',
   ADMIN: '/admin',
   ADMIN_STATISTICS: '/admin-statistics',
+  STUDIO: '/studio',
 } as const;
 
 export const API_ROUTES = {

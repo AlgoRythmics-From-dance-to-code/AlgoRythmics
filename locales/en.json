@@ -43,7 +43,9 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "leaderboard": "Leaderboard",
-    "multiplayer": "Multiplayer"
+    "multiplayer": "Multiplayer",
+    "studio": "Studio",
+    "teacher_studio": "Teacher Studio"
   },
   "aria": {
     "go_home": "Go to homepage",

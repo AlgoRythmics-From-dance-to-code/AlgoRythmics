@@ -94,6 +94,14 @@ export default function LoginPage() {
       // Also store for consistency or in case some middleware needs it
       document.cookie = `auth_remember_me=${remember}; path=/; max-age=3600; sameSite=lax`;
 
+      // Sync Payload Admin session & cookie for seamless Single Sign-On
+      await fetch('/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      }).catch(() => {});
+
       const result = await signIn('credentials', {
         email,
         password,

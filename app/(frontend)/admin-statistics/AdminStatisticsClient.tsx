@@ -207,6 +207,13 @@ interface StatisticsData {
     totalCourses: number;
     totalEnrolled: number;
   };
+  scope?: {
+    role: string;
+    isTeacher: boolean;
+    isAdmin: boolean;
+    activeInstructorFilter: string | null;
+    instructorsList?: Array<{ id: string; name: string; role?: string }>;
+  };
 }
 
 export default function AdminStatisticsClient() {
@@ -218,6 +225,8 @@ export default function AdminStatisticsClient() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [selectedAlgo, setSelectedAlgo] = useState<string>('all');
   const [selectedCourseId, setSelectedCourseId] = useState<string>('all');
+  const [selectedInstructor, setSelectedInstructor] = useState<string>('all');
+  const [scopeMode, setScopeMode] = useState<'my' | 'global'>('my');
   const [activeTab, setActiveTab] = useState<
     'overview' | 'courses' | 'research' | 'pedagogy' | 'search'
   >('overview');
@@ -232,7 +241,7 @@ export default function AdminStatisticsClient() {
       setLoading(true);
       setError(null);
       const res = await fetch(
-        `/api/admin/statistics?timeRange=${timeRange}&algorithmId=${selectedAlgo}`,
+        `/api/admin/statistics?timeRange=${timeRange}&algorithmId=${selectedAlgo}&instructorId=${selectedInstructor}&scope=${scopeMode}`,
         { cache: 'no-store' },
       );
       if (!res.ok) {
@@ -253,7 +262,7 @@ export default function AdminStatisticsClient() {
     } finally {
       setLoading(false);
     }
-  }, [timeRange, selectedAlgo, t]);
+  }, [timeRange, selectedAlgo, selectedInstructor, scopeMode, t]);
 
   useEffect(() => {
     fetchStats();
@@ -360,11 +369,15 @@ export default function AdminStatisticsClient() {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black font-montserrat tracking-tight text-gray-900 dark:text-white">
-                  {t('admin_stats.title') || 'Oktatói & Kurzus Analitika'}
+                  {data?.scope?.isTeacher
+                    ? 'Tanári Analitika (Saját Kurzusok)'
+                    : (t('admin_stats.title') || 'Oktatói & Kurzus Analitika')}
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  {t('admin_stats.subtitle') ||
-                    'Kurzus-kiértékelés, lemorzsolódási tölcsér, kognitív kutatás és diák stratégiák'}
+                  {data?.scope?.isTeacher
+                    ? 'Kizárólag a saját kurzusaid és beiratkozott diákjaid teljesítménye és statisztikái'
+                    : (t('admin_stats.subtitle') ||
+                      'Kurzus-kiértékelés, lemorzsolódási tölcsér, kognitív kutatás és diák stratégiák')}
                 </p>
               </div>
             </div>
@@ -408,6 +421,32 @@ export default function AdminStatisticsClient() {
                 </option>
               ))}
             </select>
+
+            {/* Instructor Selector (Admin only) */}
+            {data?.scope?.isAdmin && data.scope.instructorsList && (
+              <div className="flex items-center gap-1.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-xl">
+                <GraduationCap className="w-4 h-4 text-[#269984]" />
+                <select
+                  value={selectedInstructor}
+                  onChange={(e) => setSelectedInstructor(e.target.value)}
+                  className="bg-transparent text-xs font-montserrat font-semibold text-gray-700 dark:text-gray-200 outline-none"
+                >
+                  {data.scope.instructorsList.map((ins) => (
+                    <option key={ins.id} value={ins.id} className="dark:bg-slate-900">
+                      {ins.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Teacher View Badge */}
+            {data?.scope?.isTeacher && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-500/20 text-xs font-montserrat font-bold text-[#269984]">
+                <GraduationCap className="w-4 h-4" />
+                <span>Tanári Nézet: Saját kurzusok & diákok</span>
+              </div>
+            )}
 
             {/* Refresh Button */}
             <button
@@ -568,6 +607,27 @@ export default function AdminStatisticsClient() {
         {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         {activeTab === 'courses' && (
           <div className="space-y-8 animate-in fade-in duration-200">
+            {(!data?.coursesEvaluation?.coursesList || data.coursesEvaluation.coursesList.length === 0) ? (
+              <div className="p-12 text-center bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl shadow-sm space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-[#269984] flex items-center justify-center mx-auto">
+                  <BookOpen className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
+                  Még nincsenek saját kurzusaid
+                </h3>
+                <p className="text-xs text-gray-500 max-w-md mx-auto">
+                  A diákok tanulási fázisai, elakadásai és a lemorzsolódási tölcsér itt fog megjelenni, amint létrehozol egy kurzust a Tanári Stúdióban és a tanulók elkezdik megoldani.
+                </p>
+                <Link
+                  href={ROUTES.STUDIO}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#269984] text-white font-montserrat font-bold text-xs hover:bg-[#208270] transition-colors shadow-md"
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  Kurzus készítése a Tanári Stúdióban
+                </Link>
+              </div>
+            ) : (
+              <>
             {/* Top Course Filter & Executive Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-sm">
               <div>
@@ -695,7 +755,7 @@ export default function AdminStatisticsClient() {
               </div>
 
               <div className="space-y-4">
-                {selectedCourse?.dropoffFunnel.map((phase, pIdx) => (
+                {selectedCourse?.dropoffFunnel?.map((phase, pIdx) => (
                   <div
                     key={phase.phaseId}
                     className={`p-5 rounded-2xl border transition-all ${
@@ -891,6 +951,8 @@ export default function AdminStatisticsClient() {
                 </p>
               </div>
             </div>
+            </>
+            )}
           </div>
         )}
 

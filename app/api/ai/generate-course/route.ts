@@ -3,6 +3,7 @@ import { getPayloadInstance } from '../../../../lib/payload';
 import { headers as getHeaders } from 'next/headers';
 import { auth } from '../../../../auth';
 import { markdownToLexical } from '@/lib/courses/lexicalConverter';
+import { getOpenRouterConfig } from '@/lib/ai/aiSettingsHelper';
 import type { Course } from '../../../../payload-types';
 
 export const maxDuration = 60;
@@ -481,14 +482,14 @@ export async function POST(req: NextRequest) {
     // 1. Authorize user (admin or editor roles only)
     console.log('[AI Course Generation] Authorizing user...');
     const payload = await getPayloadInstance();
-    let authorizedUser: { email?: string; role?: string } | null = null;
+    let authorizedUser: { id?: string | number; email?: string; role?: string } | null = null;
 
     // Check Payload CMS token
     try {
       const headers = await getHeaders();
       const { user: payloadUser } = await payload.auth({ headers });
       if (payloadUser && (payloadUser.role === 'admin' || payloadUser.role === 'editor')) {
-        authorizedUser = payloadUser;
+        authorizedUser = payloadUser as { id?: string | number; email?: string; role?: string };
       }
     } catch {
       // Continue to check NextAuth
@@ -498,7 +499,7 @@ export async function POST(req: NextRequest) {
     if (!authorizedUser) {
       try {
         const session = await auth();
-        const nextAuthUser = session?.user as { email?: string; role?: string } | undefined;
+        const nextAuthUser = session?.user as { id?: string | number; email?: string; role?: string } | undefined;
         if (nextAuthUser && (nextAuthUser.role === 'admin' || nextAuthUser.role === 'editor')) {
           authorizedUser = nextAuthUser;
         }
@@ -517,6 +518,10 @@ export async function POST(req: NextRequest) {
     console.log(
       `[AI Course Generation] Authorized as ${authorizedUser.email} (Role: ${authorizedUser.role})`,
     );
+
+    const instructorId = authorizedUser.id
+      ? (isNaN(Number(authorizedUser.id)) ? authorizedUser.id : Number(authorizedUser.id))
+      : undefined;
 
     // Rate limiting: prevent spamming the API
     const userEmail = authorizedUser.email || 'unknown';
@@ -540,17 +545,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    let activeModel = model?.trim() ? model.trim() : 'openrouter/free';
-    console.log(`[AI Course Generation] Target model set to: ${activeModel}`);
+    // 3. Fetch OpenRouter configuration from Payload CMS (ai-settings global)
+    const aiConfig = await getOpenRouterConfig();
+    let activeModel = model?.trim() ? model.trim() : aiConfig.model;
+    const apiKey = aiConfig.apiKey;
 
-    // 3. Verify OpenRouter API Key exists
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    console.log(`[AI Course Generation] Target OpenRouter model: ${activeModel}`);
+
     if (!apiKey) {
-      console.error('[AI Course Generation] Error: OPENROUTER_API_KEY is missing.');
+      console.error('[AI Course Generation] Error: OpenRouter API key is not configured in Payload CMS.');
       return NextResponse.json(
         {
           error:
-            'OPENROUTER_API_KEY is not configured in the environment. Please add it to your .env file.',
+            'Az OpenRouter API kulcs nincs beállítva a Payload CMS adminisztrációs felületén (AI Beállítások). Kérjük, az adminisztrátor adja meg az API kulcsot a Payload CMS-ben.',
         },
         { status: 500 },
       );
@@ -877,6 +884,11 @@ CRITICAL REQUIREMENTS:
         }));
       }
 
+      if (instructorId !== undefined) {
+        result.instructor = instructorId;
+      }
+      result.visibility = 'private';
+
       return result;
     };
 
@@ -917,6 +929,8 @@ CRITICAL REQUIREMENTS:
         success: true,
         courseId: created.id,
         slug: courseData.slug,
+        course: created,
+        generatedData: courseData,
       });
     } catch (saveError: unknown) {
       console.error('[AI Course Generation] Payload save error:', saveError);
@@ -926,6 +940,7 @@ CRITICAL REQUIREMENTS:
       return NextResponse.json({
         success: false,
         saveError: saveMsg,
+        course: courseData,
         generatedData: courseData,
       });
     }

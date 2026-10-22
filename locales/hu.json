@@ -43,7 +43,9 @@
     "terms": "Felhasználási feltételek",
     "privacy": "Adatvédelmi irányelvek",
     "leaderboard": "Ranglista",
-    "multiplayer": "Multiplayer"
+    "multiplayer": "Multiplayer",
+    "studio": "Stúdió",
+    "teacher_studio": "Tanári Stúdió"
   },
   "aria": {
     "go_home": "Ugrás a kezdőlapra",

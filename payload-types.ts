@@ -99,8 +99,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('hu' | 'en' | 'ro') | ('hu' | 'en' | 'ro')[];
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'ai-settings': AiSetting;
+  };
+  globalsSelect: {
+    'ai-settings': AiSettingsSelect<false> | AiSettingsSelect<true>;
+  };
   locale: 'hu' | 'en' | 'ro';
   widgets: {
     collections: CollectionsWidget;
@@ -173,6 +177,18 @@ export interface Course {
    * A kurzus nehézségi szintje.
    */
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  /**
+   * A kurzust készítő tanár / oktató.
+   */
+  instructor?: (number | null) | User;
+  /**
+   * Láthatóság más tanárok számára a Tanári Stúdióban.
+   */
+  visibility?: ('public' | 'private') | null;
+  /**
+   * Hivatalos AlgoRythmics alapkurzus (mintasablon).
+   */
+  isOfficial?: boolean | null;
   /**
    * Per-course mascot configuration and trigger copy.
    */
@@ -850,6 +866,9 @@ export interface CoursesSelect<T extends boolean = true> {
   illustrationAsset?: T;
   estimatedMinutes?: T;
   difficulty?: T;
+  instructor?: T;
+  visibility?: T;
+  isOfficial?: T;
   mascot?:
     | T
     | {
@@ -1191,6 +1210,34 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-settings".
+ */
+export interface AiSetting {
+  id: number;
+  /**
+   * Az AI tananyag generáláshoz használt OpenRouter modell (pl. google/gemini-2.5-flash, openai/gpt-4o-mini, anthropic/claude-3.5-haiku, openrouter/free).
+   */
+  model: string;
+  /**
+   * Az OpenRouter hozzáférési kulcs (sk-or-v1-...). Kizárólag a rendszergazdák szerkeszthetik.
+   */
+  apiKey?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-settings_select".
+ */
+export interface AiSettingsSelect<T extends boolean = true> {
+  model?: T;
+  apiKey?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

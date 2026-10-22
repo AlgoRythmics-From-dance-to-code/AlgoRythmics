@@ -43,7 +43,9 @@
     "terms": "Termenii și condițiile",
     "privacy": "Politica de confidențialitate",
     "leaderboard": "Clasament",
-    "multiplayer": "Multiplayer"
+    "multiplayer": "Multiplayer",
+    "studio": "Studio",
+    "teacher_studio": "Studio Profesor"
   },
   "aria": {
     "go_home": "Mergi la pagina principală",

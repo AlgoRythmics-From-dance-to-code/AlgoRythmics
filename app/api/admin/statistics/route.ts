@@ -78,12 +78,17 @@ interface RawCourseDoc {
 export async function GET(req: Request) {
   let isAuthorized = false;
 
+  let currentUserRole = '';
+  let currentUserId = '';
+
   // 1. Check NextAuth session
   try {
     const session = await auth();
-    const user = session?.user as { role?: string } | undefined;
+    const user = session?.user as { id?: string; role?: string } | undefined;
     if (user && (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR)) {
       isAuthorized = true;
+      currentUserRole = user.role;
+      currentUserId = user.id ? String(user.id) : '';
     }
   } catch {
     // Continue to check Payload CMS token
@@ -97,6 +102,8 @@ export async function GET(req: Request) {
       const { user: payloadUser } = await payload.auth({ headers });
       if (payloadUser && (payloadUser.role === ROLES.ADMIN || payloadUser.role === ROLES.EDITOR)) {
         isAuthorized = true;
+        currentUserRole = payloadUser.role;
+        currentUserId = String(payloadUser.id);
       }
     } catch {
       // Payload auth check failed
@@ -110,6 +117,18 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const algorithmFilter = searchParams.get('algorithmId') || 'all';
   const timeRangeFilter = searchParams.get('timeRange') || '30d';
+  const requestedInstructor = searchParams.get('instructorId');
+  const scopeMode = searchParams.get('scope') || 'auto'; // 'my' | 'global' | 'auto'
+
+  let activeInstructorFilter: string | null = null;
+  if (currentUserRole === ROLES.EDITOR) {
+    // Teachers are strictly scoped to their own courses and enrolled students
+    activeInstructorFilter = currentUserId;
+  } else if (currentUserRole === ROLES.ADMIN) {
+    if (requestedInstructor && requestedInstructor !== 'all') {
+      activeInstructorFilter = requestedInstructor;
+    }
+  }
 
   try {
     // Time filter cutoff
@@ -176,10 +195,84 @@ export async function GET(req: Request) {
     // 5. Fetch Courses
     const { docs: rawCourses } = await payload.find({
       collection: 'courses',
-      limit: 50,
+      limit: 100,
+      depth: 1,
+    });
+    let coursesDocs = rawCourses as unknown as Array<RawCourseDoc & { instructor?: unknown }>;
+
+    if (activeInstructorFilter) {
+      // Filter strictly to courses authored by the active instructor
+      coursesDocs = coursesDocs.filter((c) => {
+        const ins = c.instructor as { id?: string | number } | string | number | null | undefined;
+        const insId = typeof ins === 'object' && ins !== null && ins.id !== undefined
+          ? String(ins.id)
+          : (ins !== null && ins !== undefined ? String(ins) : '');
+        return insId === activeInstructorFilter;
+      });
+    }
+
+    // Set of slugs and IDs belonging to the active instructor's courses
+    const teacherCourseSlugs = new Set<string>();
+    const teacherCourseIds = new Set<string>();
+    coursesDocs.forEach((c) => {
+      if (c.slug) teacherCourseSlugs.add(c.slug);
+      if (c.id) teacherCourseIds.add(String(c.id));
+    });
+
+    // Filter course-progress to only records belonging to the instructor's courses
+    const filteredCourseProgress = activeInstructorFilter
+      ? courseProgressDocs.filter(
+          (cp) => teacherCourseSlugs.has(cp.courseId) || teacherCourseIds.has(cp.courseId)
+        )
+      : courseProgressDocs;
+
+    // Set of student user IDs enrolled in these courses
+    const enrolledStudentUserIds = new Set<string>();
+    filteredCourseProgress.forEach((cp) => {
+      const uid = typeof cp.user === 'object' && cp.user !== null ? String(cp.user.id) : String(cp.user);
+      if (uid && uid !== 'undefined' && uid !== 'null') {
+        enrolledStudentUserIds.add(uid);
+      }
+    });
+
+    // Scope algorithm progress and learning events to enrolled students when teacher scope is active
+    const scopedProgressDocs = activeInstructorFilter
+      ? progressDocs.filter((p) => {
+          const uid = typeof p.user === 'object' && p.user !== null ? String(p.user.id) : String(p.user);
+          return enrolledStudentUserIds.has(uid);
+        })
+      : progressDocs;
+
+    const scopedEventsDocs = activeInstructorFilter
+      ? eventsDocs.filter((e) => {
+          const uid = typeof e.user === 'object' && e.user !== null ? String(e.user.id) : String(e.user);
+          return enrolledStudentUserIds.has(uid);
+        })
+      : eventsDocs;
+
+    // Fetch instructors list for admin dropdown
+    const { docs: rawInstructors } = await payload.find({
+      collection: 'users',
+      where: {
+        or: [
+          { role: { equals: ROLES.ADMIN } },
+          { role: { equals: ROLES.EDITOR } },
+        ],
+      },
+      limit: 100,
       depth: 0,
     });
-    const coursesDocs = rawCourses as unknown as RawCourseDoc[];
+
+    const instructorsList = [
+      { id: 'all', name: 'Teljes platform (Minden oktató & diák)' },
+      ...rawInstructors.map((ins) => ({
+        id: String(ins.id),
+        name: (ins as { firstName?: string; lastName?: string; email?: string }).firstName
+          ? `${(ins as { firstName?: string; lastName?: string }).firstName} ${(ins as { lastName?: string }).lastName || ''}`.trim()
+          : (ins as { email?: string }).email || 'Tanár',
+        role: (ins as { role?: string }).role,
+      })),
+    ];
 
     // 6. Fetch Search Analytics
     const { docs: searchDocs } = await payload.find({
@@ -192,31 +285,30 @@ export async function GET(req: Request) {
     // ─── AGGREGATIONS ───
 
     // A. Basic KPIs
-    const distinctUsersInEvents = new Set(
-      eventsDocs.map((e) => (typeof e.user === 'object' ? e.user?.id : e.user)),
-    );
-    const distinctUsersInProgress = new Set(
-      progressDocs.map((p) => (typeof p.user === 'object' ? p.user?.id : p.user)),
-    );
-    const activeLearnersCount = Math.max(
-      new Set([...distinctUsersInEvents, ...distinctUsersInProgress]).size,
-      users.length,
-      1,
-    );
+    const activeLearnersCount = activeInstructorFilter
+      ? enrolledStudentUserIds.size
+      : Math.max(
+          new Set([
+            ...eventsDocs.map((e) => (typeof e.user === 'object' ? e.user?.id : e.user)),
+            ...progressDocs.map((p) => (typeof p.user === 'object' ? p.user?.id : p.user)),
+          ]).size,
+          users.length,
+          0,
+        );
 
-    let totalRecordedTimeMs = progressDocs.reduce((sum, p) => sum + (p.totalTimeSpentMs || 0), 0);
+    let totalRecordedTimeMs = scopedProgressDocs.reduce((sum, p) => sum + (p.totalTimeSpentMs || 0), 0);
     if (totalRecordedTimeMs === 0) {
-      totalRecordedTimeMs = eventsDocs.reduce((sum, e) => sum + (e.durationMs || 0), 0);
+      totalRecordedTimeMs = scopedEventsDocs.reduce((sum, e) => sum + (e.durationMs || 0), 0);
     }
-    if (totalRecordedTimeMs === 0) {
+    if (totalRecordedTimeMs === 0 && !activeInstructorFilter) {
       totalRecordedTimeMs = activeLearnersCount * 32 * 60 * 1000;
     }
 
-    const totalAlgorithmsCompleted = progressDocs.filter(
+    const totalAlgorithmsCompleted = scopedProgressDocs.filter(
       (p) => (p.overallProgress || 0) >= 100,
     ).length;
 
-    const totalCoursesCompleted = courseProgressDocs.filter((cp) => cp.isCompleted === true).length;
+    const totalCoursesCompleted = filteredCourseProgress.filter((cp) => cp.isCompleted === true).length;
 
     // B. Algorithm Mistake & Hesitation Breakdown
     const algorithmStatsMap: Record<
@@ -797,79 +889,54 @@ export async function GET(req: Request) {
       .slice(0, 6);
 
     // ─── COURSES EVALUATION & DROPOFF FUNNEL ───
-    const coursesEvaluationList = (
-      coursesDocs.length > 0
-        ? coursesDocs
-        : [
-            {
-              id: 'bubble-sort-basics',
-              slug: 'bubble-sort-basics',
-              title: 'Buborékrendezés Alapjai & Koreográfia',
-              difficulty: 'Beginner',
-              estimatedMinutes: 20,
-              phases: [
-                { phaseId: 'phase-1', title: 'Videó Alapozás', sourceView: 'video' },
-                { phaseId: 'phase-2', title: 'Interaktív Irányítás', sourceView: 'control' },
-                { phaseId: 'phase-3', title: 'Kvíz & Logika', sourceView: 'quiz' },
-                { phaseId: 'phase-4', title: 'Kód Hibakeresés (Debug)', sourceView: 'debug' },
-                { phaseId: 'phase-5', title: 'Záró Szimuláció', sourceView: 'final-challenge' },
-              ],
-            },
-            {
-              id: 'quick-sort-mastery',
-              slug: 'quick-sort-mastery',
-              title: 'Gyorsrendezés és Particionálás Mesterkurzus',
-              difficulty: 'Intermediate',
-              estimatedMinutes: 30,
-              phases: [
-                { phaseId: 'qs-1', title: 'Particionálás Videó', sourceView: 'video' },
-                { phaseId: 'qs-2', title: 'Pivot Irányítás', sourceView: 'control' },
-                { phaseId: 'qs-3', title: 'Párosítás & Sorrend', sourceView: 'match' },
-                { phaseId: 'qs-4', title: 'Rekurzió Kódjavítás', sourceView: 'debug' },
-                { phaseId: 'qs-5', title: 'Mester Vizsga', sourceView: 'final-challenge' },
-              ],
-            },
-            {
-              id: 'search-algorithms',
-              slug: 'search-algorithms',
-              title: 'Keresési Algoritmusok (Lineáris vs. Bináris)',
-              difficulty: 'Beginner',
-              estimatedMinutes: 15,
-              phases: [
-                { phaseId: 'search-1', title: 'Felező Keresés Videó', sourceView: 'video' },
-                { phaseId: 'search-2', title: 'Keresési Szimuláció', sourceView: 'control' },
-                { phaseId: 'search-3', title: 'Kód Kiegészítés', sourceView: 'gap-fill' },
-                { phaseId: 'search-4', title: 'Záró Kvíz', sourceView: 'quiz' },
-              ],
-            },
-          ]
-    ).map((course) => {
+    const coursesToEvaluate = activeInstructorFilter
+      ? coursesDocs
+      : (coursesDocs.length > 0
+          ? coursesDocs
+          : [
+              {
+                id: 'bubble-sort-basics',
+                slug: 'bubble-sort-basics',
+                title: 'Buborékrendezés Alapjai & Koreográfia',
+                difficulty: 'Beginner',
+                estimatedMinutes: 20,
+                phases: [
+                  { phaseId: 'phase-1', title: 'Videó Alapozás', sourceView: 'video' },
+                  { phaseId: 'phase-2', title: 'Interaktív Irányítás', sourceView: 'control' },
+                  { phaseId: 'phase-3', title: 'Kvíz & Logika', sourceView: 'quiz' },
+                  { phaseId: 'phase-4', title: 'Kód Hibakeresés (Debug)', sourceView: 'debug' },
+                  { phaseId: 'phase-5', title: 'Záró Szimuláció', sourceView: 'final-challenge' },
+                ],
+              },
+            ]);
+
+    const coursesEvaluationList = coursesToEvaluate.map((course) => {
       const courseSlug = course.slug || String(course.id);
       const enrolled = courseProgressDocs.filter(
         (cp) => cp.courseId === courseSlug || cp.courseId === String(course.id),
       );
-      const enrolledCount = Math.max(enrolled.length, 12);
+      const enrolledCount = enrolled.length;
       const completed = enrolled.filter((cp) => cp.isCompleted === true);
-      const completedCount = completed.length || Math.round(enrolledCount * 0.75);
-      const completionRate = Math.round((completedCount / enrolledCount) * 100);
+      const completedCount = completed.length;
+      const completionRate = enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0;
 
       const totalTimeMs = enrolled.reduce((sum, cp) => sum + (cp.totalTimeMs || 0), 0);
       const estimatedMinutes = course.estimatedMinutes || 20;
       const actualAvgMinutes =
         enrolled.length > 0 && totalTimeMs > 0
           ? Math.round(totalTimeMs / enrolled.length / 60000)
-          : Math.round(estimatedMinutes * 1.18);
+          : estimatedMinutes;
 
       const pacingRatio = Number((actualAvgMinutes / estimatedMinutes).toFixed(2));
 
       const totalPoints = enrolled.reduce((sum, cp) => sum + (cp.points || 0), 0);
       const avgScore =
-        enrolled.length > 0 && totalPoints > 0 ? Math.round(totalPoints / enrolled.length) : 84;
+        enrolled.length > 0 && totalPoints > 0 ? Math.round(totalPoints / enrolled.length) : 0;
 
-      const totalMistakes = enrolled.reduce((sum, cp) => sum + (cp.totalMistakes || 0), 0) || 16;
+      const totalMistakes = enrolled.reduce((sum, cp) => sum + (cp.totalMistakes || 0), 0);
 
       const mascotInteractions =
-        enrolled.reduce((sum, cp) => sum + (cp.mascotInteractionsTotal || 0), 0) || 34;
+        enrolled.reduce((sum, cp) => sum + (cp.mascotInteractionsTotal || 0), 0);
 
       const mascotCohort = enrolled.filter((cp) => (cp.mascotInteractionsTotal || 0) > 0);
       const nonMascotCohort = enrolled.filter((cp) => (cp.mascotInteractionsTotal || 0) === 0);
@@ -878,37 +945,33 @@ export async function GET(req: Request) {
           ? Math.round(
               (mascotCohort.filter((cp) => cp.isCompleted).length / mascotCohort.length) * 100,
             )
-          : 89;
+          : 0;
       const nonMascotCompletion =
         nonMascotCohort.length > 0
           ? Math.round(
               (nonMascotCohort.filter((cp) => cp.isCompleted).length / nonMascotCohort.length) *
                 100,
             )
-          : 63;
-      const mascotRetentionBoost = Math.max(0, mascotCompletion - nonMascotCompletion) || 26;
+          : 0;
+      const mascotRetentionBoost = Math.max(0, mascotCompletion - nonMascotCompletion);
 
       // Quality Index (1-100 score)
-      const qualityIndex = Math.min(
-        100,
-        Math.round(
-          completionRate * 0.4 +
-            (avgScore / 100) * 40 +
-            Math.max(0, 20 - Math.abs(pacingRatio - 1) * 20),
-        ),
-      );
+      const qualityIndex = enrolledCount > 0
+        ? Math.min(
+            100,
+            Math.round(
+              completionRate * 0.4 +
+                (avgScore / 100) * 40 +
+                Math.max(0, 20 - Math.abs(pacingRatio - 1) * 20),
+            ),
+          )
+        : 100;
 
       // Phase drop-off funnel
       const phases =
         course.phases && course.phases.length > 0
           ? course.phases
-          : [
-              { phaseId: 'phase-1', title: 'Videó Alapozás', sourceView: 'video' },
-              { phaseId: 'phase-2', title: 'Interaktív Irányítás', sourceView: 'control' },
-              { phaseId: 'phase-3', title: 'Kvíz & Logika', sourceView: 'quiz' },
-              { phaseId: 'phase-4', title: 'Kód Hibakeresés (Debug)', sourceView: 'debug' },
-              { phaseId: 'phase-5', title: 'Záró Szimuláció', sourceView: 'final-challenge' },
-            ];
+          : [];
 
       const dropoffFunnel = phases.map((phase, pIdx) => {
         const reachedCount =
@@ -916,33 +979,41 @@ export async function GET(req: Request) {
             if (cp.isCompleted) return true;
             const compCount = cp.completedPhases?.length || 0;
             return compCount >= pIdx || (cp.activePhaseIndex || 0) >= pIdx;
-          }).length || Math.max(1, Math.round(enrolledCount * Math.pow(0.88, pIdx)));
+          }).length;
 
-        const retentionRate = Math.min(100, Math.round((reachedCount / enrolledCount) * 100));
+        const retentionRate = enrolledCount > 0 ? Math.min(100, Math.round((reachedCount / enrolledCount) * 100)) : 0;
         const avgTimeMinutes = Number(
-          ((actualAvgMinutes / phases.length) * (phase.sourceView === 'debug' ? 1.4 : 0.9)).toFixed(
+          ((actualAvgMinutes / (phases.length || 1)) * (phase.sourceView === 'debug' ? 1.4 : 0.9)).toFixed(
             1,
           ),
         );
         const mistakeCount = Math.round(
-          (totalMistakes / phases.length) *
-            (phase.sourceView === 'debug' ? 2.1 : phase.sourceView === 'quiz' ? 1.2 : 0.6),
+          (totalMistakes / (phases.length || 1)) *
+            (phase.sourceView === 'debug' ? 1.5 : 0.8),
         );
+
+        const phaseTitle = typeof phase.title === 'object' && phase.title !== null
+          ? ((phase.title as any).hu || (phase.title as any).en || (phase.title as any).ro || `Fázis #${pIdx + 1}`)
+          : (phase.title || `Fázis #${pIdx + 1}`);
 
         return {
           phaseId: phase.phaseId,
-          title: phase.title || `Fázis #${pIdx + 1}`,
+          title: phaseTitle,
           sourceView: phase.sourceView || 'info',
           retentionRate,
           avgTimeMinutes,
           mistakeCount,
-          isBottleneck: pIdx > 0 && retentionRate < 72,
+          isBottleneck: pIdx > 0 && retentionRate < 72 && enrolledCount > 0,
         };
       });
 
+      const courseTitle = typeof course.title === 'object' && course.title !== null
+        ? ((course.title as any).hu || (course.title as any).en || (course.title as any).ro || courseSlug)
+        : (course.title || courseSlug);
+
       return {
         courseId: courseSlug,
-        title: course.title || courseSlug,
+        title: courseTitle,
         difficulty: course.difficulty || 'Beginner',
         estimatedMinutes,
         actualAvgMinutes,
@@ -1040,8 +1111,15 @@ export async function GET(req: Request) {
         zeroResultSearches,
       },
       coursesSummary: {
-        totalCourses: coursesDocs.length || coursesEvaluationList.length,
-        totalEnrolled: courseProgressDocs.length || 36,
+        totalCourses: coursesDocs.length,
+        totalEnrolled: filteredCourseProgress.length,
+      },
+      scope: {
+        role: currentUserRole,
+        isTeacher: currentUserRole === ROLES.EDITOR,
+        isAdmin: currentUserRole === ROLES.ADMIN,
+        activeInstructorFilter,
+        instructorsList: currentUserRole === ROLES.ADMIN ? instructorsList : undefined,
       },
     });
   } catch (error) {

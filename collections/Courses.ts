@@ -38,8 +38,28 @@ export const Courses: CollectionConfig = {
   access: {
     read: () => true,
     create: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
-    update: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
-    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    update: ({ req: { user } }) => {
+      if (!user) return false;
+      if (user.role === ROLES.ADMIN) return true;
+      if (user.role === ROLES.EDITOR) return true;
+      return false;
+    },
+    delete: ({ req: { user } }) => {
+      if (!user) return false;
+      if (user.role === ROLES.ADMIN) return true;
+      if (user.role === ROLES.EDITOR) return true;
+      return false;
+    },
+  },
+  hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (operation === 'create' && req?.user && !data.instructor) {
+          data.instructor = req.user.id;
+        }
+        return data;
+      },
+    ],
   },
   fields: [
     {
@@ -140,6 +160,37 @@ export const Courses: CollectionConfig = {
               options: difficultyOptions,
               required: true,
               admin: { description: 'A kurzus nehézségi szintje.' },
+            },
+            {
+              name: 'instructor',
+              type: 'relationship',
+              relationTo: 'users',
+              admin: {
+                position: 'sidebar',
+                description: 'A kurzust készítő tanár / oktató.',
+              },
+            },
+            {
+              name: 'visibility',
+              type: 'select',
+              defaultValue: 'public',
+              options: [
+                { label: 'Publikus (Minden tanár látja és klónozhatja)', value: 'public' },
+                { label: 'Privát (Csak a saját kurzusaim között)', value: 'private' },
+              ],
+              admin: {
+                position: 'sidebar',
+                description: 'Láthatóság más tanárok számára a Tanári Stúdióban.',
+              },
+            },
+            {
+              name: 'isOfficial',
+              type: 'checkbox',
+              defaultValue: false,
+              admin: {
+                position: 'sidebar',
+                description: 'Hivatalos AlgoRythmics alapkurzus (mintasablon).',
+              },
             },
           ],
         },

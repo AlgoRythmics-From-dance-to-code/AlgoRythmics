@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useLocale, Locale } from '../i18n/LocaleProvider';
 import ThemeToggle from './ThemeToggle';
-import { User as UserIcon, BarChart3, Shield } from 'lucide-react';
+import { User as UserIcon, BarChart3, Shield, GraduationCap } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import { ROUTES, API_ROUTES, ROLES } from '../../lib/constants';
 import { useAlgorithmStore } from '../store/useAlgorithmStore';
@@ -28,7 +28,8 @@ export default function Header() {
         role?: string;
       }
     | undefined;
-  const isAdminOrEditor = user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR;
+  const isAdmin = user?.role === ROLES.ADMIN;
+  const isAdminOrEditor = isAdmin || user?.role === ROLES.EDITOR;
   const firstName = user?.firstName || '';
   const lastName = user?.lastName || '';
   const avatarUrl = user?.imageUrl || user?.image || null;
@@ -142,6 +143,14 @@ export default function Header() {
                 active={pathname === ROUTES.COURSES}
                 prefetch={true}
               />
+              {isAdminOrEditor && (
+                <NavLink
+                  href={ROUTES.STUDIO}
+                  label={t('nav.studio') || 'Stúdió'}
+                  active={pathname === ROUTES.STUDIO}
+                  prefetch={true}
+                />
+              )}
               <NavLink
                 href={ROUTES.LEADERBOARD}
                 label={t('nav.leaderboard')}
@@ -297,6 +306,19 @@ export default function Header() {
                   {isAdminOrEditor && (
                     <>
                       <Link
+                        href={ROUTES.STUDIO}
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-emerald-50/60 transition-colors group"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                          <GraduationCap className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <span className="font-montserrat text-sm font-semibold text-emerald-700">
+                          {t('nav.teacher_studio') || 'Tanári Stúdió'}
+                        </span>
+                      </Link>
+
+                      <Link
                         href={ROUTES.ADMIN_STATISTICS}
                         onClick={() => setProfileDropdownOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-teal-50/60 transition-colors group"
@@ -305,22 +327,24 @@ export default function Header() {
                           <BarChart3 className="w-4 h-4 text-[#269984]" />
                         </div>
                         <span className="font-montserrat text-sm font-semibold text-[#269984]">
-                          {t('admin.pedagogy_statistics') || 'Statisztikák'}
+                          {isAdmin ? (t('admin.pedagogy_statistics') || 'Rendszer Statisztikák') : 'Saját Statisztikák'}
                         </span>
                       </Link>
 
-                      <Link
-                        href={ROUTES.ADMIN}
-                        onClick={() => setProfileDropdownOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-purple-50/60 transition-colors group"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                          <Shield className="w-4 h-4 text-purple-600" />
-                        </div>
-                        <span className="font-montserrat text-sm font-semibold text-purple-600">
-                          Admin Panel
-                        </span>
-                      </Link>
+                      {isAdmin && (
+                        <Link
+                          href="/api/auth/sso?redirect=/admin"
+                          onClick={() => setProfileDropdownOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-purple-50/60 transition-colors group"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                            <Shield className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <span className="font-montserrat text-sm font-semibold text-purple-600">
+                            Admin Panel
+                          </span>
+                        </Link>
+                      )}
                     </>
                   )}
 
@@ -416,6 +440,15 @@ export default function Header() {
                 >
                   {t('nav.courses')}
                 </Link>
+                {isAdminOrEditor && (
+                  <Link
+                    href={ROUTES.STUDIO}
+                    className={`font-montserrat text-xl ${pathname === ROUTES.STUDIO ? 'text-white font-bold text-emerald-200' : 'text-emerald-100 transition-colors'}`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    🎓 {t('nav.teacher_studio') || 'Tanári Stúdió'}
+                  </Link>
+                )}
                 <Link
                   href={ROUTES.LEADERBOARD}
                   className={`font-montserrat text-xl ${pathname === ROUTES.LEADERBOARD ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
@@ -543,21 +576,31 @@ export default function Header() {
                 {isAdminOrEditor && (
                   <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
                     <Link
+                      href={ROUTES.STUDIO}
+                      className="flex items-center gap-3 font-montserrat text-emerald-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <GraduationCap className="w-4 h-4 text-emerald-300" />
+                      <span>{t('nav.teacher_studio') || 'Tanári Stúdió'}</span>
+                    </Link>
+                    <Link
                       href={ROUTES.ADMIN_STATISTICS}
                       className="flex items-center gap-3 font-montserrat text-teal-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
                       onClick={() => setMenuOpen(false)}
                     >
                       <BarChart3 className="w-4 h-4 text-teal-200" />
-                      <span>{t('admin.pedagogy_statistics') || 'Admin Statisztikák'}</span>
+                      <span>{isAdmin ? (t('admin.pedagogy_statistics') || 'Rendszer Statisztikák') : 'Saját Statisztikák'}</span>
                     </Link>
-                    <Link
-                      href={ROUTES.ADMIN}
-                      className="flex items-center gap-3 font-montserrat text-purple-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <Shield className="w-4 h-4 text-purple-200" />
-                      <span>{t('nav.admin') || 'Payload Admin Panel'}</span>
-                    </Link>
+                    {isAdmin && (
+                      <Link
+                        href="/api/auth/sso?redirect=/admin"
+                        className="flex items-center gap-3 font-montserrat text-purple-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Shield className="w-4 h-4 text-purple-200" />
+                        <span>{t('nav.admin') || 'Payload Admin Panel'}</span>
+                      </Link>
+                    )}
                   </div>
                 )}
 
