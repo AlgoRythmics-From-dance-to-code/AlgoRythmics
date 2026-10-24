@@ -66,20 +66,6 @@ export const Courses: CollectionConfig = {
       type: 'tabs',
       tabs: [
         {
-          label: 'AI Generator',
-          fields: [
-            {
-              name: 'aiGenerator',
-              type: 'ui',
-              admin: {
-                components: {
-                  Field: '@/app/components/Payload/AIGeneratorField#default',
-                },
-              },
-            },
-          ],
-        },
-        {
           label: 'General info',
           fields: [
             {
@@ -352,13 +338,11 @@ export const Courses: CollectionConfig = {
                 {
                   name: 'sourceAlgorithmId',
                   type: 'text',
-                  required: true, // Legyen kötelező a meglévő algoritmusokhoz való kapcsolódás miatt
+                  required: false,
+                  defaultValue: 'general',
                   admin: {
                     description:
-                      'Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).',
-                    components: {
-                      Field: '@/app/components/Payload/AlgorithmSelect#AlgorithmIdSelect',
-                    },
+                      'Kapcsolódó algoritmus vagy technikai azonosító (opcionális).',
                   },
                 },
                 {

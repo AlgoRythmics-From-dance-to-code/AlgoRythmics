@@ -66,7 +66,7 @@ export function sanitizePhase(
       ? phase.sourceAlgorithmId.trim()
       : '';
   if (!sourceAlgorithmId) {
-    sourceAlgorithmId = courseSlug?.replace(/-basics.*$/, '') || 'bubble-sort';
+    sourceAlgorithmId = courseSlug?.replace(/-basics.*$/, '') || 'general';
   }
 
   const result: Record<string, unknown> = {
