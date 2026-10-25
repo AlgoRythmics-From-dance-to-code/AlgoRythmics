@@ -4,6 +4,8 @@
  * with locale: 'all'.
  */
 
+import { markdownToLexical } from './lexicalConverter';
+
 export interface LocalizedString {
   hu: string;
   en: string;
@@ -20,9 +22,14 @@ export function toLocalized(val: unknown, fallback = ''): LocalizedString {
   }
   if (typeof val === 'object' && val !== null) {
     const obj = val as Record<string, unknown>;
-    const hu = typeof obj.hu === 'string' && obj.hu.trim() ? obj.hu : fallback;
-    const en = typeof obj.en === 'string' && obj.en.trim() ? obj.en : (hu || fallback);
-    const ro = typeof obj.ro === 'string' && obj.ro.trim() ? obj.ro : (hu || fallback);
+    const anyAvailable =
+      (typeof obj.hu === 'string' && obj.hu.trim() ? obj.hu.trim() : '') ||
+      (typeof obj.en === 'string' && obj.en.trim() ? obj.en.trim() : '') ||
+      (typeof obj.ro === 'string' && obj.ro.trim() ? obj.ro.trim() : '') ||
+      fallback;
+    const hu = typeof obj.hu === 'string' && obj.hu.trim() ? obj.hu.trim() : anyAvailable;
+    const en = typeof obj.en === 'string' && obj.en.trim() ? obj.en.trim() : anyAvailable;
+    const ro = typeof obj.ro === 'string' && obj.ro.trim() ? obj.ro.trim() : anyAvailable;
     return { hu, en, ro };
   }
   return { hu: fallback, en: fallback, ro: fallback };
@@ -87,6 +94,22 @@ export function sanitizePhase(
     result.customVideoId = String(phase.customVideoId).trim();
   }
 
+  // Info Content: parse Markdown string to Lexical JSON for Payload
+  if (phase.infoContent) {
+    if (typeof phase.infoContent === 'object' && phase.infoContent !== null) {
+      const infoObj = phase.infoContent as Record<string, unknown>;
+      result.infoContent = {
+        hu: typeof infoObj.hu === 'object' && infoObj.hu !== null ? infoObj.hu : markdownToLexical(String(infoObj.hu || '')),
+        en: typeof infoObj.en === 'object' && infoObj.en !== null ? infoObj.en : markdownToLexical(String(infoObj.en || infoObj.hu || '')),
+        ro: typeof infoObj.ro === 'object' && infoObj.ro !== null ? infoObj.ro : markdownToLexical(String(infoObj.ro || infoObj.hu || '')),
+      };
+    } else {
+      const md = String(phase.infoContent || '');
+      const lex = markdownToLexical(md);
+      result.infoContent = { hu: lex, en: lex, ro: lex };
+    }
+  }
+
   // Quiz questions
   if (Array.isArray(phase.quiz) && phase.quiz.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -144,6 +167,12 @@ export function sanitizePhase(
         solution: toLocalized(typeof s === 'object' && s?.solution ? s.solution : s, ''),
       }));
     }
+    if (Array.isArray(phase.gapFillDecoys)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      result.gapFillDecoys = phase.gapFillDecoys.map((d: any) => ({
+        decoy: toLocalized(typeof d === 'object' && d?.decoy ? d.decoy : d, ''),
+      }));
+    }
   }
 
   return result;
@@ -154,9 +183,24 @@ export function sanitizePhase(
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function sanitizeMascot(mascot: any): Record<string, unknown> {
+  const VALID_MODES = ['disabled', 'ai-only', 'ai-fallback', 'manual-only'];
+  const rawMode = mascot?.mode;
+  let mode: 'disabled' | 'ai-only' | 'ai-fallback' | 'manual-only' = 'disabled';
+
+  if (rawMode && VALID_MODES.includes(rawMode)) {
+    mode = rawMode;
+  } else if (mascot?.enabled) {
+    mode = 'manual-only';
+  } else {
+    mode = 'disabled';
+  }
+
+  const enabled = mode !== 'disabled';
+
   if (!mascot || typeof mascot !== 'object') {
     return {
-      enabled: true,
+      enabled: false,
+      mode: 'disabled',
       name: toLocalized('Bubi', 'Bubi'),
       asset: 'algo_group_109.svg',
       accentColor: '#269984',
@@ -192,7 +236,8 @@ export function sanitizeMascot(mascot: any): Record<string, unknown> {
   }
 
   return {
-    enabled: mascot.enabled ?? true,
+    enabled,
+    mode,
     name: toLocalized(mascot.name, 'Bubi'),
     asset: mascot.asset || 'algo_group_109.svg',
     accentColor: mascot.accentColor || '#269984',

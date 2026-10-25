@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useLocale, Locale } from '../i18n/LocaleProvider';
 import ThemeToggle from './ThemeToggle';
-import { User as UserIcon, BarChart3, Shield, GraduationCap } from 'lucide-react';
+import { User as UserIcon, BarChart3, Shield, GraduationCap, Trophy, Zap } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import { ROUTES, API_ROUTES, ROLES } from '../../lib/constants';
 import { useAlgorithmStore } from '../store/useAlgorithmStore';
@@ -141,20 +141,6 @@ export default function Header() {
                 href={ROUTES.COURSES}
                 label={t('nav.courses')}
                 active={pathname === ROUTES.COURSES}
-                prefetch={true}
-              />
-              {isAdminOrEditor && (
-                <NavLink
-                  href={ROUTES.STUDIO}
-                  label={t('nav.studio') || 'Stúdió'}
-                  active={pathname === ROUTES.STUDIO}
-                  prefetch={true}
-                />
-              )}
-              <NavLink
-                href={ROUTES.LEADERBOARD}
-                label={t('nav.leaderboard')}
-                active={pathname === ROUTES.LEADERBOARD}
                 prefetch={true}
               />
             </>
@@ -303,6 +289,19 @@ export default function Header() {
                     </span>
                   </Link>
 
+                  <Link
+                    href={ROUTES.LEADERBOARD}
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-amber-50/60 transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                      <Trophy className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <span className="font-montserrat text-sm font-semibold group-hover:text-amber-700">
+                      {t('nav.leaderboard')}
+                    </span>
+                  </Link>
+
                   {isAdminOrEditor && (
                     <>
                       <Link
@@ -330,6 +329,21 @@ export default function Header() {
                           {isAdmin ? (t('admin.pedagogy_statistics') || 'Rendszer Statisztikák') : 'Saját Statisztikák'}
                         </span>
                       </Link>
+
+                      {isAdmin && (
+                        <Link
+                          href={ROUTES.ALGORITHM_STATISTICS}
+                          onClick={() => setProfileDropdownOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-purple-50/60 transition-colors group"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                            <Zap className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <span className="font-montserrat text-sm font-semibold text-purple-600">
+                            Algoritmus Statisztikák (Admin)
+                          </span>
+                        </Link>
+                      )}
 
                       {isAdmin && (
                         <Link
@@ -439,22 +453,6 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('nav.courses')}
-                </Link>
-                {isAdminOrEditor && (
-                  <Link
-                    href={ROUTES.STUDIO}
-                    className={`font-montserrat text-xl ${pathname === ROUTES.STUDIO ? 'text-white font-bold text-emerald-200' : 'text-emerald-100 transition-colors'}`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    🎓 {t('nav.teacher_studio') || 'Tanári Stúdió'}
-                  </Link>
-                )}
-                <Link
-                  href={ROUTES.LEADERBOARD}
-                  className={`font-montserrat text-xl ${pathname === ROUTES.LEADERBOARD ? 'text-white font-bold' : 'text-white/80 transition-colors'}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {t('nav.leaderboard')}
                 </Link>
               </div>
             ) : (
@@ -573,36 +571,57 @@ export default function Header() {
                   </div>
                 </Link>
 
-                {isAdminOrEditor && (
-                  <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
-                    <Link
-                      href={ROUTES.STUDIO}
-                      className="flex items-center gap-3 font-montserrat text-emerald-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <GraduationCap className="w-4 h-4 text-emerald-300" />
-                      <span>{t('nav.teacher_studio') || 'Tanári Stúdió'}</span>
-                    </Link>
-                    <Link
-                      href={ROUTES.ADMIN_STATISTICS}
-                      className="flex items-center gap-3 font-montserrat text-teal-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <BarChart3 className="w-4 h-4 text-teal-200" />
-                      <span>{isAdmin ? (t('admin.pedagogy_statistics') || 'Rendszer Statisztikák') : 'Saját Statisztikák'}</span>
-                    </Link>
-                    {isAdmin && (
+                <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
+                  <Link
+                    href={ROUTES.LEADERBOARD}
+                    className="flex items-center gap-3 font-montserrat text-amber-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <Trophy className="w-4 h-4 text-amber-300" />
+                    <span>{t('nav.leaderboard')}</span>
+                  </Link>
+
+                  {isAdminOrEditor && (
+                    <>
                       <Link
-                        href="/api/auth/sso?redirect=/admin"
-                        className="flex items-center gap-3 font-montserrat text-purple-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
+                        href={ROUTES.STUDIO}
+                        className="flex items-center gap-3 font-montserrat text-emerald-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
                         onClick={() => setMenuOpen(false)}
                       >
-                        <Shield className="w-4 h-4 text-purple-200" />
-                        <span>{t('nav.admin') || 'Payload Admin Panel'}</span>
+                        <GraduationCap className="w-4 h-4 text-emerald-300" />
+                        <span>{t('nav.teacher_studio') || 'Tanári Stúdió'}</span>
                       </Link>
-                    )}
-                  </div>
-                )}
+                      <Link
+                        href={ROUTES.ADMIN_STATISTICS}
+                        className="flex items-center gap-3 font-montserrat text-teal-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <BarChart3 className="w-4 h-4 text-teal-200" />
+                        <span>{isAdmin ? (t('admin.pedagogy_statistics') || 'Rendszer Statisztikák') : 'Saját Statisztikák'}</span>
+                      </Link>
+                      {isAdmin && (
+                        <Link
+                          href={ROUTES.ALGORITHM_STATISTICS}
+                          className="flex items-center gap-3 font-montserrat text-purple-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          <Zap className="w-4 h-4 text-purple-200" />
+                          <span>Algoritmus Statisztikák (Admin)</span>
+                        </Link>
+                      )}
+                      {isAdmin && (
+                        <Link
+                          href="/api/auth/sso?redirect=/admin"
+                          className="flex items-center gap-3 font-montserrat text-purple-100 bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-sm font-bold"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          <Shield className="w-4 h-4 text-purple-200" />
+                          <span>{t('nav.admin') || 'Payload Admin Panel'}</span>
+                        </Link>
+                      )}
+                    </>
+                  )}
+                </div>
 
                 <button
                   onClick={async () => {

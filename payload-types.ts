@@ -198,6 +198,10 @@ export interface Course {
      */
     enabled?: boolean | null;
     /**
+     * A kabala bekapcsolási és működési módja (Kikapcsolva, Csak AI, AI manuális fallbackkel, Csak manuális).
+     */
+    mode?: ('disabled' | 'ai-only' | 'ai-fallback' | 'manual-only') | null;
+    /**
      * A kabala neve (pl. Bubi). Ez jelenik meg a szövegbuborékok felett.
      */
     name: string;
@@ -271,9 +275,9 @@ export interface Course {
          */
         title: string;
         /**
-         * Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).
+         * Kapcsolódó algoritmus vagy technikai azonosító (opcionális).
          */
-        sourceAlgorithmId: string;
+        sourceAlgorithmId?: string | null;
         /**
          * Az interaktív felület típusa (videó, kvíz, animáció stb.).
          */
@@ -873,6 +877,7 @@ export interface CoursesSelect<T extends boolean = true> {
     | T
     | {
         enabled?: T;
+        mode?: T;
         name?: T;
         asset?: T;
         accentColor?: T;

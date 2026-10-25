@@ -47,6 +47,7 @@ export type CoursePhase = {
 
 export type CourseMascot = {
   enabled: boolean;
+  mode?: 'disabled' | 'ai-only' | 'ai-fallback' | 'manual-only';
   name: string;
   asset: string;
   accentColor: string;
@@ -199,7 +200,8 @@ export function normalizeCourse(doc: Record<string, unknown>): CourseBlueprint {
     estimatedMinutes: Number(doc.estimatedMinutes || 0),
     difficulty: (doc.difficulty as 'Beginner' | 'Intermediate' | 'Advanced') || 'Beginner',
     mascot: {
-      enabled: mascot.enabled !== false,
+      enabled: mascot.enabled !== false && mascot.mode !== 'disabled',
+      mode: (mascot.mode as 'disabled' | 'ai-only' | 'ai-fallback' | 'manual-only') || (mascot.enabled === false ? 'disabled' : 'manual-only'),
       name: (mascot.name as string) || 'Guide',
       asset: (mascot.asset as string) || 'algo_group_109.svg',
       accentColor: (mascot.accentColor as string) || DEFAULT_ACCENT,

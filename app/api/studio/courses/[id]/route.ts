@@ -89,6 +89,7 @@ export async function PUT(
     if (body.mascot !== undefined) updateData.mascot = sanitizeMascot(body.mascot);
     if (body.accentColor !== undefined) updateData.accentColor = body.accentColor;
     if (body.icon !== undefined) updateData.icon = body.icon;
+    if (body.illustrationAsset !== undefined) updateData.illustrationAsset = body.illustrationAsset;
 
     if (user.role === ROLES.ADMIN && body.isOfficial !== undefined) {
       updateData.isOfficial = Boolean(body.isOfficial);

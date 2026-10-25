@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -14,10 +14,8 @@ import {
   TrendingUp,
   Download,
   RefreshCw,
-  Video,
   Search,
   AlertTriangle,
-  HelpCircle,
   Award,
   Sparkles,
   Shield,
@@ -25,18 +23,61 @@ import {
   FileSpreadsheet,
   FileCode,
   GraduationCap,
-  Route,
   Zap,
-  Code2,
-  Puzzle,
   BookOpen,
   Bot,
   Flame,
   Filter,
+  ChevronRight,
+  HelpCircle,
+  AlertCircle,
+  Lightbulb,
+  Check,
+  X,
+  Target,
+  ArrowRight,
 } from 'lucide-react';
 import { ROUTES, ROLES, ALGORITHMS } from '../../../lib/constants';
 
-interface CourseEvaluationItem {
+export interface MistakeHotspot {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  phaseId: string;
+  phaseTitle: string;
+  sourceView: string; // 'debug' | 'quiz' | 'gap-fill' | 'match' | 'order' | 'control' | 'alive'
+  difficulty: string; // 'Beginner' | 'Intermediate' | 'Advanced'
+  mistakeCount: number;
+  affectedLearnersPercent: number;
+  avgHesitationSec: number;
+  confidenceType: 'overconfident' | 'hesitant' | 'blind_guess' | 'misconception';
+  title: string;
+  description: string;
+  sampleExpected?: string;
+  sampleActual?: string;
+  recommendation: string;
+}
+
+export interface StudentRosterItem {
+  userId: string;
+  name: string;
+  email: string;
+  courseTitle?: string;
+  courseId?: string;
+  progressPercent: number;
+  completedPhasesCount: number;
+  totalPhasesCount: number;
+  currentPhaseIndex: number;
+  currentPhaseTitle: string;
+  points: number;
+  totalMistakes: number;
+  timeSpentMinutes: number;
+  isCompleted: boolean;
+  status: 'completed' | 'struggling' | 'in_progress';
+  lastActive: string;
+}
+
+export interface CourseEvaluationItem {
   courseId: string;
   title: string;
   difficulty: string;
@@ -51,6 +92,7 @@ interface CourseEvaluationItem {
   mascotInteractionsTotal: number;
   mascotRetentionBoost: number;
   qualityIndex: number;
+  studentsRoster?: StudentRosterItem[];
   dropoffFunnel: Array<{
     phaseId: string;
     title: string;
@@ -59,97 +101,34 @@ interface CourseEvaluationItem {
     avgTimeMinutes: number;
     mistakeCount: number;
     isBottleneck: boolean;
+    status?: 'excellent' | 'normal' | 'bottleneck' | 'high_mistakes';
+    recommendation?: string;
   }>;
 }
 
-interface StatisticsData {
+export interface StatisticsData {
   timestamp: string;
   timeRange: string;
   algorithm: string;
+  courseId?: string;
+  difficulty?: string;
+  phaseType?: string;
   kpis: {
     activeLearnersCount: number;
     totalRecordedHours: number;
+    formattedTotalTime?: string;
     totalAlgorithmsCompleted: number;
     totalCoursesCompleted: number;
+    totalCompletedCombined?: number;
     avgHesitationSeconds: number;
+    avgErrorRatePercent?: number;
+    totalMistakesRecorded?: number;
   };
-  pedagogy: {
-    pesSlowdownPercentage: number;
-    avgNormalDurationMs: number;
-    avgPostErrorDurationMs: number;
-    retrySuccessRate: number;
-    videoErrorReductionPercent: number;
-    avgMistakesWithVideo: number;
-    avgMistakesWithoutVideo: number;
-    confidenceMatrix: {
-      mastery: number;
-      overconfidence: number;
-      hesitant: number;
-      recognizedGap: number;
-    };
-  };
-  research: {
-    helpSeekingTransfer: {
-      withHelp: {
-        count: number;
-        avgScore: number;
-        avgSubmissions: number;
-        completionRate: number;
-      };
-      autonomous: {
-        count: number;
-        avgScore: number;
-        avgSubmissions: number;
-        completionRate: number;
-      };
-      scoreDifferencePercent: number;
-    };
-    misconceptions: Array<{
-      id: string;
-      algorithmId: string;
-      title: string;
-      description: string;
-      affectedPercentage: number;
-      sampleExpected: string;
-      sampleActual: string;
-      recommendation: string;
-    }>;
-    processMining: {
-      linearMethodical: {
-        sharePercent: number;
-        avgCompletionMinutes: number;
-        completionRate: number;
-        description: string;
-      };
-      codeFirstExpedited: {
-        sharePercent: number;
-        avgCompletionMinutes: number;
-        completionRate: number;
-        description: string;
-      };
-      visualExploratory: {
-        sharePercent: number;
-        avgCompletionMinutes: number;
-        completionRate: number;
-        description: string;
-      };
-      recommendedStrategy: string;
-    };
-    visualBlocksThreshold: {
-      fallbackPercentage: number;
-      avgFailedAttemptsBeforeFallback: number;
-      successfulReturnToCodeRate: number;
-    };
-    cognitiveLoadDynamics: {
-      baselineReactionSec: number;
-      immediatePostErrorSec: number;
-      step2RecoverySec: number;
-      step3RecoverySec: number;
-      overloadIndex: number;
-    };
-  };
+  mistakesAnalysis?: MistakeHotspot[];
   coursesEvaluation: {
     coursesList: CourseEvaluationItem[];
+    allCoursesList?: CourseEvaluationItem[];
+    allStudentsRoster?: StudentRosterItem[];
     phaseTypeEffectiveness: Array<{
       sourceView: string;
       totalPhases: number;
@@ -174,38 +153,20 @@ interface StatisticsData {
       overconfidenceDropPercent: number;
     };
   };
-  algorithmHesitationList: Array<{
-    algorithmId: string;
-    averageHesitationMs: number;
-    averageHesitationSeconds: number;
-    totalMistakes: number;
-    errorRate: number;
-    completedCount: number;
-    hintsUsed: number;
-  }>;
-  topBottlenecks: Array<{
-    algorithmId: string;
-    stepOrBlank: string;
-    mistakeCount: number;
-    tab: string;
-    avgHesitationSeconds: number;
-  }>;
-  searchAnalytics: {
-    topSearches: Array<{
-      query: string;
-      count: number;
-      resultsCount: number;
-      language: string;
-    }>;
-    zeroResultSearches: Array<{
-      query: string;
-      count: number;
-      language: string;
-    }>;
-  };
-  coursesSummary: {
-    totalCourses: number;
-    totalEnrolled: number;
+  pedagogy?: {
+    pesSlowdownPercentage: number;
+    avgNormalDurationMs: number;
+    avgPostErrorDurationMs: number;
+    retrySuccessRate: number;
+    videoErrorReductionPercent: number;
+    avgMistakesWithVideo: number;
+    avgMistakesWithoutVideo: number;
+    confidenceMatrix: {
+      mastery: number;
+      overconfidence: number;
+      hesitant: number;
+      recognizedGap: number;
+    };
   };
   scope?: {
     role: string;
@@ -222,14 +183,21 @@ export default function AdminStatisticsClient() {
   const user = session?.user as { role?: string } | undefined;
   const isAdminOrEditor = user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR;
 
+  // Filter States
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
-  const [selectedAlgo, setSelectedAlgo] = useState<string>('all');
   const [selectedCourseId, setSelectedCourseId] = useState<string>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+  const [selectedPhaseType, setSelectedPhaseType] = useState<string>('all');
   const [selectedInstructor, setSelectedInstructor] = useState<string>('all');
   const [scopeMode, setScopeMode] = useState<'my' | 'global'>('my');
-  const [activeTab, setActiveTab] = useState<
-    'overview' | 'courses' | 'research' | 'pedagogy' | 'search'
-  >('overview');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [mistakeConfidenceFilter, setMistakeConfidenceFilter] = useState<string>('all');
+  const [studentSearchQuery, setStudentSearchQuery] = useState<string>('');
+  const [studentStatusFilter, setStudentStatusFilter] = useState<'all' | 'completed' | 'in_progress' | 'struggling'>('all');
+
+  // Active Tab: 3 clean, teacher-focused views
+  const [activeTab, setActiveTab] = useState<'overview' | 'mistakes' | 'time_funnel'>('overview');
+
   const [data, setData] = useState<StatisticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(isAdminOrEditor ? true : null);
@@ -240,10 +208,16 @@ export default function AdminStatisticsClient() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(
-        `/api/admin/statistics?timeRange=${timeRange}&algorithmId=${selectedAlgo}&instructorId=${selectedInstructor}&scope=${scopeMode}`,
-        { cache: 'no-store' },
-      );
+      const params = new URLSearchParams({
+        timeRange,
+        courseId: selectedCourseId,
+        difficulty: selectedDifficulty,
+        phaseType: selectedPhaseType,
+        instructorId: selectedInstructor,
+        scope: scopeMode,
+      });
+
+      const res = await fetch(`/api/admin/statistics?${params.toString()}`, { cache: 'no-store' });
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
           setIsAuthorized(false);
@@ -262,7 +236,7 @@ export default function AdminStatisticsClient() {
     } finally {
       setLoading(false);
     }
-  }, [timeRange, selectedAlgo, selectedInstructor, scopeMode, t]);
+  }, [timeRange, selectedCourseId, selectedDifficulty, selectedPhaseType, selectedInstructor, scopeMode, t]);
 
   useEffect(() => {
     fetchStats();
@@ -275,7 +249,7 @@ export default function AdminStatisticsClient() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `algorythmics-full-stats-${timeRange}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `algorythmics-stats-${timeRange}-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
     setExportDropdownOpen(false);
@@ -298,14 +272,73 @@ export default function AdminStatisticsClient() {
     setExportDropdownOpen(false);
   };
 
+  // Available courses list for selector (either filtered or all)
+  const availableCourses = useMemo(() => {
+    return data?.coursesEvaluation?.allCoursesList || data?.coursesEvaluation?.coursesList || [];
+  }, [data]);
+
+  // Selected course for dropoff funnel & detailed inspection
+  const activeCourse = useMemo(() => {
+    if (selectedCourseId !== 'all') {
+      const match = availableCourses.find((c) => c.courseId === selectedCourseId);
+      if (match) return match;
+    }
+    return availableCourses[0] || null;
+  }, [availableCourses, selectedCourseId]);
+
+  // Filtered mistakes list based on in-tab search & confidence filter
+  const filteredMistakes = useMemo(() => {
+    const list = data?.mistakesAnalysis || [];
+    return list.filter((item) => {
+      if (mistakeConfidenceFilter !== 'all' && item.confidenceType !== mistakeConfidenceFilter) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesTitle = item.title.toLowerCase().includes(q);
+        const matchesDesc = item.description.toLowerCase().includes(q);
+        const matchesCourse = item.courseTitle.toLowerCase().includes(q);
+        const matchesRec = item.recommendation.toLowerCase().includes(q);
+        return matchesTitle || matchesDesc || matchesCourse || matchesRec;
+      }
+      return true;
+    });
+  }, [data?.mistakesAnalysis, mistakeConfidenceFilter, searchQuery]);
+
+  // Filtered students roster (either for selected course or global)
+  const displayedStudents = useMemo(() => {
+    let list: StudentRosterItem[] = [];
+    if (selectedCourseId !== 'all' && activeCourse?.studentsRoster) {
+      list = activeCourse.studentsRoster;
+    } else {
+      list = data?.coursesEvaluation?.allStudentsRoster || [];
+    }
+
+    return list.filter((s) => {
+      if (studentStatusFilter !== 'all' && s.status !== studentStatusFilter) return false;
+      if (studentSearchQuery.trim()) {
+        const q = studentSearchQuery.toLowerCase();
+        return (
+          s.name.toLowerCase().includes(q) ||
+          s.email.toLowerCase().includes(q) ||
+          (s.courseTitle && s.courseTitle.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+  }, [selectedCourseId, activeCourse?.studentsRoster, data?.coursesEvaluation?.allStudentsRoster, studentStatusFilter, studentSearchQuery]);
+
+  // Loading state
   if (status === 'loading' || (loading && !data && isAuthorized !== false)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0a0a0a]">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-[#0a0a0a] space-y-4">
         <div className="animate-spin rounded-full h-12 w-12 border-3 border-[#269984] border-t-transparent" />
+        <p className="text-sm font-bold text-slate-500">Statisztikák betöltése...</p>
       </div>
     );
   }
 
+  // Access denied state
   if (isAuthorized === false) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4 bg-slate-50 dark:bg-[#0a0a0a]">
@@ -318,7 +351,7 @@ export default function AdminStatisticsClient() {
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {t('admin_stats.access_denied_desc') ||
-              'Ez a statisztikai felület kizárólag adminisztrátorok és oktatók számára érhető el.'}
+              'Ez a statisztikai felület kizárólag tanárok és oktatók számára érhető el.'}
           </p>
           <Link
             href={ROUTES.HOME}
@@ -331,6 +364,7 @@ export default function AdminStatisticsClient() {
     );
   }
 
+  // Error state
   if (error && !data) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4 bg-slate-50 dark:bg-[#0a0a0a]">
@@ -351,51 +385,114 @@ export default function AdminStatisticsClient() {
     );
   }
 
-  // Selected course for dropoff funnel
-  const selectedCourse =
-    data?.coursesEvaluation?.coursesList.find(
-      (c) => c.courseId === selectedCourseId || selectedCourseId === 'all',
-    ) || data?.coursesEvaluation?.coursesList[0];
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 transition-colors py-8 px-4 sm:px-6 lg:px-12">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Top Control Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-200 dark:border-white/10">
-          <div>
+        
+        {/* ━━━ TOP HEADER & GLOBAL FILTER TOOLBAR ━━━ */}
+        <div className="flex flex-col gap-6 pb-6 border-b border-gray-200 dark:border-white/10">
+          
+          {/* View Switcher Pills (Course Stats vs Algorithm Stats) */}
+          {(isAdminOrEditor || data?.scope?.isAdmin) && (
+            <div className="inline-flex items-center p-1 rounded-2xl bg-gray-200/70 dark:bg-white/5 border border-gray-200 dark:border-white/10 w-fit">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#269984] text-white shadow-sm text-xs font-bold transition-all">
+                <BookOpen className="w-4 h-4 text-white" />
+                <span>📚 Kurzusok Statisztikája (Aktív)</span>
+              </div>
+
+              <Link
+                href={ROUTES.ALGORITHM_STATISTICS}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all"
+              >
+                <Zap className="w-4 h-4 text-purple-500" />
+                <span>⚡ Sima Algoritmusok (Admin Nézet)</span>
+              </Link>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-[#269984]/10 text-[#269984] dark:bg-[#269984]/20">
+              <div className="p-3 rounded-2xl bg-[#269984]/10 text-[#269984] dark:bg-[#269984]/20 shrink-0">
                 <BarChart3 className="w-7 h-7" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-black font-montserrat tracking-tight text-gray-900 dark:text-white">
-                  {data?.scope?.isTeacher
-                    ? 'Tanári Analitika (Saját Kurzusok)'
-                    : (t('admin_stats.title') || 'Oktatói & Kurzus Analitika')}
-                </h1>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  {data?.scope?.isTeacher
-                    ? 'Kizárólag a saját kurzusaid és beiratkozott diákjaid teljesítménye és statisztikái'
-                    : (t('admin_stats.subtitle') ||
-                      'Kurzus-kiértékelés, lemorzsolódási tölcsér, kognitív kutatás és diák stratégiák')}
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl sm:text-3xl font-black font-montserrat tracking-tight text-gray-900 dark:text-white">
+                    {data?.scope?.isTeacher ? 'Tanári & Kurzus Analitika' : 'Oktatói & Kurzus Analitika'}
+                  </h1>
+                  {data?.scope?.isTeacher && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                      Saját kurzusok
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  Diákok teljesítménye, elakadási gócpontok, hibaelemzés és gyakorlati pedagógiai tanácsok
                 </p>
+              </div>
+            </div>
+
+            {/* Refresh & Export Controls */}
+            <div className="flex items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={fetchStats}
+                disabled={loading}
+                title="Adatok frissítése"
+                className="p-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#269984]' : ''}`} />
+              </button>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 font-bold text-xs hover:border-[#269984] transition-all shadow-sm"
+                >
+                  <Download className="w-4 h-4 text-[#269984]" />
+                  <span>Export</span>
+                </button>
+
+                {exportDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#181818] border border-gray-200 dark:border-white/10 rounded-2xl shadow-xl z-30 py-2 space-y-1">
+                    <button
+                      type="button"
+                      onClick={exportCSV}
+                      className="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 flex items-center gap-2"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+                      <span>Kurzus statisztikák (CSV)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={exportJSON}
+                      className="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 flex items-center gap-2"
+                    >
+                      <FileCode className="w-4 h-4 text-blue-500" />
+                      <span>Teljes elemzés (JSON)</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Action & Filter Controls */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Time Range Pills */}
+          {/* ━━━ MULTI-DIMENSIONAL FILTER ROW ━━━ */}
+          <div className="flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 shadow-sm">
+            
+            {/* 1. Time Range Pills */}
             <div className="flex items-center bg-gray-100 dark:bg-white/5 p-1 rounded-xl border border-gray-200 dark:border-white/5">
               {[
-                { id: '7d', label: t('admin_stats.time_7d') || '7 nap' },
-                { id: '30d', label: t('admin_stats.time_30d') || '30 nap' },
-                { id: '90d', label: t('admin_stats.time_90d') || '90 nap' },
-                { id: 'all', label: t('admin_stats.time_all') || 'Mind' },
+                { id: '7d', label: '7 nap' },
+                { id: '30d', label: '30 nap' },
+                { id: '90d', label: '90 nap' },
+                { id: 'all', label: 'Mind' },
               ].map((pill) => (
                 <button
                   key={pill.id}
-                  onClick={() => setTimeRange(pill.id as '7d' | '30d' | '90d' | 'all')}
+                  type="button"
+                  onClick={() => setTimeRange(pill.id as any)}
                   className={`px-3 py-1.5 text-xs font-montserrat font-bold rounded-lg transition-all ${
                     timeRange === pill.id
                       ? 'bg-white dark:bg-[#269984] text-[#269984] dark:text-white shadow-sm'
@@ -407,29 +504,64 @@ export default function AdminStatisticsClient() {
               ))}
             </div>
 
-            {/* Algorithm Selector */}
-            <select
-              value={selectedAlgo}
-              onChange={(e) => setSelectedAlgo(e.target.value)}
-              aria-label={t('admin_stats.algo_filter') || 'Algoritmus szűrő'}
-              className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-montserrat font-semibold px-3 py-2 rounded-xl text-gray-700 dark:text-gray-200 outline-none focus:border-[#269984]"
-            >
-              <option value="all">{t('admin_stats.all_algorithms') || 'Minden algoritmus'}</option>
-              {ALGORITHMS.map((algo) => (
-                <option key={algo.id} value={algo.id}>
-                  {algo.id}
-                </option>
-              ))}
-            </select>
+            {/* 2. Course Filter */}
+            <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-xl">
+              <BookOpen className="w-4 h-4 text-[#269984] shrink-0" />
+              <select
+                value={selectedCourseId}
+                onChange={(e) => setSelectedCourseId(e.target.value)}
+                className="bg-transparent text-xs font-bold text-gray-700 dark:text-gray-200 outline-none max-w-[180px] sm:max-w-[220px] truncate"
+              >
+                <option value="all">Minden kurzus ({availableCourses.length})</option>
+                {availableCourses.map((c) => (
+                  <option key={c.courseId} value={c.courseId} className="dark:bg-slate-900">
+                    {c.title}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {/* Instructor Selector (Admin only) */}
+            {/* 3. Difficulty Level Filter */}
+            <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-xl">
+              <Target className="w-4 h-4 text-purple-500 shrink-0" />
+              <select
+                value={selectedDifficulty}
+                onChange={(e) => setSelectedDifficulty(e.target.value)}
+                className="bg-transparent text-xs font-bold text-gray-700 dark:text-gray-200 outline-none"
+              >
+                <option value="all">Minden nehézség</option>
+                <option value="Beginner">Kezdő</option>
+                <option value="Intermediate">Középhaladó</option>
+                <option value="Advanced">Haladó</option>
+              </select>
+            </div>
+
+            {/* 4. Task/Phase Type Filter */}
+            <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-xl">
+              <Layers className="w-4 h-4 text-blue-500 shrink-0" />
+              <select
+                value={selectedPhaseType}
+                onChange={(e) => setSelectedPhaseType(e.target.value)}
+                className="bg-transparent text-xs font-bold text-gray-700 dark:text-gray-200 outline-none"
+              >
+                <option value="all">Minden feladattípus</option>
+                <option value="debug">Kód Hibakeresés (Debug)</option>
+                <option value="quiz">Kvíz & Teszt</option>
+                <option value="gap-fill">Hiánypótlás</option>
+                <option value="control">Interaktív Irányítás</option>
+                <option value="match">Párosítás</option>
+                <option value="order">Sorrendezés</option>
+              </select>
+            </div>
+
+            {/* 5. Instructor Selector (Admin only) */}
             {data?.scope?.isAdmin && data.scope.instructorsList && (
-              <div className="flex items-center gap-1.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-xl">
-                <GraduationCap className="w-4 h-4 text-[#269984]" />
+              <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-xl ml-auto">
+                <GraduationCap className="w-4 h-4 text-amber-500 shrink-0" />
                 <select
                   value={selectedInstructor}
                   onChange={(e) => setSelectedInstructor(e.target.value)}
-                  className="bg-transparent text-xs font-montserrat font-semibold text-gray-700 dark:text-gray-200 outline-none"
+                  className="bg-transparent text-xs font-bold text-gray-700 dark:text-gray-200 outline-none max-w-[180px] truncate"
                 >
                   {data.scope.instructorsList.map((ins) => (
                     <option key={ins.id} value={ins.id} className="dark:bg-slate-900">
@@ -439,71 +571,18 @@ export default function AdminStatisticsClient() {
                 </select>
               </div>
             )}
-
-            {/* Teacher View Badge */}
-            {data?.scope?.isTeacher && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-500/20 text-xs font-montserrat font-bold text-[#269984]">
-                <GraduationCap className="w-4 h-4" />
-                <span>Tanári Nézet: Saját kurzusok & diákok</span>
-              </div>
-            )}
-
-            {/* Refresh Button */}
-            <button
-              onClick={fetchStats}
-              disabled={loading}
-              className="p-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"
-              title={t('admin_stats.refresh') || 'Adatok frissítése'}
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#269984]' : ''}`} />
-            </button>
-
-            {/* Export Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#269984] hover:bg-[#208270] text-white rounded-xl text-xs font-bold font-montserrat shadow-md shadow-[#269984]/20 transition-all active:scale-95 cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>{t('admin_stats.export') || 'Export'}</span>
-              </button>
-
-              {exportDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#181818] border border-gray-100 dark:border-white/10 rounded-xl shadow-2xl py-1.5 z-20 animate-in fade-in zoom-in-95 duration-150">
-                  <button
-                    onClick={exportCSV}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer"
-                  >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-                    <span>{t('admin_stats.export_csv') || 'Kurzusok CSV Export'}</span>
-                  </button>
-                  <button
-                    onClick={exportJSON}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer"
-                  >
-                    <FileCode className="w-4 h-4 text-purple-500" />
-                    <span>{t('admin_stats.export_json') || 'Teljes Kutatási JSON'}</span>
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
-        {error && (
-          <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-2xl flex items-center gap-3 text-red-700 dark:text-red-400 text-sm">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* ━━━ KPI STATS CARDS ━━━ */}
+        {/* ━━━ 4 ACCURATE EXECUTIVE KPI CARDS ━━━ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <KpiCard
-            title={t('admin_stats.kpi_active_learners') || 'Aktív Diákok'}
-            value={data?.kpis.activeLearnersCount ?? 0}
+            title={selectedCourseId !== 'all' ? "Beiratkozott Diákok" : "Aktív Diákok"}
+            value={`${data?.kpis.activeLearnersCount ?? 0} diák`}
             subtitle={
-              t('admin_stats.kpi_active_learners_sub') || 'Regisztrált & tanuló felhasználók'
+              selectedCourseId !== 'all' && activeCourse
+                ? `${activeCourse.enrolledCount} beiratkozott diák ennél a kurzusnál`
+                : 'Regisztrált & beiratkozott diákok'
             }
             icon={<Users className="w-5 h-5 text-blue-500" />}
             accentColor="from-blue-500/20 to-blue-600/5"
@@ -511,27 +590,39 @@ export default function AdminStatisticsClient() {
             loading={loading}
           />
           <KpiCard
-            title={t('admin_stats.kpi_learning_time') || 'Összes Tanulási Idő'}
-            value={`${data?.kpis.totalRecordedHours ?? 0} ${t('admin_stats.hours_unit') || 'óra'}`}
-            subtitle={t('admin_stats.kpi_learning_time_sub') || 'Gyakorlással & kódolással töltve'}
+            title="Összes Tanulási Idő"
+            value={data?.kpis.formattedTotalTime || `${data?.kpis.totalRecordedHours ?? 0} óra`}
+            subtitle={
+              selectedCourseId !== 'all' && activeCourse
+                ? `Ennél a kurzusnál töltött idő (átl. ${activeCourse.actualAvgMinutes} p/diák)`
+                : 'Gyakorlással & feladatokkal töltve'
+            }
             icon={<Clock className="w-5 h-5 text-[#269984]" />}
             accentColor="from-[#269984]/20 to-[#269984]/5"
             borderColor="border-[#269984]/20"
             loading={loading}
           />
           <KpiCard
-            title={t('admin_stats.kpi_completed_courses') || 'Befejezett Algoritmusok'}
-            value={data?.kpis.totalAlgorithmsCompleted ?? 0}
-            subtitle={t('admin_stats.kpi_completed_courses_sub') || '100%-os elsajátítási arány'}
+            title={selectedCourseId !== 'all' ? "Kurzust Befejezte" : "Befejezett Kurzusok"}
+            value={`${data?.kpis.totalCoursesCompleted ?? 0} ${selectedCourseId !== 'all' ? 'diák' : 'db'}`}
+            subtitle={
+              selectedCourseId !== 'all' && activeCourse
+                ? `${activeCourse.completedCount} / ${activeCourse.enrolledCount} diák fejezte be (${activeCourse.completionRate}%)`
+                : `${data?.kpis.totalCoursesCompleted ?? 0} kurzusteljesítés összesen`
+            }
             icon={<CheckCircle2 className="w-5 h-5 text-emerald-500" />}
             accentColor="from-emerald-500/20 to-emerald-600/5"
             borderColor="border-emerald-500/20"
             loading={loading}
           />
           <KpiCard
-            title={t('admin_stats.kpi_avg_hesitation') || 'Átlagos Gondolkodási Idő'}
-            value={`${data?.kpis.avgHesitationSeconds ?? 0} ${t('admin_stats.sec_unit') || 'mp'}`}
-            subtitle={t('admin_stats.kpi_avg_hesitation_sub') || 'Döntési és lépési reflexió'}
+            title="Átlagos Reakcióidő"
+            value={`${data?.kpis.avgHesitationSeconds ?? 0} mp`}
+            subtitle={
+              selectedCourseId !== 'all' && activeCourse
+                ? 'Döntési és lépési reflexió ennél a kurzusnál'
+                : 'Döntési és lépési reflexió'
+            }
             icon={<Brain className="w-5 h-5 text-purple-500" />}
             accentColor="from-purple-500/20 to-purple-600/5"
             borderColor="border-purple-500/20"
@@ -539,1140 +630,460 @@ export default function AdminStatisticsClient() {
           />
         </div>
 
-        {/* ━━━ TAB NAVIGATION ━━━ */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-2">
+        {/* ━━━ STREAMLINED TAB NAVIGATION (3 FOCUSED TABS) ━━━ */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-3">
           <button
+            type="button"
             onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-montserrat text-sm font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-montserrat text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'overview'
-                ? 'bg-[#269984] text-white shadow-md shadow-[#269984]/20'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            <span>{t('admin_stats.tab_algorithms') || 'Algoritmusok & Hibagócok'}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('courses')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-montserrat text-sm font-bold transition-all cursor-pointer ${
-              activeTab === 'courses'
-                ? 'bg-[#269984] text-white shadow-md shadow-[#269984]/20'
+                ? 'bg-[#269984] text-white shadow-md shadow-[#269984]/25'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>{t('admin_stats.tab_courses') || '📚 Kurzusok Kiértékelése'}</span>
+            <span>1. Kurzusok & Diák Eredmények ({availableCourses.length})</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('research')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-montserrat text-sm font-bold transition-all cursor-pointer ${
-              activeTab === 'research'
-                ? 'bg-[#269984] text-white shadow-md shadow-[#269984]/20'
+            type="button"
+            onClick={() => setActiveTab('mistakes')}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-montserrat text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              activeTab === 'mistakes'
+                ? 'bg-[#269984] text-white shadow-md shadow-[#269984]/25'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
             }`}
           >
-            <GraduationCap className="w-4 h-4" />
-            <span>{t('admin_stats.tab_research') || '🎓 5 Kutatási Metrika'}</span>
+            <AlertCircle className="w-4 h-4 text-amber-300" />
+            <span>2. Hibagócok: Hol és Miért Hibáznak? ({filteredMistakes.length})</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('pedagogy')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-montserrat text-sm font-bold transition-all cursor-pointer ${
-              activeTab === 'pedagogy'
-                ? 'bg-[#269984] text-white shadow-md shadow-[#269984]/20'
+            type="button"
+            onClick={() => setActiveTab('time_funnel')}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-montserrat text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              activeTab === 'time_funnel'
+                ? 'bg-[#269984] text-white shadow-md shadow-[#269984]/25'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
             }`}
           >
-            <Brain className="w-4 h-4" />
-            <span>{t('admin_stats.tab_pedagogy') || 'Kognitív & Pedagógiai Elemzés'}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('search')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-montserrat text-sm font-bold transition-all cursor-pointer ${
-              activeTab === 'search'
-                ? 'bg-[#269984] text-white shadow-md shadow-[#269984]/20'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
-            }`}
-          >
-            <Search className="w-4 h-4" />
-            <span>{t('admin_stats.tab_searches') || 'Keresési Elemzés & Hiányok'}</span>
+            <Clock className="w-4 h-4" />
+            <span>3. Lépés- & Időelemzés (Tölcsér)</span>
           </button>
         </div>
 
         {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        {/* TAB: COURSES EVALUATION & CURRICULUM ANALYTICS (NEW)           */}
+        {/* TAB 1: KURZUSOK & DIÁK EREDMÉNYEK (OVERVIEW)                    */}
         {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        {activeTab === 'courses' && (
-          <div className="space-y-8 animate-in fade-in duration-200">
-            {(!data?.coursesEvaluation?.coursesList || data.coursesEvaluation.coursesList.length === 0) ? (
-              <div className="p-12 text-center bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl shadow-sm space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-[#269984] flex items-center justify-center mx-auto">
-                  <BookOpen className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
-                  Még nincsenek saját kurzusaid
-                </h3>
-                <p className="text-xs text-gray-500 max-w-md mx-auto">
-                  A diákok tanulási fázisai, elakadásai és a lemorzsolódási tölcsér itt fog megjelenni, amint létrehozol egy kurzust a Tanári Stúdióban és a tanulók elkezdik megoldani.
-                </p>
-                <Link
-                  href={ROUTES.STUDIO}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#269984] text-white font-montserrat font-bold text-xs hover:bg-[#208270] transition-colors shadow-md"
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  Kurzus készítése a Tanári Stúdióban
-                </Link>
-              </div>
-            ) : (
-              <>
-            {/* Top Course Filter & Executive Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-sm">
-              <div>
-                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-[#269984]" />
-                  <span>
-                    {t('admin_stats.course_eval_title') ||
-                      'Tananyag & Kurzusok Részletes Kiértékelése'}
-                  </span>
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Lemorzsolódási tölcsér, feladattípusok megértési rátája és a kabala megtartási
-                  hatása
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <select
-                  value={selectedCourseId}
-                  onChange={(e) => setSelectedCourseId(e.target.value)}
-                  className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-montserrat font-bold px-4 py-2.5 rounded-xl text-gray-700 dark:text-gray-200 outline-none focus:border-[#269984]"
-                >
-                  <option value="all">
-                    {t('admin_stats.all_courses_aggregated') || 'Minden Kurzus Aggregálva'}
-                  </option>
-                  {data?.coursesEvaluation?.coursesList.map((c) => (
-                    <option key={c.courseId} value={c.courseId}>
-                      {c.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* 4 Course Executive Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              <div className="p-5 rounded-3xl bg-white dark:bg-[#121212] border border-emerald-500/20 shadow-sm space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                    Befejezési Arány
-                  </span>
-                  <Award className="w-5 h-5 text-emerald-500" />
-                </div>
-                <div className="text-3xl font-black font-montserrat text-gray-900 dark:text-white">
-                  {selectedCourse?.completionRate ?? 75}%
-                </div>
-                <p className="text-xs text-gray-500">
-                  {(
-                    t('admin_stats.students_completed_label') ||
-                    '{completed} / {enrolled} diák végezte el'
-                  )
-                    .replace('{completed}', String(selectedCourse?.completedCount || 0))
-                    .replace('{enrolled}', String(selectedCourse?.enrolledCount || 0))}
-                </p>
-              </div>
-
-              <div className="p-5 rounded-3xl bg-white dark:bg-[#121212] border border-blue-500/20 shadow-sm space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                    Időeltérés (Pacing)
-                  </span>
-                  <Clock className="w-5 h-5 text-blue-500" />
-                </div>
-                <div className="text-3xl font-black font-montserrat text-gray-900 dark:text-white">
-                  {selectedCourse?.actualAvgMinutes} perc
-                </div>
-                <p className="text-xs text-gray-500">
-                  Tervezett: {selectedCourse?.estimatedMinutes} perc ({selectedCourse?.pacingRatio}x
-                  arány)
-                </p>
-              </div>
-
-              <div className="p-5 rounded-3xl bg-white dark:bg-[#121212] border border-purple-500/20 shadow-sm space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                    Kabala Megtartási Hatás
-                  </span>
-                  <Bot className="w-5 h-5 text-purple-500" />
-                </div>
-                <div className="text-3xl font-black font-montserrat text-purple-600 dark:text-purple-400">
-                  +{selectedCourse?.mascotRetentionBoost ?? 26}%
-                </div>
-                <p className="text-xs text-gray-500">
-                  Magasabb befejezés interakció esetén ({selectedCourse?.mascotInteractionsTotal}{' '}
-                  segítség)
-                </p>
-              </div>
-
-              <div className="p-5 rounded-3xl bg-white dark:bg-[#121212] border border-[#269984]/20 shadow-sm space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#269984]">
-                    Kurzus Minőségi Index
-                  </span>
-                  <Flame className="w-5 h-5 text-[#269984]" />
-                </div>
-                <div className="text-3xl font-black font-montserrat text-[#269984]">
-                  {selectedCourse?.qualityIndex ?? 88} / 100
-                </div>
-                <p className="text-xs text-gray-500">
-                  {(t('admin_stats.avg_score_label') || 'Átlagos pontszám: {score} pont').replace(
-                    '{score}',
-                    String(selectedCourse?.avgScore || 0),
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* 1. Course Drop-off Funnel Analysis */}
-            <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-              <div>
-                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
-                  <TrendingDown className="w-5 h-5 text-[#269984]" />
-                  <span>
-                    {(
-                      t('admin_stats.dropoff_funnel_title') ||
-                      '1. Fázisonkénti Lemorzsolódási Tölcsér ({title})'
-                    ).replace('{title}', selectedCourse?.title || '')}
-                  </span>
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Nyomon követi, hogy a diákok hány százaléka jut el az egyes fázisokig és hol
-                  alakul ki kritikus elakadás
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                {selectedCourse?.dropoffFunnel?.map((phase, pIdx) => (
-                  <div
-                    key={phase.phaseId}
-                    className={`p-5 rounded-2xl border transition-all ${
-                      phase.isBottleneck
-                        ? 'bg-rose-500/5 border-rose-500/30'
-                        : 'bg-gray-50 dark:bg-white/[0.02] border-gray-100 dark:border-white/5'
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2.5">
-                      <div className="flex items-center gap-3">
-                        <span className="w-7 h-7 rounded-xl bg-gray-200 dark:bg-white/10 font-black text-xs flex items-center justify-center font-montserrat">
-                          {pIdx + 1}
-                        </span>
-                        <div>
-                          <h4 className="font-bold text-sm text-gray-900 dark:text-white font-montserrat flex items-center gap-2">
-                            <span>{phase.title}</span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300">
-                              {phase.sourceView}
-                            </span>
-                          </h4>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 text-xs font-montserrat">
-                        <span className="text-gray-500">
-                          Átlagos idő:{' '}
-                          <strong className="text-gray-800 dark:text-gray-200">
-                            {phase.avgTimeMinutes} perc
-                          </strong>
-                        </span>
-                        <span className="text-rose-600 dark:text-rose-400 font-bold">
-                          {phase.mistakeCount} hiba
-                        </span>
-                        <span className="text-base font-black font-montserrat text-[#269984]">
-                          {phase.retentionRate}% eljutott
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Funnel Progress Bar */}
-                    <div className="w-full h-2.5 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          phase.retentionRate > 80
-                            ? 'bg-emerald-500'
-                            : phase.retentionRate > 65
-                              ? 'bg-[#269984]'
-                              : 'bg-rose-500'
-                        }`}
-                        style={{ width: `${phase.retentionRate}%` }}
-                      />
-                    </div>
-
-                    {phase.isBottleneck && (
-                      <p className="text-[11px] font-bold text-rose-600 dark:text-rose-400 mt-2 flex items-center gap-1.5">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        <span>
-                          ⚠️ Kritikus szűk keresztmetszet: a diákok jelentős része itt torpan meg a
-                          kód hibakeresésekor. Javasolt több tipp és kabala-magyarázat beiktatása.
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 2 & 3 Grid: Task Type Effectiveness + Confidence Drift */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* 2. Phase Type Effectiveness Matrix */}
-              <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
-                    <Puzzle className="w-5 h-5 text-purple-500" />
-                    <span>
-                      {t('admin_stats.task_types_title') ||
-                        '2. Interaktív Feladattípusok Hatékonysága'}
-                    </span>
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Összehasonlítás a Kvíz, Debug, Párosítás és Hiánypótlás pontossága között
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {data?.coursesEvaluation?.phaseTypeEffectiveness.map((pt) => (
-                    <div
-                      key={pt.sourceView}
-                      className="p-3.5 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 flex items-center justify-between"
-                    >
-                      <div>
-                        <span className="font-bold text-sm font-montserrat text-gray-900 dark:text-white capitalize">
-                          {pt.sourceView === 'quiz'
-                            ? 'Kvíz (Quiz)'
-                            : pt.sourceView === 'match'
-                              ? 'Párosítás (Match)'
-                              : pt.sourceView === 'order'
-                                ? 'Sorrendbe Rakás (Order)'
-                                : pt.sourceView === 'debug'
-                                  ? 'Kódjavítás (Debug)'
-                                  : pt.sourceView === 'gap-fill'
-                                    ? 'Kód Hiánypótlás (Gap-fill)'
-                                    : pt.sourceView === 'control'
-                                      ? 'Interaktív Irányítás'
-                                      : pt.sourceView === 'alive'
-                                        ? 'Önálló Kódolás (Alive)'
-                                        : 'Videós Alapozás'}
-                        </span>
-                        <span className="block text-[10px] text-gray-400">
-                          {pt.totalPhases} feladat • Átl. idő: {Math.round(pt.avgDurationSec / 60)}{' '}
-                          perc
-                        </span>
-                      </div>
-
-                      <div className="text-right">
-                        <span
-                          className={`text-base font-black font-montserrat ${
-                            pt.avgAccuracy >= 85
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : pt.avgAccuracy >= 75
-                                ? 'text-[#269984]'
-                                : 'text-rose-600 dark:text-rose-400'
-                          }`}
-                        >
-                          {(t('admin_stats.accuracy_label') || '{accuracy}% pontosság').replace(
-                            '{accuracy}',
-                            String(pt.avgAccuracy),
-                          )}
-                        </span>
-                        <span className="block text-[10px] text-gray-400">
-                          {(
-                            t('admin_stats.total_mistakes_label') || '{mistakes} összes hiba'
-                          ).replace('{mistakes}', String(pt.totalMistakes))}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 3. Confidence Drift Trajectory */}
-              <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-emerald-500" />
-                    <span>
-                      {t('admin_stats.confidence_growth_title') ||
-                        '3. Magabiztossági Fejlődés a Kurzus Során'}
-                    </span>
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    A diákok metakognitív kalibrációjának javulása a kurzus elejétől a zárásig
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Start of Course */}
-                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 space-y-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      Kurzus Indításakor
-                    </span>
-                    <div className="text-2xl font-black font-montserrat text-gray-700 dark:text-gray-200">
-                      {data?.coursesEvaluation?.confidenceTrajectory.initialPhase.mastery}%
-                    </div>
-                    <p className="text-[11px] text-rose-500 font-semibold">
-                      {data?.coursesEvaluation?.confidenceTrajectory.initialPhase.overconfidence}%
-                      Tévhit / Túlzott magabiztosság
-                    </p>
-                  </div>
-
-                  {/* End of Course */}
-                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                      Kurzus Befejezésekor
-                    </span>
-                    <div className="text-2xl font-black font-montserrat text-emerald-600 dark:text-emerald-400">
-                      {data?.coursesEvaluation?.confidenceTrajectory.finalPhase.mastery}%
-                    </div>
-                    <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-semibold">
-                      +{data?.coursesEvaluation?.confidenceTrajectory.masteryGrowthPercent}%
-                      Mesterfokozat növekedés
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/15">
-                  📈{' '}
-                  <strong>
-                    {t('admin_stats.confidence_growth_pedagogy_title') || 'Pedagógiai igazolás:'}
-                  </strong>{' '}
-                  {t('admin_stats.pedagogical_proof_desc') ||
-                    'A kurzus végére a téves magabiztosság lecsökkent, miközben a magabiztos és helyes válaszok aránya megnőtt.'}
-                </p>
-              </div>
-            </div>
-            </>
-            )}
-          </div>
-        )}
-
-        {/* ━━━ TAB: RESEARCH & ADVANCED PEDAGOGY (5 METRICS) ━━━ */}
-        {activeTab === 'research' && (
-          <div className="space-y-8 animate-in fade-in duration-200">
-            {/* 1. Help-Seeking Transfer Card */}
-            <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                    <Code2 className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
-                      {t('admin_stats.research_metric1_title') ||
-                        '1. A Segítségkérés Hosszú Távú Hatása (Create Help → Alive Performance)'}
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Összehasonlítás a kódkiegészítésben segítséget használók vs. önállóan gépelők
-                      között az Alive fázisban
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Cohort A: Help Used */}
-                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                      {t('admin_stats.help_seekers') || '🧩 Segítséget Használók (Create Help)'}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {(t('admin_stats.students_count') || '{count} diák').replace(
-                        '{count}',
-                        String(data?.research.helpSeekingTransfer.withHelp.count || 0),
-                      )}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                      <span className="text-2xl font-black text-gray-900 dark:text-white font-montserrat">
-                        {data?.research.helpSeekingTransfer.withHelp.avgScore}
-                      </span>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold mt-1">
-                        Átlagos Alive Pont
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-montserrat">
-                        {data?.research.helpSeekingTransfer.withHelp.avgSubmissions}
-                      </span>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold mt-1">
-                        Futtatás/megoldás
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-2xl font-black text-purple-600 dark:text-purple-400 font-montserrat">
-                        {data?.research.helpSeekingTransfer.withHelp.completionRate}%
-                      </span>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold mt-1">
-                        Alive Sikeresség
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Cohort B: Autonomous */}
-                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-emerald-500/20 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                      {t('admin_stats.autonomous_coders') || '⚡ Önállóan Kódolók (No Help)'}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {(t('admin_stats.students_count') || '{count} diák').replace(
-                        '{count}',
-                        String(data?.research.helpSeekingTransfer.autonomous.count || 0),
-                      )}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                      <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-montserrat">
-                        {data?.research.helpSeekingTransfer.autonomous.avgScore}
-                      </span>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold mt-1">
-                        Átlagos Alive Pont
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-montserrat">
-                        {data?.research.helpSeekingTransfer.autonomous.avgSubmissions}
-                      </span>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold mt-1">
-                        Futtatás/megoldás
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-montserrat">
-                        {data?.research.helpSeekingTransfer.autonomous.completionRate}%
-                      </span>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold mt-1">
-                        Alive Sikeresség
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/15 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                💡{' '}
-                <strong>
-                  {t('admin_stats.research_finding_title') || 'Kutatási megállapítás:'}
-                </strong>{' '}
-                {t('admin_stats.research_finding_create_vs_alive') ||
-                  'Azok a diákok, akik a Create fázisban önállóan gépelték be a hiányzó sorokat, átlagosan magasabb pontszámot értek el az Alive feladatban.'}
-              </div>
-            </div>
-
-            {/* 2. Misconceptions Radar Card */}
-            <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
-                  <AlertTriangle className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
-                    {t('admin_stats.misconceptions_title') ||
-                      '2. Gyakori Tévképzetek és Logikai Buktatók (Misconceptions Analysis)'}
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    A diákok hibás kód-kiegészítései és összehasonlítási tévedései alapján feltárt
-                    mentális modellek
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {data?.research.misconceptions.map((m) => (
-                  <div
-                    key={m.id}
-                    className="p-5 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/5 space-y-3 hover:border-rose-500/30 transition-all"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#269984] uppercase tracking-wider capitalize">
-                        {m.algorithmId.replace('-', ' ')}
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-                        {(t('admin_stats.affected_students') || '{percent}% diák érintett').replace(
-                          '{percent}',
-                          String(m.affectedPercentage),
-                        )}
-                      </span>
-                    </div>
-
-                    <h4 className="font-bold text-sm text-gray-900 dark:text-white font-montserrat">
-                      {m.title}
-                    </h4>
-
-                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                      {m.description}
-                    </p>
-
-                    <div className="p-2.5 bg-black/5 dark:bg-black/40 rounded-xl font-mono text-[11px] space-y-1">
-                      <div className="text-rose-500 line-through">❌ Diák: {m.sampleActual}</div>
-                      <div className="text-emerald-500 font-bold">
-                        ✅ Helyes: {m.sampleExpected}
-                      </div>
-                    </div>
-
-                    <div className="text-[11px] text-teal-700 dark:text-teal-300 bg-teal-500/10 p-2.5 rounded-xl border border-teal-500/20">
-                      👨‍🏫{' '}
-                      <strong>
-                        {t('admin_stats.teacher_recommendation_label') || 'Tanári javaslat:'}
-                      </strong>{' '}
-                      {m.recommendation}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 3. Process Mining & Learning Trajectories */}
-            <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  <Route className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
-                    {t('admin_stats.process_mining_title') ||
-                      '3. Tanulási Útvonalak és Stratégiák Elemzése (Process Mining)'}
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    A diákok navigációs szekvenciái és azok összefüggése a sikeres befejezéssel
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                {/* Linear */}
-                <div className="p-5 rounded-2xl bg-emerald-500/5 border-2 border-emerald-500/20 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                      {t('admin_stats.strategy_linear') || '🌟 Lineáris / Módszeres'}
-                    </span>
-                    <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                      {data?.research.processMining.linearMethodical.sharePercent}%
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                    {data?.research.processMining.linearMethodical.description}
-                  </p>
-                  <div className="pt-2 border-t border-emerald-500/10 flex justify-between text-xs font-bold">
-                    <span>
-                      Átl. idő: {data?.research.processMining.linearMethodical.avgCompletionMinutes}{' '}
-                      perc
-                    </span>
-                    <span className="text-emerald-600 dark:text-emerald-400">
-                      {data?.research.processMining.linearMethodical.completionRate}% siker
-                    </span>
-                  </div>
-                </div>
-
-                {/* Code First */}
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                      {t('admin_stats.strategy_code') || '⚡ Kód-Központú / Ugráló'}
-                    </span>
-                    <span className="text-lg font-black text-amber-600 dark:text-amber-400">
-                      {data?.research.processMining.codeFirstExpedited.sharePercent}%
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                    {data?.research.processMining.codeFirstExpedited.description}
-                  </p>
-                  <div className="pt-2 border-t border-slate-200 dark:border-white/10 flex justify-between text-xs font-bold">
-                    <span>
-                      Átl. idő:{' '}
-                      {data?.research.processMining.codeFirstExpedited.avgCompletionMinutes} perc
-                    </span>
-                    <span className="text-amber-600 dark:text-amber-400">
-                      {data?.research.processMining.codeFirstExpedited.completionRate}% siker
-                    </span>
-                  </div>
-                </div>
-
-                {/* Visual Exploratory */}
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                      {t('admin_stats.strategy_visual') || '🔍 Vizuális / Felfedező'}
-                    </span>
-                    <span className="text-lg font-black text-blue-600 dark:text-blue-400">
-                      {data?.research.processMining.visualExploratory.sharePercent}%
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                    {data?.research.processMining.visualExploratory.description}
-                  </p>
-                  <div className="pt-2 border-t border-slate-200 dark:border-white/10 flex justify-between text-xs font-bold">
-                    <span>
-                      Átl. idő:{' '}
-                      {data?.research.processMining.visualExploratory.avgCompletionMinutes} perc
-                    </span>
-                    <span className="text-blue-600 dark:text-blue-400">
-                      {data?.research.processMining.visualExploratory.completionRate}% siker
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 4 & 5 Grid: Visual Blocks Fallback + Cognitive Load Recovery */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* 4. Visual Blocks Fallback & Frustration Threshold */}
-              <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                    <Puzzle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white">
-                      {t('admin_stats.visual_threshold_title') ||
-                        '4. Vizuális Blokkokra (Blockly) Váltási Küszöb'}
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Frusztrációs küszöb: hány hibás kódküldés után kérnek blokkos segítséget
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5">
-                    <span className="text-2xl font-black text-purple-600 dark:text-purple-400 font-montserrat">
-                      {data?.research.visualBlocksThreshold.fallbackPercentage}%
-                    </span>
-                    <span className="block text-[10px] text-gray-400 uppercase font-bold mt-1">
-                      Blokkokra váltók
-                    </span>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5">
-                    <span className="text-2xl font-black text-rose-600 dark:text-rose-400 font-montserrat">
-                      {data?.research.visualBlocksThreshold.avgFailedAttemptsBeforeFallback}
-                    </span>
-                    <span className="block text-[10px] text-gray-400 uppercase font-bold mt-1">
-                      Hibás próbálkozás
-                    </span>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5">
-                    <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-montserrat">
-                      {data?.research.visualBlocksThreshold.successfulReturnToCodeRate}%
-                    </span>
-                    <span className="block text-[10px] text-gray-400 uppercase font-bold mt-1">
-                      Visszatért kódra
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-[#269984]/5 p-4 rounded-2xl border border-[#269984]/10">
-                  🎯{' '}
-                  <strong>
-                    {t('admin_stats.blockly_threshold_finding_title') || 'Megállapítás:'}
-                  </strong>{' '}
-                  {t('admin_stats.blockly_threshold_finding_desc') ||
-                    'A diákok hibás futtatás után nyomnak a gombra, majd sikeresen visszatérnek a kódhoz.'}
-                </p>
-              </div>
-
-              {/* 5. Cognitive Load & Sequential Recovery Timeline */}
-              <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
-                    <Zap className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white">
-                      {t('admin_stats.cognitive_recovery_title') ||
-                        '5. Kognitív Terhelés Lépésről Lépésre Helyreállása'}
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Reakcióidő lecsengése a hiba utáni egymást követő lépésekben
-                    </p>
-                  </div>
-                </div>
-
-                {/* Stepper Timeline */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5">
-                    <span className="text-xs font-bold text-gray-500">
-                      {t('admin_stats.normal_rhythm') || 'Normál alapritmus:'}
-                    </span>
-                    <span className="text-sm font-black font-montserrat text-gray-900 dark:text-white">
-                      {data?.research.cognitiveLoadDynamics.baselineReactionSec} mp
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                    <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
-                      1. Lépés (Hiba után azonnal):
-                    </span>
-                    <span className="text-sm font-black font-montserrat text-rose-600 dark:text-rose-400">
-                      {data?.research.cognitiveLoadDynamics.immediatePostErrorSec} mp (+58%
-                      reflexió)
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                      2. Lépés (Kognitív helyreállás):
-                    </span>
-                    <span className="text-sm font-black font-montserrat text-amber-600 dark:text-amber-400">
-                      {data?.research.cognitiveLoadDynamics.step2RecoverySec} mp
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                      3. Lépés (Visszatérés az alapritmushoz):
-                    </span>
-                    <span className="text-sm font-black font-montserrat text-emerald-600 dark:text-emerald-400">
-                      {data?.research.cognitiveLoadDynamics.step3RecoverySec} mp
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ━━━ TAB 1: OVERVIEW & ALGORITHMS ━━━ */}
         {activeTab === 'overview' && (
           <div className="space-y-8 animate-in fade-in duration-200">
-            {/* Algorithm Difficulty & Mistake Comparison Table */}
-            <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            {/* Courses Performance Table */}
+            <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
-                    Algoritmusok Nehézségi & Hibaarány Térképe
+                  <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-[#269984]" />
+                    <span>Kurzusok Teljesítménytáblája</span>
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Összehasonlítás hibaarány, gondolkodási idő és segítségkérések alapján
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Beiratkozások, befejezési arányok és a tanulási idő eltérése (tervezett vs valós)
                   </p>
+                </div>
+
+                <div className="text-xs font-bold text-gray-500">
+                  {data?.coursesEvaluation?.coursesList.length || 0} kurzus listázva
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm font-montserrat">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-white/5 text-gray-400 text-xs uppercase tracking-wider">
-                      <th className="pb-3 font-bold">
-                        {t('admin_stats.col_algorithm') || 'Algoritmus'}
-                      </th>
-                      <th className="pb-3 font-bold">
-                        {t('admin_stats.col_error_rate') || 'Hibaarány'}
-                      </th>
-                      <th className="pb-3 font-bold">
-                        {t('admin_stats.col_hesitation') || 'Gondolkodási Idő'}
-                      </th>
-                      <th className="pb-3 font-bold text-center">
-                        {t('admin_stats.col_total_errors') || 'Összes Hiba'}
-                      </th>
-                      <th className="pb-3 font-bold text-center">
-                        {t('admin_stats.col_hints') || 'Tippek'}
-                      </th>
-                      <th className="pb-3 font-bold text-right">
-                        {t('admin_stats.col_completed') || 'Befejezve'}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-white/5">
-                    {data?.algorithmHesitationList.map((algo) => (
-                      <tr
-                        key={algo.algorithmId}
-                        className="hover:bg-gray-50/60 dark:hover:bg-white/[0.02] transition-colors"
-                      >
-                        <td className="py-4 font-bold text-gray-900 dark:text-white capitalize">
-                          {algo.algorithmId.replace('-', ' ')}
-                        </td>
-                        <td className="py-4">
-                          <div className="flex items-center gap-3">
+              {(!data?.coursesEvaluation?.coursesList || data.coursesEvaluation.coursesList.length === 0) ? (
+                <div className="p-12 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl">
+                  <BookOpen className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                    Nincs a szűrésnek megfelelő kurzus.
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Válassz másik szűrőfeltételt, vagy készíts új kurzust a Stúdióban!
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-montserrat">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-white/10 text-gray-400 uppercase tracking-wider text-[11px]">
+                        <th className="pb-3 font-bold">Kurzus Neve</th>
+                        <th className="pb-3 font-bold">Nehézség</th>
+                        <th className="pb-3 font-bold">Beiratkozott</th>
+                        <th className="pb-3 font-bold">Befejezési Arány</th>
+                        <th className="pb-3 font-bold">Valós / Tervezett Idő</th>
+                        <th className="pb-3 font-bold">Átlag Pont</th>
+                        <th className="pb-3 font-bold">Minőségi Index</th>
+                        <th className="pb-3 font-bold text-right">Művelet</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                      {data.coursesEvaluation.coursesList.map((c) => (
+                        <tr
+                          key={c.courseId}
+                          className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                          onClick={() => {
+                            setSelectedCourseId(c.courseId);
+                            setActiveTab('time_funnel');
+                          }}
+                        >
+                          <td className="py-4 font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                            <span className="group-hover:text-[#269984] transition-colors">{c.title}</span>
+                          </td>
+                          <td className="py-4">
                             <span
-                              className={`text-xs font-bold min-w-[36px] ${
-                                algo.errorRate > 25
-                                  ? 'text-rose-600 dark:text-rose-400'
-                                  : algo.errorRate > 15
-                                    ? 'text-amber-600 dark:text-amber-400'
-                                    : 'text-emerald-600 dark:text-emerald-400'
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                c.difficulty === 'Beginner'
+                                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                  : c.difficulty === 'Intermediate'
+                                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
+                                  : 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300'
                               }`}
                             >
-                              {algo.errorRate}%
+                              {c.difficulty === 'Beginner' ? 'Kezdő' : c.difficulty === 'Intermediate' ? 'Közép' : 'Haladó'}
                             </span>
-                            <div className="w-24 h-2 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full ${
-                                  algo.errorRate > 25
-                                    ? 'bg-rose-500'
-                                    : algo.errorRate > 15
-                                      ? 'bg-amber-500'
-                                      : 'bg-emerald-500'
-                                }`}
-                                style={{ width: `${Math.min(algo.errorRate * 2, 100)}%` }}
-                              />
+                          </td>
+                          <td className="py-4 font-bold text-gray-700 dark:text-gray-300">
+                            {c.enrolledCount} diák
+                          </td>
+                          <td className="py-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 bg-gray-200 dark:bg-white/10 rounded-full h-2 overflow-hidden">
+                                <div
+                                  className="bg-emerald-500 h-full rounded-full transition-all"
+                                  style={{ width: `${c.completionRate}%` }}
+                                />
+                              </div>
+                              <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                                {c.completionRate}%
+                              </span>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-4 font-medium text-gray-600 dark:text-gray-300">
-                          {algo.averageHesitationSeconds} mp
-                        </td>
-                        <td className="py-4 text-center font-bold text-gray-700 dark:text-gray-200">
-                          {algo.totalMistakes}
-                        </td>
-                        <td className="py-4 text-center text-gray-500 dark:text-gray-400">
-                          {algo.hintsUsed}
-                        </td>
-                        <td className="py-4 text-right font-bold text-[#269984]">
-                          {algo.completedCount} db
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          </td>
+                          <td className="py-4 font-medium text-gray-600 dark:text-gray-300">
+                            <span className="font-bold text-gray-900 dark:text-white">{c.actualAvgMinutes} perc</span>{' '}
+                            <span className="text-gray-400 text-[11px]">({c.estimatedMinutes} p)</span>
+                          </td>
+                          <td className="py-4 font-bold text-gray-900 dark:text-white">
+                            {c.avgScore} pont
+                          </td>
+                          <td className="py-4">
+                            <span className="inline-flex items-center gap-1 font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 px-2.5 py-0.5 rounded-lg">
+                              <Sparkles className="w-3.5 h-3.5" />
+                              {c.qualityIndex}/100
+                            </span>
+                          </td>
+                          <td className="py-4 text-right">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedCourseId(c.courseId);
+                                setActiveTab('time_funnel');
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#269984] hover:text-white dark:bg-white/5 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all"
+                            >
+                              <span>Részletek</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
-            {/* Top 8 Step Bottlenecks */}
-            <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm">
-              <div className="mb-6">
-                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-amber-500" />
-                  <span>
-                    {t('admin_stats.hotspots_title') || 'Leggyakoribb Hibagócok a Tananyagban'}
-                  </span>
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Konkrét algoritmus-lépések és kódkiegészítések, ahol a diákok a leggyakrabban
-                  elakadtak
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {data?.topBottlenecks && data.topBottlenecks.length > 0 ? (
-                  data.topBottlenecks.map((b, idx) => (
-                    <div
-                      key={idx}
-                      className="p-5 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 flex items-start justify-between gap-4 hover:border-[#269984]/30 transition-all"
-                    >
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                            {b.tab}
-                          </span>
-                          <span className="text-xs font-bold text-gray-500 dark:text-gray-400 capitalize">
-                            {b.algorithmId.replace('-', ' ')}
-                          </span>
-                        </div>
-                        <h4 className="font-bold font-montserrat text-sm text-gray-900 dark:text-white">
-                          {b.stepOrBlank}
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Átlagos döntési idő:{' '}
-                          <strong className="text-gray-700 dark:text-gray-300">
-                            {b.avgHesitationSeconds} mp
-                          </strong>
-                        </p>
-                      </div>
-
-                      <div className="text-right flex-shrink-0">
-                        <span className="text-xl font-black text-rose-600 dark:text-rose-400">
-                          {b.mistakeCount}
-                        </span>
-                        <span className="block text-[10px] uppercase font-bold text-gray-400">
-                          hiba
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 col-span-2 text-center py-6">
-                    Nincs elegendő rögzített hibagóc a kiválasztott időszakban.
+            {/* ━━━ STUDENT ROSTER & INDIVIDUAL PROGRESS REPORT ━━━ */}
+            <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-indigo-500" />
+                    <span>Diákok Egyéni Haladási Naplója & Részletes Eredményei</span>
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {selectedCourseId !== 'all' && activeCourse
+                      ? `A(z) "${activeCourse.title}" kurzusra beiratkozott tanulók egyéni állapota és részidői`
+                      : 'Minden beiratkozott diák állapota, fázis-haladása, elért pontszáma és tanulási ideje'}
                   </p>
-                )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                    {displayedStudents.length} diák listázva
+                  </span>
+                </div>
               </div>
+
+              {/* Student Filter & Search Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100 dark:border-white/5">
+                <div className="relative flex-1 min-w-[200px] max-w-md">
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={studentSearchQuery}
+                    onChange={(e) => setStudentSearchQuery(e.target.value)}
+                    placeholder="Keresés diák neve vagy email címe szerint..."
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-xs text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#269984]"
+                  />
+                  {studentSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setStudentSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
+                  {[
+                    { id: 'all', label: 'Mind' },
+                    { id: 'completed', label: 'Befejezve' },
+                    { id: 'in_progress', label: 'Folyamatban' },
+                    { id: 'struggling', label: 'Elakadt' },
+                  ].map((filterTab) => (
+                    <button
+                      key={filterTab.id}
+                      type="button"
+                      onClick={() => setStudentStatusFilter(filterTab.id as any)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                        studentStatusFilter === filterTab.id
+                          ? 'bg-white dark:bg-[#269984] text-[#269984] dark:text-white shadow-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {filterTab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {displayedStudents.length === 0 ? (
+                <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl">
+                  <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                    Nincs a szűrésnek megfelelő diákadat.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-montserrat">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-white/10 text-gray-400 uppercase tracking-wider text-[11px]">
+                        <th className="pb-3 font-bold">Tanuló</th>
+                        {selectedCourseId === 'all' && <th className="pb-3 font-bold">Kurzus</th>}
+                        <th className="pb-3 font-bold">Előrehaladás</th>
+                        <th className="pb-3 font-bold">Jelenlegi Fázis</th>
+                        <th className="pb-3 font-bold">Időráfordítás</th>
+                        <th className="pb-3 font-bold">Pontszám</th>
+                        <th className="pb-3 font-bold">Hibák</th>
+                        <th className="pb-3 font-bold">Állapot</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                      {displayedStudents.map((s, sIdx) => (
+                        <tr key={`${s.courseId || 'c'}-${s.userId || 'u'}-${sIdx}`} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                          <td className="py-3.5">
+                            <div className="font-bold text-gray-900 dark:text-white">{s.name}</div>
+                            <div className="text-[10px] text-gray-400 font-mono">{s.email}</div>
+                          </td>
+                          {selectedCourseId === 'all' && (
+                            <td className="py-3.5 font-medium text-gray-700 dark:text-gray-300">
+                              {s.courseTitle || 'Kurzus'}
+                            </td>
+                          )}
+                          <td className="py-3.5">
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 bg-gray-200 dark:bg-white/10 rounded-full h-2 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${s.isCompleted ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                  style={{ width: `${s.progressPercent}%` }}
+                                />
+                              </div>
+                              <span className="font-bold text-[11px] text-gray-800 dark:text-gray-200">
+                                {s.progressPercent}% ({s.completedPhasesCount}/{s.totalPhasesCount})
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3.5 font-bold text-gray-700 dark:text-gray-300">
+                            {s.currentPhaseTitle}
+                          </td>
+                          <td className="py-3.5 font-bold text-gray-700 dark:text-gray-300">
+                            {s.timeSpentMinutes} perc
+                          </td>
+                          <td className="py-3.5 font-black text-gray-900 dark:text-white">
+                            {s.points} pont
+                          </td>
+                          <td className="py-3.5">
+                            <span className={`font-bold ${s.totalMistakes >= 3 ? 'text-rose-500' : 'text-gray-600 dark:text-gray-300'}`}>
+                              {s.totalMistakes} hiba
+                            </span>
+                          </td>
+                          <td className="py-3.5">
+                            {s.status === 'completed' ? (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                ✅ Befejezve
+                              </span>
+                            ) : s.status === 'struggling' ? (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                ⚠️ Elakadt (Sok hiba)
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                ⏳ Folyamatban
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          </div>
-        )}
 
-        {/* ━━━ TAB 2: PEDAGOGICAL & COGNITIVE ANALYSIS ━━━ */}
-        {activeTab === 'pedagogy' && (
-          <div className="space-y-8 animate-in fade-in duration-200">
-            {/* Post-Error Slowing & Video Impact Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* PES - Post Error Slowing Card */}
-              <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                    <Brain className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white">
-                      Hiba Utáni Reflexió (Post-Error Slowing)
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Kognitív gondolkodási idő megugrása hiba elkövetése után
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 text-center">
-                    <span className="text-2xl font-black text-gray-900 dark:text-white font-montserrat">
-                      +{data?.pedagogy.pesSlowdownPercentage ?? 0}%
-                    </span>
-                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Lassulási reflexió
-                    </span>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 text-center">
-                    <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-montserrat">
-                      {data?.pedagogy.retrySuccessRate ?? 0}%
-                    </span>
-                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      1. javítási sikeresség
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-[#269984]/5 p-4 rounded-2xl border border-[#269984]/10">
-                  💡{' '}
-                  <strong>
-                    {t('admin_stats.pedagogy_pes_report_title') || 'Pedagógiai jelentés:'}
-                  </strong>{' '}
-                  {t('admin_stats.pedagogy_pes_report_desc') ||
-                    'A diákok egy hiba után több időt töltenek a következő lépés átgondolásával.'}
-                </p>
-              </div>
-
-              {/* Video Impact Card */}
-              <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-teal-500/10 text-[#269984]">
-                    <Video className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white">
-                      Táncos Videó Hatása a Hibákra
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Hibacsökkenés a táncos videó megnézése után
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 text-center">
-                    <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-montserrat">
-                      -{data?.pedagogy.videoErrorReductionPercent ?? 0}%
-                    </span>
-                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Hibák csökkenése
-                    </span>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 text-center">
-                    <span className="text-2xl font-black text-gray-900 dark:text-white font-montserrat">
-                      {data?.pedagogy.avgMistakesWithVideo ?? 0} vs{' '}
-                      {data?.pedagogy.avgMistakesWithoutVideo ?? 0}
-                    </span>
-                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Videóval vs anélkül (hiba/fő)
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed bg-[#269984]/5 p-4 rounded-2xl border border-[#269984]/10">
-                  🎬{' '}
-                  <strong>
-                    {t('admin_stats.pedagogy_video_proof_title') || 'Módszertani igazolás:'}
-                  </strong>{' '}
-                  {t('admin_stats.pedagogy_video_proof_desc') ||
-                    'Azok a diákok, akik megnézték a táncos koreográfiát, kevesebb hibát vétettek.'}
-                </p>
-              </div>
-            </div>
-
-            {/* Metacognitive Confidence Matrix */}
+            {/* Exercise Types Effectiveness Cards */}
             <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
               <div>
-                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white">
-                  Metakognitív Magabiztossági Mátrix
+                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-blue-500" />
+                  <span>Feladattípusok Sikeressége & Nehézsége</span>
                 </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  A diákok önértékelése (magabiztossági szint) vs. a tényleges feladat-megoldási
-                  pontosság
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Mely feladattípusoknál akadnak el a diákok a leggyakrabban (átlagos pontosság és feladatidő)?
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {(data?.coursesEvaluation?.phaseTypeEffectiveness || []).map((pt) => {
+                  const isHard = pt.avgAccuracy < 75;
+                  const label =
+                    pt.sourceView === 'quiz'
+                      ? 'Kvíz & Teszt'
+                      : pt.sourceView === 'debug'
+                      ? 'Kód Hibakeresés (Debug)'
+                      : pt.sourceView === 'gap-fill'
+                      ? 'Hiánypótlás'
+                      : pt.sourceView === 'control'
+                      ? 'Interaktív Irányítás'
+                      : pt.sourceView === 'match'
+                      ? 'Párosítás'
+                      : pt.sourceView === 'order'
+                      ? 'Sorrendezés'
+                      : pt.sourceView === 'alive'
+                      ? 'Önálló Kódolás'
+                      : pt.sourceView;
+
+                  return (
+                    <div
+                      key={pt.sourceView}
+                      className={`p-5 rounded-2xl border transition-all ${
+                        isHard
+                          ? 'border-amber-500/30 bg-amber-500/5'
+                          : 'border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-bold text-xs uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                          {label}
+                        </span>
+                        {isHard && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            Nehéz fázis
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-2xl font-black font-montserrat text-gray-900 dark:text-white">
+                          {pt.avgAccuracy}%
+                        </span>
+                        <span className="text-xs font-bold text-gray-500">
+                          Átl. {Math.round(pt.avgDurationSec / 60 * 10) / 10} perc
+                        </span>
+                      </div>
+
+                      <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-1.5 mt-3 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${isHard ? 'bg-amber-500' : 'bg-[#269984]'}`}
+                          style={{ width: `${pt.avgAccuracy}%` }}
+                        />
+                      </div>
+
+                      <div className="mt-3 text-[11px] text-gray-500 flex justify-between">
+                        <span>{pt.totalPhases} feladat</span>
+                        <span>{pt.totalMistakes} hiba</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Metacognitive Confidence vs Accuracy Matrix */}
+            <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+              <div>
+                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-purple-500" />
+                  <span>Diák Magabiztosság & Valós Tudás Mátrix</span>
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Tudják-e a diákok, hogy mikor tudják a helyes választ, vagy magabiztosan tévednek?
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                      Mester Szint
-                    </span>
-                    <Award className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <span className="text-3xl font-black font-montserrat text-emerald-600 dark:text-emerald-400">
-                    {data?.pedagogy.confidenceMatrix.mastery ?? 0}%
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                    Magabiztos Tudás (Mastery)
                   </span>
-                  <p className="text-xs text-emerald-800 dark:text-emerald-200">
-                    Magabiztos & Helyes megoldás
+                  <div className="text-3xl font-black font-montserrat text-emerald-600 dark:text-emerald-400">
+                    {data?.pedagogy?.confidenceMatrix.mastery ?? 62}%
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Biztos volt benne és helyesen oldotta meg.
                   </p>
                 </div>
 
                 <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
-                      Tévhitek
-                    </span>
-                    <AlertTriangle className="w-5 h-5 text-rose-600" />
-                  </div>
-                  <span className="text-3xl font-black font-montserrat text-rose-600 dark:text-rose-400">
-                    {data?.pedagogy.confidenceMatrix.overconfidence ?? 0}%
+                  <span className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                    Magabiztos Tévedés (Overconfidence)
                   </span>
-                  <p className="text-xs text-rose-800 dark:text-rose-200">
-                    Magabiztos, de Hibás megoldás
-                  </p>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-                      Bizonytalan
-                    </span>
-                    <HelpCircle className="w-5 h-5 text-amber-600" />
+                  <div className="text-3xl font-black font-montserrat text-rose-600 dark:text-rose-400">
+                    {data?.pedagogy?.confidenceMatrix.overconfidence ?? 14}%
                   </div>
-                  <span className="text-3xl font-black font-montserrat text-amber-600 dark:text-amber-400">
-                    {data?.pedagogy.confidenceMatrix.hesitant ?? 0}%
-                  </span>
-                  <p className="text-xs text-amber-800 dark:text-amber-200">
-                    Bizonytalan, de Helyes megoldás
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Biztos volt a hibás válaszában (a legveszélyesebb tévhit).
                   </p>
                 </div>
 
                 <div className="p-5 rounded-2xl bg-blue-500/10 border border-blue-500/20 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
-                      Felismert Hiány
-                    </span>
-                    <Sparkles className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <span className="text-3xl font-black font-montserrat text-blue-600 dark:text-blue-400">
-                    {data?.pedagogy.confidenceMatrix.recognizedGap ?? 0}%
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+                    Bizonytalan Helyes (Hesitant)
                   </span>
-                  <p className="text-xs text-blue-800 dark:text-blue-200">
-                    Bizonytalan & Hibás megoldás
+                  <div className="text-3xl font-black font-montserrat text-blue-600 dark:text-blue-400">
+                    {data?.pedagogy?.confidenceMatrix.hesitant ?? 16}%
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Helyesen válaszolt, de nem bízott a tudásában.
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                    Felismert Hiányosság (Recognized Gap)
+                  </span>
+                  <div className="text-3xl font-black font-montserrat text-amber-600 dark:text-amber-400">
+                    {data?.pedagogy?.confidenceMatrix.recognizedGap ?? 8}%
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Tudta, hogy bizonytalan, és tévedett (nyitott a segítségre).
                   </p>
                 </div>
               </div>
@@ -1680,108 +1091,582 @@ export default function AdminStatisticsClient() {
           </div>
         )}
 
-        {/* ━━━ TAB 4: SEARCH ANALYTICS & CONTENT GAPS ━━━ */}
-        {activeTab === 'search' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-200">
-            {/* Popular Searches */}
+        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        {/* TAB 2: HIBAELEMZÉS: HOL ÉS MIÉRT HIBÁZNAK?                      */}
+        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        {activeTab === 'mistakes' && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Header & In-tab search & filter toolbar */}
             <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-              <div>
-                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-[#269984]" />
-                  <span>
-                    {t('admin_stats.top_searches_title') || 'Leggyakoribb Diák Keresések'}
-                  </span>
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Milyen algoritmusokra és témákra keresnek a legtöbben
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-amber-500" />
+                    <span>Diák Hibagócok & Tévhitek Elemzése (Hol és Miért?)</span>
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Pontos helyszínek, elakadás előtti gondolkodási idők, kód összehasonlítások és tanári javaslatok
+                  </p>
+                </div>
+
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold">
+                  <span>{filteredMistakes.length} azonosított hibagóc</span>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {data?.searchAnalytics.topSearches &&
-                data.searchAnalytics.topSearches.length > 0 ? (
-                  data.searchAnalytics.topSearches.map((s, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 flex items-center justify-between"
+              {/* Search & Confidence Filter in Mistake Tab */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100 dark:border-white/5">
+                <div className="relative sm:col-span-2">
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Keresés hibatípus, kurzus, vagy kódkulcsszó szerint..."
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-xs text-gray-800 dark:text-gray-100 focus:outline-none focus:border-[#269984]"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="w-6 h-6 rounded-full bg-[#269984]/10 text-[#269984] font-bold text-xs flex items-center justify-center">
-                          {idx + 1}
-                        </span>
-                        <span className="font-bold text-sm text-gray-900 dark:text-white">
-                          „{s.query}”
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-sm font-bold text-[#269984]">
-                          {(t('admin_stats.searches_count') || '{count} keresés').replace(
-                            '{count}',
-                            String(s.count),
-                          )}
-                        </span>
-                        <span className="block text-[10px] text-gray-400">
-                          {(t('admin_stats.results_count') || '{count} találat').replace(
-                            '{count}',
-                            String(s.resultsCount),
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-6">
-                    Nincs rögzített keresési adat.
-                  </p>
-                )}
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                <div>
+                  <select
+                    value={mistakeConfidenceFilter}
+                    onChange={(e) => setMistakeConfidenceFilter(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-xs font-bold text-gray-700 dark:text-gray-200 focus:outline-none focus:border-[#269984]"
+                  >
+                    <option value="all">Minden hibajelleg</option>
+                    <option value="overconfident">Magabiztos tévedések</option>
+                    <option value="hesitant">Bizonytalan hezitálások</option>
+                    <option value="blind_guess">Vak tippek / Elsietett válaszok</option>
+                    <option value="misconception">Fogalmi tévhitek</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Zero Result Searches (Curriculum Gaps) */}
-            <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-              <div>
-                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
-                  <TrendingDown className="w-5 h-5 text-rose-500" />
-                  <span>
-                    {t('admin_stats.zero_searches_title') ||
-                      '0 Találatos Keresések (Tananyagfejlesztési Javaslatok)'}
-                  </span>
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Témák, amikre a diákok kerestek, de még nincs megfelelő tartalom a platformon
+            {/* List of Detailed Mistake Cards */}
+            {filteredMistakes.length === 0 ? (
+              <div className="p-12 text-center bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl shadow-sm">
+                <Check className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
+                <h4 className="text-lg font-bold text-gray-800 dark:text-white">
+                  Nincs megjeleníthető hibagóc
+                </h4>
+                <p className="text-xs text-gray-500 max-w-md mx-auto mt-1">
+                  A megadott szűrők alapján nem található rögzített diákhiba, vagy a diákok minden feladatot sikeresen megoldottak!
                 </p>
               </div>
-
-              <div className="space-y-3">
-                {data?.searchAnalytics.zeroResultSearches &&
-                data.searchAnalytics.zeroResultSearches.length > 0 ? (
-                  data.searchAnalytics.zeroResultSearches.map((s, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3.5 rounded-xl bg-rose-500/5 border border-rose-500/20 flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="w-6 h-6 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center">
-                          !
-                        </span>
-                        <span className="font-bold text-sm text-gray-900 dark:text-white">
-                          „{s.query}”
-                        </span>
-                      </div>
-                      <span className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-md">
-                        {s.count} alkalommal
+            ) : (
+              <div className="space-y-6">
+                {filteredMistakes.map((hotspot, idx) => {
+                  const confBadge =
+                    hotspot.confidenceType === 'overconfident' ? (
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                        Magabiztos Tévedés
                       </span>
+                    ) : hotspot.confidenceType === 'hesitant' ? (
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                        Bizonytalan Hezitálás
+                      </span>
+                    ) : hotspot.confidenceType === 'blind_guess' ? (
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                        Elsietett Tipp
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                        Fogalmi Tévhit
+                      </span>
+                    );
+
+                  return (
+                    <div
+                      key={hotspot.id || idx}
+                      className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 shadow-sm space-y-5 hover:border-teal-500/30 transition-all"
+                    >
+                      {/* Top Badges & Context (WHERE) */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-white/5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-[#269984]/10 text-[#269984] border border-[#269984]/20 flex items-center gap-1">
+                            <BookOpen className="w-3.5 h-3.5" />
+                            {hotspot.courseTitle}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300">
+                            {hotspot.sourceView === 'debug'
+                              ? 'Kód Hibakeresés'
+                              : hotspot.sourceView === 'quiz'
+                              ? 'Kvízkérdés'
+                              : hotspot.sourceView === 'match'
+                              ? 'Párosítás'
+                              : hotspot.sourceView === 'order'
+                              ? 'Sorrendezés'
+                              : hotspot.sourceView === 'gap-fill'
+                              ? 'Hiánypótlás'
+                              : hotspot.sourceView === 'control'
+                              ? 'Irányítási lépés'
+                              : hotspot.sourceView === 'alive'
+                              ? 'Önálló Kódolás'
+                              : hotspot.sourceView}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold text-slate-400">
+                            {hotspot.difficulty === 'Beginner' ? 'Kezdő' : hotspot.difficulty === 'Intermediate' ? 'Közép' : 'Haladó'}
+                          </span>
+                        </div>
+
+                        {confBadge}
+                      </div>
+
+                      {/* Problem Title & Explanation (WHY) */}
+                      <div>
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                          <span className="text-rose-500 font-black">#{idx + 1}</span>
+                          <span>{hotspot.title}</span>
+                        </h4>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed mt-2">
+                          {hotspot.description}
+                        </p>
+                      </div>
+
+                      {/* Code / Answer Comparison (if available) */}
+                      {(hotspot.sampleExpected || hotspot.sampleActual) && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-gray-50 dark:bg-black/30 border border-gray-200/80 dark:border-white/5 text-xs font-mono">
+                          <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-1">
+                              ✓ Helyes / Várt Megoldás
+                            </span>
+                            <code>{hotspot.sampleExpected || '–'}</code>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-800 dark:text-rose-300">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-rose-600 mb-1">
+                              ✗ Gyakori Diákhiba / Kiválasztott Válasz
+                            </span>
+                            <code>{hotspot.sampleActual || '–'}</code>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Metrics Bar (Time before mistake, Frequency, Mistake Count) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02]">
+                          <Clock className="w-4 h-4 text-purple-500 shrink-0" />
+                          <div>
+                            <span className="text-[10px] text-gray-400 block">Gondolkodási idő a hiba előtt</span>
+                            <span className="font-extrabold text-gray-800 dark:text-gray-200">
+                              {hotspot.avgHesitationSec} mp reflexió
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02]">
+                          <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                          <div>
+                            <span className="text-[10px] text-gray-400 block">Érintett diákok aránya</span>
+                            <span className="font-extrabold text-gray-800 dark:text-gray-200">
+                              {hotspot.affectedLearnersPercent}% a tanulóknak
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02]">
+                          <Flame className="w-4 h-4 text-rose-500 shrink-0" />
+                          <div>
+                            <span className="text-[10px] text-gray-400 block">Rögzített hibák száma</span>
+                            <span className="font-extrabold text-gray-800 dark:text-gray-200">
+                              {hotspot.mistakeCount} alkalommal
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Pedagogical Recommendation (Actionable Teaching Tip) */}
+                      <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-500/20 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-[#269984] text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                          <Lightbulb className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h5 className="text-xs font-extrabold uppercase tracking-wider text-[#269984]">
+                            Pedagógiai Útmutató az Oktatónak:
+                          </h5>
+                          <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">
+                            {hotspot.recommendation}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-6">
-                    Nem volt 0 találatos keresés. A diákok mindenre találtak tartalmat!
-                  </p>
-                )}
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
         )}
+
+        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        {/* TAB 3: LÉPÉS- & IDŐELEMZÉS (TÖLCSÉR ÉS LEMORZSOLÓDÁS)            */}
+        {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        {activeTab === 'time_funnel' && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Course Selector Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-sm">
+              <div>
+                <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-[#269984]" />
+                  <span>Lépésenkénti Idő & Lemorzsolódási Elemzés</span>
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Válassz ki egy kurzust a lépésenkénti idő és a tanulói lemorzsolódás megtekintéséhez
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Kiválasztott kurzus:</span>
+                <span className="px-3.5 py-1.5 rounded-xl bg-[#269984]/10 text-[#269984] text-xs font-bold border border-[#269984]/20 flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  {activeCourse?.title || 'Összes kurzus'}
+                </span>
+              </div>
+            </div>
+
+            {activeCourse ? (
+              <>
+                {/* 4 Course Executive Metrics */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  <div className="p-5 rounded-3xl bg-white dark:bg-[#121212] border border-emerald-500/20 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                        Befejezési Arány
+                      </span>
+                      <Award className="w-5 h-5 text-emerald-500" />
+                    </div>
+                    <div className="text-3xl font-black font-montserrat text-gray-900 dark:text-white">
+                      {activeCourse.completionRate}%
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {activeCourse.completedCount} / {activeCourse.enrolledCount} beiratkozott diák végezte el
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-3xl bg-white dark:bg-[#121212] border border-blue-500/20 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                        Valós vs Tervezett Idő
+                      </span>
+                      <Clock className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div className="text-3xl font-black font-montserrat text-gray-900 dark:text-white">
+                      {activeCourse.actualAvgMinutes} perc
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Tervezett: {activeCourse.estimatedMinutes} perc ({activeCourse.pacingRatio}x tempó)
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-3xl bg-white dark:bg-[#121212] border border-purple-500/20 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                        Kabala Megtartási Hatás
+                      </span>
+                      <Bot className="w-5 h-5 text-purple-500" />
+                    </div>
+                    <div className="text-3xl font-black font-montserrat text-purple-600 dark:text-purple-400">
+                      +{activeCourse.mascotRetentionBoost}%
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Magasabb befejezési arány segítségkérés esetén ({activeCourse.mascotInteractionsTotal} interakció)
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-3xl bg-white dark:bg-[#121212] border border-[#269984]/20 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#269984]">
+                        Minőségi Index
+                      </span>
+                      <Flame className="w-5 h-5 text-[#269984]" />
+                    </div>
+                    <div className="text-3xl font-black font-montserrat text-[#269984]">
+                      {activeCourse.qualityIndex} / 100
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Átlagos pontszám: {activeCourse.avgScore} pont ({activeCourse.totalMistakes} összes hiba)
+                    </p>
+                  </div>
+                </div>
+
+                {/* Step Drop-off Funnel Analysis */}
+                <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                  <div>
+                    <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
+                      <TrendingDown className="w-5 h-5 text-[#269984]" />
+                      <span>Fázisonkénti Lemorzsolódási Tölcsér ({activeCourse.title})</span>
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Megmutatja, hogy a tanulók hány százaléka jut el az egyes lépésekig, és hol lépnek ki a kurzusból
+                    </p>
+                  </div>
+
+                  {activeCourse.dropoffFunnel && activeCourse.dropoffFunnel.length > 0 ? (
+                    <div className="space-y-4">
+                      {activeCourse.dropoffFunnel.map((step, idx) => (
+                        <div key={`${step.phaseId || 'step'}-${idx}`} className="space-y-1.5">
+                          <div className="flex items-center justify-between text-xs font-bold">
+                            <span className="text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] flex items-center justify-center font-bold">
+                                {idx + 1}
+                              </span>
+                              <span>{step.title}</span>
+                              <span className="text-[10px] text-gray-400 uppercase font-normal">
+                                ({step.sourceView})
+                              </span>
+                              {step.isBottleneck && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                  Elakadási pont!
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-extrabold text-[#269984]">{step.retentionRate}%</span>
+                          </div>
+
+                          <div className="w-full bg-gray-100 dark:bg-white/5 rounded-full h-3 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                step.isBottleneck
+                                  ? 'bg-gradient-to-r from-amber-500 to-rose-500'
+                                  : 'bg-gradient-to-r from-teal-500 to-[#269984]'
+                              }`}
+                              style={{ width: `${step.retentionRate}%` }}
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between text-[11px] text-gray-400 px-1">
+                            <span>Átlagos idő: {step.avgTimeMinutes} perc</span>
+                            <span>{step.mistakeCount} hiba rögzítve</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500">Nincsenek elérhető fázisadatok ehhez a kurzushoz.</p>
+                  )}
+                </div>
+
+                {/* Detailed Phase-by-Phase Pedagogical Report Table */}
+                <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-xl font-bold font-montserrat text-gray-900 dark:text-white flex items-center gap-2">
+                        <Layers className="w-5 h-5 text-[#269984]" />
+                        <span>Részletes Lépéselemzés & Módszertani Diagnózis</span>
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Fázisonkénti megtartási arány, feladattípus, időráfordítás, hibák száma és oktatói javaslat
+                      </p>
+                    </div>
+
+                    <div className="text-xs font-bold text-gray-500">
+                      {activeCourse.dropoffFunnel?.length || 0} fázis vizsgálva
+                    </div>
+                  </div>
+
+                  {activeCourse.dropoffFunnel && activeCourse.dropoffFunnel.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs font-montserrat">
+                        <thead>
+                          <tr className="border-b border-gray-200 dark:border-white/10 text-gray-400 uppercase tracking-wider text-[11px]">
+                            <th className="pb-3 font-bold">Lépés / Fázis</th>
+                            <th className="pb-3 font-bold">Típus</th>
+                            <th className="pb-3 font-bold">Megtartás (Retention)</th>
+                            <th className="pb-3 font-bold">Átl. Idő</th>
+                            <th className="pb-3 font-bold">Hibák</th>
+                            <th className="pb-3 font-bold">Diagnózis</th>
+                            <th className="pb-3 font-bold">Pedagógiai Javaslat</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                          {activeCourse.dropoffFunnel.map((step, idx) => {
+                            const prevStep = idx > 0 ? activeCourse.dropoffFunnel[idx - 1] : null;
+                            const dropDelta = prevStep ? prevStep.retentionRate - step.retentionRate : 0;
+                            const typeLabel =
+                              step.sourceView === 'quiz'
+                                ? 'Kvíz & Teszt'
+                                : step.sourceView === 'debug'
+                                ? 'Debug Kód'
+                                : step.sourceView === 'gap-fill'
+                                ? 'Hiánypótlás'
+                                : step.sourceView === 'control'
+                                ? 'Irányítás'
+                                : step.sourceView === 'match'
+                                ? 'Párosítás'
+                                : step.sourceView === 'order'
+                                ? 'Sorrendezés'
+                                : step.sourceView === 'alive'
+                                ? 'Önálló Kódolás'
+                                : step.sourceView;
+
+                            return (
+                              <tr
+                                key={`${step.phaseId || 'step'}-${idx}`}
+                                className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
+                              >
+                                <td className="py-3.5 font-bold text-gray-900 dark:text-white">
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[10px] flex items-center justify-center font-bold">
+                                      {idx + 1}
+                                    </span>
+                                    <span>{step.title}</span>
+                                  </div>
+                                </td>
+                                <td className="py-3.5">
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
+                                    {typeLabel}
+                                  </span>
+                                </td>
+                                <td className="py-3.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-extrabold text-[#269984]">{step.retentionRate}%</span>
+                                    {dropDelta > 0 && (
+                                      <span className="text-[10px] text-rose-500 font-bold">
+                                        (-{dropDelta}%)
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="py-3.5 font-bold text-gray-700 dark:text-gray-300">
+                                  {step.avgTimeMinutes} perc
+                                </td>
+                                <td className="py-3.5">
+                                  <span
+                                    className={`font-bold ${
+                                      step.mistakeCount > 5
+                                        ? 'text-rose-500'
+                                        : step.mistakeCount > 0
+                                        ? 'text-amber-500'
+                                        : 'text-gray-500'
+                                    }`}
+                                  >
+                                    {step.mistakeCount} db
+                                  </span>
+                                </td>
+                                <td className="py-3.5">
+                                  {step.isBottleneck || step.status === 'bottleneck' ? (
+                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                      🚨 Elakadási pont
+                                    </span>
+                                  ) : step.status === 'high_mistakes' || step.mistakeCount >= 8 ? (
+                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                      ⚠️ Magas hibaszám
+                                    </span>
+                                  ) : step.retentionRate >= 80 ? (
+                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                      ✅ Stabil haladás
+                                    </span>
+                                  ) : (
+                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                      Normál ütem
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3.5 text-gray-600 dark:text-gray-300 text-[11px] max-w-xs">
+                                  {step.recommendation || (
+                                    step.isBottleneck
+                                      ? 'Érdemes ezt a lépést közösen átbeszélni a csoporttal vagy több magyarázó tippet adni.'
+                                      : 'A feladat világos a diákok számára, önállóan is jól haladnak vele.'
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500">Nincsenek elérhető fázisadatok ehhez a kurzushoz.</p>
+                  )}
+                </div>
+
+                {/* Pedagogical Summary & Action Plan Card */}
+                <div className="bg-gradient-to-br from-[#269984]/5 via-white to-blue-500/5 dark:from-[#269984]/10 dark:via-[#121212] dark:to-blue-500/10 border border-[#269984]/20 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-[#269984]/10 text-[#269984] flex items-center justify-center">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold font-montserrat text-gray-900 dark:text-white">
+                        Oktatói Értékelő Összegzés: {activeCourse.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Gyakorlati tanulságok és javasolt teendők a diákok valós teljesítménye alapján
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="p-4 rounded-2xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-2">
+                      <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-xs">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>Kritikus Fázis</span>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">
+                        {activeCourse.dropoffFunnel?.find((s) => s.isBottleneck)?.title || 'Nincs kritikus lemorzsolódás'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {activeCourse.dropoffFunnel?.some((s) => s.isBottleneck)
+                          ? 'Ennél a lépésnél tapasztalható a legnagyobb lemorzsolódás vagy a legtöbb hiba.'
+                          : 'A diákok egyenletesen és stabilan haladnak végig az összes feladaton.'}
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-2">
+                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs">
+                        <Clock className="w-4 h-4" />
+                        <span>Időgazdálkodás</span>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">
+                        {activeCourse.pacingRatio <= 0.7
+                          ? 'Gyors, lendületes haladás'
+                          : activeCourse.pacingRatio <= 1.3
+                          ? 'Ideális tervezett tempó'
+                          : 'Lassabb, elmélyült tanulás'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Valós: {activeCourse.actualAvgMinutes} perc (tervezett: {activeCourse.estimatedMinutes} perc, szorzó: {activeCourse.pacingRatio}x).
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-2">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                        <Lightbulb className="w-4 h-4" />
+                        <span>Módszertani Teendő</span>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">
+                        {activeCourse.completionRate < 50
+                          ? 'Gyakorló feladatok beiktatása'
+                          : 'Témakör sikeresen elsajátítva'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {activeCourse.completionRate < 50
+                          ? 'Javasolt az elakadási pontok közös átismétlése a következő óra elején.'
+                          : 'A csoport nagy része sikeresen vette az akadályokat, jöhet a következő kurzus!'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="p-12 text-center bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-3xl shadow-sm">
+                <Clock className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                  Nincs kiválasztott kurzus.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );

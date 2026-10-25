@@ -445,7 +445,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const mascotEnabled =
-    sessionStatus === 'loading' ? true : (session?.user as BaseUser)?.mascotEnabled !== false;
+    (sessionStatus === 'loading' ? true : (session?.user as BaseUser)?.mascotEnabled !== false) &&
+    course.mascot?.enabled !== false &&
+    course.mascot?.mode !== 'disabled';
 
   useEffect(() => {
     if (!mascotEnabled) setMascotVisible(false);
