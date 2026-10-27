@@ -306,6 +306,8 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
   const [showAllLanguages, setShowAllLanguages] = useState(false);
   const [isTranslatingAll, setIsTranslatingAll] = useState(false);
   const [isGeneratingMascot, setIsGeneratingMascot] = useState(false);
+  const [showAdvancedMascot, setShowAdvancedMascot] = useState(false);
+  const [openPhaseMascotIdx, setOpenPhaseMascotIdx] = useState<Record<number, boolean>>({});
 
   // Markdown view mode per phase: 'edit' | 'preview' | 'split'
   const [infoViewModes, setInfoViewModes] = useState<Record<number, 'edit' | 'preview' | 'split'>>({});
@@ -1294,6 +1296,380 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
     setExpandedPhaseIdx(phasesList.length);
   };
 
+  const addPhaseOfType = (sourceView: string) => {
+    const nextNumber = phasesList.length + 1;
+    const typeTitles: Record<string, LocalizedTextObj> = {
+      info: { hu: `${nextNumber}. Elméleti áttekintés`, en: `${nextNumber}. Theory Overview`, ro: `${nextNumber}. Prezentare teoretică` },
+      quiz: { hu: `${nextNumber}. Ellenőrző Kvíz`, en: `${nextNumber}. Knowledge Check Quiz`, ro: `${nextNumber}. Chestionar de verificare` },
+      'gap-fill': { hu: `${nextNumber}. Hiánypótló feladat`, en: `${nextNumber}. Fill in the Blanks`, ro: `${nextNumber}. Completare spații libere` },
+      match: { hu: `${nextNumber}. Fogalom párosítás`, en: `${nextNumber}. Concept Matching`, ro: `${nextNumber}. Asociere concepte` },
+      order: { hu: `${nextNumber}. Lépések sorrendezése`, en: `${nextNumber}. Step Ordering`, ro: `${nextNumber}. Ordonarea pașilor` },
+      debug: { hu: `${nextNumber}. Kód hibakeresés (Debug)`, en: `${nextNumber}. Code Debugging`, ro: `${nextNumber}. Depanare cod` },
+      video: { hu: `${nextNumber}. Oktatóvideó megtekintése`, en: `${nextNumber}. Video Lesson`, ro: `${nextNumber}. Lecție video` },
+      control: { hu: `${nextNumber}. Interaktív szimuláció`, en: `${nextNumber}. Interactive Simulation`, ro: `${nextNumber}. Simulare interactivă` },
+    };
+
+    const newPhase: PhaseDraft = {
+      phaseId: `phase-${nextNumber}-${Date.now().toString(36)}`,
+      title: typeTitles[sourceView] || { hu: `${nextNumber}. Új lépés`, en: `${nextNumber}. New step`, ro: `${nextNumber}. Pas nou` },
+      sourceView,
+      sourceAlgorithmId: 'general',
+      summary: {
+        hu: 'Rövid leírás a lépés céljáról...',
+        en: 'Brief description of the step goal...',
+        ro: 'Scurtă descriere a pasului...',
+      },
+      maxPoints: sourceView === 'info' || sourceView === 'video' ? 10 : 20,
+      askConfidence: sourceView !== 'info' && sourceView !== 'video',
+      infoContent: {
+        hu: '## Új tananyag fejezet\n\nÍrd ide a magyarázatot...',
+        en: '## New topic chapter\n\nWrite explanation here...',
+        ro: '## Capitol nou de învățare\n\nScrie explicația aici...',
+      },
+      quiz:
+        sourceView === 'quiz'
+          ? [
+              {
+                question: { hu: '1. Kérdés szövege...', en: '1. Question text...', ro: '1. Textul întrebării...' },
+                options: [
+                  { option: { hu: 'Helyes válasz', en: 'Correct answer', ro: 'Răspuns corect' } },
+                  { option: { hu: 'Második lehetőség', en: 'Second option', ro: 'A doua opțiune' } },
+                  { option: { hu: 'Harmadik lehetőség', en: 'Third option', ro: 'A treia opțiune' } },
+                ],
+                correctIndex: 0,
+                explanation: { hu: 'Magyarázat a helyes válaszhoz...', en: 'Explanation...', ro: 'Explicație...' },
+              },
+            ]
+          : [],
+      gapFillContent:
+        sourceView === 'gap-fill'
+          ? {
+              hu: 'Egészítsd ki a hiányzó részt: A ciklus minden lépésben {{gap}} értékkel növeli a számlálót.',
+              en: 'Fill in the blank: The loop increments the counter by {{gap}} on each step.',
+              ro: 'Completează spațiul: Bucla incrementează contorul cu {{gap}} la fiecare pas.',
+            }
+          : undefined,
+      gapFillSolutions:
+        sourceView === 'gap-fill' ? [{ solution: { hu: '1', en: '1', ro: '1' } }] : [],
+      gapFillDecoys:
+        sourceView === 'gap-fill'
+          ? [
+              { decoy: { hu: '0', en: '0', ro: '0' } },
+              { decoy: { hu: '-1', en: '-1', ro: '-1' } },
+            ]
+          : [],
+      matching:
+        sourceView === 'match'
+          ? [
+              {
+                left: { hu: '1. Fogalom', en: '1. Term', ro: '1. Termen' },
+                right: { hu: '1. Meghatározás', en: '1. Definition', ro: '1. Definiție' },
+              },
+              {
+                left: { hu: '2. Fogalom', en: '2. Term', ro: '2. Termen' },
+                right: { hu: '2. Meghatározás', en: '2. Definition', ro: '2. Definiție' },
+              },
+            ]
+          : [],
+      ordering:
+        sourceView === 'order'
+          ? [
+              { text: { hu: '1. Első lépés végrehajtása', en: '1. Execute first step', ro: '1. Execută primul pas' } },
+              { text: { hu: '2. Második lépés ellenőrzése', en: '2. Check second step', ro: '2. Verifică al doilea pas' } },
+              { text: { hu: '3. Eredmény kiírása', en: '3. Output result', ro: '3. Afișează rezultatul' } },
+            ]
+          : [],
+      debugCode: sourceView === 'debug' ? 'function add(a, b) {\n  return a - b; // Hiba itt!\n}' : '',
+      expectedCode: sourceView === 'debug' ? 'function add(a, b) {\n  return a + b;\n}' : '',
+      hintCopy: {
+        hu: '💡 Tipp a lépés sikeres teljesítéséhez!',
+        en: '💡 Tip for completing this step!',
+        ro: '💡 Sfat pentru finalizarea pasului!',
+      },
+      mascotLine: {
+        hu: 'Lássunk neki ennek a lépésnek!',
+        en: "Let's tackle this step!",
+        ro: 'Să începem acest pas!',
+      },
+      mascotMistakeLine: {
+        hu: 'Semmi baj, próbáld újra!',
+        en: 'No problem, try again!',
+        ro: 'Nicio problemă, încearcă din nou!',
+      },
+      idleHelp: {
+        hu: 'Ha elakadtál, kérdezz bátran!',
+        en: 'If you are stuck, feel free to ask!',
+        ro: 'Dacă te-ai blocat, întreabă cu încredere!',
+      },
+    };
+    setPhasesList((prev) => [...prev, newPhase]);
+    setExpandedPhaseIdx(phasesList.length);
+  };
+
+  const duplicatePhase = (phaseIdx: number) => {
+    const source = phasesList[phaseIdx];
+    if (!source) return;
+    const copy: PhaseDraft = JSON.parse(JSON.stringify(source));
+    copy.phaseId = `phase-${phasesList.length + 1}-${Date.now().toString(36)}`;
+    copy.title = {
+      hu: `${getLocalizedStr(source.title, 'hu')} (Másolat)`,
+      en: `${getLocalizedStr(source.title, 'en')} (Copy)`,
+      ro: `${getLocalizedStr(source.title, 'ro')} (Copie)`,
+    };
+    setPhasesList((prev) => {
+      const next = [...prev];
+      next.splice(phaseIdx + 1, 0, copy);
+      return next;
+    });
+    setExpandedPhaseIdx(phaseIdx + 1);
+    toast.success('Lépés sikeresen lemásolva!');
+  };
+
+  const applyCourseTemplate = (tpl: 'algo_classic' | 'quick_quiz' | 'code_debug') => {
+    const nowId = Date.now().toString(36);
+    if (tpl === 'algo_classic') {
+      setCourseForm((prev) => ({
+        ...prev,
+        estimatedMinutes: 25,
+        icon: '🚀',
+      }));
+      setPhasesList([
+        {
+          phaseId: `phase-1-${nowId}`,
+          title: { hu: '1. Elméleti alapozás és működési elv', en: '1. Theory & Core Principles', ro: '1. Bazele teoretice' },
+          sourceView: 'info',
+          sourceAlgorithmId: 'general',
+          summary: { hu: 'A témakör kulcsfogalmainak és logikájának bemutatása.', en: 'Core concepts and logic.', ro: 'Concepte cheie.' },
+          maxPoints: 10,
+          askConfidence: false,
+          infoContent: {
+            hu: '## 1. Hogyan működik?\n\nÍrd ide a legfontosabb alapfogalmakat és egy rövid példát.\n\n- **1. szabály:** Alapfeltétel\n- **2. szabály:** Ismétlődő lépés',
+            en: '## 1. How does it work?\n\nWrite the core concepts here.',
+            ro: '## 1. Cum funcționează?\n\nScrie conceptele de bază aici.',
+          },
+        },
+        {
+          phaseId: `phase-2-${nowId}`,
+          title: { hu: '2. Kulcsfogalmak párosítása', en: '2. Concept Matching', ro: '2. Asocierea conceptelor' },
+          sourceView: 'match',
+          sourceAlgorithmId: 'general',
+          summary: { hu: 'Kösd össze a fogalmakat a hozzájuk tartozó definícióval!', en: 'Match the concepts!', ro: 'Asociază conceptele!' },
+          maxPoints: 15,
+          askConfidence: true,
+          matching: [
+            { left: { hu: 'Időbonyolultság', en: 'Time Complexity', ro: 'Complexitate în timp' }, right: { hu: 'A lépésszám növekedése a bemenet függvényében', en: 'Growth of steps', ro: 'Creșterea numărului de pași' } },
+            { left: { hu: 'Iteráció', en: 'Iteration', ro: 'Iterație' }, right: { hu: 'Utasítások ciklikus ismétlése', en: 'Cyclic repetition', ro: 'Repetare ciclică' } },
+          ],
+        },
+        {
+          phaseId: `phase-3-${nowId}`,
+          title: { hu: '3. Kód / Szabály hiánypótlás', en: '3. Code Gap-Fill', ro: '3. Completare cod' },
+          sourceView: 'gap-fill',
+          sourceAlgorithmId: 'general',
+          summary: { hu: 'Pótold a hiányzó kifejezéseket a kódban!', en: 'Fill in the missing expressions!', ro: 'Completează expresiile lipsă!' },
+          maxPoints: 20,
+          askConfidence: true,
+          gapFillContent: {
+            hu: 'for (let i = 0; i < tomb.{{gap}}; i++) {\n  console.log(tomb[i]);\n}',
+            en: 'for (let i = 0; i < arr.{{gap}}; i++) {\n  console.log(arr[i]);\n}',
+            ro: 'for (let i = 0; i < arr.{{gap}}; i++) {\n  console.log(arr[i]);\n}',
+          },
+          gapFillSolutions: [{ solution: { hu: 'length', en: 'length', ro: 'length' } }],
+          gapFillDecoys: [{ decoy: { hu: 'size', en: 'size', ro: 'size' } }, { decoy: { hu: 'count', en: 'count', ro: 'count' } }],
+        },
+        {
+          phaseId: `phase-4-${nowId}`,
+          title: { hu: '4. Záró ellenőrző kvíz', en: '4. Final Quiz', ro: '4. Chestionar final' },
+          sourceView: 'quiz',
+          sourceAlgorithmId: 'general',
+          summary: { hu: 'Teszteld a megszerzett tudásodat!', en: 'Test your knowledge!', ro: 'Testează-ți cunoștințele!' },
+          maxPoints: 25,
+          askConfidence: true,
+          quiz: [
+            {
+              question: { hu: 'Melyik állítás igaz az alábbiak közül?', en: 'Which statement is true?', ro: 'Care afirmație este adevărată?' },
+              options: [
+                { option: { hu: 'Az első válasz (Helyes)', en: 'First option (Correct)', ro: 'Prima opțiune (Corect)' } },
+                { option: { hu: 'Második válasz', en: 'Second option', ro: 'A doua opțiune' } },
+                { option: { hu: 'Harmadik válasz', en: 'Third option', ro: 'A treia opțiune' } },
+              ],
+              correctIndex: 0,
+              explanation: { hu: 'Mert ez felel meg a definíciónak.', en: 'Matches the definition.', ro: 'Corespunde definiției.' },
+            },
+          ],
+        },
+      ]);
+      toast.success('🚀 Klasszikus 4-lépéses kurzussablon betöltve!');
+    } else if (tpl === 'quick_quiz') {
+      setCourseForm((prev) => ({
+        ...prev,
+        estimatedMinutes: 15,
+        icon: '⚡',
+      }));
+      setPhasesList([
+        {
+          phaseId: `phase-1-${nowId}`,
+          title: { hu: '1. Gyors összefoglaló (Puskázó)', en: '1. Quick Cheat-Sheet', ro: '1. Rezumat rapid' },
+          sourceView: 'info',
+          sourceAlgorithmId: 'general',
+          summary: { hu: 'Rövid áttekintés a teszt előtt.', en: 'Short review before the quiz.', ro: 'Scurtă recapitulare.' },
+          maxPoints: 10,
+          askConfidence: false,
+          infoContent: {
+            hu: '## Fontos tudnivalók a teszthez\n\n- 1. kulcspont\n- 2. kulcspont',
+            en: '## Key takeaways\n\n- Point 1\n- Point 2',
+            ro: '## Idei principale\n\n- Punctul 1\n- Punctul 2',
+          },
+        },
+        {
+          phaseId: `phase-2-${nowId}`,
+          title: { hu: '2. Lépések helyes sorrendje', en: '2. Step Ordering', ro: '2. Ordonarea pașilor' },
+          sourceView: 'order',
+          sourceAlgorithmId: 'general',
+          summary: { hu: 'Állítsd helyes sorrendbe a folyamat lépéseit!', en: 'Order the steps!', ro: 'Ordonează pașii!' },
+          maxPoints: 15,
+          askConfidence: true,
+          ordering: [
+            { text: { hu: '1. Adatok bekérése és ellenőrzése', en: '1. Input & validation', ro: '1. Citirea datelor' } },
+            { text: { hu: '2. Feldolgozás és számítás', en: '2. Processing', ro: '2. Procesarea datelor' } },
+            { text: { hu: '3. Eredmény megjelenítése', en: '3. Display output', ro: '3. Afișarea rezultatului' } },
+          ],
+        },
+        {
+          phaseId: `phase-3-${nowId}`,
+          title: { hu: '3. Tudásfelmérő Kvíz', en: '3. Assessment Quiz', ro: '3. Chestionar de evaluare' },
+          sourceView: 'quiz',
+          sourceAlgorithmId: 'general',
+          summary: { hu: 'Válaszolj a feleletválasztós kérdésekre!', en: 'Answer the multiple-choice questions!', ro: 'Răspunde la întrebări!' },
+          maxPoints: 25,
+          askConfidence: true,
+          quiz: [
+            {
+              question: { hu: '1. Ellenőrző kérdés...', en: '1. Check question...', ro: '1. Întrebare de verificare...' },
+              options: [
+                { option: { hu: 'A válasz (Helyes)', en: 'Option A (Correct)', ro: 'Opțiunea A (Corect)' } },
+                { option: { hu: 'B válasz', en: 'Option B', ro: 'Opțiunea B' } },
+                { option: { hu: 'C válasz', en: 'Option C', ro: 'Opțiunea C' } },
+              ],
+              correctIndex: 0,
+              explanation: { hu: 'Rövid indoklás...', en: 'Short explanation...', ro: 'Scurtă explicație...' },
+            },
+          ],
+        },
+      ]);
+      toast.success('⚡ Gyors 3-lépéses tudáspróba sablon betöltve!');
+    } else if (tpl === 'code_debug') {
+      setCourseForm((prev) => ({
+        ...prev,
+        estimatedMinutes: 20,
+        icon: '🐞',
+      }));
+      setPhasesList([
+        {
+          phaseId: `phase-1-${nowId}`,
+          title: { hu: '1. Kódolási minták és gyakori hibák', en: '1. Coding Patterns & Bugs', ro: '1. Șabloane de cod și erori' },
+          sourceView: 'info',
+          sourceAlgorithmId: 'general',
+          summary: { hu: 'Mire figyeljünk a kód írása és javítása közben?', en: 'What to watch out for?', ro: 'La ce să fim atenți?' },
+          maxPoints: 10,
+          askConfidence: false,
+          infoContent: {
+            hu: '## Gyakori kódolási hibák\n\n```python\n# Figyelj a ciklushatárokra!\nfor i in range(len(arr)):\n    print(arr[i])\n```',
+            en: '## Common coding bugs\n\n```python\nfor i in range(len(arr)):\n    print(arr[i])\n```',
+            ro: '## Erori frecvente\n\n```python\nfor i in range(len(arr)):\n    print(arr[i])\n```',
+          },
+        },
+        {
+          phaseId: `phase-2-${nowId}`,
+          title: { hu: '2. Kódkiegészítés (Gap-Fill)', en: '2. Code Completion', ro: '2. Completare cod' },
+          sourceView: 'gap-fill',
+          sourceAlgorithmId: 'general',
+          summary: { hu: 'Egészítsd ki a hiányzó kulcsszót!', en: 'Fill in the missing keyword!', ro: 'Completează cuvântul cheie!' },
+          maxPoints: 20,
+          askConfidence: true,
+          gapFillContent: {
+            hu: 'function sum(a, b) {\n  {{gap}} a + b;\n}',
+            en: 'function sum(a, b) {\n  {{gap}} a + b;\n}',
+            ro: 'function sum(a, b) {\n  {{gap}} a + b;\n}',
+          },
+          gapFillSolutions: [{ solution: { hu: 'return', en: 'return', ro: 'return' } }],
+          gapFillDecoys: [{ decoy: { hu: 'break', en: 'break', ro: 'break' } }],
+        },
+        {
+          phaseId: `phase-3-${nowId}`,
+          title: { hu: '3. Kód hibakeresés (Bugfix)', en: '3. Code Debugging', ro: '3. Depanare cod' },
+          sourceView: 'debug',
+          sourceAlgorithmId: 'general',
+          summary: { hu: 'Találd meg és javítsd ki a hibát a kódban!', en: 'Find and fix the bug!', ro: 'Găsește și repară eroarea!' },
+          maxPoints: 30,
+          askConfidence: true,
+          debugCode: 'function isEven(n) {\n  return n % 2 === 1;\n}',
+          expectedCode: 'function isEven(n) {\n  return n % 2 === 0;\n}',
+        },
+      ]);
+      toast.success('🐞 3-lépéses Kódolási & Debug sablon betöltve!');
+    }
+    setExpandedPhaseIdx(0);
+  };
+
+  const applyMascotPersonality = (preset: 'friendly' | 'mentor' | 'coach') => {
+    if (preset === 'friendly') {
+      setCourseForm((prev) => ({
+        ...prev,
+        mascot: {
+          ...prev.mascot,
+          enabled: true,
+          mode: prev.mascot.mode === 'disabled' ? 'ai-fallback' : prev.mascot.mode,
+          name: { hu: 'Bubi', en: 'Bubi', ro: 'Bubi' },
+          asset: 'algo_group_109.svg',
+          accentColor: '#269984',
+          idleTriggerSeconds: 30,
+          mistakeTriggerCount: 2,
+          summonLabel: { hu: 'Segítség kérése Bubitól', en: 'Ask Bubi for help', ro: 'Cere ajutor lui Bubi' },
+          idlePrompt: { hu: 'Elakadtál? Szívesen adok egy kis tippet!', en: 'Stuck? Happy to give you a hint!', ro: 'Te-ai blocat? Îți ofer un indiciu!' },
+          mistakePrompt: { hu: 'Semmi gond, a hibákból tanulunk a legtöbbet! Próbáljuk újra!', en: "No worries, we learn from mistakes! Let's try again!", ro: 'Nicio problemă, din greșeli învățăm!' },
+        },
+      }));
+      toast.success('🌱 Barátságos Bubi személyiség beállítva!');
+    } else if (preset === 'mentor') {
+      setCourseForm((prev) => ({
+        ...prev,
+        mascot: {
+          ...prev.mascot,
+          enabled: true,
+          mode: prev.mascot.mode === 'disabled' ? 'ai-fallback' : prev.mascot.mode,
+          name: { hu: 'Prof. Algo', en: 'Prof. Algo', ro: 'Prof. Algo' },
+          asset: 'algo_group_166.svg',
+          accentColor: '#2563eb',
+          idleTriggerSeconds: 40,
+          mistakeTriggerCount: 2,
+          summonLabel: { hu: 'Szakmai tipp kérése', en: 'Request mentor hint', ro: 'Cere sfatul mentorului' },
+          idlePrompt: { hu: 'Gondold végig a bemeneti feltételeket. Kérsz egy logikai támpontot?', en: 'Consider the input conditions. Need a logical clue?', ro: 'Analizează condițiile de intrare.' },
+          mistakePrompt: { hu: 'Vizsgáljuk meg, hol tért el a futás a várt eredménytől.', en: 'Let us examine where the execution diverged.', ro: 'Să analizăm unde a apărut diferența.' },
+        },
+      }));
+      toast.success('🎯 Szakmai Mentor (Prof. Algo) személyiség beállítva!');
+    } else if (preset === 'coach') {
+      setCourseForm((prev) => ({
+        ...prev,
+        mascot: {
+          ...prev.mascot,
+          enabled: true,
+          mode: prev.mascot.mode === 'disabled' ? 'ai-fallback' : prev.mascot.mode,
+          name: { hu: 'Turbo', en: 'Turbo', ro: 'Turbo' },
+          asset: 'bubble_dragon.png',
+          accentColor: '#ea580c',
+          idleTriggerSeconds: 25,
+          mistakeTriggerCount: 2,
+          summonLabel: { hu: 'Gyors tipp!', en: 'Power hint!', ro: 'Indiciu rapid!' },
+          idlePrompt: { hu: 'Ne állj meg, már nagyon közel vagy a megoldáshoz! Csapjunk bele!', en: "Don't stop now, you're super close!", ro: 'Nu te opri, ești foarte aproape!' },
+          mistakePrompt: { hu: 'Majdnem megvolt! Rázd le magadról és mutasd meg, mit tudsz!', en: 'Almost had it! Shake it off and try again!', ro: 'Aproape ai reușit! Încearcă din nou!' },
+        },
+      }));
+      toast.success('🔥 Motiváló Edző (Turbo) személyiség beállítva!');
+    }
+  };
+
   // Gap fill helpers
   const addGapSolution = (phaseIdx: number) => {
     setPhasesList((prev) =>
@@ -1738,14 +2114,46 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
         {/* Course List Header with Search & Filters (Only shown when not in editor) */}
         {activeTab !== 'course_editor' && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-4">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-[#269984]" />
-                Saját Kurzusaim
-              </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-[#269984]/10 text-[#269984] border border-[#269984]/20">
-                {myCourses.length}
-              </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('my_courses')}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                  activeTab === 'my_courses'
+                    ? 'bg-[#269984] text-white shadow-md shadow-teal-700/20'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Saját Kurzusaim</span>
+                <span className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
+                  activeTab === 'my_courses'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-[#269984]/10 text-[#269984]'
+                }`}>
+                  {myCourses.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('community')}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                  activeTab === 'community'
+                    ? 'bg-[#269984] text-white shadow-md shadow-teal-700/20'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                }`}
+              >
+                <Globe className="w-4 h-4" />
+                <span>Közösségi Tár (Klónozható Sablonok)</span>
+                <span className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
+                  activeTab === 'community'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'
+                }`}>
+                  {communityCourses.length}
+                </span>
+              </button>
             </div>
 
             {/* Search & Filters */}
@@ -2086,38 +2494,6 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
 
               <button
                 type="button"
-                onClick={() => setEditorStep('phases')}
-                className={`flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
-                  editorStep === 'phases'
-                    ? 'bg-purple-50/70 dark:bg-purple-950/40 border border-purple-500/30 ring-1 ring-purple-500/20'
-                    : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500'
-                }`}
-              >
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
-                    editorStep === 'phases'
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  2
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
-                    <Layers className="w-3.5 h-3.5 text-purple-600" />
-                    2. Tananyag & Lépések
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300">
-                      {phasesList.length} fázis
-                    </span>
-                  </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    Elmélet, tesztek, interaktív feladatok
-                  </p>
-                </div>
-              </button>
-
-              <button
-                type="button"
                 onClick={() => setEditorStep('mascot')}
                 className={`flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
                   editorStep === 'mascot'
@@ -2132,16 +2508,58 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                   }`}
                 >
-                  3
+                  2
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
                     <Bot className="w-3.5 h-3.5 text-amber-500" />
-                    3. Kabala & Mentor
-                    <span className="text-[10px] text-slate-400 font-normal">(Opcionális)</span>
+                    2. Kabala & Mentor
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                        courseForm.mascot.mode === 'disabled'
+                          ? 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400'
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+                      }`}
+                    >
+                      {courseForm.mascot.mode === 'disabled'
+                        ? 'Kikapcsolva'
+                        : getLocalizedStr(courseForm.mascot.name, activeEditorLang) || 'Bubi'}
+                    </span>
                   </p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    Virtuális tanársegéd beállításai
+                    Segítő karakter, személyiség és viselkedés
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEditorStep('phases')}
+                className={`flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
+                  editorStep === 'phases'
+                    ? 'bg-purple-50/70 dark:bg-purple-950/40 border border-purple-500/30 ring-1 ring-purple-500/20'
+                    : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500'
+                }`}
+              >
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
+                    editorStep === 'phases'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  3
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                    <Layers className="w-3.5 h-3.5 text-purple-600" />
+                    3. Tananyag & Lépések
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300">
+                      {phasesList.length} fázis • {phasesList.reduce((acc, p) => acc + (p.maxPoints ?? 10), 0)} pt
+                    </span>
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    Elmélet, kvízek, interaktív feladatok felépítése
                   </p>
                 </div>
               </button>
@@ -2150,13 +2568,119 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
             {/* ━━━ STEP 1: KURZUS ALAPADATOK ━━━ */}
             {editorStep === 'basics' && (
               <div className="p-8 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-white/10 shadow-sm space-y-6">
-                <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-white/5">
-                  <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-[#269984]">
-                    <BookOpen className="w-5 h-5" />
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-[#269984]">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">1. Kurzus Alapadatok & Sablonválasztó</h3>
+                      <p className="text-xs text-slate-500">Add meg a kurzus nevét és megjelenését, vagy indulj egy előre felépített sablonból!</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Kurzus Alapadatok</h3>
-                    <p className="text-xs text-slate-500">Cím, slug, összefoglaló, kiemelő szín és megjelenési beállítások</p>
+                </div>
+
+                {/* Quick Starter Templates + Live Preview Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/30 border border-slate-200/80 dark:border-white/10">
+                  <div className="lg:col-span-7 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-[#269984] flex items-center gap-1.5">
+                        <Wand2 className="w-4 h-4" />
+                        Gyors Kurzus Sablonok (1 kattintásos felépítés)
+                      </span>
+                      <span className="text-[11px] text-slate-400">Előre elkészített lépéssorok</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => applyCourseTemplate('algo_classic')}
+                        className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:border-[#269984] text-left transition-all group"
+                      >
+                        <div className="text-lg mb-1">🚀</div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#269984]">
+                          Klasszikus Tanmenet
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                          4 lépés: Elmélet → Párosítás → Hiánypótlás → Kvíz
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => applyCourseTemplate('quick_quiz')}
+                        className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:border-amber-500 text-left transition-all group"
+                      >
+                        <div className="text-lg mb-1">⚡</div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-500">
+                          Gyors Tudáspróba
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                          3 lépés: Puskázó → Sorrendezés → Ellenőrző Kvíz
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => applyCourseTemplate('code_debug')}
+                        className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:border-rose-500 text-left transition-all group"
+                      >
+                        <div className="text-lg mb-1">🐞</div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-rose-500">
+                          Kód & Hibakereső
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                          3 lépés: Kódminták → Kódkiegészítés → Debug
+                        </p>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Live Course Card Preview */}
+                  <div className="lg:col-span-5 flex flex-col justify-between p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+                    <div
+                      className="absolute top-0 left-0 right-0 h-1.5"
+                      style={{ backgroundColor: courseForm.accentColor || '#269984' }}
+                    />
+                    <div className="flex items-start justify-between gap-3 pt-1">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base">{courseForm.icon || '📘'}</span>
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                            {courseForm.difficulty === 'Beginner'
+                              ? 'Kezdő'
+                              : courseForm.difficulty === 'Intermediate'
+                              ? 'Középhaladó'
+                              : 'Haladó'}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400">• Élő kártya előnézet</span>
+                        </div>
+                        <h4 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                          {getLocalizedStr(courseForm.title, activeEditorLang) || 'A kurzusod címe itt jelenik meg'}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 line-clamp-2">
+                          {getLocalizedStr(courseForm.summary, activeEditorLang) ||
+                            'Rövid leírás a kurzusról, amit a diákok a kurzuslistában látnak...'}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 p-1.5 flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5">
+                        <Image
+                          src={`/assets/${courseForm.illustrationAsset || 'algo_group_109.svg'}`}
+                          alt="Preview"
+                          width={38}
+                          height={38}
+                          className="object-contain max-h-full"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 mt-3 border-t border-slate-100 dark:border-white/5">
+                      <span>📚 {phasesList.length} fázis</span>
+                      <span>⏱️ ~{courseForm.estimatedMinutes} perc</span>
+                      <span>
+                        {courseForm.mascot.mode !== 'disabled'
+                          ? `🤖 Kabala: ${getLocalizedStr(courseForm.mascot.name, activeEditorLang) || 'Bubi'}`
+                          : '🚫 Kabala nélkül'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -2562,17 +3086,17 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditorStep('phases')}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-600/20 transition-all hover:scale-[1.02] active:scale-95"
+                    onClick={() => setEditorStep('mascot')}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-95"
                   >
-                    <span>Tovább a Tananyag Lépéseihez (2. Lépés)</span>
+                    <span>Tovább a Kabala Kiválasztásához (2. Lépés)</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* ━━━ STEP 3: KABALA & MENTOR BEÁLLÍTÁSOK ━━━ */}
+            {/* ━━━ STEP 2: KABALA & MENTOR BEÁLLÍTÁSOK ━━━ */}
             {editorStep === 'mascot' && (
               <div className="p-8 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-white/10 shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-white/5">
@@ -2582,10 +3106,10 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                      Kabala & Mentori Beállítások
+                      2. Kabala & Virtuális Mentor Kiválasztása
                     </h3>
                     <p className="text-xs text-slate-500">
-                      A kurzushoz tartozó interaktív segítő kabala megjelenése, szövegei és automatikus viselkedése minden nyelven
+                      Válaszd ki egyetlen kattintással a kurzus segítő karakterét és személyiségét (mielőtt összeállítod a lépéseket)
                     </p>
                   </div>
                 </div>
@@ -2744,6 +3268,122 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                       </div>
                     </div>
                   )}
+                  {/* 1-Click Personality Presets & Live Mascot Preview */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/30 border border-slate-200/80 dark:border-white/10">
+                    <div className="lg:col-span-7 space-y-3">
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
+                        ✨ Gyors Karakter & Személyiség Sablonok (1 kattintás)
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => applyMascotPersonality('friendly')}
+                          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:border-[#269984] text-left transition-all"
+                        >
+                          <div className="text-base mb-1">🌱 Barátságos Bubi</div>
+                          <p className="text-[10px] text-slate-500 leading-snug">
+                            Kedves, bátorító stílus kezdőknek (30 mp tétlenség után segít).
+                          </p>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyMascotPersonality('mentor')}
+                          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:border-blue-500 text-left transition-all"
+                        >
+                          <div className="text-base mb-1">🎯 Prof. Algo Mentor</div>
+                          <p className="text-[10px] text-slate-500 leading-snug">
+                            Szakmai, logikus rávezető kérdések haladóknak.
+                          </p>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyMascotPersonality('coach')}
+                          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:border-orange-500 text-left transition-all"
+                        >
+                          <div className="text-base mb-1">🔥 Turbo Edző</div>
+                          <p className="text-[10px] text-slate-500 leading-snug">
+                            Lendületes, játékos motiváció és gyors tippek.
+                          </p>
+                        </button>
+                      </div>
+
+                      {/* Visual Character Picker Grid */}
+                      <div className="pt-2">
+                        <span className="text-[11px] font-bold text-slate-500 block mb-2">
+                          Válassz vizuális kabala figurát kattintással:
+                        </span>
+                        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                          {ASSET_OPTIONS.slice(0, 8).map((opt) => {
+                            const isCharSelected = (courseForm.mascot.asset || 'algo_group_109.svg') === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() =>
+                                  setCourseForm((prev) => ({
+                                    ...prev,
+                                    mascot: { ...prev.mascot, asset: opt.value },
+                                  }))
+                                }
+                                title={opt.label}
+                                className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                                  isCharSelected
+                                    ? 'border-2 border-[#269984] bg-teal-50/70 dark:bg-teal-950/40 scale-105 shadow-sm'
+                                    : 'border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 hover:border-slate-300'
+                                }`}
+                              >
+                                <Image
+                                  src={`/assets/${opt.value}`}
+                                  alt={opt.label}
+                                  width={32}
+                                  height={32}
+                                  className="object-contain h-8 w-8"
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Live Mascot Speech Bubble Preview */}
+                    <div className="lg:col-span-5 flex flex-col justify-center p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-sm">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Élő Kabala Előnézet ({activeEditorLang.toUpperCase()})
+                      </span>
+                      <div className="flex items-start gap-3">
+                        <div
+                          className="w-14 h-14 rounded-2xl p-1.5 flex items-center justify-center shrink-0 border-2 shadow-sm"
+                          style={{
+                            borderColor: courseForm.mascot.accentColor || '#269984',
+                            backgroundColor: `${courseForm.mascot.accentColor || '#269984'}15`,
+                          }}
+                        >
+                          <Image
+                            src={`/assets/${courseForm.mascot.asset || 'algo_group_109.svg'}`}
+                            alt="Mascot Preview"
+                            width={42}
+                            height={42}
+                            className="object-contain max-h-full"
+                          />
+                        </div>
+                        <div className="flex-1 p-3 rounded-2xl rounded-tl-none bg-slate-100 dark:bg-slate-800 text-xs space-y-1">
+                          <div
+                            className="font-extrabold"
+                            style={{ color: courseForm.mascot.accentColor || '#269984' }}
+                          >
+                            {getLocalizedStr(courseForm.mascot.name, activeEditorLang) || 'Bubi'}
+                          </div>
+                          <p className="text-slate-700 dark:text-slate-200 leading-relaxed">
+                            “{getLocalizedStr(courseForm.mascot.welcomeMessages?.[0]?.text, activeEditorLang) ||
+                              getLocalizedStr(courseForm.mascot.idlePrompt, activeEditorLang) ||
+                              'Üdv a kurzuson! Készen állsz a közös tanulásra?'}”
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Mascot Profile Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Mascot Name (3 languages) */}
@@ -2895,8 +3535,40 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
 
                   {/* Triggers & Timers and Summon Label (only for manual and hybrid fallback) */}
                   {(courseForm.mascot.mode === 'ai-fallback' || courseForm.mascot.mode === 'manual-only') && (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2 border-t border-slate-100 dark:border-white/5">
+                    <div className="pt-3 border-t border-slate-100 dark:border-white/5 space-y-4">
+                      {/* Collapsible Toggle for Advanced Mascot Prompts */}
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvancedMascot((v) => !v)}
+                        className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 text-left">
+                          <Settings className="w-4 h-4 text-[#269984]" />
+                          <div>
+                            <div className="text-xs font-extrabold text-slate-800 dark:text-slate-100">
+                              Haladó Kabala Szövegek & Triggerek Finomhangolása (3 Nyelven)
+                            </div>
+                            <div className="text-[11px] text-slate-500">
+                              Tétlenségi időzítő ({courseForm.mascot.idleTriggerSeconds ?? 30} mp), hiba küszöb ({courseForm.mascot.mistakeTriggerCount ?? 2} hiba), üdvözlő és dicsérő mondatok szerkesztése
+                            </div>
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-[11px] font-bold text-slate-600 dark:text-slate-300 shrink-0">
+                          {showAdvancedMascot ? (
+                            <>
+                              Elrejtés <ChevronUp className="w-3.5 h-3.5" />
+                            </>
+                          ) : (
+                            <>
+                              Megnyitás <ChevronDown className="w-3.5 h-3.5" />
+                            </>
+                          )}
+                        </span>
+                      </button>
+
+                      {showAdvancedMascot && (
+                        <div className="space-y-6 pt-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                         Tétlenségi Trigger (mp)
@@ -3388,44 +4060,47 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                       </div>
                     </div>
                   </div>
-                </>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
 
-          {/* Step 3 Bottom Navigation */}
+          {/* Step 2 Bottom Navigation */}
           <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5">
             <button
               type="button"
-              onClick={() => setEditorStep('phases')}
+              onClick={() => setEditorStep('basics')}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 font-bold text-xs transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Vissza a Tananyag Lépéseihez</span>
+              <span>Vissza az Alapadatokhoz (1. Lépés)</span>
             </button>
-            <button
-              type="button"
-              onClick={handleSaveCourseForm}
-              disabled={savingCourse}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#269984] hover:bg-[#1e7e6c] disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-teal-700/20 transition-all hover:scale-[1.02] active:scale-95"
-            >
-              {savingCourse ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  Mentés...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Kurzus Mentése
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSaveCourseForm}
+                disabled={savingCourse}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 disabled:opacity-50 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all"
+              >
+                <Save className="w-4 h-4" />
+                <span>Mentés most</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorStep('phases')}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#269984] hover:bg-[#1e7e6c] text-white font-bold text-xs shadow-md shadow-teal-700/20 transition-all hover:scale-[1.02] active:scale-95"
+              >
+                <span>Tovább a Tananyag & Lépésekhez (3. Lépés)</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-            {/* ━━━ STEP 2: TANANYAG & LÉPÉSEK (FÁZISOK) ━━━ */}
+            {/* ━━━ STEP 3: TANANYAG & LÉPÉSEK (FÁZISOK) ━━━ */}
             {editorStep === 'phases' && (
               <div className="p-8 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-white/10 shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-white/5">
@@ -3435,24 +4110,15 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                      Tanulási Lépések (Fázisok) ({phasesList.length})
+                      3. Tananyag & Lépések Felépítése ({phasesList.length} lépés)
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Minden lépéshez egyedi feladattípust (kvíz, hiánypótlás, hibakeresés, párosítás, elméleti szöveg) választhatsz.
+                      Kattints a lenti gyorstípus-gombokra egy előre felépített lépés azonnali beszúrásához, vagy generálj AI-val!
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={addPhase}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Új Fázis
-                  </button>
-
                   <button
                     type="button"
                     onClick={openNewPhaseAiModal}
@@ -3465,21 +4131,58 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                 </div>
               </div>
 
+              {/* ━━━ 1-CLICK QUICK-ADD PHASE TYPE TOOLBAR ━━━ */}
+              <div className="p-3.5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/40 border border-slate-200/80 dark:border-white/10">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1">
+                    ⚡ Gyors Lépés Beszúrása:
+                  </span>
+                  {[
+                    { view: 'info', icon: '📖', label: 'Elmélet / Szöveg', cls: 'hover:border-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-300' },
+                    { view: 'quiz', icon: '❓', label: 'Kvíz Kérdés', cls: 'hover:border-amber-500 hover:text-amber-700 dark:hover:text-amber-300' },
+                    { view: 'gap-fill', icon: '🧩', label: 'Hiánypótlás', cls: 'hover:border-blue-500 hover:text-blue-700 dark:hover:text-blue-300' },
+                    { view: 'match', icon: '🔗', label: 'Fogalom Párosítás', cls: 'hover:border-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300' },
+                    { view: 'order', icon: '🔢', label: 'Sorrendezés', cls: 'hover:border-purple-500 hover:text-purple-700 dark:hover:text-purple-300' },
+                    { view: 'debug', icon: '🐞', label: 'Kód Hibakeresés', cls: 'hover:border-rose-500 hover:text-rose-700 dark:hover:text-rose-300' },
+                    { view: 'video', icon: '🎬', label: 'Oktatóvideó', cls: 'hover:border-red-500 hover:text-red-700 dark:hover:text-red-300' },
+                    { view: 'control', icon: '🕹️', label: 'Szimuláció', cls: 'hover:border-teal-500 hover:text-teal-700 dark:hover:text-teal-300' },
+                  ].map((btn) => (
+                    <button
+                      key={btn.view}
+                      type="button"
+                      onClick={() => addPhaseOfType(btn.view)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${btn.cls}`}
+                    >
+                      <span>{btn.icon}</span>
+                      <span>+ {btn.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {phasesList.length === 0 ? (
                 <div className="text-center py-12 px-6 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10">
                   <Layers className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
                   <h4 className="text-base font-bold text-slate-800 dark:text-white">Még nincsenek hozzáadva lépések</h4>
                   <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-5">
-                    Kezdd el manuálisan vagy kérj AI segítséget egy-egy lépés feladatainak összeállításához!
+                    Kattints a fenti gyorstípus-gombok egyikére, vagy kérj AI segítséget egy lépés összeállításához!
                   </p>
-                  <div className="flex items-center justify-center gap-3">
+                  <div className="flex flex-wrap items-center justify-center gap-3">
                     <button
                       type="button"
-                      onClick={addPhase}
+                      onClick={() => addPhaseOfType('info')}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-800 dark:text-white font-bold text-xs shadow-sm"
                     >
                       <Plus className="w-4 h-4" />
-                      Első Fázis Hozzáadása
+                      📖 Elméleti Bevezető Hozzáadása
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addPhaseOfType('quiz')}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/20 font-bold text-xs shadow-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      ❓ Kvíz Lépés Hozzáadása
                     </button>
                     <button
                       type="button"
@@ -3575,6 +4278,16 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                             >
                               <Sparkles className="w-3.5 h-3.5" />
                               <span>AI Segéd</span>
+                            </button>
+
+                            {/* Duplicate phase */}
+                            <button
+                              type="button"
+                              onClick={() => duplicatePhase(idx)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-white/5 transition-colors"
+                              title="Fázis duplikálása (másolat létrehozása)"
+                            >
+                              <Copy className="w-4 h-4" />
                             </button>
 
                             {/* Delete phase */}
@@ -4172,11 +4885,17 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                               </div>
                             </div>
 
-                            {/* Phase Mascot Guidance (Only visible when mascot mode has manual fallback or is manual-only) */}
+                            {/* Phase Mascot Guidance (Collapsible so phase cards stay compact!) */}
                             {courseForm.mascot.enabled &&
                               (courseForm.mascot.mode === 'ai-fallback' || courseForm.mascot.mode === 'manual-only') && (
-                              <div className="p-4 rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-500/20 space-y-4">
-                                <div className="flex items-center justify-between">
+                              <div className="rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-500/20 overflow-hidden">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setOpenPhaseMascotIdx((prev) => ({ ...prev, [idx]: !prev[idx] }))
+                                  }
+                                  className="w-full flex items-center justify-between p-3.5 hover:bg-teal-500/10 transition-colors text-left"
+                                >
                                   <div className="flex items-center gap-2">
                                     <Bot className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                                     <span className="text-xs font-bold uppercase tracking-wider text-teal-800 dark:text-teal-300">
@@ -4185,240 +4904,255 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                                         : '🤖 Kabala Tanácsadás & Szövegek Ebben a Lépésben (3 Nyelven)'}
                                     </span>
                                   </div>
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-600">
-                                    {getLocalizedStr(courseForm.mascot.name, activeEditorLang) || 'Bubi'}
-                                  </span>
-                                </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-600">
+                                      {getLocalizedStr(courseForm.mascot.name, activeEditorLang) || 'Bubi'}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-teal-500/20 text-[10px] font-bold text-teal-700 dark:text-teal-300">
+                                      {openPhaseMascotIdx[idx] ? (
+                                        <>
+                                          Elrejtés <ChevronUp className="w-3 h-3" />
+                                        </>
+                                      ) : (
+                                        <>
+                                          Szerkesztés <ChevronDown className="w-3 h-3" />
+                                        </>
+                                      )}
+                                    </span>
+                                  </div>
+                                </button>
 
-                                <div className="space-y-3">
-                                  {/* hintCopy - 3 Nyelv */}
-                                  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-teal-200/60 dark:border-teal-800/30 space-y-1.5">
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                                      💡 Kabala Segítő Tipp (Bubi tanácsa erre a lépésre)
-                                    </label>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 shrink-0">
-                                          HU
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.hintCopy, 'hu')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              hintCopy: setLocalizedStr(phase.hintCopy, 'hu', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Tipp magyarul..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
+                                {openPhaseMascotIdx[idx] && (
+                                  <div className="p-4 pt-2 border-t border-teal-500/10 space-y-3">
+                                    {/* hintCopy - 3 Nyelv */}
+                                    <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-teal-200/60 dark:border-teal-800/30 space-y-1.5">
+                                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        💡 Kabala Segítő Tipp (Bubi tanácsa erre a lépésre)
+                                      </label>
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 shrink-0">
+                                            HU
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.hintCopy, 'hu')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                hintCopy: setLocalizedStr(phase.hintCopy, 'hu', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Tipp magyarul..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 shrink-0">
+                                            EN
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.hintCopy, 'en')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                hintCopy: setLocalizedStr(phase.hintCopy, 'en', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Hint in English..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 shrink-0">
+                                            RO
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.hintCopy, 'ro')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                hintCopy: setLocalizedStr(phase.hintCopy, 'ro', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Indiciu în română..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
                                       </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 shrink-0">
-                                          EN
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.hintCopy, 'en')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              hintCopy: setLocalizedStr(phase.hintCopy, 'en', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Hint in English..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
+                                    </div>
+
+                                    {/* mascotLine - 3 Nyelv */}
+                                    <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-teal-200/60 dark:border-teal-800/30 space-y-1.5">
+                                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        👋 Kabala Kezdő / Bátorító Szöveg
+                                      </label>
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 shrink-0">
+                                            HU
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.mascotLine, 'hu')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                mascotLine: setLocalizedStr(phase.mascotLine, 'hu', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Bátorítás magyarul..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 shrink-0">
+                                            EN
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.mascotLine, 'en')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                mascotLine: setLocalizedStr(phase.mascotLine, 'en', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Intro line in English..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 shrink-0">
+                                            RO
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.mascotLine, 'ro')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                mascotLine: setLocalizedStr(phase.mascotLine, 'ro', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Încurajare în română..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
                                       </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 shrink-0">
-                                          RO
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.hintCopy, 'ro')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              hintCopy: setLocalizedStr(phase.hintCopy, 'ro', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Indiciu în română..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
+                                    </div>
+
+                                    {/* mascotMistakeLine - 3 Nyelv */}
+                                    <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-teal-200/60 dark:border-teal-800/30 space-y-1.5">
+                                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        🩹 Kabala Szövege Hiba Esetén
+                                      </label>
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 shrink-0">
+                                            HU
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.mascotMistakeLine, 'hu')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                mascotMistakeLine: setLocalizedStr(phase.mascotMistakeLine, 'hu', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Reakció hiba esetén magyarul..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 shrink-0">
+                                            EN
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.mascotMistakeLine, 'en')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                mascotMistakeLine: setLocalizedStr(phase.mascotMistakeLine, 'en', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Mistake response in English..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 shrink-0">
+                                            RO
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.mascotMistakeLine, 'ro')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                mascotMistakeLine: setLocalizedStr(phase.mascotMistakeLine, 'ro', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Reacție la greșeală în română..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* idleHelp - 3 Nyelv */}
+                                    <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-teal-200/60 dark:border-teal-800/30 space-y-1.5">
+                                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        ⏳ Kabala Szövege Tétlenség Esetén
+                                      </label>
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 shrink-0">
+                                            HU
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.idleHelp, 'hu')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                idleHelp: setLocalizedStr(phase.idleHelp, 'hu', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Noszogatás magyarul..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 shrink-0">
+                                            EN
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.idleHelp, 'en')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                idleHelp: setLocalizedStr(phase.idleHelp, 'en', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Idle nudge in English..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 shrink-0">
+                                            RO
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={getLocalizedStr(phase.idleHelp, 'ro')}
+                                            onChange={(e) =>
+                                              updatePhase(idx, {
+                                                idleHelp: setLocalizedStr(phase.idleHelp, 'ro', e.target.value),
+                                              })
+                                            }
+                                            placeholder="Îndemn la inactivitate în română..."
+                                            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
+                                          />
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
-
-                                  {/* mascotLine - 3 Nyelv */}
-                                  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-teal-200/60 dark:border-teal-800/30 space-y-1.5">
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                                      👋 Kabala Kezdő / Bátorító Szöveg
-                                    </label>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 shrink-0">
-                                          HU
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.mascotLine, 'hu')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              mascotLine: setLocalizedStr(phase.mascotLine, 'hu', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Bátorítás magyarul..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 shrink-0">
-                                          EN
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.mascotLine, 'en')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              mascotLine: setLocalizedStr(phase.mascotLine, 'en', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Intro line in English..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 shrink-0">
-                                          RO
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.mascotLine, 'ro')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              mascotLine: setLocalizedStr(phase.mascotLine, 'ro', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Încurajare în română..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* mascotMistakeLine - 3 Nyelv */}
-                                  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-teal-200/60 dark:border-teal-800/30 space-y-1.5">
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                                      🩹 Kabala Szövege Hiba Esetén
-                                    </label>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 shrink-0">
-                                          HU
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.mascotMistakeLine, 'hu')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              mascotMistakeLine: setLocalizedStr(phase.mascotMistakeLine, 'hu', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Reakció hiba esetén magyarul..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 shrink-0">
-                                          EN
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.mascotMistakeLine, 'en')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              mascotMistakeLine: setLocalizedStr(phase.mascotMistakeLine, 'en', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Mistake response in English..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 shrink-0">
-                                          RO
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.mascotMistakeLine, 'ro')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              mascotMistakeLine: setLocalizedStr(phase.mascotMistakeLine, 'ro', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Reacție la greșeală în română..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* idleHelp - 3 Nyelv */}
-                                  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-teal-200/60 dark:border-teal-800/30 space-y-1.5">
-                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                                      ⏳ Kabala Szövege Tétlenség Esetén
-                                    </label>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 shrink-0">
-                                          HU
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.idleHelp, 'hu')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              idleHelp: setLocalizedStr(phase.idleHelp, 'hu', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Noszogatás magyarul..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 shrink-0">
-                                          EN
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.idleHelp, 'en')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              idleHelp: setLocalizedStr(phase.idleHelp, 'en', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Idle nudge in English..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 shrink-0">
-                                          RO
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={getLocalizedStr(phase.idleHelp, 'ro')}
-                                          onChange={(e) =>
-                                            updatePhase(idx, {
-                                              idleHelp: setLocalizedStr(phase.idleHelp, 'ro', e.target.value),
-                                            })
-                                          }
-                                          placeholder="Îndemn la inactivitate în română..."
-                                          className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
+                                )}
                               </div>
                             )}
                           </div>
@@ -4431,14 +5165,36 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
 
               {/* Add phase button at bottom */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
-                <button
-                  type="button"
-                  onClick={addPhase}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-dashed border-slate-300 dark:border-white/20 hover:border-[#269984] text-slate-700 dark:text-slate-300 hover:text-[#269984] font-bold text-xs transition-colors w-full sm:w-auto justify-center"
-                >
-                  <Plus className="w-4 h-4" />
-                  Új Tanulási Lépés Hozzáadása
-                </button>
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => addPhaseOfType('info')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-cyan-500 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> 📖 Elmélet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addPhaseOfType('quiz')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-amber-500 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> ❓ Kvíz
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addPhaseOfType('gap-fill')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-blue-500 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> 🧩 Hiánypótlás
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addPhaseOfType('debug')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-rose-500 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> 🐞 Hibakeresés
+                  </button>
+                </div>
 
                 <button
                   type="button"
@@ -4450,25 +5206,17 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                 </button>
               </div>
 
-                {/* Step 2 Bottom Navigation */}
+                {/* Step 3 Bottom Navigation */}
                 <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5">
                   <button
                     type="button"
-                    onClick={() => setEditorStep('basics')}
+                    onClick={() => setEditorStep('mascot')}
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 font-bold text-xs transition-colors"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    <span>Vissza az Alapadatokhoz</span>
+                    <span>Vissza a Kabala Beállításokhoz (2. Lépés)</span>
                   </button>
                   <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setEditorStep('mascot')}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors"
-                    >
-                      <span>Kabala Beállítások (3. Lépés)</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
                     <button
                       type="button"
                       onClick={handleSaveCourseForm}
