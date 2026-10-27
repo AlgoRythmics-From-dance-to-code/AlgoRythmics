@@ -197,11 +197,27 @@ export async function POST(request: Request) {
     }
 
     if (action === 'UPDATE_ROOM') {
-      if (!roomState) {
+      if (!roomState || typeof roomState !== 'object') {
         return NextResponse.json({ error: 'roomState is required' }, { status: 400 });
       }
 
       const existingRecord = rooms.get(cleanRoomId);
+
+      // Verify that if the room already has a host, the update preserves or originates from a known participant/host
+      if (existingRecord && existingRecord.state.players.length > 0) {
+        const existingHost = existingRecord.state.players.find((p) => p.isHost);
+        const incomingPlayers = Array.isArray(roomState.players) ? roomState.players : [];
+        if (
+          existingHost &&
+          incomingPlayers.length > 0 &&
+          !incomingPlayers.some((p: Player) => p.id === existingHost.id)
+        ) {
+          return NextResponse.json(
+            { error: 'Unauthorized: Cannot remove room host during update' },
+            { status: 403 },
+          );
+        }
+      }
 
       // Auto-heal / re-create room if server state was reset or worker changed
       const nextVersion = existingRecord ? (existingRecord.state.version || 0) + 1 : 1;

@@ -1,7 +1,7 @@
 /**
  * Static code analysis for the "Alive" tab.
- * Pattern-matches user code to check for required algorithm elements.
- * Does NOT execute user code — purely structural analysis.
+ * Pattern-matches user code to check for required algorithm elements,
+ * plus safe bounded execution testing.
  */
 
 export interface CodePattern {
@@ -49,14 +49,12 @@ export const bubbleSortPatterns: CodePattern[] = [
   {
     id: 'comparison',
     label: 'Element comparison',
-    // Matches arr[j] > arr[j+1] or arr[j] > arr[j + 1], ensuring array and index variable names match
     pattern: /([a-zA-Z_]\w*)\[\s*([a-zA-Z_]\w*)\s*\]\s*>\s*\1\[\s*\2\s*\+\s*1\s*\]/i,
     weight: 25,
   },
   {
     id: 'swap',
     label: 'Swap operation',
-    // Matches `temp = arr[j]; arr[j] = ...` OR `[arr[j], arr[j+1]] = [arr[j+1], arr[j]]`
     pattern:
       /(?:(?:let|var|const)?\s*[a-zA-Z_]\w*\s*=\s*[a-zA-Z_]\w*\[[^\]]+\])|(?:\[\s*[a-zA-Z_]\w*\[[^\]]+\]\s*,\s*[a-zA-Z_]\w*\[[^\]]+\]\s*\]\s*=\s*\[)/i,
     weight: 25,
@@ -148,7 +146,6 @@ export const mergeSortPatterns: CodePattern[] = [
   {
     id: 'recursion',
     label: 'Recursive calls',
-    // Matches calling mergeSort twice
     pattern: /(?:mergeSort\s*\([\s\S]*){2}/i,
     weight: 25,
   },
@@ -288,7 +285,6 @@ export function analyzeCode(
     algorithmId === 'merge-sort' ||
     algorithmId === 'quick-sort' ||
     algorithmId === 'shell-sort' ||
-    algorithmId === 'heap-sort' ||
     algorithmId === 'heap-sort'
   ) {
     const testRes = runSortAndCheck(code, algorithmId);
@@ -321,14 +317,29 @@ function runSortAndCheck(
     const testArray = [5, 2, 9, 1, 5, 6, -3, 8];
     const expected = [...testArray].sort((a, b) => a - b);
 
-    // Safety: Inject loop limiter to prevent browser freeze
+    // Safety: Inject loop and recursion limiter to prevent browser freeze (even on braceless loops or recursion)
     let safeCode = userCode;
-    const loopLimiter = `if (!globalThis.__loopCount) globalThis.__loopCount = 0; if (globalThis.__loopCount++ > 10000) throw new Error("Végtelen ciklus észlelve! Kérlek ellenőrizd a feltételeket.");`;
+    const loopLimiter = `if (++globalThis.__loopCount > 10000) throw new Error("Végtelen ciklus vagy túl mély rekurzió észlelve! Kérlek ellenőrizd a leállási feltételeket.");`;
 
-    // Insert limiter inside opening braces of for/while loops
+    // 1. Guard braceless while/for loops by injecting condition check inside the loop header or body
     safeCode = safeCode.replace(
-      /(for\s*\([^)]*\)\s*\{|while\s*\([^)]*\)\s*\{)/g,
+      /\bwhile\s*\(([^)]+)\)/g,
+      `while ((${loopLimiter.replace('if (', '((').replace(') throw', ') ? (() => { throw') .replace(');', ' })() : true)')} && ($1)))`,
+    );
+
+    // 2. Insert limiter inside opening braces of for, do, function, and arrow function blocks
+    safeCode = safeCode.replace(
+      /(for\s*\([^)]*\)\s*\{|do\s*\{|function\s+[a-zA-Z_$][\w$]*\s*\([^)]*\)\s*\{|=>\s*\{)/g,
       `$1 ${loopLimiter}`,
+    );
+
+    // 3. Also guard braceless for(init; cond; step) by wrapping the condition expression
+    safeCode = safeCode.replace(
+      /\bfor\s*\(([^;]*);([^;]*);([^)]*)\)/g,
+      (_match, init, cond, step) => {
+        const cleanCond = cond.trim() || 'true';
+        return `for (${init}; (++globalThis.__loopCount <= 10000 ? (${cleanCond}) : (() => { throw new Error("Végtelen ciklus észlelve! Kérlek ellenőrizd a feltételeket."); })()); ${step})`;
+      },
     );
 
     const fnMap: Record<string, string> = {
@@ -370,7 +381,7 @@ function runSortAndCheck(
       result = sortFn(isBinarySearch ? [...expected] : [...testArray]);
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes('Kérlek hozz létre')) {
-        // Fallback: If they didn't name it correctly, let's try evaluating it as a flat script modifying 'arr'
+        // Fallback: If they didn't name it correctly, evaluate as a flat script modifying 'arr'
         const alternateRunnable = `
           globalThis.__loopCount = 0;
           let target = ${testTarget};

@@ -14,7 +14,15 @@ export const CourseProgress: CollectionConfig = {
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       return { user: { equals: user.id } };
     },
-    create: ({ req: { user } }) => !!user,
+    create: ({ req: { user }, data }) => {
+      if (!user) return false;
+      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
+      const targetUser =
+        typeof data?.user === 'object' && data.user !== null
+          ? (data.user as { id?: string | number }).id
+          : data?.user;
+      return targetUser === undefined || String(targetUser) === String(user.id);
+    },
     update: ({ req: { user } }) => {
       if (!user) return false;
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;

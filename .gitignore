@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+eslint-final.json
 
 # debug
 npm-debug.log*

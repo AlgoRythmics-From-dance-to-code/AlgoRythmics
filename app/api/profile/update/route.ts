@@ -1,5 +1,4 @@
-import { getPayload } from 'payload';
-import configPromise from '../../../../payload.config';
+import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
 import { auth } from '../../../../auth';
 import logger from '../../../../lib/logger';
@@ -21,7 +20,7 @@ export async function POST(req: Request) {
     const cleanBio = typeof body.bio === 'string' ? body.bio.trim().slice(0, 500) : undefined;
     const mascotEnabled = body.mascotEnabled;
 
-    const payload = await getPayload({ config: configPromise });
+    const payload = await getPayloadInstance();
     const userId = session.user.id;
 
     if (!userId) {

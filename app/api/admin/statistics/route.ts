@@ -332,7 +332,7 @@ export async function GET(req: Request) {
       };
     }
 
-    for (const prog of progressDocs) {
+    for (const prog of scopedProgressDocs) {
       const algo = prog.algorithmId;
       if (!algorithmStatsMap[algo]) {
         algorithmStatsMap[algo] = {
@@ -368,7 +368,7 @@ export async function GET(req: Request) {
       }
     > = {};
 
-    for (const evt of eventsDocs) {
+    for (const evt of scopedEventsDocs) {
       const algo = evt.algorithmId;
       if (evt.eventType === 'control_decision') {
         const isCorrect = evt.eventData?.isCorrect === true;
@@ -421,7 +421,7 @@ export async function GET(req: Request) {
 
     // C. Post-Error Slowing (PES) & Sequential Cognitive Load Recovery
     const sessionEvents: Record<string, RawEvent[]> = {};
-    for (const evt of eventsDocs) {
+    for (const evt of scopedEventsDocs) {
       if (!sessionEvents[evt.sessionId]) sessionEvents[evt.sessionId] = [];
       sessionEvents[evt.sessionId].push(evt);
     }
@@ -512,7 +512,7 @@ export async function GET(req: Request) {
     // D. Video Impact Comparison
     const withVideoMistakes: number[] = [];
     const withoutVideoMistakes: number[] = [];
-    for (const p of progressDocs) {
+    for (const p of scopedProgressDocs) {
       const m = (p.controlMistakes || 0) + (p.createMistakes || 0);
       if (p.videoWatched || (p.videoWatchTimeMs || 0) > 15000) {
         withVideoMistakes.push(m);
@@ -546,8 +546,8 @@ export async function GET(req: Request) {
     // ─── 5 ADVANCED RESEARCH METRICS ───
 
     // 1. Help-Seeking Transfer to Autonomous Coding (Create Help -> Alive Performance)
-    const helpCohort = progressDocs.filter((p) => p.createHelpUsed === true);
-    const autoCohort = progressDocs.filter((p) => p.createHelpUsed === false);
+    const helpCohort = scopedProgressDocs.filter((p) => p.createHelpUsed === true);
+    const autoCohort = scopedProgressDocs.filter((p) => p.createHelpUsed === false);
 
     const helpAliveAvgScore =
       helpCohort.length > 0
@@ -588,7 +588,7 @@ export async function GET(req: Request) {
         ? Math.round((autoCohort.filter((p) => p.aliveCompleted).length / autoCohort.length) * 100)
         : 89;
 
-    const totalCohortLearners = progressDocs.length;
+    const totalCohortLearners = scopedProgressDocs.length;
     const helpSeekingTransfer = {
       withHelp: {
         count: helpCohort.length || Math.round(totalCohortLearners * 0.42),
@@ -674,7 +674,7 @@ export async function GET(req: Request) {
     // 3. Process Mining & Learning Trajectories
     // Identify user paths: Linear vs Code-First vs Visual Explorer
     const userSessionPath: Record<string, string[]> = {};
-    for (const evt of eventsDocs) {
+    for (const evt of scopedEventsDocs) {
       if (evt.tab) {
         const uId = String(typeof evt.user === 'object' ? evt.user.id : evt.user);
         if (!userSessionPath[uId]) userSessionPath[uId] = [];
@@ -731,7 +731,7 @@ export async function GET(req: Request) {
     let returnToCodeCount = 0;
     const failedAttemptsList: number[] = [];
 
-    for (const p of progressDocs) {
+    for (const p of scopedProgressDocs) {
       if (p.aliveHelpUsed) {
         fallbackCount++;
         failedAttemptsList.push(Math.max(1, p.aliveCodeSubmissions || 3));
@@ -740,7 +740,7 @@ export async function GET(req: Request) {
     }
 
     const totalAliveLearners =
-      progressDocs.filter((p) => (p.aliveCodeSubmissions || 0) > 0).length || 1;
+      scopedProgressDocs.filter((p) => (p.aliveCodeSubmissions || 0) > 0).length || 1;
     const visualBlocksThreshold = {
       fallbackPercentage: Math.round((fallbackCount / totalAliveLearners) * 100) || 34,
       avgFailedAttemptsBeforeFallback:
@@ -769,7 +769,7 @@ export async function GET(req: Request) {
 
     // E. Algorithm Hesitation List
     const algorithmHesitationList = Object.entries(algorithmStatsMap).map(([algoId, data]) => {
-      const algoEvents = eventsDocs.filter((e) => e.algorithmId === algoId && e.durationMs);
+      const algoEvents = scopedEventsDocs.filter((e) => e.algorithmId === algoId && e.durationMs);
       const avgDuration =
         algoEvents.length > 0
           ? Math.round(algoEvents.reduce((s, e) => s + (e.durationMs || 0), 0) / algoEvents.length)
@@ -818,7 +818,7 @@ export async function GET(req: Request) {
     let lowConfCorrect = 0;
     let lowConfIncorrect = 0;
 
-    for (const evt of eventsDocs) {
+    for (const evt of scopedEventsDocs) {
       if (evt.eventData?.confidence) {
         const isHigh = evt.eventData.confidence === 'high';
         const isCorrect = evt.eventData.allCorrect === true || evt.eventData.correct === true;
@@ -1083,6 +1083,22 @@ export async function GET(req: Request) {
         qualityIndex,
         dropoffFunnel,
         studentsRoster,
+        strugglingCount: studentsRoster.filter((s) => s.status === 'struggling').length,
+        inProgressCount: studentsRoster.filter((s) => s.status === 'in_progress').length,
+        instructorName: (() => {
+          const ins = (course as any).instructor;
+          if (!ins) return 'Rendszer / Admin';
+          if (typeof ins === 'object' && ins !== null) {
+            const name = `${ins.firstName || ''} ${ins.lastName || ''}`.trim();
+            return name || ins.email || 'Tanár';
+          }
+          const matched = users.find((u) => String(u.id) === String(ins));
+          if (matched) {
+            const name = `${matched.firstName || ''} ${matched.lastName || ''}`.trim();
+            return name || matched.email || 'Tanár';
+          }
+          return 'Tanár';
+        })(),
       };
     });
 
@@ -1142,7 +1158,31 @@ export async function GET(req: Request) {
           ? Math.round(stats.totalTimesSec.reduce((a, b) => a + b, 0) / stats.totalTimesSec.length)
           : 120;
       return {
+        type,
         sourceView: type,
+        label:
+          type === 'quiz'
+            ? 'Kvíz & Teszt'
+            : type === 'create' || type === 'gap-fill'
+            ? 'Kódkiegészítés'
+            : type === 'debug'
+            ? 'Kód Hibakeresés'
+            : type === 'control'
+            ? 'Interaktív Irányítás'
+            : type === 'video'
+            ? 'Videó Alapozás'
+            : type === 'match'
+            ? 'Párosító Feladat'
+            : type === 'order'
+            ? 'Sorrendbe Rendező'
+            : type === 'final-challenge' || type === 'simulation'
+            ? 'Záró Szimuláció'
+            : 'Elmélet & Leírás',
+        avgTimeSec: avgDuration,
+        avgMistakes: stats.totalPhases > 0 ? Number((stats.totalMistakes / stats.totalPhases).toFixed(1)) : 0,
+        completionRate: avgScore,
+        avgScore,
+        engagementScore: avgScore,
         totalPhases: stats.totalPhases,
         totalMistakes: stats.totalMistakes,
         avgAccuracy: avgScore,
@@ -1530,6 +1570,13 @@ export async function GET(req: Request) {
       phaseType: phaseTypeFilter,
       kpis: {
         activeLearnersCount,
+        platformLearnersCount: new Set([
+          ...filteredCourseProgress.map((cp) => String(typeof cp.user === 'object' && cp.user !== null ? cp.user.id : cp.user)),
+          ...scopedProgressDocs.map((p) => String(typeof p.user === 'object' && p.user !== null ? p.user.id : p.user)),
+        ]).size,
+        algorithmLearnersCount: new Set(
+          scopedProgressDocs.map((p) => String(typeof p.user === 'object' && p.user !== null ? p.user.id : p.user)),
+        ).size,
         totalRecordedHours,
         formattedTotalTime,
         totalAlgorithmsCompleted,

@@ -13,25 +13,25 @@ export async function GET() {
   try {
     const payload = await getPayloadInstance();
     const userId = Number(session.user.id);
-    const user = await payload.findByID({
-      collection: 'users',
-      id: userId,
-      depth: 0,
-    });
-
-    const progressDocs = await payload.find({
-      collection: 'algorithm-progress',
-      where: { user: { equals: userId } },
-      pagination: false,
-      depth: 0,
-    });
-
-    const courseProgressDocs = await payload.find({
-      collection: 'course-progress',
-      where: { user: { equals: userId } },
-      pagination: false,
-      depth: 0,
-    });
+    const [user, progressDocs, courseProgressDocs] = await Promise.all([
+      payload.findByID({
+        collection: 'users',
+        id: userId,
+        depth: 0,
+      }),
+      payload.find({
+        collection: 'algorithm-progress',
+        where: { user: { equals: userId } },
+        pagination: false,
+        depth: 0,
+      }),
+      payload.find({
+        collection: 'course-progress',
+        where: { user: { equals: userId } },
+        pagination: false,
+        depth: 0,
+      }),
+    ]);
 
     const algorithmProgress: Record<string, unknown> = {};
     progressDocs.docs.forEach((doc) => {
@@ -114,6 +114,23 @@ export async function POST(req: Request) {
     const payload = await getPayloadInstance();
     const userId = Number(session.user.id);
 
+    // Fetch user and existing progress records in parallel upfront (avoids duplicate queries at the end)
+    const [userDoc, allAlgoDocsResult, allCourseDocsResult] = await Promise.all([
+      payload.findByID({ collection: 'users', id: userId, depth: 0 }),
+      payload.find({
+        collection: 'algorithm-progress',
+        where: { user: { equals: userId } },
+        pagination: false,
+        depth: 0,
+      }),
+      payload.find({
+        collection: 'course-progress',
+        where: { user: { equals: userId } },
+        pagination: false,
+        depth: 0,
+      }),
+    ]);
+
     // Get completed course IDs from slugs
     let completedCourseIds: (string | number)[] = [];
     if (courseProgress && typeof courseProgress === 'object') {
@@ -132,50 +149,46 @@ export async function POST(req: Request) {
       }
     }
 
-    // 1. Update User level data
-    await payload.update({
-      collection: 'users',
-      id: userId,
-      data: {
-        completedAlgorithms: completedIds as User['completedAlgorithms'],
-        completedCourses: completedCourseIds as User['completedCourses'],
-        visualizerProgress: (visualizerProgress || {}) as User['visualizerProgress'],
-      },
-    });
+    const existingByAlgoId = new Map(
+      allAlgoDocsResult.docs.map((doc) => [
+        String((doc as unknown as AlgorithmProgress).algorithmId),
+        doc as unknown as AlgorithmProgress,
+      ]),
+    );
 
-    // 2. Sync Algorithm-specific Progress (Analytics)
+    type CourseProgRecord = {
+      id: string | number;
+      courseId: string;
+      points?: number;
+      totalTimeMs?: number;
+      totalMistakes?: number;
+      mascotInteractionsTotal?: number;
+      completedPhases?: string[];
+      isCompleted?: boolean;
+    };
+
+    const existingBySlug = new Map(
+      allCourseDocsResult.docs.map((doc) => {
+        const cDoc = doc as unknown as CourseProgRecord;
+        return [String(cDoc.courseId), cDoc];
+      }),
+    );
+
+    // 1. Sync Algorithm-specific Progress in parallel
     if (algorithmProgress && typeof algorithmProgress === 'object') {
       const now = new Date().toISOString();
-
       const progressEntries = Object.entries(algorithmProgress).filter(
         ([, data]) => data && typeof data === 'object',
       ) as [string, Record<string, unknown>][];
 
-      if (progressEntries.length > 0) {
-        const algorithmIds = progressEntries.map(([id]) => id);
-
-        // Find all existing records in one batch
-        const { docs: existingDocs } = await payload.find({
-          collection: 'algorithm-progress',
-          where: {
-            and: [{ user: { equals: userId } }, { algorithmId: { in: algorithmIds } }],
-          },
-          limit: algorithmIds.length,
-          depth: 0,
-        });
-
-        const existingByAlgoId = new Map(existingDocs.map((doc) => [String(doc.algorithmId), doc]));
-
-        for (const [id, data] of progressEntries) {
-          const existingDoc = existingByAlgoId.get(id) as AlgorithmProgress | undefined;
-
-          // Merge incoming data with existing record to ensure accurate aggregate calculation
+      await Promise.all(
+        progressEntries.map(async ([id, data]) => {
+          const existingDoc = existingByAlgoId.get(id);
           const merged = {
             ...(existingDoc || {}),
             ...(data as Record<string, unknown>),
           };
 
-          // We don't want to overwrite identity fields if they come from the frontend
           const updates = { ...(data as Record<string, unknown>) };
           delete updates.user;
           delete updates.algorithmId;
@@ -183,9 +196,7 @@ export async function POST(req: Request) {
           delete updates.createdAt;
           delete updates.updatedAt;
 
-          // For counts and scores, ensure we take the maximum to protect against stale client data
           if (existingDoc) {
-            // Protect boolean completion flags from regression
             const completionFlags = [
               'videoWatched',
               'animationCompleted',
@@ -257,7 +268,6 @@ export async function POST(req: Request) {
                 existingDoc.aliveTotalTimeMs || 0,
                 updates.aliveTotalTimeMs as number,
               );
-            // Best time should be MINIMUM (faster = better)
             if (updates.controlBestTimeMs !== undefined && existingDoc.controlBestTimeMs) {
               updates.controlBestTimeMs = Math.min(
                 existingDoc.controlBestTimeMs,
@@ -266,7 +276,6 @@ export async function POST(req: Request) {
             }
           }
 
-          // Compute algorithm-specific aggregates based on FULL merged state
           const totalTime =
             ((merged.videoWatchTimeMs as number) || 0) +
             ((merged.animationTotalTimeMs as number) || 0) +
@@ -274,7 +283,6 @@ export async function POST(req: Request) {
             ((merged.createTotalTimeMs as number) || 0) +
             ((merged.aliveTotalTimeMs as number) || 0);
 
-          // Compute overallProgress from post-protection merged state
           const protectedMerged = {
             ...(existingDoc || {}),
             ...updates,
@@ -291,7 +299,7 @@ export async function POST(req: Request) {
           updates.overallProgress = overall;
 
           if (existingDoc) {
-            await payload.update({
+            const updated = await payload.update({
               collection: 'algorithm-progress',
               id: existingDoc.id,
               data: {
@@ -299,8 +307,9 @@ export async function POST(req: Request) {
                 lastActivityAt: now,
               },
             });
+            existingByAlgoId.set(id, updated as unknown as AlgorithmProgress);
           } else {
-            await payload.create({
+            const created = await payload.create({
               collection: 'algorithm-progress',
               data: {
                 ...updates,
@@ -310,47 +319,21 @@ export async function POST(req: Request) {
                 lastActivityAt: now,
               },
             });
+            existingByAlgoId.set(id, created as unknown as AlgorithmProgress);
           }
-        }
-      }
+        }),
+      );
     }
 
-    // 3. Sync Course-specific Progress
+    // 2. Sync Course-specific Progress in parallel
     if (courseProgress && typeof courseProgress === 'object') {
       const now = new Date().toISOString();
       const courseEntries = Object.entries(courseProgress).filter(
         ([, data]) => data && typeof data === 'object',
       ) as [string, Record<string, unknown>][];
 
-      if (courseEntries.length > 0) {
-        const courseSlugs = courseEntries.map(([slug]) => slug);
-
-        // Batch find all existing course-progress docs instead of N+1 queries
-        const { docs: existingCourseDocs } = await payload.find({
-          collection: 'course-progress',
-          where: {
-            and: [{ user: { equals: userId } }, { courseId: { in: courseSlugs } }],
-          },
-          limit: courseSlugs.length,
-          depth: 0,
-        });
-
-        const existingBySlug = new Map(
-          existingCourseDocs.map((doc) => [
-            String((doc as unknown as { courseId: string }).courseId),
-            doc as unknown as {
-              id: string | number;
-              points?: number;
-              totalTimeMs?: number;
-              totalMistakes?: number;
-              mascotInteractionsTotal?: number;
-              completedPhases?: string[];
-              isCompleted?: boolean;
-            },
-          ]),
-        );
-
-        for (const [slug, data] of courseEntries) {
+      await Promise.all(
+        courseEntries.map(async ([slug, data]) => {
           const updates = { ...data } as Record<string, unknown>;
           delete updates.user;
           delete updates.courseId;
@@ -361,12 +344,9 @@ export async function POST(req: Request) {
           const existing = existingBySlug.get(slug);
 
           if (existing) {
-            // Trust the frontend for the exact set of completed phases to support rollbacks
             if (updates.completedPhases !== undefined) {
               updates.completedPhases = updates.completedPhases as string[];
             }
-
-            // Allow points to decrease (e.g. on reset)
             if (updates.points !== undefined) {
               updates.points = (updates.points as number) || 0;
             }
@@ -384,37 +364,26 @@ export async function POST(req: Request) {
               (updates.mascotInteractionsTotal as number) || 0,
             );
 
-            // Allow isCompleted to be reset
-            // (Removed regression protection to support course resets)
-
-            await payload.update({
+            const updated = await payload.update({
               collection: 'course-progress',
               id: existing.id,
               data: { ...updates, updatedAt: now },
             });
+            existingBySlug.set(slug, updated as unknown as CourseProgRecord);
           } else {
-            await payload.create({
+            const created = await payload.create({
               collection: 'course-progress',
               data: { ...updates, user: userId, courseId: slug, createdAt: now, updatedAt: now },
             });
+            existingBySlug.set(slug, created as unknown as CourseProgRecord);
           }
-        }
-      }
+        }),
+      );
     }
 
-    // 4. Update aggregated learningStats on User collection
-    const allAlgoDocs = await payload.find({
-      collection: 'algorithm-progress',
-      where: { user: { equals: userId } },
-      pagination: false,
-      depth: 0,
-    });
-    const allCourseDocs = await payload.find({
-      collection: 'course-progress',
-      where: { user: { equals: userId } },
-      pagination: false,
-      depth: 0,
-    });
+    // 3. Compute aggregated learningStats in memory from the up-to-date maps and update User once
+    const allAlgoDocs = Array.from(existingByAlgoId.values());
+    const allCourseDocs = Array.from(existingBySlug.values());
 
     let totalTimeSpentMs = 0;
     let totalMistakes = 0;
@@ -423,10 +392,9 @@ export async function POST(req: Request) {
     let totalControlAttempts = 0;
     let totalCreateAttempts = 0;
     let totalAliveAttempts = 0;
-    const totalAlgorithmsStarted = allAlgoDocs.docs.length;
+    const totalAlgorithmsStarted = allAlgoDocs.length;
 
-    allAlgoDocs.docs.forEach((doc) => {
-      const aDoc = doc as unknown as AlgorithmProgress;
+    allAlgoDocs.forEach((aDoc) => {
       totalTimeSpentMs +=
         (aDoc.videoWatchTimeMs || 0) +
         (aDoc.animationTotalTimeMs || 0) +
@@ -441,30 +409,17 @@ export async function POST(req: Request) {
       totalAliveAttempts += aDoc.aliveCodeSubmissions || 0;
     });
 
-    allCourseDocs.docs.forEach((doc) => {
-      const cDoc = doc as unknown as {
-        totalTimeMs?: number;
-        totalMistakes?: number;
-        mascotInteractionsTotal?: number;
-        points?: number;
-      };
+    allCourseDocs.forEach((cDoc) => {
       totalTimeSpentMs += cDoc.totalTimeMs || 0;
       totalMistakes += cDoc.totalMistakes || 0;
       totalHintsUsed += cDoc.mascotInteractionsTotal || 0;
       totalPoints += cDoc.points || 0;
     });
 
-    // We do NOT completely overwrite learningStats to avoid destructive operations if only part of it was synced
-    // However, since we queried ALL docs, the aggregates computed here represent the total sum from DB.
-    // Fetch user to merge safely.
-    const userDoc = await payload.findByID({ collection: 'users', id: userId, depth: 0 });
     const existingStats = (userDoc.learningStats || {}) as Record<string, unknown>;
-
     const totalAlgorithmsCompleted = completedIds?.length || 0;
-    const totalCoursesCompleted = allCourseDocs.docs.filter(
-      (doc) => (doc as unknown as { isCompleted?: boolean }).isCompleted,
-    ).length;
-    const totalCoursesStarted = allCourseDocs.docs.length;
+    const totalCoursesCompleted = allCourseDocs.filter((doc) => doc.isCompleted).length;
+    const totalCoursesStarted = allCourseDocs.length;
 
     // --- Streak Calculation ---
     const today = new Date();
@@ -498,8 +453,7 @@ export async function POST(req: Request) {
     // --- Average Score Calculation ---
     let totalScoreSum = 0;
     let scoreCount = 0;
-    allAlgoDocs.docs.forEach((doc) => {
-      const aDoc = doc as unknown as AlgorithmProgress;
+    allAlgoDocs.forEach((aDoc) => {
       if (
         aDoc.controlBestScore !== undefined &&
         aDoc.controlBestScore !== null &&
@@ -530,10 +484,14 @@ export async function POST(req: Request) {
       }
     }
 
+    // Single combined user update for both completed arrays and learningStats
     await payload.update({
       collection: 'users',
       id: userId,
       data: {
+        completedAlgorithms: completedIds as User['completedAlgorithms'],
+        completedCourses: completedCourseIds as User['completedCourses'],
+        visualizerProgress: (visualizerProgress || {}) as User['visualizerProgress'],
         learningStats: {
           ...existingStats,
           totalTimeSpentMs,

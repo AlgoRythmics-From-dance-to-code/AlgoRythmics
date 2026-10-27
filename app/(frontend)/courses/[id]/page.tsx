@@ -4,7 +4,6 @@ import CoursePlayer from '../../../components/Course/CoursePlayer';
 import { getPayloadInstance } from '../../../../lib/payload';
 import {
   findCourseBySlug,
-  getCourseCatalog,
   type CourseCollectionDoc,
 } from '../../../../lib/courses/courseCatalog';
 import { getServerLocale } from '../../../../lib/i18n-server';
@@ -24,21 +23,17 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
     const payload = await getPayloadInstance();
     const result = await payload.find({
       collection: 'courses',
+      where: {
+        slug: { equals: id },
+      },
       depth: 0,
-      limit: 50,
-      sort: 'title',
+      limit: 1,
       locale: locale as 'all' | 'en' | 'hu' | 'ro',
+      overrideAccess: true,
     });
     docs = result.docs as unknown as CourseCollectionDoc[];
   } catch {
     docs = [];
-  }
-
-  const catalog = await getCourseCatalog(docs);
-  const matchedCourse = catalog.find((course) => course.slug === id);
-
-  if (!matchedCourse) {
-    notFound();
   }
 
   const course = findCourseBySlug(id, docs);

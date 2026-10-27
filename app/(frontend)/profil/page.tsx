@@ -253,8 +253,8 @@ export default function ProfilePage() {
     if (
       firstName === (u.firstName || '') &&
       lastName === (u.lastName || '') &&
-      bio === (u.bio || '') &&
-      mascotEnabled === (u.mascotEnabled !== false)
+      bio === (u.bio || '')
+
     ) {
       return;
     }
@@ -268,7 +268,7 @@ export default function ProfilePage() {
     firstName,
     lastName,
     bio,
-    mascotEnabled,
+
     status,
     lastSyncedEmail,
     session,

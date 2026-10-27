@@ -20,7 +20,6 @@ interface CertificateData {
   success: boolean;
   userId: number;
   userName: string;
-  userEmail: string;
   courseSlug: string;
   courseTitle: string;
   courseSummary: string;
@@ -33,7 +32,7 @@ interface CertificateData {
 }
 
 export default function CertificatePage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const params = useParams();
   const router = useRouter();
 
@@ -43,6 +42,11 @@ export default function CertificatePage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<CertificateData | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const tr = (key: string, fallback: string) => {
+    const val = t(key);
+    return val && val !== key ? val : fallback;
+  };
 
   useEffect(() => {
     if (!userIdStr || !courseSlug) return;
@@ -72,7 +76,7 @@ export default function CertificatePage() {
     const url = window.location.href;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
-      toast.success('Certificate link copied to clipboard!');
+      toast.success(tr('certificate_page.copy_link', 'Certificate link copied to clipboard!'));
       setTimeout(() => setCopied(false), 2500);
     });
   };
@@ -83,11 +87,12 @@ export default function CertificatePage() {
     }
   };
 
-  const formatDateEnglish = (dateStr: string) => {
+  const formatLocalizedDate = (dateStr: string) => {
     if (!dateStr) return 'N/A';
     try {
       const d = new Date(dateStr);
-      return d.toLocaleDateString('en-US', {
+      const localeTag = locale === 'hu' ? 'hu-HU' : locale === 'ro' ? 'ro-RO' : 'en-US';
+      return d.toLocaleDateString(localeTag, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -102,30 +107,32 @@ export default function CertificatePage() {
       <div className="min-h-[70vh] flex flex-col items-center justify-center bg-[#0d1117] text-white">
         <Loader2 className="w-12 h-12 text-[#269984] animate-spin mb-4" />
         <p className="text-gray-400 font-medium">
-          {t('certificate.loading') || 'Loading certificate...'}
+          {tr('common.loading', 'Loading certificate...')}
         </p>
       </div>
     );
   }
 
-  if (!data || data.error) {
+  if (!data || data.error || !data.isCompleted) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center bg-[#0d1117] text-white px-4">
         <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 max-w-md text-center shadow-2xl">
           <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">
-            {t('certificate.not_found_title') || 'Certificate Not Found'}
+            {tr('certificate_page.not_found', 'Certificate Not Found')}
           </h2>
           <p className="text-gray-400 text-sm mb-6">
-            {t('certificate.not_found_desc') ||
-              'The requested certificate does not exist or has an invalid ID.'}
+            {tr(
+              'certificate_page.not_found_desc',
+              'The requested certificate does not exist or has an invalid ID.',
+            )}
           </p>
           <button
             onClick={() => router.push('/profil')}
             className="inline-flex items-center gap-2 bg-[#269984] hover:bg-[#1f7c6b] text-white font-bold px-6 py-3 rounded-xl transition-all shadow-lg text-sm"
           >
             <ArrowLeft size={18} />
-            {t('certificate.back_to_profile') || 'Back to Profile'}
+            {tr('certificate_page.back_to_profile', 'Back to Profile')}
           </button>
         </div>
       </div>
@@ -181,7 +188,7 @@ export default function CertificatePage() {
             className="flex items-center gap-2 text-gray-300 hover:text-white font-semibold text-sm transition-colors px-3 py-2 rounded-xl hover:bg-neutral-800"
           >
             <ArrowLeft size={18} />
-            <span>{t('certificate.back_to_profile') || 'Back to Profile'}</span>
+            <span>{tr('certificate_page.back_to_profile', 'Back to Profile')}</span>
           </button>
 
           <div className="flex items-center gap-3">
@@ -193,8 +200,8 @@ export default function CertificatePage() {
               {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
               <span>
                 {copied
-                  ? t('certificate.copied') || 'Copied!'
-                  : t('certificate.share_link') || 'Copy Link'}
+                  ? tr('certificate.copied', 'Copied!')
+                  : tr('certificate_page.copy_link', 'Copy Link')}
               </span>
             </button>
 
@@ -204,7 +211,7 @@ export default function CertificatePage() {
               className="flex items-center gap-2 bg-[#269984] hover:bg-[#1f7c6b] text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-[#269984]/20"
             >
               <Printer size={18} />
-              <span>{t('certificate.print') || 'Print'}</span>
+              <span>{tr('certificate_page.print', 'Print')}</span>
             </button>
           </div>
         </div>
@@ -238,14 +245,14 @@ export default function CertificatePage() {
             {/* Certificate Title */}
             <div className="mb-6">
               <h1 className="text-2xl sm:text-4xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-gray-300 uppercase">
-                Certificate of Completion
+                {tr('certificate_page.title', 'Certificate of Completion')}
               </h1>
               <div className="w-20 h-1 bg-gradient-to-r from-transparent via-[#269984] to-transparent mx-auto mt-3 rounded-full" />
             </div>
 
             {/* Certifies That */}
             <p className="text-gray-400 font-medium text-xs sm:text-sm italic mb-2">
-              This is to certify that
+              {tr('certificate_page.certifies_that', 'This is to certify that')}
             </p>
 
             {/* Student Name */}
@@ -255,7 +262,7 @@ export default function CertificatePage() {
 
             {/* Completed Text */}
             <p className="text-gray-400 font-medium text-xs sm:text-sm italic mt-3 mb-2">
-              has successfully completed the course
+              {tr('certificate_page.has_completed', 'has successfully completed the course:')}
             </p>
 
             {/* Course Title */}
@@ -270,10 +277,10 @@ export default function CertificatePage() {
               {/* Date of Issue */}
               <div className="flex flex-col items-start text-left">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-                  Date of Issue
+                  {tr('certificate_page.issue_date', 'Date of Issue')}
                 </span>
                 <span className="text-xs font-semibold text-white">
-                  {formatDateEnglish(data.completedAt)}
+                  {formatLocalizedDate(data.completedAt)}
                 </span>
               </div>
 
@@ -292,7 +299,7 @@ export default function CertificatePage() {
               {/* Certificate ID */}
               <div className="flex flex-col items-end text-right">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-                  Certificate ID
+                  {tr('certificate_page.verification_id', 'Certificate ID')}
                 </span>
                 <span className="text-[11px] font-mono font-bold text-[#269984] bg-[#269984]/10 px-2 py-0.5 rounded border border-[#269984]/20">
                   {data.certificateId}
@@ -304,7 +311,7 @@ export default function CertificatePage() {
             <div className="mt-6 flex items-center justify-center gap-1.5 text-emerald-400/80 text-[10px] font-medium">
               <ShieldCheck className="w-3.5 h-3.5 text-[#269984]" />
               <span>
-                {t('certificate.verified_badge') || 'Official AlgoRythmics Verified Certificate'}
+                {tr('certificate_page.official_seal', 'Official AlgoRythmics Verified Certificate')}
               </span>
             </div>
           </div>

@@ -7,7 +7,11 @@ import { APP_CONFIG, ROUTES, ROLES } from '../../../../lib/constants';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const redirectPath = searchParams.get('redirect') || ROUTES.ADMIN;
+  const rawRedirect = searchParams.get('redirect') || ROUTES.ADMIN;
+  const redirectPath =
+    rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes('\\')
+      ? rawRedirect
+      : ROUTES.ADMIN;
 
   try {
     const session = await auth();

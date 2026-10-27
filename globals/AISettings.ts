@@ -30,6 +30,10 @@ export const AISettings: GlobalConfig = {
       type: 'text',
       required: false,
       label: 'OpenRouter API Kulcs',
+      access: {
+        read: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+        update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+      },
       admin: {
         description:
           'Az OpenRouter hozzáférési kulcs (sk-or-v1-...). Kizárólag a rendszergazdák szerkeszthetik.',

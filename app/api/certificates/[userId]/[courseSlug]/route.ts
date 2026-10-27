@@ -20,9 +20,10 @@ export async function GET(
 
     const payload = await getPayloadInstance();
 
-    // 1. Fetch User (public display name)
+    // 1. Fetch User (public display name only — do not expose email)
     let userName = `Tanuló #${userId}`;
-    let userEmail = '';
+    let userCompletedCourses: Array<number | string | { id?: number | string; slug?: string }> = [];
+    let courseDocId: number | string | null = null;
 
     try {
       const user = await payload.findByID({
@@ -32,16 +33,20 @@ export async function GET(
         overrideAccess: true,
       });
 
-      if (user) {
-        userEmail = user.email || '';
-        if (user.firstName || user.lastName) {
-          userName = `${user.lastName || ''} ${user.firstName || ''}`.trim();
-        } else if (user.email) {
-          userName = user.email.split('@')[0];
-        }
+      if (!user) {
+        return NextResponse.json({ error: 'A felhasználó nem található' }, { status: 404 });
+      }
+
+      userCompletedCourses = (user.completedCourses || []) as Array<
+        number | string | { id?: number | string; slug?: string }
+      >;
+
+      if (user.firstName || user.lastName) {
+        userName = `${user.lastName || ''} ${user.firstName || ''}`.trim();
+      } else if (user.email) {
+        userName = user.email.split('@')[0];
       }
     } catch {
-      // User not found in DB
       return NextResponse.json({ error: 'A felhasználó nem található' }, { status: 404 });
     }
 
@@ -49,6 +54,7 @@ export async function GET(
     let courseTitle = courseSlug.replace(/[-_]+/g, ' ').toUpperCase();
     let courseSummary = '';
     let accentColor = '#269984';
+    let courseExists = false;
 
     try {
       const courseDocs = await payload.find({
@@ -60,6 +66,8 @@ export async function GET(
       });
 
       if (courseDocs.docs.length > 0) {
+        courseExists = true;
+        courseDocId = courseDocs.docs[0].id;
         const normalized = normalizeCourse(
           courseDocs.docs[0] as unknown as Record<string, unknown>,
         );
@@ -69,16 +77,21 @@ export async function GET(
       } else {
         const blueprint = findCourseBySlug(courseSlug, courseBlueprints);
         if (blueprint) {
+          courseExists = true;
           courseTitle = blueprint.title;
           courseSummary = blueprint.summary;
           accentColor = blueprint.accentColor || '#269984';
         }
       }
     } catch {
-      // Fall back to humanized slug
+      // Fall back to check
     }
 
-    // 3. Fetch Course Progress
+    if (!courseExists) {
+      return NextResponse.json({ error: 'A kurzus nem található' }, { status: 404 });
+    }
+
+    // 3. Fetch Course Progress & Verify Completion
     let isCompleted = false;
     let completedAt: string | null = null;
     let points = 0;
@@ -101,12 +114,29 @@ export async function GET(
           lastActivityAt?: string;
           points?: number;
         };
-        isCompleted = prog.isCompleted ?? false;
-        completedAt = prog.updatedAt || prog.lastActivityAt || new Date().toISOString();
+        isCompleted = prog.isCompleted === true;
+        completedAt = prog.updatedAt || prog.lastActivityAt || null;
         points = prog.points || 0;
       }
     } catch {
       // No progress record found
+    }
+
+    // Fallback check in user.completedCourses if courseDocId is present
+    if (!isCompleted && courseDocId !== null && Array.isArray(userCompletedCourses)) {
+      isCompleted = userCompletedCourses.some((item) => {
+        if (typeof item === 'object' && item !== null) {
+          return String(item.id) === String(courseDocId) || item.slug === courseSlug;
+        }
+        return String(item) === String(courseDocId);
+      });
+    }
+
+    if (!isCompleted) {
+      return NextResponse.json(
+        { error: 'A keresett tanúsítvány nem található, mert a kurzus még nincs teljesítve' },
+        { status: 404 },
+      );
     }
 
     // Generate unique verification ID
@@ -116,11 +146,10 @@ export async function GET(
       success: true,
       userId,
       userName,
-      userEmail,
       courseSlug,
       courseTitle,
       courseSummary,
-      isCompleted,
+      isCompleted: true,
       completedAt: completedAt || new Date().toISOString(),
       points,
       certificateId,

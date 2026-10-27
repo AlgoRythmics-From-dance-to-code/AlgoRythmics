@@ -14,7 +14,8 @@ export default function Footer() {
         {/* Social icons */}
         <div className="flex items-center gap-10">
           <a
-            href="https://www.youtube.com/@AlgoRythmics"
+            href="https://www.facebook.com/AlgoRythmics"
+            aria-label="AlgoRythmics on Facebook"
             className="hover:opacity-80 transition-opacity"
             target="_blank"
             rel="noopener noreferrer"
@@ -31,6 +32,7 @@ export default function Footer() {
           </a>
           <a
             href="https://www.youtube.com/@AlgoRythmics"
+            aria-label="AlgoRythmics on YouTube"
             className="hover:opacity-80 transition-opacity"
             target="_blank"
             rel="noopener noreferrer"
@@ -46,7 +48,8 @@ export default function Footer() {
             </div>
           </a>
           <a
-            href="https://www.youtube.com/@AlgoRythmics"
+            href="https://www.instagram.com/algorythmics"
+            aria-label="AlgoRythmics on Instagram"
             className="hover:opacity-80 transition-opacity"
             target="_blank"
             rel="noopener noreferrer"

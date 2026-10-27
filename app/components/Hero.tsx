@@ -10,7 +10,7 @@ export default function Hero() {
     <>
       {/* ━━━ HERO SECTION ━━━ */}
       <section className="w-full relative overflow-hidden bg-white dark:bg-[#0a0a0a]">
-        {/* ── TELJES SZÉLESSÉGŰ RÉTEG A GRAFIKÁNAK ── */}
+        {/* ── TELJES SZÉLESSÉGŰ RÉTEG A GRAFIKÁNAK (Desktop / Tablet) ── */}
         <div className="absolute inset-0 w-full h-full pointer-events-none z-10 hidden md:block">
           <Image
             src="/assets/hero_ground_path.svg"
@@ -19,19 +19,13 @@ export default function Hero() {
             height={744}
             priority
             sizes="(max-width: 1920px) 35vw, 600px"
-            className="absolute dark:invert dark:hue-rotate-180"
-            style={{
-              bottom: '-1px',
-              right: '8%',
-              width: '35.2%',
-              height: 'auto',
-            }}
+            className="absolute dark:invert dark:hue-rotate-180 right-[3%] lg:right-[6%] xl:right-[8%] w-[42%] lg:w-[38%] xl:w-[35.2%] h-auto bottom-[-1px]"
           />
         </div>
 
-        {/* Content wrapper – 1920 based layout */}
-        <div className="relative mx-auto" style={{ maxWidth: '1920px' }}>
-          <div className="hidden md:block" style={{ height: '655px' }} />
+        {/* Content wrapper – responsive across md/lg/xl up to 1920px */}
+        <div className="relative mx-auto max-w-[1920px]">
+          <div className="hidden md:block h-[500px] lg:h-[580px] xl:h-[655px]" />
 
           {/* ── Decorative vine/dots (top-left) ── */}
           <Image
@@ -42,19 +36,12 @@ export default function Hero() {
             priority
             sizes="200px"
             aria-hidden={true}
-            className="absolute pointer-events-none select-none hidden md:block dark:invert dark:hue-rotate-180"
-            style={{ left: '420px', width: '200px', top: '-7px', height: 'auto' }}
+            className="absolute pointer-events-none select-none hidden lg:block dark:invert dark:hue-rotate-180 left-[320px] xl:left-[420px] w-[150px] xl:w-[200px] top-[-7px] h-auto"
           />
 
           {/* ── Text block (left side) ── */}
-          <div
-            className="absolute hidden md:block"
-            style={{ top: '250px', left: '90px', width: '440px' }}
-          >
-            <h1
-              className="font-montserrat font-bold leading-[1.12] text-black dark:text-white"
-              style={{ fontSize: '55px' }}
-            >
+          <div className="absolute hidden md:block z-20 top-[140px] lg:top-[200px] xl:top-[250px] left-[40px] lg:left-[64px] xl:left-[90px] w-[360px] lg:w-[410px] xl:w-[440px]">
+            <h1 className="font-montserrat font-bold leading-[1.12] text-black dark:text-white text-[36px] lg:text-[46px] xl:text-[55px]">
               {t('hero.title_line1')}
               <br />
               {t('hero.title_line2')}
@@ -62,14 +49,14 @@ export default function Hero() {
               {t('hero.title_line3')}
             </h1>
             <p
-              className="font-montserrat mt-5 text-black dark:text-white"
-              style={{ fontSize: '17px', lineHeight: '1.7em' }}
+              className="font-montserrat mt-4 lg:mt-5 text-black dark:text-white text-[15px] lg:text-[16px] xl:text-[17px]"
+              style={{ lineHeight: '1.7em' }}
             >
               {t('hero.description')}
             </p>
           </div>
 
-          {/* Mobile fallback marad változatlanul */}
+          {/* Mobile fallback */}
           <div className="md:hidden flex flex-col items-center px-6 py-12 gap-8 z-20 relative">
             <Image
               src="/assets/group_21.svg"

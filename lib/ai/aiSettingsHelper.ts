@@ -16,6 +16,7 @@ export async function getOpenRouterConfig(): Promise<OpenRouterConfig> {
     const payload = await getPayloadInstance();
     const settings = (await payload.findGlobal({
       slug: 'ai-settings',
+      overrideAccess: true,
     })) as AiSetting;
 
     const dbModel = settings?.model?.trim();

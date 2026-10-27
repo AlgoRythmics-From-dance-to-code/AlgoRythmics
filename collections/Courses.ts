@@ -1,4 +1,4 @@
-import type { CollectionConfig, FieldHook } from 'payload';
+import type { CollectionConfig, FieldHook, Where } from 'payload';
 
 import { ROLES } from '../lib/constants';
 // Helper to parse Markdown strings into Lexical Editor JSON states
@@ -36,7 +36,18 @@ export const Courses: CollectionConfig = {
       'Reusable course blueprints with phases, mascot behavior, confidence prompts, and complexity guidance.',
   },
   access: {
-    read: () => true,
+    read: ({ req: { user } }): boolean | Where => {
+      if (user?.role === ROLES.ADMIN) return true;
+      if (user?.role === ROLES.EDITOR) {
+        return {
+          or: [
+            { visibility: { not_equals: 'private' } },
+            { instructor: { equals: user.id } },
+          ],
+        };
+      }
+      return { visibility: { not_equals: 'private' } };
+    },
     create: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
     update: ({ req: { user } }) => {
       if (!user) return false;

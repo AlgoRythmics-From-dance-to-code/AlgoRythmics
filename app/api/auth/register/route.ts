@@ -1,5 +1,4 @@
-import { getPayload } from 'payload';
-import configPromise from '../../../../payload.config';
+import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
 import { ROLES } from '../../../../lib/constants';
 import logger from '../../../../lib/logger';
@@ -34,7 +33,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const payload = await getPayload({ config: configPromise });
+    const payload = await getPayloadInstance();
 
     // Check if user already exists
     const existingUsers = await payload.find({
