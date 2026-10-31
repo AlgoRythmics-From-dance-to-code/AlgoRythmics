@@ -115,6 +115,23 @@ export function useMultiplayerEngine(initialRoomId?: string): {
   const localPlayerIdRef = useRef<string>(localPlayerId);
   localPlayerIdRef.current = localPlayerId;
 
+  const participantTokenRef = useRef<string | null>(null);
+
+  // Restore participant token from sessionStorage if page is refreshed
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (initialRoomId || room.roomId)) {
+      const targetId = (initialRoomId || room.roomId).toUpperCase().trim();
+      try {
+        const saved = sessionStorage.getItem(`algorythmics_token_${targetId}`);
+        if (saved) {
+          participantTokenRef.current = saved;
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [initialRoomId, room.roomId]);
+
   // Sound generator
   const playTone = useCallback(
     (freq: number, type: OscillatorType = 'sine', duration = 0.15) => {
@@ -174,13 +191,18 @@ export function useMultiplayerEngine(initialRoomId?: string): {
     }
 
     if (roomWithVersion.roomId) {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (participantTokenRef.current) {
+        headers['x-participant-token'] = participantTokenRef.current;
+      }
       fetch('/api/multiplayer/room', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           action: 'UPDATE_ROOM',
           roomId: roomWithVersion.roomId,
           roomState: roomWithVersion,
+          participantToken: participantTokenRef.current || undefined,
         }),
       }).catch((err) => console.warn('Room sync error:', err));
     }
@@ -358,7 +380,22 @@ export function useMultiplayerEngine(initialRoomId?: string): {
           player: hostPlayer,
           roomState: newRoom,
         }),
-      }).catch((err) => console.warn('Create room error:', err));
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.participantToken) {
+            participantTokenRef.current = data.participantToken;
+            try {
+              sessionStorage.setItem(
+                `algorythmics_token_${finalRoomId.toUpperCase()}`,
+                data.participantToken,
+              );
+            } catch {
+              // ignore
+            }
+          }
+        })
+        .catch((err) => console.warn('Create room error:', err));
 
       if (channelRef.current) {
         channelRef.current.postMessage({ type: 'SYNC_ROOM', room: newRoom });
@@ -414,6 +451,14 @@ export function useMultiplayerEngine(initialRoomId?: string): {
 
         if (res.ok) {
           const data = await res.json();
+          if (data.participantToken) {
+            participantTokenRef.current = data.participantToken;
+            try {
+              sessionStorage.setItem(`algorythmics_token_${cleanRoomId}`, data.participantToken);
+            } catch {
+              // ignore
+            }
+          }
           if (data.room) {
             versionRef.current = data.room.version || 1;
             setRoom(data.room);
