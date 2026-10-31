@@ -1510,7 +1510,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   data-mascot-anchor="phase-summary"
                   className="max-w-3xl text-base font-medium text-gray-500 dark:text-gray-400 leading-relaxed"
                 >
-                  {activePhase.summary}
+                  {activePhase.summary ? String(activePhase.summary).replace(/\s*\|\s*/g, ' · ') : ''}
                 </p>
               </div>
             </div>

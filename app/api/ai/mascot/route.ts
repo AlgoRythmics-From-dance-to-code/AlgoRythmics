@@ -4,7 +4,7 @@ import { callOpenRouterStructured, type OpenRouterMessage } from '@/lib/ai/openR
 import { buildUserLearningDossier } from '@/lib/ai/mascotContextBuilder';
 import { getPayloadInstance } from '@/lib/payload';
 
-export const maxDuration = 45;
+export const maxDuration = 30;
 
 const mascotResponseSchema = {
   type: 'object',
@@ -12,7 +12,7 @@ const mascotResponseSchema = {
     message: {
       type: 'string',
       description:
-        'Warm, encouraging, direct mentorship text from the mascot in the student’s language. Be concise (1-3 sentences max).',
+        'Warm, encouraging, direct mentorship text from the mascot in the student’s language. Be concise (1-2 sentences max).',
     },
     mood: {
       type: 'string',
@@ -37,8 +37,7 @@ const mascotResponseSchema = {
           },
           badgeText: {
             type: 'string',
-            description:
-              'Optional 1-3 word mini hint badge above the element, e.g. "Nézd itt!" or "Ciklushatár?"',
+            description: 'Optional 1-3 word mini hint badge above the element, e.g. "Nézd itt!"',
           },
         },
         required: ['targetAnchor', 'effect'],
@@ -48,8 +47,7 @@ const mascotResponseSchema = {
     quickReplies: {
       type: 'array',
       items: { type: 'string' },
-      description:
-        '2-3 short, relevant contextual follow-up question chips for the student to ask next',
+      description: '2 short, relevant follow-up question chips for the student',
     },
   },
   required: ['message', 'mood', 'annotations', 'quickReplies'],
@@ -66,10 +64,14 @@ export interface MascotAIResponse {
   quickReplies: string[];
 }
 
-// In-memory rate limiter per user (max 25 requests per minute)
+// In-memory course cache for mascot to avoid hitting Postgres on every single message
+const courseDocCache = new Map<string, { doc: Record<string, unknown>; expiresAt: number }>();
+const COURSE_CACHE_TTL = 60_000; // 60s
+
+// In-memory rate limiter per user (max 30 requests per minute)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW = 60_000;
-const MAX_REQUESTS = 25;
+const MAX_REQUESTS = 30;
 
 export async function POST(req: NextRequest) {
   try {
@@ -109,17 +111,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'courseSlug is required' }, { status: 400 });
     }
 
-    // Load course data to know the exact phase, solution, and mascot config
-    const payload = await getPayloadInstance();
-    const courseRes = await payload.find({
-      collection: 'courses',
-      where: { slug: { equals: courseSlug } },
-      limit: 1,
-      depth: 0,
-      locale: locale as 'all' | 'en' | 'hu' | 'ro',
-    });
+    // Load course data (cached for 60s for speed)
+    const cacheKey = `${courseSlug}:${locale}`;
+    let courseDoc: Record<string, unknown> | undefined;
+    const cachedCourse = courseDocCache.get(cacheKey);
 
-    const courseDoc = courseRes.docs?.[0] as unknown as Record<string, unknown> | undefined;
+    if (cachedCourse && cachedCourse.expiresAt > now) {
+      courseDoc = cachedCourse.doc;
+    } else {
+      const payload = await getPayloadInstance();
+      const courseRes = await payload.find({
+        collection: 'courses',
+        where: { slug: { equals: courseSlug } },
+        limit: 1,
+        depth: 0,
+        locale: locale as 'all' | 'en' | 'hu' | 'ro',
+      });
+      courseDoc = courseRes.docs?.[0] as unknown as Record<string, unknown> | undefined;
+      if (courseDoc) {
+        courseDocCache.set(cacheKey, { doc: courseDoc, expiresAt: now + COURSE_CACHE_TTL });
+      }
+    }
+
     if (!courseDoc) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 });
     }
@@ -137,7 +150,7 @@ export async function POST(req: NextRequest) {
         ? (mascotConfig.name as Record<string, string>)[locale]
         : String(mascotConfig.name || 'Bubi')) || 'Bubi';
 
-    // Build rich user dossier
+    // Build user dossier (cached for 40s in mascotContextBuilder)
     const dossier = await buildUserLearningDossier(user.id, courseSlug, phaseId, sourceAlgorithmId);
 
     // Filter available anchors from screen
@@ -145,76 +158,50 @@ export async function POST(req: NextRequest) {
       ? (screenSnapshot.availableAnchors as string[])
       : [];
 
-    // System prompt with Socratic spoiler protection and personality
-    const systemPrompt = `You are "${mascotName}", the intelligent, friendly, and encouraging AI mascot guide of AlgoRythmics.
-Your role is to guide the student (${dossier.identity.firstName}) step-by-step through their interactive course.
+    const targetLang = locale === 'en' ? 'English' : locale === 'ro' ? 'Romanian' : 'Hungarian';
 
-LANGUAGE RULE:
-You MUST respond strictly in the requested language: "${locale === 'en' ? 'English' : locale === 'ro' ? 'Romanian' : 'Hungarian'}".
+    // Streamlined, token-efficient system prompt for rapid Time-To-First-Token (TTFT)
+    const systemPrompt = `You are "${mascotName}", the friendly AI mascot guide in AlgoRythmics.
+Role: Help student ${dossier.identity.firstName} solve this step.
+LANGUAGE: Respond strictly in ${targetLang}.
 
-PEDAGOGICAL & SOCRATIC RULES:
-1. NEVER directly blur out the raw solution (e.g. do NOT say "The answer is option B" or "Type 42 in the blank").
-2. Instead, guide the student with a smart, inspiring hint or thought-provoking question that prompts them to notice the pattern.
-3. If the student has had 3+ mistakes on this step, you can be significantly more specific and provide a clear hint pointing directly to the exact element.
-4. Keep your speech concise and conversational: 1 to 3 punchy sentences. No long lectures.
-5. You can point to and highlight elements on the student's screen! When pointing to an element, choose ONLY from the "AVAILABLE_ANCHORS" list.
-   - Use 'frame' to box an option, button, or container.
-   - Use 'underline' to underline a specific line of code or text.
-   - Use 'pointer' to draw a directional guiding arrow towards an input, slider, or button.
-   - Use 'pulse' to highlight a hint or submit button.
+RULES:
+1. NEVER reveal the exact answer directly. Give a Socratic hint or guiding clue.
+2. If student has 3+ mistakes, you can point directly to the exact element.
+3. Keep response very short and punchy: 1 to 2 sentences max.
+4. Pointing: Select targetAnchor ONLY from AVAILABLE_ANCHORS list.
+   - effect: 'frame' (boxes), 'underline' (code/text), 'pointer' (inputs/buttons), 'pulse' (hint/submit).
 
-LEARNER PROFILE CONTEXT:
-- Name: ${dossier.identity.name}
-- Total Points: ${dossier.globalStats.totalPoints} pts
-- Streak: ${dossier.globalStats.currentStreak} (Longest: ${dossier.globalStats.longestStreak})
-- Average Accuracy: ${dossier.globalStats.averageScore}%
-- Badges: ${dossier.globalStats.badges.map((b) => b.id).join(', ') || 'Keletkező bajnok'}
-- Current Course Progress: Phase ${dossier.currentCourseState.activePhaseIndex + 1} of ${phases.length}
-- CBL Confidence Stats: ${dossier.currentCourseState.confidenceSummary?.masteryCount || 0} Mastery, ${dossier.currentCourseState.confidenceSummary?.misconceptionCount || 0} Misconceptions.
+STUDENT STATE:
+- Streak: ${dossier.globalStats.currentStreak} | Points: ${dossier.globalStats.totalPoints} | Step: Phase ${dossier.currentCourseState.activePhaseIndex + 1}/${phases.length}
 
-CURRENT PHASE CONTEXT:
-- Phase Title: "${currentPhase?.title || ''}"
-- Phase Type (sourceView): "${currentPhase?.sourceView || ''}"
-- Phase Goal / Summary: "${currentPhase?.summary || ''}"
-- Manual Phase Hint: "${currentPhase?.hintCopy || ''}"
+CURRENT STEP:
+- Title: "${currentPhase?.title || ''}" (${currentPhase?.sourceView || ''})
+- Goal: "${currentPhase?.summary || ''}"
+${currentPhase?.hintCopy ? `- Hint: "${currentPhase.hintCopy}"` : ''}
 ${
   currentPhase?.quiz
     ? `- Quiz Question: "${(currentPhase.quiz as Array<Record<string, unknown>>)[0]?.question || ''}"
-- Options: ${JSON.stringify((currentPhase.quiz as Array<Record<string, unknown>>)[0]?.options)}
-- Correct Index: ${(currentPhase.quiz as Array<Record<string, unknown>>)[0]?.correctIndex}
-- Explanation: "${(currentPhase.quiz as Array<Record<string, unknown>>)[0]?.explanation || ''}"`
-    : ''
-}
-${
-  currentPhase?.debugCode
-    ? `- Debug Code:
-${currentPhase.debugCode}
-- Expected Code:
-${currentPhase.expectedCode}`
+- Correct Index: ${(currentPhase.quiz as Array<Record<string, unknown>>)[0]?.correctIndex}`
     : ''
 }
 ${
   currentPhase?.gapFillContent
-    ? `- Gap Fill Text: "${currentPhase.gapFillContent}"
+    ? `- GapFill: "${String(currentPhase.gapFillContent).slice(0, 200)}"
 - Solutions: ${JSON.stringify(currentPhase.gapFillSolutions)}`
     : ''
 }
 
-LIVE SCREEN STATE (What the student is seeing/interacting with right now):
-- Screen View: "${screenSnapshot.sourceView || currentPhase?.sourceView || 'general'}"
-- Available Anchors currently visible on DOM: ${JSON.stringify(availableAnchors)}
-- Student's current action/draft: ${JSON.stringify(screenSnapshot.currentSelection || null)}
-- Phase complete flag: ${Boolean(screenSnapshot.isComplete)}
+SCREEN:
+- View: "${screenSnapshot.sourceView || currentPhase?.sourceView || 'general'}"
+- Available Anchors: ${JSON.stringify(availableAnchors)}
+- Draft: ${JSON.stringify(screenSnapshot.currentSelection || null)}`;
 
-TRIGGER REASON: "${trigger}"
-${userQuery ? `STUDENT ASKED: "${userQuery}"` : ''}
-`;
-
-    // Construct conversation messages
+    // Construct conversation messages (keep only last 2 turns to minimize latency)
     const messages: OpenRouterMessage[] = [{ role: 'system', content: systemPrompt }];
 
     if (Array.isArray(chatHistory) && chatHistory.length > 0) {
-      chatHistory.slice(-4).forEach((msg) => {
+      chatHistory.slice(-2).forEach((msg) => {
         if (msg.role === 'user' || msg.role === 'assistant') {
           messages.push({ role: msg.role, content: String(msg.content) });
         }
@@ -224,26 +211,27 @@ ${userQuery ? `STUDENT ASKED: "${userQuery}"` : ''}
     if (userQuery) {
       messages.push({
         role: 'user',
-        content: `Student Question: "${userQuery}". Respond as ${mascotName}, indicating any relevant UI element to highlight from the available anchors.`,
+        content: `Student: "${userQuery}". Give a 1-2 sentence guiding reply and point to relevant anchors if helpful.`,
       });
     } else {
       messages.push({
         role: 'user',
-        content: `The trigger "${trigger}" occurred on screen for phase "${currentPhase?.title}". Give a proactive, helpful mentoring line and point to relevant elements if appropriate.`,
+        content: `Trigger: "${trigger}". Give an encouraging 1-sentence tip and point to relevant anchors if helpful.`,
       });
     }
 
+    // Call OpenRouter with high throughput, no reasoning, and low maxTokens for maximum speed
     const { data: aiResponse } = await callOpenRouterStructured<MascotAIResponse>({
       messages,
       schema: mascotResponseSchema,
       schemaName: 'mascot_ai_response',
-      timeoutMs: 25_000,
+      timeoutMs: 15_000,
       disableReasoning: true,
-      maxTokens: 450,
-      temperature: 0.35,
+      maxTokens: 180,
+      temperature: 0.25,
     });
 
-    // Sanitize annotations so they only target anchors genuinely present on the client screen
+    // Sanitize annotations to only valid client screen anchors
     const validAnnotations = (aiResponse.annotations || []).filter(
       (a) =>
         a.targetAnchor &&
@@ -257,7 +245,7 @@ ${userQuery ? `STUDENT ASKED: "${userQuery}"` : ''}
         message: aiResponse.message,
         mood: aiResponse.mood || 'pointing',
         annotations: validAnnotations,
-        quickReplies: aiResponse.quickReplies || [],
+        quickReplies: (aiResponse.quickReplies || []).slice(0, 2),
       },
     });
   } catch (error) {

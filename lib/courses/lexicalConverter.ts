@@ -16,7 +16,10 @@ export function markdownToLexical(markdown: string) {
     };
   }
 
-  const lines = markdown.split(/\r?\n/);
+  // Normalize escaped newlines and pipe delimiters emitted by LLMs
+  let normalized = markdown.replace(/\\n/g, '\n');
+  normalized = normalized.replace(/\s*\|\s*(?=[-#*`A-ZÁÉÍÓÖŐÚÜŰa-záéíóöőúüű0-9])/g, '\n\n');
+  const lines = normalized.split(/\r?\n/);
   const children: any[] = [];
 
   let currentList: {

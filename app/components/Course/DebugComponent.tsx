@@ -31,8 +31,8 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
 
   const { trackEvent } = useAnalytics(undefined, 'debug', courseId);
 
-  const debugLines = phase.debugCode?.split('\n') || [];
-  const expectedLines = phase.expectedCode?.split('\n') || [];
+  const debugLines = (phase.debugCode || '').replace(/\\n/g, '\n').split('\n');
+  const expectedLines = (phase.expectedCode || '').replace(/\\n/g, '\n').split('\n');
 
   // Find which line is different (the bug)
   const bugLineIndex = debugLines.findIndex((line, i) => line.trim() !== expectedLines[i]?.trim());

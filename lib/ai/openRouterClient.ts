@@ -114,10 +114,13 @@ export async function callOpenRouterStructured<T>(
               },
             }
           : { type: 'json_object' },
+      provider: {
+        sort: 'throughput',
+      },
     };
 
     if (reasoningMode === 'disabled') {
-      payloadBody.reasoning = { enabled: false };
+      payloadBody.reasoning = { enabled: false, effort: 'none' };
     } else if (reasoningMode === 'excluded') {
       payloadBody.reasoning = { exclude: true };
     }

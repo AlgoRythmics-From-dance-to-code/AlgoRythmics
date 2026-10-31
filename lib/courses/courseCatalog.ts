@@ -91,31 +91,6 @@ function humanizeSlug(slug: string) {
     .trim();
 }
 
-/**
- * Normalizes string arrays that might come from Payload as objects with a 'text' or 'tip' or 'option' property.
- */
-function toStringArray(value: unknown, property: string = 'text'): string[] {
-  if (!Array.isArray(value)) return [];
-
-  return value
-    .map((item) => {
-      if (typeof item === 'string') return item;
-      if (item && typeof item === 'object') {
-        const record = item as Record<string, unknown>;
-        const candidate =
-          record[property] ||
-          record.tip ||
-          record.value ||
-          record.label ||
-          record.text ||
-          record.option;
-        if (typeof candidate === 'string') return candidate;
-      }
-      return '';
-    })
-    .filter((item) => item.trim().length > 0);
-}
-
 function extractString(val: unknown, fallback = ''): string {
   if (typeof val === 'string') return val;
   if (val && typeof val === 'object') {
@@ -128,6 +103,35 @@ function extractString(val: unknown, fallback = ''): string {
     );
   }
   return fallback;
+}
+
+/**
+ * Normalizes string arrays that might come from Payload as objects with a 'text' or 'tip' or 'option' property.
+ */
+function toStringArray(value: unknown, property: string = 'text'): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object') {
+        const record = item as Record<string, unknown>;
+        const candidate =
+          record[property] ??
+          record.tip ??
+          record.value ??
+          record.label ??
+          record.text ??
+          record.option ??
+          record.solution;
+        if (typeof candidate === 'string') return candidate;
+        if (candidate && typeof candidate === 'object') {
+          return extractString(candidate);
+        }
+      }
+      return '';
+    })
+    .filter((item) => item.trim().length > 0);
 }
 
 function toPhases(value: unknown): CoursePhase[] {
@@ -177,15 +181,11 @@ function toPhases(value: unknown): CoursePhase[] {
               text: (o.text as string) || '',
             }))
           : undefined,
-        debugCode: current.debugCode as string,
-        expectedCode: current.expectedCode as string,
-        gapFillContent: current.gapFillContent as string,
-        gapFillOptions: Array.isArray(current.gapFillOptions)
-          ? current.gapFillOptions.map((o: Record<string, unknown>) => o.option as string)
-          : undefined,
-        gapFillSolutions: Array.isArray(current.gapFillSolutions)
-          ? current.gapFillSolutions.map((s: Record<string, unknown>) => s.solution as string)
-          : undefined,
+        debugCode: current.debugCode ? String(current.debugCode).replace(/\\n/g, '\n') : undefined,
+        expectedCode: current.expectedCode ? String(current.expectedCode).replace(/\\n/g, '\n') : undefined,
+        gapFillContent: extractString(current.gapFillContent),
+        gapFillOptions: toStringArray(current.gapFillOptions, 'option'),
+        gapFillSolutions: toStringArray(current.gapFillSolutions, 'solution'),
       };
     })
     .filter((phase): phase is CoursePhase => phase !== null);

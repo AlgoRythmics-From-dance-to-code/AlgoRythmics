@@ -165,7 +165,8 @@ Each question needs:
         viewSpecificInstructions = `
 CRITICAL FOR GAP-FILL VIEW:
 You MUST generate:
-- 'gapFillContent': localized text or pseudo-code containing blanks indicated by '{{gap}}' (e.g. "A ciklus addig fut, amíg i < {{gap}} és van még csere").
+- 'gapFillContent': localized text or pseudo-code/manifest containing blanks indicated by '{{gap}}'.
+  IMPORTANT: If the phase is about code, YAML, config, or programming, format 'gapFillContent' as multi-line indented code with newline characters (\n), preserving proper indentation! Do NOT put everything on one line.
 - 'gapFillOptions': 4-6 localized options (including distractors).
 - 'gapFillSolutions': the correct answers in the order of the '{{gap}}' placeholders.`;
         break;
@@ -174,8 +175,8 @@ You MUST generate:
         viewSpecificInstructions = `
 CRITICAL FOR DEBUG VIEW:
 You MUST generate:
-- 'debugCode': a clean piece of programming code (Python, C++ or JavaScript) with 1-2 realistic errors/bugs (e.g. wrong index, inverted comparison, off-by-one).
-- 'expectedCode': the corrected version of the code block.`;
+- 'debugCode': a clean piece of programming code (Python, C++ or JavaScript) with 1-2 realistic errors/bugs (e.g. wrong index, inverted comparison, off-by-one). Use newline characters (\n).
+- 'expectedCode': the corrected version of the code block. Use newline characters (\n).`;
         break;
 
       case 'match':
@@ -194,7 +195,7 @@ You MUST generate the 'ordering' array with 4-5 localized steps in their correct
       case 'info':
         viewSpecificInstructions = `
 CRITICAL FOR INFO VIEW:
-You MUST generate 'infoContent': a detailed, structured educational markdown text explaining the topic clearly with bullet points and code/analogy examples.`;
+You MUST generate 'infoContent': a detailed, structured educational markdown text explaining the topic clearly with bullet points and code/analogy examples. Use real newline characters for markdown paragraphs, headings (###), and lists (-). Do NOT use pipes | as line delimiters.`;
         break;
 
       case 'video':

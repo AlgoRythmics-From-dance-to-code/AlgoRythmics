@@ -33,7 +33,11 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
   const { trackEvent } = useAnalytics(undefined, 'order', courseId);
 
   const initialItems =
-    phase.ordering?.map((o, i) => ({ id: `O-${i}`, text: o.text, originalIndex: i })) || [];
+    phase.ordering?.map((o, i) => ({
+      id: `O-${i}`,
+      text: String(o.text || '').replace(/\s*\|\s*/g, ' '),
+      originalIndex: i,
+    })) || [];
 
   // Shuffle for the challenge
   const [items, setItems] = useState(() => [...initialItems].sort(() => Math.random() - 0.5));
