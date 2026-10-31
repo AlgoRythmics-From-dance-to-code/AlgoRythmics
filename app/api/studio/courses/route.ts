@@ -13,7 +13,11 @@ interface CourseDoc {
   estimatedMinutes?: number;
   visibility?: 'public' | 'private';
   isOfficial?: boolean;
-  instructor?: number | string | { id: number | string; email?: string; firstName?: string; lastName?: string } | null;
+  instructor?:
+    | number
+    | string
+    | { id: number | string; email?: string; firstName?: string; lastName?: string }
+    | null;
   phases?: Array<unknown>;
   updatedAt?: string;
   createdAt?: string;
@@ -25,7 +29,10 @@ export async function GET() {
     const user = session?.user as { id?: string; email?: string; role?: string } | undefined;
 
     if (!user || (user.role !== ROLES.ADMIN && user.role !== ROLES.EDITOR)) {
-      return NextResponse.json({ error: 'Unauthorized: Teacher or Admin access required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized: Teacher or Admin access required' },
+        { status: 401 },
+      );
     }
 
     const payload = await getPayloadInstance();
@@ -65,22 +72,29 @@ export async function GET() {
 
     const formatCourse = (c: CourseDoc) => {
       const instructorObj = typeof c.instructor === 'object' && c.instructor ? c.instructor : null;
-      const instructorId = instructorObj ? String(instructorObj.id) : (c.instructor ? String(c.instructor) : null);
+      const instructorId = instructorObj
+        ? String(instructorObj.id)
+        : c.instructor
+          ? String(c.instructor)
+          : null;
       const instructorName = instructorObj?.firstName
         ? `${instructorObj.firstName} ${instructorObj.lastName || ''}`.trim()
-        : (instructorObj?.email || 'AlgoRythmics Tanár');
+        : instructorObj?.email || 'AlgoRythmics Tanár';
 
       const cId = String(c.id);
-      const stats = statsByCourseId[c.slug] || statsByCourseId[cId] || { enrolled: 0, completed: 0 };
+      const stats = statsByCourseId[c.slug] ||
+        statsByCourseId[cId] || { enrolled: 0, completed: 0 };
 
       // Localized or string title
-      const title = typeof c.title === 'object' && c.title !== null
-        ? (c.title.hu || c.title.en || c.title.ro || 'Névtelen kurzus')
-        : String(c.title || 'Névtelen kurzus');
+      const title =
+        typeof c.title === 'object' && c.title !== null
+          ? c.title.hu || c.title.en || c.title.ro || 'Névtelen kurzus'
+          : String(c.title || 'Névtelen kurzus');
 
-      const summary = typeof c.summary === 'object' && c.summary !== null
-        ? (c.summary.hu || c.summary.en || c.summary.ro || '')
-        : String(c.summary || '');
+      const summary =
+        typeof c.summary === 'object' && c.summary !== null
+          ? c.summary.hu || c.summary.en || c.summary.ro || ''
+          : String(c.summary || '');
 
       return {
         id: c.id,
@@ -140,7 +154,10 @@ export async function POST(req: Request) {
     const user = session?.user as { id?: string; email?: string; role?: string } | undefined;
 
     if (!user || (user.role !== ROLES.ADMIN && user.role !== ROLES.EDITOR)) {
-      return NextResponse.json({ error: 'Unauthorized: Teacher or Admin access required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized: Teacher or Admin access required' },
+        { status: 401 },
+      );
     }
 
     const payload = await getPayloadInstance();
@@ -163,7 +180,10 @@ export async function POST(req: Request) {
     } = body;
 
     if (!title || !slug) {
-      return NextResponse.json({ error: 'A cím és az azonosító (slug) megadása kötelező!' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'A cím és az azonosító (slug) megadása kötelező!' },
+        { status: 400 },
+      );
     }
 
     // Generate unique slug if collision
@@ -197,11 +217,13 @@ export async function POST(req: Request) {
       illustrationAsset,
     });
 
-    console.log(`[Studio Courses] Creating new course "${finalSlug}" for instructor ${instructorId}...`);
+    console.log(
+      `[Studio Courses] Creating new course "${finalSlug}" for instructor ${instructorId}...`,
+    );
 
     const newCourse = await payload.create({
       collection: 'courses',
-      data: courseData as any,
+      data: courseData as never,
       locale: 'all' as 'hu',
     });
 
@@ -220,4 +242,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

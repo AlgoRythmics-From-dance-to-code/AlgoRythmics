@@ -328,4 +328,3 @@ export function lexicalToMarkdown(node: any): string {
     }
   }
 }
-

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMascotScreen, type MascotAnnotation } from './MascotScreenContext';
+import { useMascotScreen } from './MascotScreenContext';
 
 interface AnchorRect {
   anchorId: string;

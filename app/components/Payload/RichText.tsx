@@ -104,7 +104,11 @@ export function RichText({ content }: { content: any }) {
   if (data && typeof data === 'object' && data.root) {
     const rawLexicalText = extractTextFromLexical(data.root);
     // If the Lexical state is basically an unformatted pipe string (from legacy generator), render clean Markdown
-    if (rawLexicalText.includes(' | ') || rawLexicalText.includes(' |###') || rawLexicalText.includes(' |- ')) {
+    if (
+      rawLexicalText.includes(' | ') ||
+      rawLexicalText.includes(' |###') ||
+      rawLexicalText.includes(' |- ')
+    ) {
       return <MarkdownRenderer markdown={cleanMarkdownText(rawLexicalText)} />;
     }
 

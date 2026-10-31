@@ -326,7 +326,9 @@ export default function Header() {
                           <BarChart3 className="w-4 h-4 text-[#269984]" />
                         </div>
                         <span className="font-montserrat text-sm font-semibold text-[#269984]">
-                          {isAdmin ? (t('admin.pedagogy_statistics') || 'Rendszer Statisztikák') : 'Saját Statisztikák'}
+                          {isAdmin
+                            ? t('admin.pedagogy_statistics') || 'Rendszer Statisztikák'
+                            : 'Saját Statisztikák'}
                         </span>
                       </Link>
 
@@ -597,7 +599,11 @@ export default function Header() {
                         onClick={() => setMenuOpen(false)}
                       >
                         <BarChart3 className="w-4 h-4 text-teal-200" />
-                        <span>{isAdmin ? (t('admin.pedagogy_statistics') || 'Rendszer Statisztikák') : 'Saját Statisztikák'}</span>
+                        <span>
+                          {isAdmin
+                            ? t('admin.pedagogy_statistics') || 'Rendszer Statisztikák'
+                            : 'Saját Statisztikák'}
+                        </span>
                       </Link>
                       {isAdmin && (
                         <Link

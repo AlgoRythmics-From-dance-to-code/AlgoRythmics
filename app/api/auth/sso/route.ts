@@ -61,7 +61,7 @@ export async function GET(req: Request) {
       id: dbUser.id,
       data: {
         sessions: validSessions,
-      } as any,
+      } as unknown as Record<string, unknown>,
       overrideAccess: true,
     });
 
@@ -74,7 +74,7 @@ export async function GET(req: Request) {
         sid,
       },
       payload.secret,
-      { expiresIn: '7d' }
+      { expiresIn: '7d' },
     );
 
     const redirectUrl = new URL(redirectPath, req.url);

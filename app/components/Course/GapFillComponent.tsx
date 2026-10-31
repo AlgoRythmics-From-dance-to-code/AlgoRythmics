@@ -106,8 +106,8 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
   const { trackEvent } = useAnalytics(undefined, 'gap-fill', courseId);
 
   const rawContent = phase.gapFillContent || '';
-  const rawOptions = phase.gapFillOptions || [];
-  const rawSolutions = phase.gapFillSolutions || [];
+  const rawOptions = useMemo(() => phase.gapFillOptions || [], [phase.gapFillOptions]);
+  const rawSolutions = useMemo(() => phase.gapFillSolutions || [], [phase.gapFillSolutions]);
 
   // Detect whether this gap-fill is code / YAML manifest vs prose text
   const isCodeOrYaml = useMemo(() => {
@@ -136,7 +136,10 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
     if (isCodeOrYaml) {
       return formatYamlOrCode(rawContent);
     }
-    return rawContent.replace(/\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\s*\|\s*/g, '\n\n');
+    return rawContent
+      .replace(/\\n/g, '\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/\s*\|\s*/g, '\n\n');
   }, [rawContent, isCodeOrYaml]);
 
   // Normalize markers to [blank]
@@ -167,9 +170,17 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
 
     // If options are still sparse for a YAML/code phase, provide reasonable common distractors
     if (optsSet.size < 4 && isCodeOrYaml) {
-      ['apps/v1', 'v1', 'Deployment', 'Pod', 'Service', '3', '80', 'nginx:alpine', 'ClusterIP'].forEach(
-        (cand) => optsSet.add(cand),
-      );
+      [
+        'apps/v1',
+        'v1',
+        'Deployment',
+        'Pod',
+        'Service',
+        '3',
+        '80',
+        'nginx:alpine',
+        'ClusterIP',
+      ].forEach((cand) => optsSet.add(cand));
     }
 
     return Array.from(optsSet);
@@ -189,8 +200,9 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
         options: effectiveOptions,
         confidence,
         isEvaluated: !!evaluation,
-        isCorrect:
-          evaluation ? evaluation.category === 'mastery' || evaluation.category === 'lucky' : undefined,
+        isCorrect: evaluation
+          ? evaluation.category === 'mastery' || evaluation.category === 'lucky'
+          : undefined,
         isCompleted: !!isDone,
       }),
       [blankCount, choices, effectiveOptions, confidence, evaluation, isDone],
@@ -352,7 +364,10 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
                                   } focus:ring-2 focus:ring-[#269984]/50`}
                                   style={{ minWidth: '125px' }}
                                 >
-                                  <option value="" className="bg-[#141622] text-gray-400 font-normal">
+                                  <option
+                                    value=""
+                                    className="bg-[#141622] text-gray-400 font-normal"
+                                  >
                                     ··· [{curIdx + 1}] ···
                                   </option>
                                   {effectiveOptions.map((opt, oIdx) => (

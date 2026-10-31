@@ -19,7 +19,10 @@ const singlePhaseSchema = {
     hintCopy: localizedStringSchema,
     idleHelp: localizedStringSchema,
     infoContent: localizedStringSchema,
-    customVideoId: { type: 'string', description: 'YouTube video ID if educational video, else empty' },
+    customVideoId: {
+      type: 'string',
+      description: 'YouTube video ID if educational video, else empty',
+    },
     quiz: {
       type: 'array',
       items: {
@@ -122,24 +125,20 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const {
-      courseContext,
-      phase,
-      previousPhasesSummary = [],
-      customInstruction,
-      model,
-    } = body;
+    const { courseContext, phase, previousPhasesSummary = [], customInstruction, model } = body;
 
     if (!courseContext || !phase) {
       return NextResponse.json(
         { error: 'Hiányzó courseContext vagy phase paraméter!' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const phaseView = phase.sourceView || 'control';
-    const phaseTitleHu = typeof phase.title === 'object' ? phase.title.hu : String(phase.title || '');
-    const phaseSummaryHu = typeof phase.summary === 'object' ? phase.summary.hu : String(phase.summary || '');
+    const phaseTitleHu =
+      typeof phase.title === 'object' ? phase.title.hu : String(phase.title || '');
+    const phaseSummaryHu =
+      typeof phase.summary === 'object' ? phase.summary.hu : String(phase.summary || '');
     const courseTopic = courseContext.topic || 'Általános témakör';
     const courseDifficulty = courseContext.difficulty || 'Beginner';
 
@@ -244,10 +243,18 @@ Generate the detailed phase content matching the requested schema. Provide natur
       summary: sanitizeLocalizedField(rawPhase.summary, phaseSummaryHu || ''),
       maxPoints: Number(phase.maxPoints) || 10,
       mascotLine: sanitizeLocalizedField(rawPhase.mascotLine, 'Figyeld meg a lépéseket!'),
-      mascotMistakeLine: sanitizeLocalizedField(rawPhase.mascotMistakeLine, 'Semmi baj, próbáld meg újra!'),
+      mascotMistakeLine: sanitizeLocalizedField(
+        rawPhase.mascotMistakeLine,
+        'Semmi baj, próbáld meg újra!',
+      ),
       hintCopy: sanitizeLocalizedField(rawPhase.hintCopy, 'Gondold végig az algoritmus logikáját.'),
-      idleHelp: sanitizeLocalizedField(rawPhase.idleHelp, 'Kattints az egyik elemre a folytatáshoz!'),
-      infoContent: rawPhase.infoContent ? sanitizeLocalizedField(rawPhase.infoContent, '') : undefined,
+      idleHelp: sanitizeLocalizedField(
+        rawPhase.idleHelp,
+        'Kattints az egyik elemre a folytatáshoz!',
+      ),
+      infoContent: rawPhase.infoContent
+        ? sanitizeLocalizedField(rawPhase.infoContent, '')
+        : undefined,
       customVideoId: rawPhase.customVideoId?.trim() || phase.customVideoId || '',
       quiz: Array.isArray(rawPhase.quiz)
         ? rawPhase.quiz.map((q) => ({
@@ -272,7 +279,9 @@ Generate the detailed phase content matching the requested schema. Provide natur
         : undefined,
       debugCode: rawPhase.debugCode || '',
       expectedCode: rawPhase.expectedCode || '',
-      gapFillContent: rawPhase.gapFillContent ? sanitizeLocalizedField(rawPhase.gapFillContent, '') : undefined,
+      gapFillContent: rawPhase.gapFillContent
+        ? sanitizeLocalizedField(rawPhase.gapFillContent, '')
+        : undefined,
       gapFillOptions: Array.isArray(rawPhase.gapFillOptions)
         ? rawPhase.gapFillOptions.map((g) => ({
             option: sanitizeLocalizedField(g.option, ''),

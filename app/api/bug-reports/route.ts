@@ -73,7 +73,13 @@ export async function POST(req: Request) {
           { status: 413 },
         );
       }
-      const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+      const ALLOWED_MIME_TYPES = [
+        'image/png',
+        'image/jpeg',
+        'image/jpg',
+        'image/webp',
+        'image/gif',
+      ];
       const fileType = screenshotFile.type?.toLowerCase() || '';
       if (!ALLOWED_MIME_TYPES.includes(fileType)) {
         return NextResponse.json(

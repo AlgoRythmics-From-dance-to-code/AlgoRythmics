@@ -81,7 +81,18 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
         mistakes,
         activeExpectedIndices: currentExpected?.activeIndices,
       }),
-      [algorithmId, isSorting, isBacktracking, expectedStepIndex, steps.length, selectedIndices, interactionMode, isComplete, mistakes, currentExpected],
+      [
+        algorithmId,
+        isSorting,
+        isBacktracking,
+        expectedStepIndex,
+        steps.length,
+        selectedIndices,
+        interactionMode,
+        isComplete,
+        mistakes,
+        currentExpected,
+      ],
     ),
   );
 

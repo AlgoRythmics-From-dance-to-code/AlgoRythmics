@@ -81,7 +81,7 @@ export async function callOpenRouterStructured<T>(
 
   if (!apiKey) {
     throw new Error(
-      'Az OpenRouter API kulcs nincs beállítva a Payload CMS adminisztrációs felületén (AI Beállítások).'
+      'Az OpenRouter API kulcs nincs beállítva a Payload CMS adminisztrációs felületén (AI Beállítások).',
     );
   }
 
@@ -161,7 +161,9 @@ export async function callOpenRouterStructured<T>(
 
   // 1b. If reasoning: { enabled: false } returned 400 (some models reject disabled reasoning), try excluded
   if (!response.ok && disableReasoning && response.status === 400) {
-    console.warn(`[OpenRouter] Reasoning disabled rejected for ${activeModel}. Retrying with excluded/none...`);
+    console.warn(
+      `[OpenRouter] Reasoning disabled rejected for ${activeModel}. Retrying with excluded/none...`,
+    );
     response = await executeCall(activeModel, 'json_schema', 'excluded');
     if (!response.ok) {
       response = await executeCall(activeModel, 'json_schema', 'none');
@@ -171,7 +173,7 @@ export async function callOpenRouterStructured<T>(
   // 2. If structured schema call fails with 400 (not supported) or non-ok, try json_object fallback
   if (!response.ok) {
     console.warn(
-      `[OpenRouter] Primary schema call failed (${response.status}) for ${activeModel}. Falling back to json_object...`
+      `[OpenRouter] Primary schema call failed (${response.status}) for ${activeModel}. Falling back to json_object...`,
     );
     response = await executeCall(activeModel, 'json_object');
   }
@@ -211,7 +213,7 @@ export async function callOpenRouterStructured<T>(
   try {
     const parsed = JSON.parse(cleanText) as T;
     return { data: parsed, modelUsed: activeModel };
-  } catch (parseError) {
+  } catch {
     console.error('[OpenRouter] JSON Parse Error. Raw text:', rawContent);
     throw new Error('Az AI válaszát nem sikerült JSON formátumban feldolgozni. Próbáld újra.');
   }

@@ -260,7 +260,8 @@ export default function ActivityTimelineChart({ data }: ActivityTimelineChartPro
             Átl. Napi Megoldás
           </span>
           <span className="text-sm font-black text-teal-600 dark:text-teal-400 mt-0.5 block">
-            {Math.round(data.reduce((sum, d) => sum + d.completedSteps, 0) / data.length)} lépés / nap
+            {Math.round(data.reduce((sum, d) => sum + d.completedSteps, 0) / data.length)} lépés /
+            nap
           </span>
         </div>
         <div className="p-3 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5">
@@ -275,4 +276,3 @@ export default function ActivityTimelineChart({ data }: ActivityTimelineChartPro
     </motion.div>
   );
 }
-

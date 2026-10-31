@@ -16,10 +16,7 @@ export async function authorizeTeacherOrAdmin(): Promise<AuthorizedUser | null> 
   try {
     const headers = await getHeaders();
     const { user: payloadUser } = await payload.auth({ headers });
-    if (
-      payloadUser &&
-      (payloadUser.role === ROLES.ADMIN || payloadUser.role === ROLES.EDITOR)
-    ) {
+    if (payloadUser && (payloadUser.role === ROLES.ADMIN || payloadUser.role === ROLES.EDITOR)) {
       return {
         id: payloadUser.id,
         email: payloadUser.email || '',
@@ -36,10 +33,7 @@ export async function authorizeTeacherOrAdmin(): Promise<AuthorizedUser | null> 
     const nextAuthUser = session?.user as
       | { id?: string | number; email?: string; role?: string }
       | undefined;
-    if (
-      nextAuthUser &&
-      (nextAuthUser.role === ROLES.ADMIN || nextAuthUser.role === ROLES.EDITOR)
-    ) {
+    if (nextAuthUser && (nextAuthUser.role === ROLES.ADMIN || nextAuthUser.role === ROLES.EDITOR)) {
       return {
         id: nextAuthUser.id || '',
         email: nextAuthUser.email || '',

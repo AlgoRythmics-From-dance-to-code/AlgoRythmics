@@ -121,4 +121,3 @@ export default function HourlyActivityHeatmap({ data }: HourlyActivityHeatmapPro
     </motion.div>
   );
 }
-

@@ -18,17 +18,17 @@ interface OriginalCourse {
 
 import { buildPayloadCourseData } from '../../../../../../lib/courses/studioHelper';
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await auth();
     const user = session?.user as { id?: string; email?: string; role?: string } | undefined;
 
     if (!user || (user.role !== ROLES.ADMIN && user.role !== ROLES.EDITOR)) {
-      return NextResponse.json({ error: 'Unauthorized: Teacher or Admin access required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized: Teacher or Admin access required' },
+        { status: 401 },
+      );
     }
 
     const payload = await getPayloadInstance();
@@ -44,15 +44,20 @@ export async function POST(
     }
 
     const currentUserId = user.id ? String(user.id) : '';
-    const originalInstructorId = (original as any).instructor
-      ? typeof (original as any).instructor === 'object'
-        ? String((original as any).instructor.id)
-        : String((original as any).instructor)
+    const originalRecord = original as unknown as Record<string, unknown>;
+    const rawInstructor = originalRecord.instructor;
+    const originalInstructorId = rawInstructor
+      ? typeof rawInstructor === 'object' && rawInstructor !== null && 'id' in rawInstructor
+        ? String((rawInstructor as { id: string | number }).id)
+        : String(rawInstructor)
       : '';
-    const isPrivate = (original as any).visibility === 'private';
+    const isPrivate = originalRecord.visibility === 'private';
 
     if (isPrivate && user.role !== ROLES.ADMIN && originalInstructorId !== currentUserId) {
-      return NextResponse.json({ error: 'Nincs jogosultságod más tanár privát kurzusát másolni!' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Nincs jogosultságod más tanár privát kurzusát másolni!' },
+        { status: 403 },
+      );
     }
 
     // Prepare localized cloned title
@@ -91,11 +96,13 @@ export async function POST(
       illustrationAsset: original.illustrationAsset || 'algo_group_109.svg',
     });
 
-    console.log(`[Studio Courses Clone] Cloning course ${id} into new slug "${uniqueSlug}" for teacher ${instructorId}...`);
+    console.log(
+      `[Studio Courses Clone] Cloning course ${id} into new slug "${uniqueSlug}" for teacher ${instructorId}...`,
+    );
 
     const clonedCourse = await payload.create({
       collection: 'courses',
-      data: clonedPayload as any,
+      data: clonedPayload as never,
       locale: 'all' as 'hu',
     });
 
@@ -107,4 +114,3 @@ export async function POST(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

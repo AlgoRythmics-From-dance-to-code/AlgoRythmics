@@ -499,7 +499,9 @@ export async function POST(req: NextRequest) {
     if (!authorizedUser) {
       try {
         const session = await auth();
-        const nextAuthUser = session?.user as { id?: string | number; email?: string; role?: string } | undefined;
+        const nextAuthUser = session?.user as
+          | { id?: string | number; email?: string; role?: string }
+          | undefined;
         if (nextAuthUser && (nextAuthUser.role === 'admin' || nextAuthUser.role === 'editor')) {
           authorizedUser = nextAuthUser;
         }
@@ -520,7 +522,9 @@ export async function POST(req: NextRequest) {
     );
 
     const instructorId = authorizedUser.id
-      ? (isNaN(Number(authorizedUser.id)) ? authorizedUser.id : Number(authorizedUser.id))
+      ? isNaN(Number(authorizedUser.id))
+        ? authorizedUser.id
+        : Number(authorizedUser.id)
       : undefined;
 
     // Rate limiting: prevent spamming the API
@@ -553,7 +557,9 @@ export async function POST(req: NextRequest) {
     console.log(`[AI Course Generation] Target OpenRouter model: ${activeModel}`);
 
     if (!apiKey) {
-      console.error('[AI Course Generation] Error: OpenRouter API key is not configured in Payload CMS.');
+      console.error(
+        '[AI Course Generation] Error: OpenRouter API key is not configured in Payload CMS.',
+      );
       return NextResponse.json(
         {
           error:

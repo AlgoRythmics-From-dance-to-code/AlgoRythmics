@@ -242,7 +242,9 @@ export default function SkillRadarChart({ data }: SkillRadarChartProps) {
               <div>
                 <div className="flex justify-between text-gray-600 dark:text-gray-300 mb-1">
                   <span>Tanulói csoport eredmény:</span>
-                  <span className="text-purple-600 dark:text-purple-400 font-black">{selectedSkill.studentScore}%</span>
+                  <span className="text-purple-600 dark:text-purple-400 font-black">
+                    {selectedSkill.studentScore}%
+                  </span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden">
                   <div
@@ -279,4 +281,3 @@ export default function SkillRadarChart({ data }: SkillRadarChartProps) {
     </motion.div>
   );
 }
-

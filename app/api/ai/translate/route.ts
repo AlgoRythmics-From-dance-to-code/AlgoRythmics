@@ -14,7 +14,10 @@ export async function POST(req: NextRequest) {
   try {
     const user = await authorizeTeacherOrAdmin();
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized: Teacher or Admin access required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized: Teacher or Admin access required' },
+        { status: 401 },
+      );
     }
 
     const body = await req.json();
@@ -52,7 +55,11 @@ export async function POST(req: NextRequest) {
               properties: {
                 text: {
                   type: 'object',
-                  properties: { hu: { type: 'string' }, en: { type: 'string' }, ro: { type: 'string' } },
+                  properties: {
+                    hu: { type: 'string' },
+                    en: { type: 'string' },
+                    ro: { type: 'string' },
+                  },
                   required: ['hu', 'en', 'ro'],
                 },
               },
@@ -66,7 +73,11 @@ export async function POST(req: NextRequest) {
               properties: {
                 text: {
                   type: 'object',
-                  properties: { hu: { type: 'string' }, en: { type: 'string' }, ro: { type: 'string' } },
+                  properties: {
+                    hu: { type: 'string' },
+                    en: { type: 'string' },
+                    ro: { type: 'string' },
+                  },
                   required: ['hu', 'en', 'ro'],
                 },
               },
@@ -80,7 +91,11 @@ export async function POST(req: NextRequest) {
               properties: {
                 text: {
                   type: 'object',
-                  properties: { hu: { type: 'string' }, en: { type: 'string' }, ro: { type: 'string' } },
+                  properties: {
+                    hu: { type: 'string' },
+                    en: { type: 'string' },
+                    ro: { type: 'string' },
+                  },
                   required: ['hu', 'en', 'ro'],
                 },
               },
@@ -127,7 +142,7 @@ Generate 2-3 welcome messages, 2-3 overconfident mistake messages (kind but guid
 
     // Default: Translation mode
     const itemsList = (Array.isArray(items) ? items : []).filter(
-      (it: TranslationItem) => it && typeof it.hu === 'string' && it.hu.trim().length > 0
+      (it: TranslationItem) => it && typeof it.hu === 'string' && it.hu.trim().length > 0,
     );
 
     if (itemsList.length === 0) {
@@ -161,7 +176,8 @@ CRITICAL RULES:
 3. Use natural terminology appropriate for computer science and interactive education.
 4. Each item in 'translations' must correspond to the requested 'key'.`;
 
-    const userPrompt = `Translate the following ${itemsList.length} items from Hungarian to English and Romanian:\n` +
+    const userPrompt =
+      `Translate the following ${itemsList.length} items from Hungarian to English and Romanian:\n` +
       JSON.stringify(itemsList, null, 2);
 
     const { data } = await callOpenRouterStructured<{

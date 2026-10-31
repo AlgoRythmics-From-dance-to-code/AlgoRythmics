@@ -51,7 +51,9 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
         selectedLine: selectedIndex !== null ? debugLines[selectedIndex] : undefined,
         confidence,
         isEvaluated: !!evaluation,
-        isCorrect: evaluation ? evaluation.category === 'mastery' || evaluation.category === 'lucky' : undefined,
+        isCorrect: evaluation
+          ? evaluation.category === 'mastery' || evaluation.category === 'lucky'
+          : undefined,
         isCompleted: !!isDone,
       }),
       [debugLines, selectedIndex, confidence, evaluation, isDone],
@@ -132,7 +134,10 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
 
   return (
     <div className="flex flex-col items-center gap-8 p-4">
-      <div data-mascot-anchor="debug-editor" className="w-full max-w-2xl bg-[#1e1e2e] rounded-3xl overflow-hidden shadow-2xl border border-white/5">
+      <div
+        data-mascot-anchor="debug-editor"
+        className="w-full max-w-2xl bg-[#1e1e2e] rounded-3xl overflow-hidden shadow-2xl border border-white/5"
+      >
         <div className="px-6 py-4 bg-[#181825] border-b border-white/5 flex items-center justify-between">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-500/50" />

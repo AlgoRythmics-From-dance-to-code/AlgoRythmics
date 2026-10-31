@@ -122,7 +122,7 @@ export async function GET(req: Request) {
   const phaseTypeFilter = searchParams.get('phaseType') || 'all';
   const timeRangeFilter = searchParams.get('timeRange') || '30d';
   const requestedInstructor = searchParams.get('instructorId');
-  const scopeMode = searchParams.get('scope') || 'auto'; // 'my' | 'global' | 'auto'
+  const _scopeMode = searchParams.get('scope') || 'auto'; // 'my' | 'global' | 'auto'
 
   let activeInstructorFilter: string | null = null;
   if (currentUserRole === ROLES.EDITOR) {
@@ -208,9 +208,12 @@ export async function GET(req: Request) {
       // Filter strictly to courses authored by the active instructor
       coursesDocs = coursesDocs.filter((c) => {
         const ins = c.instructor as { id?: string | number } | string | number | null | undefined;
-        const insId = typeof ins === 'object' && ins !== null && ins.id !== undefined
-          ? String(ins.id)
-          : (ins !== null && ins !== undefined ? String(ins) : '');
+        const insId =
+          typeof ins === 'object' && ins !== null && ins.id !== undefined
+            ? String(ins.id)
+            : ins !== null && ins !== undefined
+              ? String(ins)
+              : '';
         return insId === activeInstructorFilter;
       });
     }
@@ -226,14 +229,15 @@ export async function GET(req: Request) {
     // Filter course-progress to only records belonging to the instructor's courses
     const filteredCourseProgress = activeInstructorFilter
       ? courseProgressDocs.filter(
-          (cp) => teacherCourseSlugs.has(cp.courseId) || teacherCourseIds.has(cp.courseId)
+          (cp) => teacherCourseSlugs.has(cp.courseId) || teacherCourseIds.has(cp.courseId),
         )
       : courseProgressDocs;
 
     // Set of student user IDs enrolled in these courses
     const enrolledStudentUserIds = new Set<string>();
     filteredCourseProgress.forEach((cp) => {
-      const uid = typeof cp.user === 'object' && cp.user !== null ? String(cp.user.id) : String(cp.user);
+      const uid =
+        typeof cp.user === 'object' && cp.user !== null ? String(cp.user.id) : String(cp.user);
       if (uid && uid !== 'undefined' && uid !== 'null') {
         enrolledStudentUserIds.add(uid);
       }
@@ -242,14 +246,16 @@ export async function GET(req: Request) {
     // Scope algorithm progress and learning events to enrolled students when teacher scope is active
     const scopedProgressDocs = activeInstructorFilter
       ? progressDocs.filter((p) => {
-          const uid = typeof p.user === 'object' && p.user !== null ? String(p.user.id) : String(p.user);
+          const uid =
+            typeof p.user === 'object' && p.user !== null ? String(p.user.id) : String(p.user);
           return enrolledStudentUserIds.has(uid);
         })
       : progressDocs;
 
     const scopedEventsDocs = activeInstructorFilter
       ? eventsDocs.filter((e) => {
-          const uid = typeof e.user === 'object' && e.user !== null ? String(e.user.id) : String(e.user);
+          const uid =
+            typeof e.user === 'object' && e.user !== null ? String(e.user.id) : String(e.user);
           return enrolledStudentUserIds.has(uid);
         })
       : eventsDocs;
@@ -258,10 +264,7 @@ export async function GET(req: Request) {
     const { docs: rawInstructors } = await payload.find({
       collection: 'users',
       where: {
-        or: [
-          { role: { equals: ROLES.ADMIN } },
-          { role: { equals: ROLES.EDITOR } },
-        ],
+        or: [{ role: { equals: ROLES.ADMIN } }, { role: { equals: ROLES.EDITOR } }],
       },
       limit: 100,
       depth: 0,
@@ -787,8 +790,8 @@ export async function GET(req: Request) {
         totalDecisions > 0
           ? Math.min(100, Math.round((data.decisionsWrong / totalDecisions) * 100))
           : data.totalAttempts > 0
-          ? Math.min(100, Math.round((totalMistakes / data.totalAttempts) * 100))
-          : 0;
+            ? Math.min(100, Math.round((totalMistakes / data.totalAttempts) * 100))
+            : 0;
 
       return {
         algorithmId: algoId,
@@ -876,24 +879,24 @@ export async function GET(req: Request) {
     // ─── COURSES EVALUATION & DROPOFF FUNNEL ───
     const coursesToEvaluate = activeInstructorFilter
       ? coursesDocs
-      : (coursesDocs.length > 0
-          ? coursesDocs
-          : [
-              {
-                id: 'bubble-sort-basics',
-                slug: 'bubble-sort-basics',
-                title: 'Buborékrendezés Alapjai & Koreográfia',
-                difficulty: 'Beginner',
-                estimatedMinutes: 20,
-                phases: [
-                  { phaseId: 'phase-1', title: 'Videó Alapozás', sourceView: 'video' },
-                  { phaseId: 'phase-2', title: 'Interaktív Irányítás', sourceView: 'control' },
-                  { phaseId: 'phase-3', title: 'Kvíz & Logika', sourceView: 'quiz' },
-                  { phaseId: 'phase-4', title: 'Kód Hibakeresés (Debug)', sourceView: 'debug' },
-                  { phaseId: 'phase-5', title: 'Záró Szimuláció', sourceView: 'final-challenge' },
-                ],
-              },
-            ]);
+      : coursesDocs.length > 0
+        ? coursesDocs
+        : [
+            {
+              id: 'bubble-sort-basics',
+              slug: 'bubble-sort-basics',
+              title: 'Buborékrendezés Alapjai & Koreográfia',
+              difficulty: 'Beginner',
+              estimatedMinutes: 20,
+              phases: [
+                { phaseId: 'phase-1', title: 'Videó Alapozás', sourceView: 'video' },
+                { phaseId: 'phase-2', title: 'Interaktív Irányítás', sourceView: 'control' },
+                { phaseId: 'phase-3', title: 'Kvíz & Logika', sourceView: 'quiz' },
+                { phaseId: 'phase-4', title: 'Kód Hibakeresés (Debug)', sourceView: 'debug' },
+                { phaseId: 'phase-5', title: 'Záró Szimuláció', sourceView: 'final-challenge' },
+              ],
+            },
+          ];
 
     const coursesEvaluationList = coursesToEvaluate.map((course) => {
       const courseSlug = course.slug || String(course.id);
@@ -903,7 +906,8 @@ export async function GET(req: Request) {
       const enrolledCount = enrolled.length;
       const completed = enrolled.filter((cp) => cp.isCompleted === true);
       const completedCount = completed.length;
-      const completionRate = enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0;
+      const completionRate =
+        enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0;
 
       const totalTimeMs = enrolled.reduce((sum, cp) => sum + (cp.totalTimeMs || 0), 0);
       const estimatedMinutes = course.estimatedMinutes || 20;
@@ -920,8 +924,10 @@ export async function GET(req: Request) {
 
       const totalMistakes = enrolled.reduce((sum, cp) => sum + (cp.totalMistakes || 0), 0);
 
-      const mascotInteractions =
-        enrolled.reduce((sum, cp) => sum + (cp.mascotInteractionsTotal || 0), 0);
+      const mascotInteractions = enrolled.reduce(
+        (sum, cp) => sum + (cp.mascotInteractionsTotal || 0),
+        0,
+      );
 
       const mascotCohort = enrolled.filter((cp) => (cp.mascotInteractionsTotal || 0) > 0);
       const nonMascotCohort = enrolled.filter((cp) => (cp.mascotInteractionsTotal || 0) === 0);
@@ -944,7 +950,10 @@ export async function GET(req: Request) {
       let mascotImprovedPhasesCount = 0;
 
       enrolled.forEach((cp) => {
-        const stats = (cp.detailedStats || {}) as Record<string, { mascotHelpCount?: number; improvedAfterMascot?: boolean }>;
+        const stats = (cp.detailedStats || {}) as Record<
+          string,
+          { mascotHelpCount?: number; improvedAfterMascot?: boolean }
+        >;
         Object.values(stats).forEach((pStat) => {
           if ((pStat.mascotHelpCount || 0) > 0) {
             mascotHelpedPhasesCount += pStat.mascotHelpCount || 0;
@@ -961,62 +970,64 @@ export async function GET(req: Request) {
           : 0;
 
       // Quality Index (1-100 score)
-      const qualityIndex = enrolledCount > 0
-        ? Math.min(
-            100,
-            Math.round(
-              completionRate * 0.4 +
-                (avgScore / 100) * 40 +
-                Math.max(0, 20 - Math.abs(pacingRatio - 1) * 20),
-            ),
-          )
-        : 100;
+      const qualityIndex =
+        enrolledCount > 0
+          ? Math.min(
+              100,
+              Math.round(
+                completionRate * 0.4 +
+                  (avgScore / 100) * 40 +
+                  Math.max(0, 20 - Math.abs(pacingRatio - 1) * 20),
+              ),
+            )
+          : 100;
 
       // Phase drop-off funnel
-      const phases =
-        course.phases && course.phases.length > 0
-          ? course.phases
-          : [];
+      const phases = course.phases && course.phases.length > 0 ? course.phases : [];
 
       const dropoffFunnel = phases.map((phase, pIdx) => {
-        const reachedCount =
-          enrolled.filter((cp) => {
-            if (cp.isCompleted) return true;
-            const compCount = cp.completedPhases?.length || 0;
-            return compCount >= pIdx || (cp.activePhaseIndex || 0) >= pIdx;
-          }).length;
+        const reachedCount = enrolled.filter((cp) => {
+          if (cp.isCompleted) return true;
+          const compCount = cp.completedPhases?.length || 0;
+          return compCount >= pIdx || (cp.activePhaseIndex || 0) >= pIdx;
+        }).length;
 
-        const retentionRate = enrolledCount > 0 ? Math.min(100, Math.round((reachedCount / enrolledCount) * 100)) : 0;
+        const retentionRate =
+          enrolledCount > 0 ? Math.min(100, Math.round((reachedCount / enrolledCount) * 100)) : 0;
         const avgTimeMinutes = Number(
-          ((actualAvgMinutes / (phases.length || 1)) * (phase.sourceView === 'debug' ? 1.4 : 0.9)).toFixed(
-            1,
-          ),
+          (
+            (actualAvgMinutes / (phases.length || 1)) *
+            (phase.sourceView === 'debug' ? 1.4 : 0.9)
+          ).toFixed(1),
         );
         const mistakeCount = Math.round(
-          (totalMistakes / (phases.length || 1)) *
-            (phase.sourceView === 'debug' ? 1.5 : 0.8),
+          (totalMistakes / (phases.length || 1)) * (phase.sourceView === 'debug' ? 1.5 : 0.8),
         );
 
-        const phaseTitle = typeof phase.title === 'object' && phase.title !== null
-          ? ((phase.title as any).hu || (phase.title as any).en || (phase.title as any).ro || `Fázis #${pIdx + 1}`)
-          : (phase.title || `Fázis #${pIdx + 1}`);
+        const phaseTitle =
+          typeof phase.title === 'object' && phase.title !== null
+            ? (phase.title as Record<string, string>).hu ||
+              (phase.title as Record<string, string>).en ||
+              (phase.title as Record<string, string>).ro ||
+              `Fázis #${pIdx + 1}`
+            : phase.title || `Fázis #${pIdx + 1}`;
 
         const isBottleneck = pIdx > 0 && retentionRate < 72 && enrolledCount > 0;
         const status =
           retentionRate >= 85 && mistakeCount <= 2
             ? ('excellent' as const)
             : isBottleneck
-            ? ('bottleneck' as const)
-            : mistakeCount >= 4
-            ? ('high_mistakes' as const)
-            : ('normal' as const);
+              ? ('bottleneck' as const)
+              : mistakeCount >= 4
+                ? ('high_mistakes' as const)
+                : ('normal' as const);
 
         const recommendation =
           status === 'bottleneck'
             ? 'Javasolt a fázis felosztása vagy kabala-segítség aktiválása a lemorzsolódás csökkentése érdekében.'
             : status === 'high_mistakes'
-            ? 'Érdemes megerősítő példát vagy részletesebb útmutatót adni ehhez a lépéshez.'
-            : 'A diákok stabilan és magabiztosan veszik ezt az akadályt.';
+              ? 'Érdemes megerősítő példát vagy részletesebb útmutatót adni ehhez a lépéshez.'
+              : 'A diákok stabilan és magabiztosan veszik ezt az akadályt.';
 
         return {
           phaseId: phase.phaseId,
@@ -1033,39 +1044,51 @@ export async function GET(req: Request) {
 
       // Detailed student roster for this course
       const studentsRoster = enrolled.map((cp, sIdx) => {
-        const u = typeof cp.user === 'object' && cp.user !== null ? (cp.user as any) : null;
+        const u =
+          typeof cp.user === 'object' && cp.user !== null
+            ? (cp.user as Record<string, unknown>)
+            : null;
         const uId = u?.id ? String(u.id) : String(cp.user);
-        const matchedUser = u || users.find((usr) => String(usr.id) === uId);
-        const firstName = matchedUser?.firstName || '';
-        const lastName = matchedUser?.lastName || '';
+        const matchedUser = (u || users.find((usr) => String(usr.id) === uId)) as
+          | Record<string, unknown>
+          | undefined;
+        const firstName = typeof matchedUser?.firstName === 'string' ? matchedUser.firstName : '';
+        const lastName = typeof matchedUser?.lastName === 'string' ? matchedUser.lastName : '';
+        const userEmail = typeof matchedUser?.email === 'string' ? matchedUser.email : '';
         const name =
           firstName || lastName
             ? `${firstName} ${lastName}`.trim()
-            : matchedUser?.email
-            ? matchedUser.email.split('@')[0]
-            : `Tanuló #${sIdx + 1}`;
-        const email = matchedUser?.email || `diak${sIdx + 1}@algorythmics.com`;
+            : userEmail
+              ? userEmail.split('@')[0]
+              : `Tanuló #${sIdx + 1}`;
+        const email = userEmail || `diak${sIdx + 1}@algorythmics.com`;
         const completedPhases = cp.completedPhases || [];
         const completedCount = completedPhases.length;
         const totalPhases = phases.length || 1;
-        const progressPercent = cp.isCompleted ? 100 : Math.min(100, Math.round((completedCount / totalPhases) * 100));
+        const progressPercent = cp.isCompleted
+          ? 100
+          : Math.min(100, Math.round((completedCount / totalPhases) * 100));
         const timeMinutes = Math.round((cp.totalTimeMs || 0) / 60000) || 1;
         const currentPhaseIdx = cp.activePhaseIndex || 0;
         const currentPhase = phases[currentPhaseIdx] || phases[0];
         const currentPhaseTitle = currentPhase
           ? typeof currentPhase.title === 'string'
             ? currentPhase.title
-            : (currentPhase.title as any)?.hu || currentPhase.phaseId
+            : (currentPhase.title as Record<string, string>)?.hu || currentPhase.phaseId
           : 'Kezdő lépés';
 
         const isStruggling = (cp.totalMistakes || 0) >= 3 && !cp.isCompleted;
-        const status = cp.isCompleted || progressPercent === 100
-          ? ('completed' as const)
-          : isStruggling
-          ? ('struggling' as const)
-          : ('in_progress' as const);
+        const status =
+          cp.isCompleted || progressPercent === 100
+            ? ('completed' as const)
+            : isStruggling
+              ? ('struggling' as const)
+              : ('in_progress' as const);
 
-        const detailed = (cp.detailedStats || {}) as Record<string, { mascotHelpCount?: number; improvedAfterMascot?: boolean }>;
+        const detailed = (cp.detailedStats || {}) as Record<
+          string,
+          { mascotHelpCount?: number; improvedAfterMascot?: boolean }
+        >;
         let studentMascotHelpCount = 0;
         let studentImprovedCount = 0;
         Object.values(detailed).forEach((st) => {
@@ -1095,9 +1118,13 @@ export async function GET(req: Request) {
         };
       });
 
-      const courseTitle = typeof course.title === 'object' && course.title !== null
-        ? ((course.title as any).hu || (course.title as any).en || (course.title as any).ro || courseSlug)
-        : (course.title || courseSlug);
+      const courseTitle =
+        typeof course.title === 'object' && course.title !== null
+          ? (course.title as Record<string, string>).hu ||
+            (course.title as Record<string, string>).en ||
+            (course.title as Record<string, string>).ro ||
+            courseSlug
+          : course.title || courseSlug;
 
       return {
         courseId: courseSlug,
@@ -1122,7 +1149,9 @@ export async function GET(req: Request) {
         strugglingCount: studentsRoster.filter((s) => s.status === 'struggling').length,
         inProgressCount: studentsRoster.filter((s) => s.status === 'in_progress').length,
         instructorName: (() => {
-          const ins = (course as any).instructor;
+          const ins = (course as Record<string, unknown>).instructor as
+            | { firstName?: string; lastName?: string; email?: string }
+            | undefined;
           if (!ins) return 'Rendszer / Admin';
           if (typeof ins === 'object' && ins !== null) {
             const name = `${ins.firstName || ''} ${ins.lastName || ''}`.trim();
@@ -1171,14 +1200,15 @@ export async function GET(req: Request) {
           };
         }
         phaseTypeStatsMap[type].totalPhases += 1;
-        const phaseMistakes = phases.length > 0 ? Math.round(courseTotalMistakes / phases.length) : 0;
+        const phaseMistakes =
+          phases.length > 0 ? Math.round(courseTotalMistakes / phases.length) : 0;
         phaseTypeStatsMap[type].totalMistakes += phaseMistakes;
         const phaseTimeSec =
           enrolled.length > 0 && phases.length > 0
             ? Math.round(courseTotalTimeSec / enrolled.length / phases.length)
             : course.estimatedMinutes
-            ? Math.round((course.estimatedMinutes * 60) / (phases.length || 1))
-            : 120;
+              ? Math.round((course.estimatedMinutes * 60) / (phases.length || 1))
+              : 120;
         phaseTypeStatsMap[type].totalTimesSec.push(phaseTimeSec);
         phaseTypeStatsMap[type].totalScores.push(courseAvgScore);
       });
@@ -1200,22 +1230,23 @@ export async function GET(req: Request) {
           type === 'quiz'
             ? 'Kvíz & Teszt'
             : type === 'create' || type === 'gap-fill'
-            ? 'Kódkiegészítés'
-            : type === 'debug'
-            ? 'Kód Hibakeresés'
-            : type === 'control'
-            ? 'Interaktív Irányítás'
-            : type === 'video'
-            ? 'Videó Alapozás'
-            : type === 'match'
-            ? 'Párosító Feladat'
-            : type === 'order'
-            ? 'Sorrendbe Rendező'
-            : type === 'final-challenge' || type === 'simulation'
-            ? 'Záró Szimuláció'
-            : 'Elmélet & Leírás',
+              ? 'Kódkiegészítés'
+              : type === 'debug'
+                ? 'Kód Hibakeresés'
+                : type === 'control'
+                  ? 'Interaktív Irányítás'
+                  : type === 'video'
+                    ? 'Videó Alapozás'
+                    : type === 'match'
+                      ? 'Párosító Feladat'
+                      : type === 'order'
+                        ? 'Sorrendbe Rendező'
+                        : type === 'final-challenge' || type === 'simulation'
+                          ? 'Záró Szimuláció'
+                          : 'Elmélet & Leírás',
         avgTimeSec: avgDuration,
-        avgMistakes: stats.totalPhases > 0 ? Number((stats.totalMistakes / stats.totalPhases).toFixed(1)) : 0,
+        avgMistakes:
+          stats.totalPhases > 0 ? Number((stats.totalMistakes / stats.totalPhases).toFixed(1)) : 0,
         completionRate: avgScore,
         avgScore,
         engagementScore: avgScore,
@@ -1329,7 +1360,11 @@ export async function GET(req: Request) {
       const courseTitle =
         typeof course.title === 'string'
           ? course.title
-          : (course.title as any)?.hu || (course.title as any)?.en || courseSlug;
+          : typeof course.title === 'object' && course.title !== null
+            ? (course.title as Record<string, string>).hu ||
+              (course.title as Record<string, string>).en ||
+              courseSlug
+            : courseSlug;
       const enrolled = filteredCourseProgress.filter(
         (cp) => cp.courseId === courseSlug || cp.courseId === String(course.id),
       );
@@ -1391,15 +1426,19 @@ export async function GET(req: Request) {
           const phaseTitle = matchingPhase
             ? typeof matchingPhase.title === 'string'
               ? matchingPhase.title
-              : (matchingPhase.title as any)?.hu || (matchingPhase.title as any)?.en || matchingPhase.phaseId
+              : (matchingPhase.title as Record<string, string>)?.hu ||
+                (matchingPhase.title as Record<string, string>)?.en ||
+                matchingPhase.phaseId
             : `Fázis #${gIdx + 1}`;
           const sourceView = matchingPhase?.sourceView || 'quiz';
           const avgDuration =
             evts.reduce((sum, e) => sum + (e.durationMs || 10000), 0) / evts.length / 1000;
-          const sampleExpected = evts.find((e) => e.eventData?.expectedAnswer || e.eventData?.correctAnswer)
-            ?.eventData as Record<string, unknown> | undefined;
-          const sampleActual = evts.find((e) => e.eventData?.selectedAnswer || e.eventData?.userAnswer)
-            ?.eventData as Record<string, unknown> | undefined;
+          const sampleExpected = evts.find(
+            (e) => e.eventData?.expectedAnswer || e.eventData?.correctAnswer,
+          )?.eventData as Record<string, unknown> | undefined;
+          const sampleActual = evts.find(
+            (e) => e.eventData?.selectedAnswer || e.eventData?.userAnswer,
+          )?.eventData as Record<string, unknown> | undefined;
 
           allMistakesAnalysis.push({
             id: `${courseSlug}-evt-${pId}-${gIdx}`,
@@ -1411,14 +1450,12 @@ export async function GET(req: Request) {
             difficulty: course.difficulty || 'Beginner',
             mistakeCount: evts.length,
             affectedLearnersPercent:
-              enrolledCount > 0 ? Math.min(100, Math.round((evts.length / enrolledCount) * 100)) : 30,
+              enrolledCount > 0
+                ? Math.min(100, Math.round((evts.length / enrolledCount) * 100))
+                : 30,
             avgHesitationSec: Number(avgDuration.toFixed(1)),
             confidenceType:
-              avgDuration < 4
-                ? 'blind_guess'
-                : avgDuration > 18
-                ? 'hesitant'
-                : 'misconception',
+              avgDuration < 4 ? 'blind_guess' : avgDuration > 18 ? 'hesitant' : 'misconception',
             title: `Tanulói elakadás a(z) "${phaseTitle}" feladatnál`,
             description: `A diákok több alkalommal választottak helytelen megoldást a(z) "${phaseTitle}" feladat végrehajtásakor.`,
             sampleExpected: sampleExpected
@@ -1431,10 +1468,10 @@ export async function GET(req: Request) {
               sourceView === 'quiz'
                 ? 'Érdemes átismételni az elméleti alapokat a csoporttal, vagy kiegészítő magyarázatot fűzni a teszthez.'
                 : sourceView === 'match'
-                ? 'Gyakoroltassuk a fogalmak pontos jelentését és definícióit konkrét példákon keresztül.'
-                : sourceView === 'order'
-                ? 'Vezessük végig a tanulókat a lépéssorrend logikai ok-okozati összefüggésein.'
-                : 'Gyakoroltassuk ezt a fázist közösen a következő órán.',
+                  ? 'Gyakoroltassuk a fogalmak pontos jelentését és definícióit konkrét példákon keresztül.'
+                  : sourceView === 'order'
+                    ? 'Vezessük végig a tanulókat a lépéssorrend logikai ok-okozati összefüggésein.'
+                    : 'Gyakoroltassuk ezt a fázist közösen a következő órán.',
           });
         });
       } else if (courseTotalMistakes > 0 && phases.length > 0) {
@@ -1451,11 +1488,14 @@ export async function GET(req: Request) {
           const phaseTitle =
             typeof targetPhase.title === 'string'
               ? targetPhase.title
-              : (targetPhase.title as any)?.hu ||
-                (targetPhase.title as any)?.en ||
+              : (targetPhase.title as Record<string, string>)?.hu ||
+                (targetPhase.title as Record<string, string>)?.en ||
                 targetPhase.phaseId;
           const sourceView = targetPhase.sourceView || 'quiz';
-          const mistakesForPhase = Math.max(1, Math.round(courseTotalMistakes / targetPhases.length));
+          const mistakesForPhase = Math.max(
+            1,
+            Math.round(courseTotalMistakes / targetPhases.length),
+          );
 
           allMistakesAnalysis.push({
             id: `${courseSlug}-phase-${targetPhase.phaseId || pIdx}`,
@@ -1477,22 +1517,22 @@ export async function GET(req: Request) {
               sourceView === 'quiz'
                 ? `A tanulók helytelen választ adtak meg a(z) "${phaseTitle}" tesztkérdéseire válaszolva.`
                 : sourceView === 'match'
-                ? `A fogalmak vagy funkciók összekötésekor bizonytalanodtak el a diákok a(z) "${phaseTitle}" fázisban.`
-                : sourceView === 'order'
-                ? `A munkafolyamat helyes lépéssorrendjének meghatározásakor vétettek hibát a tanulók.`
-                : sourceView === 'gap-fill'
-                ? `A hiányzó szavak vagy kifejezések pontos beillesztése okozott nehézséget a diákoknak.`
-                : `A feladat végrehajtása közben rögzített tanulói elakadás a(z) "${phaseTitle}" lépésnél.`,
+                  ? `A fogalmak vagy funkciók összekötésekor bizonytalanodtak el a diákok a(z) "${phaseTitle}" fázisban.`
+                  : sourceView === 'order'
+                    ? `A munkafolyamat helyes lépéssorrendjének meghatározásakor vétettek hibát a tanulók.`
+                    : sourceView === 'gap-fill'
+                      ? `A hiányzó szavak vagy kifejezések pontos beillesztése okozott nehézséget a diákoknak.`
+                      : `A feladat végrehajtása közben rögzített tanulói elakadás a(z) "${phaseTitle}" lépésnél.`,
             sampleExpected: undefined, // NEVER FABRICATE FAKE CODE
-            sampleActual: undefined,   // NEVER FABRICATE FAKE CODE
+            sampleActual: undefined, // NEVER FABRICATE FAKE CODE
             recommendation:
               sourceView === 'quiz'
                 ? 'Érdemes a következő óra elején röviden átismételni a témakör kulcsfogalmait és kérdéseit.'
                 : sourceView === 'match'
-                ? 'Hangsúlyozzuk a fogalompárok közötti logikai kapcsolatokat és különbségeket.'
-                : sourceView === 'order'
-                ? 'Vezessük végig a csoportot a folyamat logikai láncolatán lépésről lépésre.'
-                : 'Beszéljük át a feladat elvárásait és nyújtsunk kiegészítő magyarázatot.',
+                  ? 'Hangsúlyozzuk a fogalompárok közötti logikai kapcsolatokat és különbségeket.'
+                  : sourceView === 'order'
+                    ? 'Vezessük végig a csoportot a folyamat logikai láncolatán lépésről lépésre.'
+                    : 'Beszéljük át a feladat elvárásait és nyújtsunk kiegészítő magyarázatot.',
           });
         });
       }
@@ -1556,13 +1596,23 @@ export async function GET(req: Request) {
         totalCoursesCompleted = activeCourseData.completedCount;
         totalCompletedCombined = activeCourseData.completedCount;
         totalMistakesRecorded = activeCourseData.totalMistakes;
-        const totalSteps = activeCourseData.enrolledCount * (activeCourseData.dropoffFunnel.length || 1);
+        const totalSteps =
+          activeCourseData.enrolledCount * (activeCourseData.dropoffFunnel.length || 1);
         avgErrorRatePercent =
           totalSteps > 0
-            ? Math.min(100, Math.round((activeCourseData.totalMistakes / (activeCourseData.totalMistakes + totalSteps)) * 100))
+            ? Math.min(
+                100,
+                Math.round(
+                  (activeCourseData.totalMistakes / (activeCourseData.totalMistakes + totalSteps)) *
+                    100,
+                ),
+              )
             : 0;
         avgHesitationSeconds = Number(
-          ((activeCourseData.actualAvgMinutes * 60) / Math.max(1, (activeCourseData.dropoffFunnel.length || 1) * 3)).toFixed(1),
+          (
+            (activeCourseData.actualAvgMinutes * 60) /
+            Math.max(1, (activeCourseData.dropoffFunnel.length || 1) * 3)
+          ).toFixed(1),
         );
       }
     } else {
@@ -1571,20 +1621,31 @@ export async function GET(req: Request) {
           typeof cp.user === 'object' && cp.user !== null ? cp.user.id : cp.user,
         ),
       ).size;
-      const allCoursesTimeMs = filteredCourseProgress.reduce((s, cp) => s + (cp.totalTimeMs || 0), 0);
+      const allCoursesTimeMs = filteredCourseProgress.reduce(
+        (s, cp) => s + (cp.totalTimeMs || 0),
+        0,
+      );
       const allMinutes = Math.round(allCoursesTimeMs / 60000);
       totalRecordedHours = Number((allCoursesTimeMs / (1000 * 60 * 60)).toFixed(1));
       formattedTotalTime = allMinutes < 60 ? `${allMinutes} perc` : `${totalRecordedHours} óra`;
       totalCoursesCompleted = filteredCourseProgress.filter((cp) => cp.isCompleted === true).length;
       totalCompletedCombined = totalCoursesCompleted;
-      totalMistakesRecorded = filteredCourseProgress.reduce((s, cp) => s + (cp.totalMistakes || 0), 0);
+      totalMistakesRecorded = filteredCourseProgress.reduce(
+        (s, cp) => s + (cp.totalMistakes || 0),
+        0,
+      );
       const totalPhasesAttempted = coursesEvaluationList.reduce(
         (s, c) => s + c.enrolledCount * (c.dropoffFunnel?.length || 1),
         0,
       );
       avgErrorRatePercent =
         totalPhasesAttempted > 0
-          ? Math.min(100, Math.round((totalMistakesRecorded / (totalMistakesRecorded + totalPhasesAttempted)) * 100))
+          ? Math.min(
+              100,
+              Math.round(
+                (totalMistakesRecorded / (totalMistakesRecorded + totalPhasesAttempted)) * 100,
+              ),
+            )
           : 0;
       avgHesitationSeconds = Number((avgNormalDurationMs / 1000).toFixed(1));
     }
@@ -1726,11 +1787,17 @@ export async function GET(req: Request) {
       kpis: {
         activeLearnersCount,
         platformLearnersCount: new Set([
-          ...filteredCourseProgress.map((cp) => String(typeof cp.user === 'object' && cp.user !== null ? cp.user.id : cp.user)),
-          ...scopedProgressDocs.map((p) => String(typeof p.user === 'object' && p.user !== null ? p.user.id : p.user)),
+          ...filteredCourseProgress.map((cp) =>
+            String(typeof cp.user === 'object' && cp.user !== null ? cp.user.id : cp.user),
+          ),
+          ...scopedProgressDocs.map((p) =>
+            String(typeof p.user === 'object' && p.user !== null ? p.user.id : p.user),
+          ),
         ]).size,
         algorithmLearnersCount: new Set(
-          scopedProgressDocs.map((p) => String(typeof p.user === 'object' && p.user !== null ? p.user.id : p.user)),
+          scopedProgressDocs.map((p) =>
+            String(typeof p.user === 'object' && p.user !== null ? p.user.id : p.user),
+          ),
         ).size,
         totalRecordedHours,
         formattedTotalTime,

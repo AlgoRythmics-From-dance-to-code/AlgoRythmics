@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useLocale } from '../../../i18n/LocaleProvider';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
@@ -14,28 +13,13 @@ import {
   RefreshCw,
   Search,
   AlertTriangle,
-  Award,
-  Sparkles,
   Shield,
-  Layers,
   FileSpreadsheet,
   FileCode,
-  GraduationCap,
   Zap,
   BookOpen,
-  Filter,
-  ChevronRight,
-  HelpCircle,
   AlertCircle,
-  Lightbulb,
-  Check,
-  X,
-  Target,
-  ArrowRight,
-  TrendingDown,
-  TrendingUp,
   Video,
-  Code2,
 } from 'lucide-react';
 import { ROUTES, ROLES, ALGORITHMS } from '../../../../lib/constants';
 
@@ -92,7 +76,12 @@ interface AlgorithmStatisticsData {
   research?: {
     helpSeekingTransfer: {
       withHelp: { count: number; avgScore: number; avgSubmissions: number; completionRate: number };
-      autonomous: { count: number; avgScore: number; avgSubmissions: number; completionRate: number };
+      autonomous: {
+        count: number;
+        avgScore: number;
+        avgSubmissions: number;
+        completionRate: number;
+      };
       scoreDifferencePercent: number;
     };
     misconceptions: Array<{
@@ -123,7 +112,6 @@ interface AlgorithmStatisticsData {
 }
 
 export default function AdminAlgorithmsClient() {
-  const { t } = useLocale();
   const { data: session, status } = useSession();
   const user = session?.user as { role?: string } | undefined;
   const isAdminOrEditor = user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR;
@@ -251,7 +239,8 @@ export default function AdminAlgorithmsClient() {
             Admin Jogosultság Szükséges
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Az önálló algoritmusok rendszerszintű elemzése kizárólag adminisztrátorok számára érhető el.
+            Az önálló algoritmusok rendszerszintű elemzése kizárólag adminisztrátorok számára érhető
+            el.
           </p>
           <Link
             href={ROUTES.HOME}
@@ -288,10 +277,8 @@ export default function AdminAlgorithmsClient() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 transition-colors py-8 px-4 sm:px-6 lg:px-12">
       <div className="max-w-7xl mx-auto space-y-8">
-        
         {/* ━━━ TOP HEADER & SWITCH BAR ━━━ */}
         <div className="flex flex-col gap-6 pb-6 border-b border-gray-200 dark:border-white/10">
-          
           {/* View Switcher Pills (Course Stats vs Algorithm Stats) */}
           <div className="inline-flex items-center p-1 rounded-2xl bg-gray-200/70 dark:bg-white/5 border border-gray-200 dark:border-white/10 w-fit">
             <Link
@@ -376,7 +363,6 @@ export default function AdminAlgorithmsClient() {
 
           {/* ━━━ FILTER CONTROLS ━━━ */}
           <div className="flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 shadow-sm">
-            
             {/* Time Range Pills */}
             <div className="flex items-center bg-gray-100 dark:bg-white/5 p-1 rounded-xl border border-gray-200 dark:border-white/5">
               {[
@@ -388,7 +374,7 @@ export default function AdminAlgorithmsClient() {
                 <button
                   key={pill.id}
                   type="button"
-                  onClick={() => setTimeRange(pill.id as any)}
+                  onClick={() => setTimeRange(pill.id as '7d' | '30d' | 'all')}
                   className={`px-3 py-1.5 text-xs font-montserrat font-bold rounded-lg transition-all ${
                     timeRange === pill.id
                       ? 'bg-white dark:bg-[#269984] text-[#269984] dark:text-white shadow-sm'
@@ -559,11 +545,10 @@ export default function AdminAlgorithmsClient() {
                     const isHigh = algo.errorRate >= 30;
                     const isMedium = algo.errorRate >= 20 && algo.errorRate < 30;
 
-                    const formattedName =
-                      algo.algorithmId
-                        .split('-')
-                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                        .join(' ');
+                    const formattedName = algo.algorithmId
+                      .split('-')
+                      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                      .join(' ');
 
                     return (
                       <tr
@@ -575,7 +560,9 @@ export default function AdminAlgorithmsClient() {
                         }}
                       >
                         <td className="py-4 font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
-                          <span className="group-hover:text-purple-600 transition-colors">{formattedName}</span>
+                          <span className="group-hover:text-purple-600 transition-colors">
+                            {formattedName}
+                          </span>
                         </td>
                         <td className="py-4">
                           <div className="flex items-center gap-3">
@@ -584,8 +571,8 @@ export default function AdminAlgorithmsClient() {
                                 isHigh
                                   ? 'text-rose-600 dark:text-rose-400'
                                   : isMedium
-                                  ? 'text-amber-600 dark:text-amber-400'
-                                  : 'text-emerald-600 dark:text-emerald-400'
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : 'text-emerald-600 dark:text-emerald-400'
                               }`}
                             >
                               {algo.errorRate}%
@@ -593,7 +580,11 @@ export default function AdminAlgorithmsClient() {
                             <div className="w-24 bg-gray-200 dark:bg-white/10 rounded-full h-2 overflow-hidden">
                               <div
                                 className={`h-full rounded-full ${
-                                  isHigh ? 'bg-rose-500' : isMedium ? 'bg-amber-500' : 'bg-emerald-500'
+                                  isHigh
+                                    ? 'bg-rose-500'
+                                    : isMedium
+                                      ? 'bg-amber-500'
+                                      : 'bg-emerald-500'
                                 }`}
                                 style={{ width: `${algo.errorRate}%` }}
                               />
@@ -606,9 +597,7 @@ export default function AdminAlgorithmsClient() {
                         <td className="py-4 font-bold text-gray-900 dark:text-white">
                           {algo.totalMistakes}
                         </td>
-                        <td className="py-4 text-gray-500">
-                          {algo.hintsUsed}
-                        </td>
+                        <td className="py-4 text-gray-500">{algo.hintsUsed}</td>
                         <td className="py-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
                           {algo.completedCount} db
                         </td>
@@ -638,7 +627,9 @@ export default function AdminAlgorithmsClient() {
 
             {filteredBottlenecks.length === 0 ? (
               <div className="p-12 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl">
-                <p className="text-sm font-bold text-gray-600">Nincs rögzített elakadás ehhez a szűréshez.</p>
+                <p className="text-sm font-bold text-gray-600">
+                  Nincs rögzített elakadás ehhez a szűréshez.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -652,7 +643,11 @@ export default function AdminAlgorithmsClient() {
                         {b.algorithmId.replace('-', ' ')}
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 uppercase">
-                        {b.tab === 'control' ? 'Irányítás' : b.tab === 'create' ? 'Kódkiegészítés' : b.tab}
+                        {b.tab === 'control'
+                          ? 'Irányítás'
+                          : b.tab === 'create'
+                            ? 'Kódkiegészítés'
+                            : b.tab}
                       </span>
                     </div>
 
@@ -732,12 +727,14 @@ export default function AdminAlgorithmsClient() {
                 <strong className="text-purple-600 dark:text-purple-400 font-extrabold">
                   +{data?.pedagogy?.pesSlowdownPercentage ?? 58}%-kal több időt
                 </strong>{' '}
-                töltenek el a következő lépés átgondolásával ({Math.round((data?.pedagogy?.avgPostErrorDurationMs ?? 4200) / 1000 * 10) / 10} mp vs {Math.round((data?.pedagogy?.avgNormalDurationMs ?? 2600) / 1000 * 10) / 10} mp normál idő). Ez egészséges kognitív reflexiót jelez.
+                töltenek el a következő lépés átgondolásával (
+                {Math.round(((data?.pedagogy?.avgPostErrorDurationMs ?? 4200) / 1000) * 10) / 10} mp
+                vs {Math.round(((data?.pedagogy?.avgNormalDurationMs ?? 2600) / 1000) * 10) / 10} mp
+                normál idő). Ez egészséges kognitív reflexiót jelez.
               </p>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

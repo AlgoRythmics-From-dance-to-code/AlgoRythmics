@@ -42,7 +42,7 @@ export function sanitizePhase(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   phase: any,
   index: number,
-  courseSlug?: string
+  courseSlug?: string,
 ): Record<string, unknown> {
   const phaseNum = index + 1;
   const phaseId =
@@ -99,9 +99,18 @@ export function sanitizePhase(
     if (typeof phase.infoContent === 'object' && phase.infoContent !== null) {
       const infoObj = phase.infoContent as Record<string, unknown>;
       result.infoContent = {
-        hu: typeof infoObj.hu === 'object' && infoObj.hu !== null ? infoObj.hu : markdownToLexical(String(infoObj.hu || '')),
-        en: typeof infoObj.en === 'object' && infoObj.en !== null ? infoObj.en : markdownToLexical(String(infoObj.en || infoObj.hu || '')),
-        ro: typeof infoObj.ro === 'object' && infoObj.ro !== null ? infoObj.ro : markdownToLexical(String(infoObj.ro || infoObj.hu || '')),
+        hu:
+          typeof infoObj.hu === 'object' && infoObj.hu !== null
+            ? infoObj.hu
+            : markdownToLexical(String(infoObj.hu || '')),
+        en:
+          typeof infoObj.en === 'object' && infoObj.en !== null
+            ? infoObj.en
+            : markdownToLexical(String(infoObj.en || infoObj.hu || '')),
+        ro:
+          typeof infoObj.ro === 'object' && infoObj.ro !== null
+            ? infoObj.ro
+            : markdownToLexical(String(infoObj.ro || infoObj.hu || '')),
       };
     } else {
       const md = String(phase.infoContent || '');
@@ -116,11 +125,11 @@ export function sanitizePhase(
     result.quiz = phase.quiz.map((q: any) => ({
       question: toLocalized(q.question, 'Kérdés'),
       options: Array.isArray(q.options)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? q.options.map((opt: any) => ({
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          q.options.map((opt: any) => ({
             option: toLocalized(
               typeof opt === 'object' && opt?.option ? opt.option : opt,
-              'Válaszlehetőség'
+              'Válaszlehetőség',
             ),
           }))
         : [
@@ -246,25 +255,35 @@ export function sanitizeMascot(mascot: any): Record<string, unknown> {
     summonLabel: toLocalized(mascot.summonLabel, 'Segítség kérése'),
     idlePrompt: toLocalized(mascot.idlePrompt, 'Segíthetek a következő lépésben?'),
     mistakePrompt: toLocalized(mascot.mistakePrompt, 'Ne aggódj a hibák miatt!'),
-    welcomeMessages: Array.isArray(mascot.welcomeMessages) && mascot.welcomeMessages.length > 0
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ? mascot.welcomeMessages.map((m: any) => ({
-          text: toLocalized(typeof m === 'object' && m?.text ? m.text : m, 'Üdv a kurzuson!'),
-        }))
-      : [{ text: { hu: 'Üdv a kurzuson!', en: 'Welcome to the course!', ro: 'Bun venit la curs!' } }],
+    welcomeMessages:
+      Array.isArray(mascot.welcomeMessages) && mascot.welcomeMessages.length > 0
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          mascot.welcomeMessages.map((m: any) => ({
+            text: toLocalized(typeof m === 'object' && m?.text ? m.text : m, 'Üdv a kurzuson!'),
+          }))
+        : [
+            {
+              text: {
+                hu: 'Üdv a kurzuson!',
+                en: 'Welcome to the course!',
+                ro: 'Bun venit la curs!',
+              },
+            },
+          ],
     overconfidentMessages:
       Array.isArray(mascot.overconfidentMessages) && mascot.overconfidentMessages.length > 0
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? mascot.overconfidentMessages.map((m: any) => ({
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          mascot.overconfidentMessages.map((m: any) => ({
             text: toLocalized(typeof m === 'object' && m?.text ? m.text : m, 'Nézd át újra!'),
           }))
         : [{ text: { hu: 'Nézd át újra!', en: 'Take another look!', ro: 'Mai verifică!' } }],
-    streakMessages: Array.isArray(mascot.streakMessages) && mascot.streakMessages.length > 0
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ? mascot.streakMessages.map((m: any) => ({
-          text: toLocalized(typeof m === 'object' && m?.text ? m.text : m, 'Kiváló!'),
-        }))
-      : [{ text: { hu: 'Kiváló haladás!', en: 'Great streak!', ro: 'Excelent!' } }],
+    streakMessages:
+      Array.isArray(mascot.streakMessages) && mascot.streakMessages.length > 0
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          mascot.streakMessages.map((m: any) => ({
+            text: toLocalized(typeof m === 'object' && m?.text ? m.text : m, 'Kiváló!'),
+          }))
+        : [{ text: { hu: 'Kiváló haladás!', en: 'Great streak!', ro: 'Excelent!' } }],
   };
 }
 
@@ -304,7 +323,7 @@ export function buildPayloadCourseData(input: any): Record<string, unknown> {
     isOfficial: Boolean(isOfficial),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     phases: (Array.isArray(phases) ? phases : []).map((p: any, idx: number) =>
-      sanitizePhase(p, idx, slug)
+      sanitizePhase(p, idx, slug),
     ),
     mascot: sanitizeMascot(mascot),
     accentColor: accentColor || '#269984',

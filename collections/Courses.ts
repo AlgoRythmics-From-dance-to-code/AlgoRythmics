@@ -40,10 +40,7 @@ export const Courses: CollectionConfig = {
       if (user?.role === ROLES.ADMIN) return true;
       if (user?.role === ROLES.EDITOR) {
         return {
-          or: [
-            { visibility: { not_equals: 'private' } },
-            { instructor: { equals: user.id } },
-          ],
+          or: [{ visibility: { not_equals: 'private' } }, { instructor: { equals: user.id } }],
         };
       }
       return { visibility: { not_equals: 'private' } };
@@ -371,8 +368,7 @@ export const Courses: CollectionConfig = {
                   required: false,
                   defaultValue: 'general',
                   admin: {
-                    description:
-                      'Kapcsolódó algoritmus vagy technikai azonosító (opcionális).',
+                    description: 'Kapcsolódó algoritmus vagy technikai azonosító (opcionális).',
                   },
                 },
                 {
@@ -399,7 +395,11 @@ export const Courses: CollectionConfig = {
                   admin: {
                     description: 'Opcionális: A kabala egyedi bátorító mondata.',
                     condition: (data) =>
-                      Boolean(data?.mascot?.enabled && data?.mascot?.mode !== 'disabled' && data?.mascot?.mode !== 'ai-only'),
+                      Boolean(
+                        data?.mascot?.enabled &&
+                        data?.mascot?.mode !== 'disabled' &&
+                        data?.mascot?.mode !== 'ai-only',
+                      ),
                   },
                 },
                 {
@@ -410,7 +410,11 @@ export const Courses: CollectionConfig = {
                     description:
                       'Opcionális: Egyedi üzenet sok hiba esetén (pl. "Látom elakadtál ennél a résznél...").',
                     condition: (data) =>
-                      Boolean(data?.mascot?.enabled && data?.mascot?.mode !== 'disabled' && data?.mascot?.mode !== 'ai-only'),
+                      Boolean(
+                        data?.mascot?.enabled &&
+                        data?.mascot?.mode !== 'disabled' &&
+                        data?.mascot?.mode !== 'ai-only',
+                      ),
                   },
                 },
                 {
@@ -420,7 +424,11 @@ export const Courses: CollectionConfig = {
                   admin: {
                     description: 'A konkrét szakmai segítség/tipp a fázishoz.',
                     condition: (data) =>
-                      Boolean(data?.mascot?.enabled && data?.mascot?.mode !== 'disabled' && data?.mascot?.mode !== 'ai-only'),
+                      Boolean(
+                        data?.mascot?.enabled &&
+                        data?.mascot?.mode !== 'disabled' &&
+                        data?.mascot?.mode !== 'ai-only',
+                      ),
                   },
                 },
                 {
@@ -430,7 +438,11 @@ export const Courses: CollectionConfig = {
                   admin: {
                     description: 'Tipp vagy bátorítás, ha sokáig nem történik semmi a fázisban.',
                     condition: (data) =>
-                      Boolean(data?.mascot?.enabled && data?.mascot?.mode !== 'disabled' && data?.mascot?.mode !== 'ai-only'),
+                      Boolean(
+                        data?.mascot?.enabled &&
+                        data?.mascot?.mode !== 'disabled' &&
+                        data?.mascot?.mode !== 'ai-only',
+                      ),
                   },
                 },
                 {

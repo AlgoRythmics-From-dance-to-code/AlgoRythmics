@@ -39,8 +39,14 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
 
   const { trackEvent } = useAnalytics(undefined, 'match', courseId);
 
-  const initialLeft = phase.matching?.map((m, i) => ({ id: `L-${i}`, text: m.left })) || [];
-  const initialRight = phase.matching?.map((m, i) => ({ id: `R-${i}`, text: m.right })) || [];
+  const initialLeft = React.useMemo(
+    () => phase.matching?.map((m, i) => ({ id: `L-${i}`, text: m.left })) || [],
+    [phase.matching],
+  );
+  const initialRight = React.useMemo(
+    () => phase.matching?.map((m, i) => ({ id: `R-${i}`, text: m.right })) || [],
+    [phase.matching],
+  );
 
   // Shuffle right side for the challenge
   const [shuffledRight] = useState(() => [...initialRight].sort(() => Math.random() - 0.5));
@@ -65,7 +71,9 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
         matchesCount: matches.filter((m) => m.rightId !== null).length,
         confidence,
         isEvaluated: !!evaluation,
-        isCorrect: evaluation ? evaluation.category === 'mastery' || evaluation.category === 'lucky' : undefined,
+        isCorrect: evaluation
+          ? evaluation.category === 'mastery' || evaluation.category === 'lucky'
+          : undefined,
         isCompleted: !!isDone,
       }),
       [initialLeft, shuffledRight, selectedLeft, matches, confidence, evaluation, isDone],

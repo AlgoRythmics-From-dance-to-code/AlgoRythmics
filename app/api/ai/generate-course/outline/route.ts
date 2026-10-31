@@ -180,18 +180,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const {
-      topic,
-      difficulty = 'Beginner',
-      phasesCount = 5,
-      customInstruction,
-      model,
-    } = body;
+    const { topic, difficulty = 'Beginner', phasesCount = 5, customInstruction, model } = body;
 
     if (!topic || typeof topic !== 'string' || !topic.trim()) {
       return NextResponse.json(
         { error: 'Kérjük, adj meg egy algoritmus vagy programozási témakört!' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -232,7 +226,10 @@ Ensure the 'sourceAlgorithmId' logically fits the algorithm (e.g. 'insertion-sor
       title: sanitizeLocalizedField(rawOutline.title, topic.trim()),
       slug: (rawOutline.slug || topic.toLowerCase().replace(/[^a-z0-9]+/g, '-')).toLowerCase(),
       summary: sanitizeLocalizedField(rawOutline.summary, `${topic} interaktív tanfolyam`),
-      heroTagline: sanitizeLocalizedField(rawOutline.heroTagline, 'Sajátítsd el az algoritmust lépésről lépésre!'),
+      heroTagline: sanitizeLocalizedField(
+        rawOutline.heroTagline,
+        'Sajátítsd el az algoritmust lépésről lépésre!',
+      ),
       icon: rawOutline.icon || '📘',
       accentColor: rawOutline.accentColor || '#269984',
       illustrationAsset: rawOutline.illustrationAsset || 'algo_group_109.svg',
@@ -247,10 +244,13 @@ Ensure the 'sourceAlgorithmId' logically fits the algorithm (e.g. 'insertion-sor
             idleTriggerSeconds: rawOutline.mascot.idleTriggerSeconds || 30,
             mistakeTriggerCount: rawOutline.mascot.mistakeTriggerCount || 2,
             summonLabel: sanitizeLocalizedField(rawOutline.mascot.summonLabel, 'Segítség'),
-            idlePrompt: sanitizeLocalizedField(rawOutline.mascot.idlePrompt, 'Segíthetek a következő lépésben?'),
+            idlePrompt: sanitizeLocalizedField(
+              rawOutline.mascot.idlePrompt,
+              'Segíthetek a következő lépésben?',
+            ),
             mistakePrompt: sanitizeLocalizedField(
               rawOutline.mascot.mistakePrompt,
-              'Ne aggódj a hibák miatt, próbáld újra!'
+              'Ne aggódj a hibák miatt, próbáld újra!',
             ),
             welcomeMessages: (rawOutline.mascot.welcomeMessages || []).map((m) => ({
               text: sanitizeLocalizedField(m.text, 'Üdvözöllek!'),

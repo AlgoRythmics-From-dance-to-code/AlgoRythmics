@@ -213,7 +213,7 @@ export async function POST(request: Request) {
         const incomingPlayers = Array.isArray(roomState.players) ? roomState.players : [];
         if (
           existingHost &&
-          (!incomingPlayers.some((p: Player) => p.id === existingHost.id && p.isHost))
+          !incomingPlayers.some((p: Player) => p.id === existingHost.id && p.isHost)
         ) {
           return NextResponse.json(
             { error: 'Unauthorized: Cannot remove or demote room host during update' },

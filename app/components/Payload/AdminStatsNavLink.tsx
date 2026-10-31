@@ -40,7 +40,7 @@ export default function AdminStatsNavLink() {
       >
         Pedagógiai hőtérkép, hibagócok és diák-előrehaladás.
       </p>
-      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+      {}
       <a
         href="/admin-statistics"
         rel="external"
@@ -70,4 +70,3 @@ export default function AdminStatsNavLink() {
     </div>
   );
 }
-

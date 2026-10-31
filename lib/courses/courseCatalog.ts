@@ -182,7 +182,9 @@ function toPhases(value: unknown): CoursePhase[] {
             }))
           : undefined,
         debugCode: current.debugCode ? String(current.debugCode).replace(/\\n/g, '\n') : undefined,
-        expectedCode: current.expectedCode ? String(current.expectedCode).replace(/\\n/g, '\n') : undefined,
+        expectedCode: current.expectedCode
+          ? String(current.expectedCode).replace(/\\n/g, '\n')
+          : undefined,
         gapFillContent: extractString(current.gapFillContent),
         gapFillOptions: toStringArray(current.gapFillOptions, 'option'),
         gapFillSolutions: toStringArray(current.gapFillSolutions, 'solution'),

@@ -4,12 +4,29 @@ import { auth } from '../../../../../auth';
 import { getPayloadInstance } from '../../../../../lib/payload';
 import { ROLES } from '../../../../../lib/constants';
 
-import { toLocalized, sanitizePhase, sanitizeMascot } from '../../../../../lib/courses/studioHelper';
+import {
+  toLocalized,
+  sanitizePhase,
+  sanitizeMascot,
+} from '../../../../../lib/courses/studioHelper';
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+function extractInstructorId(item: unknown): string {
+  if (!item || typeof item !== 'object') return '';
+  const obj = item as Record<string, unknown>;
+  const inst = obj.instructor;
+  if (!inst) return '';
+  if (typeof inst === 'object' && inst !== null && 'id' in inst) {
+    return String((inst as { id: string | number }).id);
+  }
+  return String(inst);
+}
+
+function isCoursePrivate(item: unknown): boolean {
+  if (!item || typeof item !== 'object') return false;
+  return (item as Record<string, unknown>).visibility === 'private';
+}
+
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await auth();
@@ -32,15 +49,14 @@ export async function GET(
     }
 
     const currentUserId = user.id ? String(user.id) : '';
-    const instructorId = (course as any).instructor
-      ? typeof (course as any).instructor === 'object'
-        ? String((course as any).instructor.id)
-        : String((course as any).instructor)
-      : '';
-    const isPrivate = (course as any).visibility === 'private';
+    const instructorId = extractInstructorId(course);
+    const isPrivate = isCoursePrivate(course);
 
     if (isPrivate && user.role !== ROLES.ADMIN && instructorId !== currentUserId) {
-      return NextResponse.json({ error: 'Nincs jogosultságod megtekinteni ezt a privát kurzust!' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Nincs jogosultságod megtekinteni ezt a privát kurzust!' },
+        { status: 403 },
+      );
     }
 
     return NextResponse.json({ course });
@@ -51,10 +67,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await auth();
@@ -78,13 +91,12 @@ export async function PUT(
 
     // Permission check: Admin can edit any, Editor can edit only their own
     const currentUserId = user.id ? String(user.id) : '';
-    const instructorId = (existing as any).instructor
-      ? typeof (existing as any).instructor === 'object'
-        ? String((existing as any).instructor.id)
-        : String((existing as any).instructor)
-      : '';
+    const instructorId = extractInstructorId(existing);
     if (user.role !== ROLES.ADMIN && instructorId !== currentUserId) {
-      return NextResponse.json({ error: 'Nincs jogosultságod ezt a kurzust módosítani!' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Nincs jogosultságod ezt a kurzust módosítani!' },
+        { status: 403 },
+      );
     }
 
     const body = await req.json();
@@ -99,8 +111,9 @@ export async function PUT(
     }
     if (body.visibility !== undefined) updateData.visibility = body.visibility;
     if (body.phases !== undefined) {
-      updateData.phases = (Array.isArray(body.phases) ? body.phases : []).map((p: any, idx: number) =>
-        sanitizePhase(p, idx, existing.slug)
+      updateData.phases = (Array.isArray(body.phases) ? body.phases : []).map(
+        (p: unknown, idx: number) =>
+          sanitizePhase(p as Record<string, unknown>, idx, existing.slug),
       );
     }
     if (body.mascot !== undefined) updateData.mascot = sanitizeMascot(body.mascot);
@@ -117,7 +130,7 @@ export async function PUT(
     const updated = await payload.update({
       collection: 'courses',
       id,
-      data: updateData as any,
+      data: updateData as never,
       locale: 'all' as 'hu',
     });
 
@@ -138,10 +151,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await auth();
@@ -163,13 +173,12 @@ export async function DELETE(
     }
 
     const currentUserId = user.id ? String(user.id) : '';
-    const instructorId = (existing as any).instructor
-      ? typeof (existing as any).instructor === 'object'
-        ? String((existing as any).instructor.id)
-        : String((existing as any).instructor)
-      : '';
+    const instructorId = extractInstructorId(existing);
     if (user.role !== ROLES.ADMIN && instructorId !== currentUserId) {
-      return NextResponse.json({ error: 'Nincs jogosultságod ezt a kurzust törölni!' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Nincs jogosultságod ezt a kurzust törölni!' },
+        { status: 403 },
+      );
     }
 
     await payload.delete({

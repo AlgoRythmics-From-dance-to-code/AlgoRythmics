@@ -73,7 +73,10 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
   );
 
   return (
-    <div data-mascot-anchor="video-player" className="w-full max-w-[1000px] mx-auto overflow-hidden rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 bg-black aspect-video relative group">
+    <div
+      data-mascot-anchor="video-player"
+      className="w-full max-w-[1000px] mx-auto overflow-hidden rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 bg-black aspect-video relative group"
+    >
       {isPlaceholder ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-neutral-900 p-8 text-center">
           <div className="w-16 h-16 mb-4 rounded-full bg-[#269984] flex items-center justify-center">

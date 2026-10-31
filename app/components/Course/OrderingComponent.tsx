@@ -54,7 +54,9 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
         currentOrder: items.map((i) => i.text),
         confidence,
         isEvaluated: !!evaluation,
-        isCorrect: evaluation ? evaluation.category === 'mastery' || evaluation.category === 'lucky' : undefined,
+        isCorrect: evaluation
+          ? evaluation.category === 'mastery' || evaluation.category === 'lucky'
+          : undefined,
         isCompleted: !!isDone,
       }),
       [items, confidence, evaluation, isDone],

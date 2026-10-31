@@ -26,7 +26,8 @@ export default function RoleBodyClass() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('locale') || localStorage.getItem('algorythmics_locale') || 'hu';
+      const saved =
+        localStorage.getItem('locale') || localStorage.getItem('algorythmics_locale') || 'hu';
       setLocale(saved);
     }
   }, []);

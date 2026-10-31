@@ -105,7 +105,17 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
         mistakes,
         simulationOutcome: simulation.isCorrect ? 'correct' : simulation.status,
       }),
-      [algorithmId, totalBlanks, blankStates, activeBlank, blanksMap, helpActive, isComplete, mistakes, simulation],
+      [
+        algorithmId,
+        totalBlanks,
+        blankStates,
+        activeBlank,
+        blanksMap,
+        helpActive,
+        isComplete,
+        mistakes,
+        simulation,
+      ],
     ),
   );
 
@@ -423,7 +433,10 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
       <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Code Editor Column */}
         <div className="lg:col-span-7 flex flex-col gap-4">
-          <div data-mascot-anchor="create-editor" className="rounded-2xl bg-[#1e1e2e] dark:bg-[#0d0d0d] border border-gray-200 dark:border-white/5 shadow-xl overflow-hidden">
+          <div
+            data-mascot-anchor="create-editor"
+            className="rounded-2xl bg-[#1e1e2e] dark:bg-[#0d0d0d] border border-gray-200 dark:border-white/5 shadow-xl overflow-hidden"
+          >
             <div className="flex items-center gap-2 px-4 py-3 bg-[#181825] dark:bg-[#080808] border-b border-white/5">
               <div className="w-3 h-3 rounded-full bg-red-500/60" />
               <div className="w-3 h-3 rounded-full bg-yellow-500/60" />

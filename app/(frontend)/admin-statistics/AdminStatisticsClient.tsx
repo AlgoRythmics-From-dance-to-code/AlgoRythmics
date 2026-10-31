@@ -16,14 +16,10 @@ import {
   Filter,
   RefreshCw,
   ShieldAlert,
-  TrendingDown,
-  TrendingUp,
   Layers,
-  Award,
   Search,
   ChevronRight,
   HelpCircle,
-  Activity,
   Download,
   BookOpen,
   Code2,
@@ -36,12 +32,8 @@ import {
   Lightbulb,
   ArrowUpRight,
   Flame,
-  Eye,
-  SlidersHorizontal,
-  UserCheck,
   AlertCircle,
   LayoutGrid,
-  ListFilter,
 } from 'lucide-react';
 
 import ActivityTimelineChart, { type TimelineDataPoint } from './components/ActivityTimelineChart';
@@ -265,7 +257,11 @@ interface StatisticsResponse {
     coursesList: CourseEvalItem[];
     allCoursesList?: CourseEvalItem[];
     phaseTypeEffectiveness: PhaseEffectivenessItem[];
-    confidenceTrajectory: Array<{ phaseOrder: string; highConfidenceRate: number; accuracyRate: number }>;
+    confidenceTrajectory: Array<{
+      phaseOrder: string;
+      highConfidenceRate: number;
+      accuracyRate: number;
+    }>;
     allStudentsRoster?: StudentRosterItem[];
   };
   algorithmHesitationList: AlgoHesitationItem[];
@@ -359,10 +355,10 @@ const PHASE_TYPE_META: Record<
 
 type DashboardViewMode =
   | 'platform_overview' // Admin big picture: Courses + Standalone Algorithms + Search + Pedagogy
-  | 'teacher_overview'  // General Courses Overview (All courses comparison + student status + overview)
-  | 'by_course'         // Course-by-course deep dive (Single course funnel + roster + mistakes + pacing)
-  | 'algorithms_deep'   // Standalone Algorithms Deep Dive (Heatmap + Bottlenecks + Cognitive Research)
-  | 'mistakes_explorer';// Searchable Mistakes & Students Explorer
+  | 'teacher_overview' // General Courses Overview (All courses comparison + student status + overview)
+  | 'by_course' // Course-by-course deep dive (Single course funnel + roster + mistakes + pacing)
+  | 'algorithms_deep' // Standalone Algorithms Deep Dive (Heatmap + Bottlenecks + Cognitive Research)
+  | 'mistakes_explorer'; // Searchable Mistakes & Students Explorer
 
 export default function AdminStatisticsClient() {
   const { data: session, status } = useSession();
@@ -383,11 +379,15 @@ export default function AdminStatisticsClient() {
 
   // Course-by-course state
   const [activeCourseId, setActiveCourseId] = useState<string>('');
-  const [courseSection, setCourseSection] = useState<'all' | 'funnel' | 'students' | 'mistakes'>('all');
+  const [courseSection, setCourseSection] = useState<'all' | 'funnel' | 'students' | 'mistakes'>(
+    'all',
+  );
 
   // Student & Mistake search/filter states
   const [studentSearchQuery, setStudentSearchQuery] = useState<string>('');
-  const [studentStatusFilter, setStudentStatusFilter] = useState<'all' | 'struggling' | 'in_progress' | 'completed'>('all');
+  const [studentStatusFilter, setStudentStatusFilter] = useState<
+    'all' | 'struggling' | 'in_progress' | 'completed'
+  >('all');
   const [mistakeSearchQuery, setMistakeSearchQuery] = useState<string>('');
   const [expandedHotspotId, setExpandedHotspotId] = useState<string | null>(null);
 
@@ -398,7 +398,7 @@ export default function AdminStatisticsClient() {
 
   const isAdmin = data?.scope?.isAdmin ?? sessionUser?.role === ROLES.ADMIN;
   const isTeacher = data?.scope?.isTeacher ?? sessionUser?.role === ROLES.EDITOR;
-  const isAdminOrEditor = isAdmin || isTeacher || isAuthorized === true;
+  const _isAdminOrEditor = isAdmin || isTeacher || isAuthorized === true;
 
   // Set default viewMode once user role is known
   useEffect(() => {
@@ -436,8 +436,12 @@ export default function AdminStatisticsClient() {
       setIsAuthorized(true);
       setData(json);
 
-      const list = json.coursesEvaluation?.allCoursesList || json.coursesEvaluation?.coursesList || [];
-      if (list.length > 0 && (!activeCourseId || !list.some((c) => c.courseId === activeCourseId))) {
+      const list =
+        json.coursesEvaluation?.allCoursesList || json.coursesEvaluation?.coursesList || [];
+      if (
+        list.length > 0 &&
+        (!activeCourseId || !list.some((c) => c.courseId === activeCourseId))
+      ) {
         setActiveCourseId(list[0].courseId);
       }
     } catch (err: unknown) {
@@ -465,7 +469,10 @@ export default function AdminStatisticsClient() {
   );
 
   const allStudentsRoster = useMemo(() => {
-    if (data?.coursesEvaluation?.allStudentsRoster && data.coursesEvaluation.allStudentsRoster.length > 0) {
+    if (
+      data?.coursesEvaluation?.allStudentsRoster &&
+      data.coursesEvaluation.allStudentsRoster.length > 0
+    ) {
       return data.coursesEvaluation.allStudentsRoster;
     }
     return coursesList.flatMap((c) =>
@@ -486,7 +493,9 @@ export default function AdminStatisticsClient() {
     if (coursesList.length === 0) return 0;
     const withStudents = coursesList.filter((c) => c.enrolledCount > 0);
     if (withStudents.length === 0) return 0;
-    return Math.round(withStudents.reduce((acc, c) => acc + c.completionRate, 0) / withStudents.length);
+    return Math.round(
+      withStudents.reduce((acc, c) => acc + c.completionRate, 0) / withStudents.length,
+    );
   }, [coursesList]);
 
   const normalizedHotspots = useMemo((): MistakeHotspotItem[] => {
@@ -502,7 +511,12 @@ export default function AdminStatisticsClient() {
         phaseTitle: m.title || m.phaseTitle,
         phaseType: (m.sourceView as MistakeHotspotItem['phaseType']) || 'quiz',
         mistakeCount: m.mistakeCount,
-        affectedStudents: Math.max(1, Math.round((m.affectedLearnersPercent / 100) * Math.max(1, allStudentsRoster.length || 5))),
+        affectedStudents: Math.max(
+          1,
+          Math.round(
+            (m.affectedLearnersPercent / 100) * Math.max(1, allStudentsRoster.length || 5),
+          ),
+        ),
         avgRetryCount: 1.8,
         avgTimeOnTaskSec: m.avgHesitationSec,
         topWrongAnswers: m.sampleActual
@@ -541,7 +555,16 @@ export default function AdminStatisticsClient() {
   const handleExportCSV = () => {
     if (!data) return;
     const rows: string[][] = [
-      ['Típus', 'Azonosító / Kurzus', 'Cím / Diák', 'Státusz / Nehézség', 'Beiratkozók / Haladás', 'Teljesítés / Pontszám', 'Hibák száma', 'Idő (perc)'],
+      [
+        'Típus',
+        'Azonosító / Kurzus',
+        'Cím / Diák',
+        'Státusz / Nehézség',
+        'Beiratkozók / Haladás',
+        'Teljesítés / Pontszám',
+        'Hibák száma',
+        'Idő (perc)',
+      ],
     ];
 
     coursesList.forEach((c) => {
@@ -562,7 +585,11 @@ export default function AdminStatisticsClient() {
         'Diák haladás',
         `"${(s.courseTitle || '').replace(/"/g, '""')}"`,
         `"${s.name.replace(/"/g, '""')} (${s.email})"`,
-        s.status === 'completed' ? 'Teljesítette' : s.status === 'struggling' ? 'Elakadt' : 'Folyamatban',
+        s.status === 'completed'
+          ? 'Teljesítette'
+          : s.status === 'struggling'
+            ? 'Elakadt'
+            : 'Folyamatban',
         `${s.progressPercent}% (${s.completedPhasesCount}/${s.totalPhasesCount})`,
         `${s.points} pt`,
         `${s.totalMistakes}`,
@@ -585,7 +612,8 @@ export default function AdminStatisticsClient() {
       });
     }
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + rows.map((e) => e.join(';')).join('\n');
+    const csvContent =
+      'data:text/csv;charset=utf-8,\uFEFF' + rows.map((e) => e.join(';')).join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -681,7 +709,8 @@ export default function AdminStatisticsClient() {
                 {isAdmin && selectedInstructorId !== 'all' && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-500/20">
                     Szűrve tanár szerint:{' '}
-                    {data?.scope?.instructorsList?.find((i) => i.id === selectedInstructorId)?.name || 'Kiválasztott tanár'}
+                    {data?.scope?.instructorsList?.find((i) => i.id === selectedInstructorId)
+                      ?.name || 'Kiválasztott tanár'}
                     <button
                       onClick={() => setSelectedInstructorId('all')}
                       className="ml-1 underline hover:no-underline"
@@ -734,10 +763,18 @@ export default function AdminStatisticsClient() {
                   onChange={(e) => setTimeRange(e.target.value)}
                   className="bg-transparent text-xs font-bold text-gray-800 dark:text-gray-200 focus:outline-none cursor-pointer"
                 >
-                  <option value="all" className="dark:bg-[#1a1a1a]">Összes idő</option>
-                  <option value="7d" className="dark:bg-[#1a1a1a]">Utolsó 7 nap</option>
-                  <option value="30d" className="dark:bg-[#1a1a1a]">Utolsó 30 nap</option>
-                  <option value="90d" className="dark:bg-[#1a1a1a]">Utolsó 90 nap</option>
+                  <option value="all" className="dark:bg-[#1a1a1a]">
+                    Összes idő
+                  </option>
+                  <option value="7d" className="dark:bg-[#1a1a1a]">
+                    Utolsó 7 nap
+                  </option>
+                  <option value="30d" className="dark:bg-[#1a1a1a]">
+                    Utolsó 30 nap
+                  </option>
+                  <option value="90d" className="dark:bg-[#1a1a1a]">
+                    Utolsó 90 nap
+                  </option>
                 </select>
               </div>
 
@@ -789,7 +826,9 @@ export default function AdminStatisticsClient() {
                     <div className="text-xs font-extrabold truncate">1. Nagy Áttekintés</div>
                     <div
                       className={`text-[10px] truncate ${
-                        currentView === 'platform_overview' ? 'text-indigo-100' : 'text-gray-500 dark:text-gray-400'
+                        currentView === 'platform_overview'
+                          ? 'text-indigo-100'
+                          : 'text-gray-500 dark:text-gray-400'
                       }`}
                     >
                       Kurzusok + Algoritmusok
@@ -822,7 +861,9 @@ export default function AdminStatisticsClient() {
                   </div>
                   <div
                     className={`text-[10px] truncate ${
-                      currentView === 'teacher_overview' ? 'text-emerald-100' : 'text-gray-500 dark:text-gray-400'
+                      currentView === 'teacher_overview'
+                        ? 'text-emerald-100'
+                        : 'text-gray-500 dark:text-gray-400'
                     }`}
                   >
                     Minden kurzus & diákok
@@ -854,7 +895,9 @@ export default function AdminStatisticsClient() {
                   </div>
                   <div
                     className={`text-[10px] truncate ${
-                      currentView === 'by_course' ? 'text-emerald-100' : 'text-gray-500 dark:text-gray-400'
+                      currentView === 'by_course'
+                        ? 'text-emerald-100'
+                        : 'text-gray-500 dark:text-gray-400'
                     }`}
                   >
                     Tölcsér, diákok, hibák 1 helyen
@@ -885,7 +928,9 @@ export default function AdminStatisticsClient() {
                     <div className="text-xs font-extrabold truncate">4. Sima Algoritmusok</div>
                     <div
                       className={`text-[10px] truncate ${
-                        currentView === 'algorithms_deep' ? 'text-purple-100' : 'text-gray-500 dark:text-gray-400'
+                        currentView === 'algorithms_deep'
+                          ? 'text-purple-100'
+                          : 'text-gray-500 dark:text-gray-400'
                       }`}
                     >
                       Hőtérkép, lépések & kogníció
@@ -918,7 +963,9 @@ export default function AdminStatisticsClient() {
                   </div>
                   <div
                     className={`text-[10px] truncate ${
-                      currentView === 'mistakes_explorer' ? 'text-rose-100' : 'text-gray-500 dark:text-gray-400'
+                      currentView === 'mistakes_explorer'
+                        ? 'text-rose-100'
+                        : 'text-gray-500 dark:text-gray-400'
                     }`}
                   >
                     Tipikus hibák & diagnózis
@@ -956,13 +1003,25 @@ export default function AdminStatisticsClient() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold text-gray-900 dark:text-white font-montserrat">
-                    {loading ? '...' : data?.kpis?.platformLearnersCount || data?.kpis?.activeLearnersCount || 0}
+                    {loading
+                      ? '...'
+                      : data?.kpis?.platformLearnersCount || data?.kpis?.activeLearnersCount || 0}
                   </span>
                   <span className="text-xs font-semibold text-gray-500">egyedi diák</span>
                 </div>
                 <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-xs text-gray-500">
-                  <span>📚 Kurzusokon: <strong className="text-gray-800 dark:text-gray-200">{data?.kpis?.activeLearnersCount ?? 0} fő</strong></span>
-                  <span>⚡ Algoritmusokon: <strong className="text-gray-800 dark:text-gray-200">{data?.kpis?.algorithmLearnersCount ?? 0} fő</strong></span>
+                  <span>
+                    📚 Kurzusokon:{' '}
+                    <strong className="text-gray-800 dark:text-gray-200">
+                      {data?.kpis?.activeLearnersCount ?? 0} fő
+                    </strong>
+                  </span>
+                  <span>
+                    ⚡ Algoritmusokon:{' '}
+                    <strong className="text-gray-800 dark:text-gray-200">
+                      {data?.kpis?.algorithmLearnersCount ?? 0} fő
+                    </strong>
+                  </span>
                 </div>
               </div>
 
@@ -980,13 +1039,24 @@ export default function AdminStatisticsClient() {
                   <span className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 font-montserrat">
                     {loading
                       ? '...'
-                      : (data?.kpis?.totalCoursesCompleted ?? 0) + (data?.kpis?.totalAlgorithmsCompleted ?? 0)}
+                      : (data?.kpis?.totalCoursesCompleted ?? 0) +
+                        (data?.kpis?.totalAlgorithmsCompleted ?? 0)}
                   </span>
                   <span className="text-xs font-semibold text-gray-500">befejezett modul</span>
                 </div>
                 <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-xs text-gray-500">
-                  <span>🎓 Kurzusok: <strong className="text-emerald-600 dark:text-emerald-400">{data?.kpis?.totalCoursesCompleted ?? 0} db</strong></span>
-                  <span>⚡ Sima algoritmusok: <strong className="text-purple-600 dark:text-purple-400">{data?.kpis?.totalAlgorithmsCompleted ?? 0} db</strong></span>
+                  <span>
+                    🎓 Kurzusok:{' '}
+                    <strong className="text-emerald-600 dark:text-emerald-400">
+                      {data?.kpis?.totalCoursesCompleted ?? 0} db
+                    </strong>
+                  </span>
+                  <span>
+                    ⚡ Sima algoritmusok:{' '}
+                    <strong className="text-purple-600 dark:text-purple-400">
+                      {data?.kpis?.totalAlgorithmsCompleted ?? 0} db
+                    </strong>
+                  </span>
                 </div>
               </div>
 
@@ -1002,12 +1072,25 @@ export default function AdminStatisticsClient() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold text-gray-900 dark:text-white font-montserrat">
-                    {loading ? '...' : data?.kpis?.formattedTotalTime || `${data?.kpis?.totalRecordedHours ?? 0} óra`}
+                    {loading
+                      ? '...'
+                      : data?.kpis?.formattedTotalTime ||
+                        `${data?.kpis?.totalRecordedHours ?? 0} óra`}
                   </span>
                 </div>
                 <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-xs text-gray-500">
-                  <span>⏱️ Átl. reakcióidő: <strong className="text-gray-800 dark:text-gray-200">{data?.kpis?.avgHesitationSeconds ?? 0} mp/lépés</strong></span>
-                  <span>🧠 Hiba utáni lassulás: <strong className="text-purple-600">+{data?.pedagogy?.pesSlowdownPercentage ?? 0}%</strong></span>
+                  <span>
+                    ⏱️ Átl. reakcióidő:{' '}
+                    <strong className="text-gray-800 dark:text-gray-200">
+                      {data?.kpis?.avgHesitationSeconds ?? 0} mp/lépés
+                    </strong>
+                  </span>
+                  <span>
+                    🧠 Hiba utáni lassulás:{' '}
+                    <strong className="text-purple-600">
+                      +{data?.pedagogy?.pesSlowdownPercentage ?? 0}%
+                    </strong>
+                  </span>
                 </div>
               </div>
 
@@ -1030,8 +1113,14 @@ export default function AdminStatisticsClient() {
                   </span>
                 </div>
                 <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-xs text-gray-500">
-                  <span>🔥 Azonosított hibagóc: <strong className="text-rose-600">{normalizedHotspots.length} db</strong></span>
-                  <span>⚠️ Elakadt diák: <strong className="text-amber-600">{totalStrugglingStudents} fő</strong></span>
+                  <span>
+                    🔥 Azonosított hibagóc:{' '}
+                    <strong className="text-rose-600">{normalizedHotspots.length} db</strong>
+                  </span>
+                  <span>
+                    ⚠️ Elakadt diák:{' '}
+                    <strong className="text-amber-600">{totalStrugglingStudents} fő</strong>
+                  </span>
                 </div>
               </div>
 
@@ -1047,13 +1136,23 @@ export default function AdminStatisticsClient() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold text-[#269984] font-montserrat">
-                    -{loading ? '...' : data?.pedagogy?.videoErrorReductionPercent ?? 62}%
+                    -{loading ? '...' : (data?.pedagogy?.videoErrorReductionPercent ?? 62)}%
                   </span>
                   <span className="text-xs font-semibold text-gray-500">kevesebb hiba</span>
                 </div>
                 <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-xs text-gray-500">
-                  <span>Videóval: <strong className="text-emerald-600">{data?.pedagogy?.avgMistakesWithVideo ?? 1.2} hiba</strong></span>
-                  <span>Videó nélkül: <strong className="text-rose-600">{data?.pedagogy?.avgMistakesWithoutVideo ?? 3.1} hiba</strong></span>
+                  <span>
+                    Videóval:{' '}
+                    <strong className="text-emerald-600">
+                      {data?.pedagogy?.avgMistakesWithVideo ?? 1.2} hiba
+                    </strong>
+                  </span>
+                  <span>
+                    Videó nélkül:{' '}
+                    <strong className="text-rose-600">
+                      {data?.pedagogy?.avgMistakesWithoutVideo ?? 3.1} hiba
+                    </strong>
+                  </span>
                 </div>
               </div>
 
@@ -1074,8 +1173,15 @@ export default function AdminStatisticsClient() {
                   <span className="text-xs font-semibold text-gray-500">sikeres önkorrekció</span>
                 </div>
                 <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-xs text-gray-500">
-                  <span>Elsőre helyes: <strong className="text-gray-800 dark:text-gray-200">{100 - (data?.kpis?.avgErrorRatePercent ?? 24)}%</strong></span>
-                  <span>Átl. próba: <strong className="text-gray-800 dark:text-gray-200">1.8x</strong></span>
+                  <span>
+                    Elsőre helyes:{' '}
+                    <strong className="text-gray-800 dark:text-gray-200">
+                      {100 - (data?.kpis?.avgErrorRatePercent ?? 24)}%
+                    </strong>
+                  </span>
+                  <span>
+                    Átl. próba: <strong className="text-gray-800 dark:text-gray-200">1.8x</strong>
+                  </span>
                 </div>
               </div>
             </div>
@@ -1118,7 +1224,8 @@ export default function AdminStatisticsClient() {
                       {coursesList.map((course) => {
                         const struggling =
                           course.strugglingCount ??
-                          (course.studentsRoster || []).filter((s) => s.status === 'struggling').length;
+                          (course.studentsRoster || []).filter((s) => s.status === 'struggling')
+                            .length;
                         return (
                           <div
                             key={course.courseId}
@@ -1155,13 +1262,17 @@ export default function AdminStatisticsClient() {
 
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                               <div>
-                                <span className="text-gray-400 block text-[10px]">Beiratkozva / Végzett</span>
+                                <span className="text-gray-400 block text-[10px]">
+                                  Beiratkozva / Végzett
+                                </span>
                                 <span className="font-extrabold text-gray-800 dark:text-gray-200">
                                   {course.enrolledCount} fő / {course.completedCount} fő
                                 </span>
                               </div>
                               <div>
-                                <span className="text-gray-400 block text-[10px]">Teljesítési arány</span>
+                                <span className="text-gray-400 block text-[10px]">
+                                  Teljesítési arány
+                                </span>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <div className="w-16 h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
                                     <div
@@ -1169,19 +1280,26 @@ export default function AdminStatisticsClient() {
                                       style={{ width: `${course.completionRate}%` }}
                                     />
                                   </div>
-                                  <span className="font-extrabold text-[#269984]">{course.completionRate}%</span>
+                                  <span className="font-extrabold text-[#269984]">
+                                    {course.completionRate}%
+                                  </span>
                                 </div>
                               </div>
                               <div>
-                                <span className="text-gray-400 block text-[10px]">Időarány (Terv vs Valós)</span>
+                                <span className="text-gray-400 block text-[10px]">
+                                  Időarány (Terv vs Valós)
+                                </span>
                                 <span className="font-bold text-gray-700 dark:text-gray-300">
                                   {course.estimatedMinutes}p → {course.actualAvgMinutes}p
                                 </span>
                               </div>
                               <div>
-                                <span className="text-gray-400 block text-[10px]">Összes hiba / Minőség</span>
+                                <span className="text-gray-400 block text-[10px]">
+                                  Összes hiba / Minőség
+                                </span>
                                 <span className="font-bold text-gray-800 dark:text-gray-200">
-                                  <span className="text-rose-500">{course.totalMistakes} hiba</span> • {course.qualityIndex}/100
+                                  <span className="text-rose-500">{course.totalMistakes} hiba</span>{' '}
+                                  • {course.qualityIndex}/100
                                 </span>
                               </div>
                             </div>
@@ -1193,7 +1311,9 @@ export default function AdminStatisticsClient() {
                 </div>
 
                 <div className="pt-3 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-xs text-gray-500">
-                  <span>Kattints bármelyik kurzusra a fázis-tölcsér és a diákok megtekintéséhez.</span>
+                  <span>
+                    Kattints bármelyik kurzusra a fázis-tölcsér és a diákok megtekintéséhez.
+                  </span>
                   <button
                     onClick={() => setViewMode('teacher_overview')}
                     className="font-bold text-[#269984] hover:underline"
@@ -1209,7 +1329,8 @@ export default function AdminStatisticsClient() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                        2. Pillér • Sima Algoritmusok ({data?.algorithmHesitationList?.length || 0} db)
+                        2. Pillér • Sima Algoritmusok ({data?.algorithmHesitationList?.length || 0}{' '}
+                        db)
                       </span>
                       <h2 className="text-lg font-extrabold text-gray-900 dark:text-white font-montserrat flex items-center gap-2">
                         <Zap className="w-5 h-5 text-purple-500" />
@@ -1244,7 +1365,11 @@ export default function AdminStatisticsClient() {
                             </span>
                             <span
                               className={`font-extrabold ${
-                                isHard ? 'text-rose-500' : isMed ? 'text-amber-500' : 'text-emerald-500'
+                                isHard
+                                  ? 'text-rose-500'
+                                  : isMed
+                                    ? 'text-amber-500'
+                                    : 'text-emerald-500'
                               }`}
                             >
                               {algo.errorRate}% hibaarány
@@ -1329,16 +1454,18 @@ export default function AdminStatisticsClient() {
                         Minden eddigi keresésre volt találat!
                       </p>
                     ) : (
-                      (data?.searchAnalytics?.zeroResultSearches || []).slice(0, 5).map((item, i) => (
-                        <div key={i} className="flex items-center justify-between text-xs">
-                          <span className="font-semibold text-gray-800 dark:text-gray-200 truncate">
-                            “{item.query}”
-                          </span>
-                          <span className="px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400 font-bold">
-                            {item.count}x (0 találat)
-                          </span>
-                        </div>
-                      ))
+                      (data?.searchAnalytics?.zeroResultSearches || [])
+                        .slice(0, 5)
+                        .map((item, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-gray-800 dark:text-gray-200 truncate">
+                              “{item.query}”
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400 font-bold">
+                              {item.count}x (0 találat)
+                            </span>
+                          </div>
+                        ))
                     )}
                   </div>
                 </div>
@@ -1426,7 +1553,7 @@ export default function AdminStatisticsClient() {
                   </div>
                 </div>
                 <div className="text-3xl font-extrabold text-gray-900 dark:text-white font-montserrat">
-                  {loading ? '...' : data?.kpis?.activeLearnersCount ?? 0} fő
+                  {loading ? '...' : (data?.kpis?.activeLearnersCount ?? 0)} fő
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Összesen <strong>{coursesList.length} db</strong> kurzuson
@@ -1444,7 +1571,7 @@ export default function AdminStatisticsClient() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 font-montserrat">
-                    {loading ? '...' : data?.kpis?.totalCoursesCompleted ?? 0} db
+                    {loading ? '...' : (data?.kpis?.totalCoursesCompleted ?? 0)} db
                   </span>
                   <span className="text-xs font-bold text-emerald-600">
                     (Átl. {averageCourseCompletionRate}%)
@@ -1480,7 +1607,10 @@ export default function AdminStatisticsClient() {
                   </div>
                 </div>
                 <div className="text-3xl font-extrabold text-gray-900 dark:text-white font-montserrat">
-                  {loading ? '...' : data?.kpis?.formattedTotalTime || `${data?.kpis?.totalRecordedHours ?? 0} óra`}
+                  {loading
+                    ? '...'
+                    : data?.kpis?.formattedTotalTime ||
+                      `${data?.kpis?.totalRecordedHours ?? 0} óra`}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Összes rögzített hiba: <strong>{data?.kpis?.totalMistakesRecorded ?? 0}</strong>
@@ -1532,7 +1662,8 @@ export default function AdminStatisticsClient() {
                       {coursesList.map((course) => {
                         const struggling =
                           course.strugglingCount ??
-                          (course.studentsRoster || []).filter((s) => s.status === 'struggling').length;
+                          (course.studentsRoster || []).filter((s) => s.status === 'struggling')
+                            .length;
                         const isSlow = course.pacingRatio > 1.25;
                         return (
                           <tr
@@ -1570,8 +1701,8 @@ export default function AdminStatisticsClient() {
                                       course.completionRate >= 70
                                         ? 'bg-emerald-500'
                                         : course.completionRate >= 40
-                                        ? 'bg-amber-500'
-                                        : 'bg-rose-500'
+                                          ? 'bg-amber-500'
+                                          : 'bg-rose-500'
                                     }`}
                                     style={{ width: `${course.completionRate}%` }}
                                   />
@@ -1612,7 +1743,9 @@ export default function AdminStatisticsClient() {
                                 {course.avgScore} pt
                               </span>
                               <span className="text-gray-400 mx-1">•</span>
-                              <span className="font-bold text-rose-500">{course.totalMistakes} hiba</span>
+                              <span className="font-bold text-rose-500">
+                                {course.totalMistakes} hiba
+                              </span>
                             </td>
                             <td className="py-4 pl-3 text-right">
                               <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#269984]/10 text-[#269984] text-xs font-bold group-hover:bg-[#269984] group-hover:text-white transition-all">
@@ -1688,7 +1821,8 @@ export default function AdminStatisticsClient() {
 
               {(() => {
                 const filteredRoster = allStudentsRoster.filter((s) => {
-                  if (studentStatusFilter !== 'all' && s.status !== studentStatusFilter) return false;
+                  if (studentStatusFilter !== 'all' && s.status !== studentStatusFilter)
+                    return false;
                   if (studentSearchQuery.trim()) {
                     const q = studentSearchQuery.toLowerCase();
                     return (
@@ -1723,14 +1857,21 @@ export default function AdminStatisticsClient() {
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-white/5 text-xs">
                         {filteredRoster.slice(0, 30).map((student, idx) => (
-                          <tr key={`${student.userId}-${student.courseId}-${idx}`} className="hover:bg-slate-50/70 dark:hover:bg-white/[0.02]">
+                          <tr
+                            key={`${student.userId}-${student.courseId}-${idx}`}
+                            className="hover:bg-slate-50/70 dark:hover:bg-white/[0.02]"
+                          >
                             <td className="py-3.5 pr-4">
-                              <div className="font-bold text-gray-900 dark:text-white">{student.name}</div>
+                              <div className="font-bold text-gray-900 dark:text-white">
+                                {student.name}
+                              </div>
                               <div className="text-[11px] text-gray-400">{student.email}</div>
                             </td>
                             <td className="py-3.5 px-3">
                               <button
-                                onClick={() => student.courseId && openCourseDetails(student.courseId)}
+                                onClick={() =>
+                                  student.courseId && openCourseDetails(student.courseId)
+                                }
                                 className="font-semibold text-[#269984] hover:underline text-left"
                               >
                                 {student.courseTitle}
@@ -1744,14 +1885,15 @@ export default function AdminStatisticsClient() {
                                       student.status === 'completed'
                                         ? 'bg-emerald-500'
                                         : student.status === 'struggling'
-                                        ? 'bg-rose-500'
-                                        : 'bg-[#269984]'
+                                          ? 'bg-rose-500'
+                                          : 'bg-[#269984]'
                                     }`}
                                     style={{ width: `${student.progressPercent}%` }}
                                   />
                                 </div>
                                 <span className="font-bold text-gray-800 dark:text-gray-200">
-                                  {student.progressPercent}% ({student.completedPhasesCount}/{student.totalPhasesCount})
+                                  {student.progressPercent}% ({student.completedPhasesCount}/
+                                  {student.totalPhasesCount})
                                 </span>
                               </div>
                             </td>
@@ -1759,11 +1901,15 @@ export default function AdminStatisticsClient() {
                               {student.currentPhaseTitle}
                             </td>
                             <td className="py-3.5 px-3">
-                              <span className={`font-bold ${student.totalMistakes >= 3 ? 'text-rose-500' : 'text-gray-700 dark:text-gray-300'}`}>
+                              <span
+                                className={`font-bold ${student.totalMistakes >= 3 ? 'text-rose-500' : 'text-gray-700 dark:text-gray-300'}`}
+                              >
                                 {student.totalMistakes} hiba
                               </span>
                               <span className="text-gray-400 mx-1">•</span>
-                              <span className="font-bold text-emerald-600">{student.points} pt</span>
+                              <span className="font-bold text-emerald-600">
+                                {student.points} pt
+                              </span>
                               <span className="text-gray-400 mx-1">•</span>
                               <span className="text-gray-500">{student.timeSpentMinutes}p</span>
                             </td>
@@ -1818,7 +1964,9 @@ export default function AdminStatisticsClient() {
                         className="p-4 rounded-2xl bg-slate-50/70 dark:bg-white/[0.02] border border-gray-200/80 dark:border-white/10 space-y-2.5"
                       >
                         <div className="flex items-center justify-between">
-                          <span className={`inline-flex items-center gap-1.5 text-xs font-extrabold ${meta.color}`}>
+                          <span
+                            className={`inline-flex items-center gap-1.5 text-xs font-extrabold ${meta.color}`}
+                          >
                             {renderPhaseIcon(meta.iconType)}
                             {item.label || meta.label}
                           </span>
@@ -1899,7 +2047,9 @@ export default function AdminStatisticsClient() {
                       </div>
                       <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
                         <span>👥 {course.enrolledCount} diák</span>
-                        <span className="font-bold text-[#269984]">✅ {course.completionRate}% kész</span>
+                        <span className="font-bold text-[#269984]">
+                          ✅ {course.completionRate}% kész
+                        </span>
                         {struggling > 0 && (
                           <span className="font-bold text-rose-500">⚠️ {struggling} elakadt</span>
                         )}
@@ -1930,7 +2080,10 @@ export default function AdminStatisticsClient() {
                           </span>
                         )}
                         <span className="text-xs text-gray-400">
-                          • Minőségi Index: <strong className="text-gray-800 dark:text-gray-200">{selectedCourseObj.qualityIndex}/100</strong>
+                          • Minőségi Index:{' '}
+                          <strong className="text-gray-800 dark:text-gray-200">
+                            {selectedCourseObj.qualityIndex}/100
+                          </strong>
                         </span>
                       </div>
                       <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white font-montserrat">
@@ -1944,7 +2097,10 @@ export default function AdminStatisticsClient() {
                         [
                           { id: 'all', label: 'Minden szekció egyben' },
                           { id: 'funnel', label: '📉 Lemorzsolódási Tölcsér' },
-                          { id: 'students', label: `🎓 Diákok (${selectedCourseObj.enrolledCount})` },
+                          {
+                            id: 'students',
+                            label: `🎓 Diákok (${selectedCourseObj.enrolledCount})`,
+                          },
                           { id: 'mistakes', label: '🔥 Kurzus Hibagócok' },
                         ] as const
                       ).map((sec) => (
@@ -1966,7 +2122,9 @@ export default function AdminStatisticsClient() {
                   {/* 4 Course KPI Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-gray-200/70 dark:border-white/10">
-                      <span className="text-xs font-bold text-gray-400 uppercase">Beiratkozott / Végzett</span>
+                      <span className="text-xs font-bold text-gray-400 uppercase">
+                        Beiratkozott / Végzett
+                      </span>
                       <div className="text-2xl font-extrabold text-gray-900 dark:text-white font-montserrat mt-1">
                         {selectedCourseObj.enrolledCount} fő{' '}
                         <span className="text-sm font-bold text-emerald-600">
@@ -1979,9 +2137,12 @@ export default function AdminStatisticsClient() {
                     </div>
 
                     <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-gray-200/70 dark:border-white/10">
-                      <span className="text-xs font-bold text-gray-400 uppercase">Tervezett vs Valós Idő</span>
+                      <span className="text-xs font-bold text-gray-400 uppercase">
+                        Tervezett vs Valós Idő
+                      </span>
                       <div className="text-2xl font-extrabold text-gray-900 dark:text-white font-montserrat mt-1">
-                        {selectedCourseObj.estimatedMinutes}p → {selectedCourseObj.actualAvgMinutes}p
+                        {selectedCourseObj.estimatedMinutes}p → {selectedCourseObj.actualAvgMinutes}
+                        p
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1">
                         Időarány: <strong>{selectedCourseObj.pacingRatio}x</strong>{' '}
@@ -1992,27 +2153,44 @@ export default function AdminStatisticsClient() {
                     </div>
 
                     <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-gray-200/70 dark:border-white/10">
-                      <span className="text-xs font-bold text-gray-400 uppercase">Átlagpontszám & Kabala</span>
+                      <span className="text-xs font-bold text-gray-400 uppercase">
+                        Átlagpontszám & Kabala
+                      </span>
                       <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-montserrat mt-1">
                         {selectedCourseObj.avgScore} pont
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1">
-                        Kabala megtartó hatás: <strong>+{selectedCourseObj.mascotRetentionBoost}%</strong>
-                        {typeof selectedCourseObj.mascotImprovementRate === 'number' && selectedCourseObj.mascotImprovementRate > 0 && (
-                          <span> • Siker javulás: <strong className="text-emerald-600 dark:text-emerald-400">{selectedCourseObj.mascotImprovementRate}%</strong></span>
-                        )}
+                        Kabala megtartó hatás:{' '}
+                        <strong>+{selectedCourseObj.mascotRetentionBoost}%</strong>
+                        {typeof selectedCourseObj.mascotImprovementRate === 'number' &&
+                          selectedCourseObj.mascotImprovementRate > 0 && (
+                            <span>
+                              {' '}
+                              • Siker javulás:{' '}
+                              <strong className="text-emerald-600 dark:text-emerald-400">
+                                {selectedCourseObj.mascotImprovementRate}%
+                              </strong>
+                            </span>
+                          )}
                       </p>
                     </div>
 
                     <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-gray-200/70 dark:border-white/10">
-                      <span className="text-xs font-bold text-gray-400 uppercase">Összes Hiba & Elakadás</span>
+                      <span className="text-xs font-bold text-gray-400 uppercase">
+                        Összes Hiba & Elakadás
+                      </span>
                       <div className="text-2xl font-extrabold text-rose-600 dark:text-rose-400 font-montserrat mt-1">
                         {selectedCourseObj.totalMistakes} hiba
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1">
                         Segítségre szoruló diák:{' '}
                         <strong className="text-rose-500">
-                          {(selectedCourseObj.studentsRoster || []).filter((s) => s.status === 'struggling').length} fő
+                          {
+                            (selectedCourseObj.studentsRoster || []).filter(
+                              (s) => s.status === 'struggling',
+                            ).length
+                          }{' '}
+                          fő
                         </strong>
                       </p>
                     </div>
@@ -2032,7 +2210,9 @@ export default function AdminStatisticsClient() {
                     </div>
 
                     {selectedCourseObj.dropoffFunnel.length === 0 ? (
-                      <p className="text-sm text-gray-500">Nincsenek fázisok rögzítve ehhez a kurzushoz.</p>
+                      <p className="text-sm text-gray-500">
+                        Nincsenek fázisok rögzítve ehhez a kurzushoz.
+                      </p>
                     ) : (
                       <div className="space-y-3">
                         {selectedCourseObj.dropoffFunnel.map((phase, idx) => {
@@ -2086,8 +2266,8 @@ export default function AdminStatisticsClient() {
                                     phase.isBottleneck
                                       ? 'bg-rose-500'
                                       : phase.retentionRate >= 80
-                                      ? 'bg-[#269984]'
-                                      : 'bg-amber-500'
+                                        ? 'bg-[#269984]'
+                                        : 'bg-amber-500'
                                   }`}
                                   style={{ width: `${phase.retentionRate}%` }}
                                 />
@@ -2116,12 +2296,14 @@ export default function AdminStatisticsClient() {
                           2. Szekció • Beiratkozott Diákok Ebben a Kurzusban
                         </span>
                         <h3 className="text-xl font-extrabold text-gray-900 dark:text-white font-montserrat mt-0.5">
-                          {selectedCourseObj.title} – Diákok Egyéni Haladása ({selectedCourseObj.studentsRoster?.length || 0} fő)
+                          {selectedCourseObj.title} – Diákok Egyéni Haladása (
+                          {selectedCourseObj.studentsRoster?.length || 0} fő)
                         </h3>
                       </div>
                     </div>
 
-                    {!selectedCourseObj.studentsRoster || selectedCourseObj.studentsRoster.length === 0 ? (
+                    {!selectedCourseObj.studentsRoster ||
+                    selectedCourseObj.studentsRoster.length === 0 ? (
                       <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl text-xs text-gray-500">
                         Erre a kurzusra még nem iratkozott fel diák.
                       </div>
@@ -2142,9 +2324,14 @@ export default function AdminStatisticsClient() {
                           </thead>
                           <tbody className="divide-y divide-gray-100 dark:divide-white/5 text-xs">
                             {selectedCourseObj.studentsRoster.map((student, idx) => (
-                              <tr key={`${student.userId}-${idx}`} className="hover:bg-slate-50/70 dark:hover:bg-white/[0.02]">
+                              <tr
+                                key={`${student.userId}-${idx}`}
+                                className="hover:bg-slate-50/70 dark:hover:bg-white/[0.02]"
+                              >
                                 <td className="py-3.5 pr-4">
-                                  <div className="font-bold text-gray-900 dark:text-white">{student.name}</div>
+                                  <div className="font-bold text-gray-900 dark:text-white">
+                                    {student.name}
+                                  </div>
                                   <div className="text-[11px] text-gray-400">{student.email}</div>
                                 </td>
                                 <td className="py-3.5 px-3">
@@ -2155,22 +2342,27 @@ export default function AdminStatisticsClient() {
                                           student.status === 'completed'
                                             ? 'bg-emerald-500'
                                             : student.status === 'struggling'
-                                            ? 'bg-rose-500'
-                                            : 'bg-[#269984]'
+                                              ? 'bg-rose-500'
+                                              : 'bg-[#269984]'
                                         }`}
                                         style={{ width: `${student.progressPercent}%` }}
                                       />
                                     </div>
                                     <span className="font-bold">
-                                      {student.progressPercent}% ({student.completedPhasesCount}/{student.totalPhasesCount})
+                                      {student.progressPercent}% ({student.completedPhasesCount}/
+                                      {student.totalPhasesCount})
                                     </span>
                                   </div>
                                 </td>
                                 <td className="py-3.5 px-3 font-medium text-gray-700 dark:text-gray-300">
                                   {student.currentPhaseTitle}
                                 </td>
-                                <td className="py-3.5 px-3 font-bold text-emerald-600">{student.points} pt</td>
-                                <td className="py-3.5 px-3 font-bold text-rose-500">{student.totalMistakes} db</td>
+                                <td className="py-3.5 px-3 font-bold text-emerald-600">
+                                  {student.points} pt
+                                </td>
+                                <td className="py-3.5 px-3 font-bold text-rose-500">
+                                  {student.totalMistakes} db
+                                </td>
                                 <td className="py-3.5 px-3">
                                   {student.mascotHelpCount ? (
                                     <span className="inline-flex items-center gap-1 font-bold text-[#269984] dark:text-[#36D6BA]">
@@ -2186,7 +2378,9 @@ export default function AdminStatisticsClient() {
                                     <span className="text-gray-400">-</span>
                                   )}
                                 </td>
-                                <td className="py-3.5 px-3 text-gray-500">{student.timeSpentMinutes} perc</td>
+                                <td className="py-3.5 px-3 text-gray-500">
+                                  {student.timeSpentMinutes} perc
+                                </td>
                                 <td className="py-3.5 pl-3 text-right">
                                   {student.status === 'completed' ? (
                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -2269,7 +2463,8 @@ export default function AdminStatisticsClient() {
                                       Leggyakoribb hibás válasz / kód:
                                     </span>
                                     <div className="text-xs font-mono font-bold text-gray-800 dark:text-gray-200">
-                                      {spot.topWrongAnswers[0].answer} ({spot.topWrongAnswers[0].count}x)
+                                      {spot.topWrongAnswers[0].answer} (
+                                      {spot.topWrongAnswers[0].count}x)
                                     </div>
                                     <div className="text-[11px] text-gray-500">
                                       Ok: {spot.topWrongAnswers[0].reason}
@@ -2350,7 +2545,10 @@ export default function AdminStatisticsClient() {
                       const isHard = algo.errorRate >= 35;
                       const isMed = algo.errorRate >= 20 && algo.errorRate < 35;
                       return (
-                        <tr key={algo.algorithmId} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02]">
+                        <tr
+                          key={algo.algorithmId}
+                          className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02]"
+                        >
                           <td className="py-4 pr-4 font-bold text-gray-900 dark:text-white">
                             {ALGORITHM_LABELS[algo.algorithmId] || algo.algorithmId}
                           </td>
@@ -2359,14 +2557,22 @@ export default function AdminStatisticsClient() {
                               <div className="w-28 h-2.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
                                 <div
                                   className={`h-full rounded-full ${
-                                    isHard ? 'bg-rose-500' : isMed ? 'bg-amber-500' : 'bg-emerald-500'
+                                    isHard
+                                      ? 'bg-rose-500'
+                                      : isMed
+                                        ? 'bg-amber-500'
+                                        : 'bg-emerald-500'
                                   }`}
                                   style={{ width: `${Math.max(5, algo.errorRate)}%` }}
                                 />
                               </div>
                               <span
                                 className={`text-xs font-extrabold ${
-                                  isHard ? 'text-rose-500' : isMed ? 'text-amber-500' : 'text-emerald-500'
+                                  isHard
+                                    ? 'text-rose-500'
+                                    : isMed
+                                      ? 'text-amber-500'
+                                      : 'text-emerald-500'
                                 }`}
                               >
                                 {algo.errorRate}%
@@ -2376,7 +2582,9 @@ export default function AdminStatisticsClient() {
                           <td className="py-4 px-3 font-semibold text-gray-700 dark:text-gray-300">
                             {algo.averageHesitationSeconds} mp / lépés
                           </td>
-                          <td className="py-4 px-3 font-bold text-rose-500">{algo.totalMistakes} db</td>
+                          <td className="py-4 px-3 font-bold text-rose-500">
+                            {algo.totalMistakes} db
+                          </td>
                           <td className="py-4 px-3 text-gray-500">{algo.hintsUsed} alkalom</td>
                           <td className="py-4 pl-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
                             {algo.completedCount} db
@@ -2408,7 +2616,11 @@ export default function AdminStatisticsClient() {
                           {ALGORITHM_LABELS[b.algorithmId] || b.algorithmId}
                         </span>
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 uppercase">
-                          {b.tab === 'control' ? 'Irányítás' : b.tab === 'create' ? 'Kódkiegészítés' : b.tab}
+                          {b.tab === 'control'
+                            ? 'Irányítás'
+                            : b.tab === 'create'
+                              ? 'Kódkiegészítés'
+                              : b.tab}
                         </span>
                       </div>
                       <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">
@@ -2431,7 +2643,8 @@ export default function AdminStatisticsClient() {
                     <span>Kognitív Terhelés & Vizuális Segítség Transzfer</span>
                   </h3>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Hogyan térnek vissza a diákok a hibázás után, és mennyit segít a vizuális blokk-építő?
+                    Hogyan térnek vissza a diákok a hibázás után, és mennyit segít a vizuális
+                    blokk-építő?
                   </p>
                 </div>
 
@@ -2444,7 +2657,8 @@ export default function AdminStatisticsClient() {
                       {data?.research?.helpSeekingTransfer?.aliveAfterHelpSuccessRate ?? 84}%
                     </span>
                     <span className="text-[10px] text-gray-500 block mt-1">
-                      Segítség nélkül: {data?.research?.helpSeekingTransfer?.aliveWithoutHelpSuccessRate ?? 62}%
+                      Segítség nélkül:{' '}
+                      {data?.research?.helpSeekingTransfer?.aliveWithoutHelpSuccessRate ?? 62}%
                     </span>
                   </div>
 
@@ -2456,7 +2670,8 @@ export default function AdminStatisticsClient() {
                       {data?.research?.visualBlocksThreshold?.successfulReturnToCodeRate ?? 78}%
                     </span>
                     <span className="text-[10px] text-gray-500 block mt-1">
-                      Átl. {data?.research?.visualBlocksThreshold?.avgAttemptsBeforeFallback ?? 3.4} próba után
+                      Átl. {data?.research?.visualBlocksThreshold?.avgAttemptsBeforeFallback ?? 3.4}{' '}
+                      próba után
                     </span>
                   </div>
                 </div>
@@ -2468,19 +2683,27 @@ export default function AdminStatisticsClient() {
                   <div className="grid grid-cols-4 gap-2 text-center text-xs pt-1">
                     <div className="p-2 rounded-xl bg-white dark:bg-black/30">
                       <span className="text-[10px] text-gray-400 block">Alap reakció</span>
-                      <strong>{data?.research?.cognitiveLoadDynamics?.baselineReactionSec ?? 2.6} mp</strong>
+                      <strong>
+                        {data?.research?.cognitiveLoadDynamics?.baselineReactionSec ?? 2.6} mp
+                      </strong>
                     </div>
                     <div className="p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
                       <span className="text-[10px] block">Hiba után (+1)</span>
-                      <strong>{data?.research?.cognitiveLoadDynamics?.immediatePostErrorSec ?? 4.2} mp</strong>
+                      <strong>
+                        {data?.research?.cognitiveLoadDynamics?.immediatePostErrorSec ?? 4.2} mp
+                      </strong>
                     </div>
                     <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                       <span className="text-[10px] block">2. lépés (+2)</span>
-                      <strong>{data?.research?.cognitiveLoadDynamics?.step2RecoverySec ?? 3.3} mp</strong>
+                      <strong>
+                        {data?.research?.cognitiveLoadDynamics?.step2RecoverySec ?? 3.3} mp
+                      </strong>
                     </div>
                     <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                       <span className="text-[10px] block">3. lépés (+3)</span>
-                      <strong>{data?.research?.cognitiveLoadDynamics?.step3RecoverySec ?? 2.8} mp</strong>
+                      <strong>
+                        {data?.research?.cognitiveLoadDynamics?.step3RecoverySec ?? 2.8} mp
+                      </strong>
                     </div>
                   </div>
                 </div>
@@ -2515,7 +2738,8 @@ export default function AdminStatisticsClient() {
                     Részletes Hibadiagnosztika
                   </span>
                   <h2 className="text-xl font-extrabold text-gray-900 dark:text-white font-montserrat">
-                    Hol és miért hibáznak a diákok? ({normalizedHotspots.length} azonosított hibagóc)
+                    Hol és miért hibáznak a diákok? ({normalizedHotspots.length} azonosított
+                    hibagóc)
                   </h2>
                 </div>
 
@@ -2549,7 +2773,8 @@ export default function AdminStatisticsClient() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 {normalizedHotspots
                   .filter((h) => {
-                    if (selectedPhaseType !== 'all' && h.phaseType !== selectedPhaseType) return false;
+                    if (selectedPhaseType !== 'all' && h.phaseType !== selectedPhaseType)
+                      return false;
                     if (mistakeSearchQuery.trim()) {
                       const q = mistakeSearchQuery.toLowerCase();
                       return (
@@ -2586,7 +2811,9 @@ export default function AdminStatisticsClient() {
                         </div>
 
                         <div>
-                          <div className="text-xs font-semibold text-gray-400">{spot.targetTitle}</div>
+                          <div className="text-xs font-semibold text-gray-400">
+                            {spot.targetTitle}
+                          </div>
                           <div className="text-sm font-extrabold text-gray-900 dark:text-white mt-0.5">
                             {spot.phaseTitle}
                           </div>
@@ -2619,7 +2846,9 @@ export default function AdminStatisticsClient() {
                             onClick={() => setExpandedHotspotId(isExpanded ? null : spot.id)}
                             className="text-xs font-bold text-[#269984] hover:underline"
                           >
-                            {isExpanded ? 'Kevesebb mutatása' : `További hibás válaszok (${spot.topWrongAnswers.length})`}
+                            {isExpanded
+                              ? 'Kevesebb mutatása'
+                              : `További hibás válaszok (${spot.topWrongAnswers.length})`}
                           </button>
                         )}
                       </div>
