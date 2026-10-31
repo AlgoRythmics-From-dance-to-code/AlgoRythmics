@@ -5,9 +5,7 @@ import CoursesClient from '../../components/Course/CoursesClient';
 import { auth } from '../../../auth';
 import { redirect } from 'next/navigation';
 
-import { unstable_cache } from 'next/cache';
-
-export const revalidate = 3600; // Cache for 1 hour
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata() {
   const t = await getT();
@@ -16,27 +14,24 @@ export async function generateMetadata() {
   };
 }
 
-// Cached fetcher for courses
-const getCachedCourses = unstable_cache(
-  async (locale: string) => {
-    const payload = await getPayloadInstance();
-    if (!payload) return [];
+async function getFreshCourses(locale: string): Promise<CourseCollectionDoc[]> {
+  const payload = await getPayloadInstance();
+  if (!payload) return [];
 
-    const result = await payload.find({
-      collection: 'courses',
-      depth: 0,
-      limit: 100,
-      sort: 'title',
-      locale: locale as 'en' | 'hu' | 'ro',
-      overrideAccess: true, // Bypass access control for background caching
-    });
+  const result = await payload.find({
+    collection: 'courses',
+    where: {
+      visibility: { not_equals: 'private' },
+    },
+    depth: 0,
+    limit: 100,
+    sort: 'title',
+    locale: locale as 'en' | 'hu' | 'ro',
+    overrideAccess: true,
+  });
 
-    // Crucial: unstable_cache works best with plain JSON-serializable objects
-    return JSON.parse(JSON.stringify(result.docs)) as CourseCollectionDoc[];
-  },
-  ['courses-list-cache'],
-  { revalidate: 3600, tags: ['courses'] },
-);
+  return JSON.parse(JSON.stringify(result.docs)) as CourseCollectionDoc[];
+}
 
 export default async function CoursesPage() {
   const session = await auth();
@@ -47,7 +42,7 @@ export default async function CoursesPage() {
   const locale = await getServerLocale();
   const t = await getT();
 
-  const docs = await getCachedCourses(locale);
+  const docs = await getFreshCourses(locale);
   const courses = await getCourseCatalog(docs);
 
   return (

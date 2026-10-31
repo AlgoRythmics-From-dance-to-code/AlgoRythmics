@@ -14,6 +14,7 @@ import {
 } from '../../../lib/courses/confidenceEngine';
 import ConfidenceSelector from './ConfidenceSelector';
 import AdaptiveFeedbackCard from './AdaptiveFeedbackCard';
+import { useReportMascotScreen } from './MascotScreenContext';
 
 interface OrderingComponentProps {
   phase: CoursePhase;
@@ -32,7 +33,11 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
   const { trackEvent } = useAnalytics(undefined, 'order', courseId);
 
   const initialItems =
-    phase.ordering?.map((o, i) => ({ id: `O-${i}`, text: o.text, originalIndex: i })) || [];
+    phase.ordering?.map((o, i) => ({
+      id: `O-${i}`,
+      text: String(o.text || '').replace(/\s*\|\s*/g, ' '),
+      originalIndex: i,
+    })) || [];
 
   // Shuffle for the challenge
   const [items, setItems] = useState(() => [...initialItems].sort(() => Math.random() - 0.5));
@@ -40,6 +45,23 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
   const [showFeedback, setShowFeedback] = useState(false);
   const [confidence, setConfidence] = useState<ConfidenceLevel>('high');
   const [evaluation, setEvaluation] = useState<ConfidenceEvaluationResult | null>(null);
+
+  useReportMascotScreen(
+    'order',
+    React.useMemo(
+      () => ({
+        itemsCount: items.length,
+        currentOrder: items.map((i) => i.text),
+        confidence,
+        isEvaluated: !!evaluation,
+        isCorrect: evaluation
+          ? evaluation.category === 'mastery' || evaluation.category === 'lucky'
+          : undefined,
+        isCompleted: !!isDone,
+      }),
+      [items, confidence, evaluation, isDone],
+    ),
+  );
 
   const { setCourseConfidenceRating } = useAlgorithmStore();
 
@@ -125,6 +147,7 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
           {items.map((item, idx) => (
             <Reorder.Item
               key={item.id}
+              data-mascot-anchor={`order-item-${idx}`}
               value={item}
               className={`flex items-center gap-4 p-4 sm:p-5 rounded-2xl border-2 cursor-grab active:cursor-grabbing transition-all ${
                 showFeedback
@@ -150,6 +173,7 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
         <div className="flex flex-col items-center gap-6 w-full max-w-xl">
           {isConfidenceEnabled && (
             <ConfidenceSelector
+              data-mascot-anchor="confidence-selector"
               selected={confidence}
               onChange={(lvl) => setConfidence(lvl)}
               className="w-full"
@@ -157,6 +181,7 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
           )}
 
           <button
+            data-mascot-anchor="order-submit-btn"
             type="button"
             onClick={checkOrder}
             className="w-full sm:w-auto px-10 py-4 bg-[#269984] hover:bg-[#208270] text-white rounded-2xl font-montserrat font-black uppercase tracking-widest shadow-xl shadow-[#269984]/25 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"

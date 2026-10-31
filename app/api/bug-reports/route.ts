@@ -64,8 +64,29 @@ export async function POST(req: Request) {
     const payload = await getPayloadInstance();
     const userAgent = req.headers.get('user-agent') || undefined;
 
+    const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024; // 5 MB
     let fileObj: { data: Buffer; name: string; mimetype: string; size: number } | undefined;
     if (screenshotFile && screenshotFile.size > 0) {
+      if (screenshotFile.size > MAX_SCREENSHOT_SIZE) {
+        return NextResponse.json(
+          { error: 'Screenshot file is too large (max 5 MB)' },
+          { status: 413 },
+        );
+      }
+      const ALLOWED_MIME_TYPES = [
+        'image/png',
+        'image/jpeg',
+        'image/jpg',
+        'image/webp',
+        'image/gif',
+      ];
+      const fileType = screenshotFile.type?.toLowerCase() || '';
+      if (!ALLOWED_MIME_TYPES.includes(fileType)) {
+        return NextResponse.json(
+          { error: 'Only raster images (PNG, JPEG, WebP, GIF) are allowed for screenshots' },
+          { status: 400 },
+        );
+      }
       const bytes = await screenshotFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
       fileObj = {

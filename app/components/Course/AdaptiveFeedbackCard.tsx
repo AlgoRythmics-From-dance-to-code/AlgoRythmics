@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import {
   Sparkles,
   BookOpen,
@@ -133,10 +134,29 @@ export default function AdaptiveFeedbackCard({
           </div>
         )}
 
-      {/* Detailed explanation body */}
+      {/* Detailed explanation body with Rich Text / Markdown support */}
       {evaluation.explanationText && (
         <div className="p-3.5 rounded-xl bg-white/80 dark:bg-white/5 border border-gray-100 dark:border-white/10 text-xs sm:text-sm font-montserrat text-gray-700 dark:text-gray-200 leading-relaxed">
-          {evaluation.explanationText}
+          <ReactMarkdown
+            components={{
+              strong: ({ children }) => (
+                <span className="font-bold text-gray-900 dark:text-white">{children}</span>
+              ),
+              em: ({ children }) => (
+                <span className="italic font-semibold text-amber-700 dark:text-amber-300">
+                  {children}
+                </span>
+              ),
+              code: ({ children }) => (
+                <code className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono text-xs text-amber-600 dark:text-amber-400 font-bold">
+                  {children}
+                </code>
+              ),
+              p: ({ children }) => <p className="mb-1.5 last:mb-0 leading-relaxed">{children}</p>,
+            }}
+          >
+            {evaluation.explanationText}
+          </ReactMarkdown>
         </div>
       )}
 

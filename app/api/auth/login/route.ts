@@ -1,5 +1,4 @@
-import { getPayload } from 'payload';
-import configPromise from '../../../../payload.config';
+import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { APP_CONFIG } from '../../../../lib/constants';
@@ -10,7 +9,7 @@ export async function POST(req: Request) {
   const t = await getT();
   try {
     const { email, password, remember } = await req.json();
-    const payload = await getPayload({ config: configPromise });
+    const payload = await getPayloadInstance();
 
     const result = await payload.login({
       collection: 'users',

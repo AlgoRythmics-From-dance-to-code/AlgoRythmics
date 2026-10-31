@@ -99,8 +99,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('hu' | 'en' | 'ro') | ('hu' | 'en' | 'ro')[];
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'ai-settings': AiSetting;
+  };
+  globalsSelect: {
+    'ai-settings': AiSettingsSelect<false> | AiSettingsSelect<true>;
+  };
   locale: 'hu' | 'en' | 'ro';
   widgets: {
     collections: CollectionsWidget;
@@ -174,6 +178,18 @@ export interface Course {
    */
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   /**
+   * A kurzust készítő tanár / oktató.
+   */
+  instructor?: (number | null) | User;
+  /**
+   * Láthatóság más tanárok számára a Tanári Stúdióban.
+   */
+  visibility?: ('public' | 'private') | null;
+  /**
+   * Hivatalos AlgoRythmics alapkurzus (mintasablon).
+   */
+  isOfficial?: boolean | null;
+  /**
    * Per-course mascot configuration and trigger copy.
    */
   mascot: {
@@ -181,6 +197,10 @@ export interface Course {
      * Ki/Bekapcsolja a kabalát a teljes kurzusra.
      */
     enabled?: boolean | null;
+    /**
+     * A kabala bekapcsolási és működési módja (Kikapcsolva, Csak AI, AI manuális fallbackkel, Csak manuális).
+     */
+    mode?: ('disabled' | 'ai-only' | 'ai-fallback' | 'manual-only') | null;
     /**
      * A kabala neve (pl. Bubi). Ez jelenik meg a szövegbuborékok felett.
      */
@@ -255,9 +275,9 @@ export interface Course {
          */
         title: string;
         /**
-         * Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).
+         * Kapcsolódó algoritmus vagy technikai azonosító (opcionális).
          */
-        sourceAlgorithmId: string;
+        sourceAlgorithmId?: string | null;
         /**
          * Az interaktív felület típusa (videó, kvíz, animáció stb.).
          */
@@ -850,10 +870,14 @@ export interface CoursesSelect<T extends boolean = true> {
   illustrationAsset?: T;
   estimatedMinutes?: T;
   difficulty?: T;
+  instructor?: T;
+  visibility?: T;
+  isOfficial?: T;
   mascot?:
     | T
     | {
         enabled?: T;
+        mode?: T;
         name?: T;
         asset?: T;
         accentColor?: T;
@@ -1191,6 +1215,34 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-settings".
+ */
+export interface AiSetting {
+  id: number;
+  /**
+   * Az AI tananyag generáláshoz használt OpenRouter modell (pl. google/gemini-2.5-flash, openai/gpt-4o-mini, anthropic/claude-3.5-haiku, openrouter/free).
+   */
+  model: string;
+  /**
+   * Az OpenRouter hozzáférési kulcs (sk-or-v1-...). Kizárólag a rendszergazdák szerkeszthetik.
+   */
+  apiKey?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-settings_select".
+ */
+export interface AiSettingsSelect<T extends boolean = true> {
+  model?: T;
+  apiKey?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

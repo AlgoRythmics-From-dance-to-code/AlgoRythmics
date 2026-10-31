@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocale } from '../../../i18n/LocaleProvider';
 import type { MultiplayerRoomState, TacticalPing } from '../../../../types/multiplayer';
 import {
   Flame,
@@ -47,6 +48,7 @@ export default function CyberMatrixArena({
   onSendTacticalPing,
   onSendReaction,
 }: CyberMatrixArenaProps) {
+  const { t } = useLocale();
   const [selectedCoreIdx, setSelectedCoreIdx] = useState<number | null>(null);
 
   const localPlayer = room.players.find((p) => p.id === localPlayerId) || room.players[0];
@@ -286,7 +288,9 @@ export default function CyberMatrixArena({
               </div>
               <div className="text-sm font-black font-mono text-[#269984] flex items-center gap-1.5">
                 <span>{teamSynergy}%</span>
-                <span className="text-[10px] text-cyan-400 font-bold">1.5x Szorzó</span>
+                <span className="text-[10px] text-cyan-400 font-bold">
+                  {t('multiplayer.cyber.multiplier') || '1.5x Szorzó'}
+                </span>
               </div>
             </div>
           </div>
@@ -308,16 +312,18 @@ export default function CyberMatrixArena({
           <div className="text-xs">
             {isScanner && !isLocked && (
               <span className="text-cyan-300 font-bold">
-                🎯 <strong>Szkennelő:</strong> Keresd az anomáliát! Kattints a{' '}
-                <strong>[{activeIdxA}]</strong> és <strong>[{activeIdxB}]</strong> magokra, vagy
-                nyomj <strong>Célzás Rögzítést (Space)</strong>!
+                🎯 <strong>{t('multiplayer.cyber.scanner') || 'Szkennelő:'}</strong> Keresd az
+                anomáliát! Kattints a <strong>[{activeIdxA}]</strong> és{' '}
+                <strong>[{activeIdxB}]</strong> magokra, vagy nyomj{' '}
+                <strong>{t('multiplayer.cyber.lock_target') || 'Célzás Rögzítést (Space)'}</strong>!
               </span>
             )}
             {isScanner && isLocked && (
               <span className="text-emerald-400 font-bold flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4" />
-                Cél rögzítve! Várakozás az <strong>Operátorra</strong>, hogy meghúzza a Csere /
-                Fixálás kart...
+                Cél rögzítve! Várakozás az{' '}
+                <strong>{t('multiplayer.cyber.operator') || 'Operátorra'}</strong>, hogy meghúzza a
+                Csere / Fixálás kart...
               </span>
             )}
             {isOperator && !isLocked && (
@@ -527,7 +533,7 @@ export default function CyberMatrixArena({
                   key={emoji}
                   onClick={() => onSendReaction(emoji)}
                   className="p-1 hover:scale-125 transition-transform active:scale-95 text-sm"
-                  title="Reakció küldése"
+                  title={t('multiplayer.cyber.send_reaction') || 'Reakció küldése'}
                 >
                   {emoji}
                 </button>
@@ -567,12 +573,15 @@ export default function CyberMatrixArena({
               {isLocked ? (
                 <>
                   <Unlock className="w-4 h-4" />
-                  <span>Célzás Feloldása</span>
+                  <span>{t('multiplayer.cyber.unlock_target') || 'Célzás Feloldása'}</span>
                 </>
               ) : (
                 <>
                   <Crosshair className="w-4 h-4" />
-                  <span>🎯 Cél Rögzítése a Reaktorhoz (Space)</span>
+                  <span>
+                    {t('multiplayer.cyber.target_reactor') ||
+                      '🎯 Cél Rögzítése a Reaktorhoz (Space)'}
+                  </span>
                 </>
               )}
             </button>
@@ -617,7 +626,9 @@ export default function CyberMatrixArena({
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>1. Core Lock: Stabil Rendben (Enter)</span>
+                <span>
+                  {t('multiplayer.cyber.core_lock') || '1. Core Lock: Stabil Rendben (Enter)'}
+                </span>
               </button>
 
               {/* Flux Swap Button */}
@@ -633,7 +644,9 @@ export default function CyberMatrixArena({
                 }`}
               >
                 <ArrowLeftRight className="w-4 h-4" />
-                <span>2. ⚡ FLUX SWAP: Kvantum Csere (Space)</span>
+                <span>
+                  {t('multiplayer.cyber.flux_swap') || '2. ⚡ FLUX SWAP: Kvantum Csere (Space)'}
+                </span>
               </button>
             </div>
           </div>

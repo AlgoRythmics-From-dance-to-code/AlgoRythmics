@@ -1,17 +1,30 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import en from '../../locales/en.json';
 import hu from '../../locales/hu.json';
-import ro from '../../locales/ro.json';
 
 export type Locale = 'en' | 'hu' | 'ro';
 
-const translations: Record<Locale, unknown> = {
-  en: en,
-  hu: hu,
-  ro: ro,
+const loadedDictionaries: Partial<Record<Locale, Record<string, unknown>>> = {
+  hu: hu as Record<string, unknown>,
 };
+
+async function loadLocaleDictionary(locale: Locale): Promise<Record<string, unknown>> {
+  if (loadedDictionaries[locale]) {
+    return loadedDictionaries[locale]!;
+  }
+  if (locale === 'en') {
+    const mod = await import('../../locales/en.json');
+    loadedDictionaries.en = (mod.default || mod) as Record<string, unknown>;
+    return loadedDictionaries.en;
+  }
+  if (locale === 'ro') {
+    const mod = await import('../../locales/ro.json');
+    loadedDictionaries.ro = (mod.default || mod) as Record<string, unknown>;
+    return loadedDictionaries.ro;
+  }
+  return hu as Record<string, unknown>;
+}
 
 const LocaleContext = createContext<{
   locale: Locale;
@@ -32,27 +45,59 @@ export function useLocale() {
 export default function LocaleProvider({
   children,
   initialLocale,
+  initialDictionary,
 }: {
   children: React.ReactNode;
   initialLocale?: Locale;
+  initialDictionary?: Record<string, unknown>;
 }) {
-  const [locale, setLocaleState] = useState<Locale>(initialLocale || 'hu');
+  const startLocale: Locale = initialLocale || 'hu';
+  if (initialDictionary && !loadedDictionaries[startLocale]) {
+    loadedDictionaries[startLocale] = initialDictionary;
+  }
+
+  const [locale, setLocaleState] = useState<Locale>(startLocale);
+  const [dictionary, setDictionary] = useState<Record<string, unknown>>(
+    () => loadedDictionaries[startLocale] || initialDictionary || (hu as Record<string, unknown>),
+  );
 
   useEffect(() => {
-    // Only load from localStorage if we didn't get an initialLocale from the server
-    // OR if we want to ensure client-side preference overrides server-side cookie (usually cookie is better)
     if (!initialLocale) {
       const saved = typeof window !== 'undefined' ? localStorage.getItem('locale') : null;
-      if (saved === 'en' || saved === 'hu' || saved === 'ro') setLocaleState(saved);
+      if (saved === 'en' || saved === 'hu' || saved === 'ro') {
+        setLocaleState(saved);
+      }
     }
   }, [initialLocale]);
 
+  useEffect(() => {
+    let active = true;
+    if (loadedDictionaries[locale]) {
+      setDictionary(loadedDictionaries[locale]!);
+    } else {
+      loadLocaleDictionary(locale).then((dict) => {
+        if (active) setDictionary(dict);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [locale]);
+
   function setLocale(l: Locale) {
-    setLocaleState(l);
     try {
       localStorage.setItem('locale', l);
       document.cookie = `locale=${l};path=/;max-age=31536000;SameSite=Lax`;
     } catch {}
+    if (loadedDictionaries[l]) {
+      setDictionary(loadedDictionaries[l]!);
+      setLocaleState(l);
+    } else {
+      loadLocaleDictionary(l).then((dict) => {
+        setDictionary(dict);
+        setLocaleState(l);
+      });
+    }
   }
 
   function t(path: string, vars?: Record<string, string | number>) {
@@ -69,7 +114,7 @@ export default function LocaleProvider({
 
   function getRaw(path: string): unknown {
     const parts = path.split('.');
-    let current: unknown = translations[locale] as unknown;
+    let current: unknown = dictionary;
     for (const p of parts) {
       if (current && typeof current === 'object' && p in (current as Record<string, unknown>)) {
         current = (current as Record<string, unknown>)[p];

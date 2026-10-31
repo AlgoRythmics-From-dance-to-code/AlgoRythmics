@@ -253,8 +253,7 @@ export default function ProfilePage() {
     if (
       firstName === (u.firstName || '') &&
       lastName === (u.lastName || '') &&
-      bio === (u.bio || '') &&
-      mascotEnabled === (u.mascotEnabled !== false)
+      bio === (u.bio || '')
     ) {
       return;
     }
@@ -264,16 +263,7 @@ export default function ProfilePage() {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [
-    firstName,
-    lastName,
-    bio,
-    mascotEnabled,
-    status,
-    lastSyncedEmail,
-    session,
-    handleUpdateProfile,
-  ]);
+  }, [firstName, lastName, bio, status, lastSyncedEmail, session, handleUpdateProfile]);
 
   // Mascot toggle is immediate
   useEffect(() => {

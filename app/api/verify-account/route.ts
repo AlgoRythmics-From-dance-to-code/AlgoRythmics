@@ -1,5 +1,4 @@
-import { getPayload } from 'payload';
-import configPromise from '../../../payload.config';
+import { getPayloadInstance } from '../../../lib/payload';
 import { NextResponse } from 'next/server';
 import logger from '../../../lib/logger';
 import { getT } from '../../../lib/i18n-server';
@@ -8,13 +7,12 @@ export async function POST(req: Request) {
   const t = await getT();
   try {
     const { token } = await req.json();
-    if (!token) {
+    if (!token || typeof token !== 'string') {
       return NextResponse.json({ error: t('verify.no_token') }, { status: 400 });
     }
 
-    const payload = await getPayload({ config: configPromise });
+    const payload = await getPayloadInstance();
 
-    // Use find + update pattern for reliability
     const result = await payload.find({
       collection: 'users',
       where: {

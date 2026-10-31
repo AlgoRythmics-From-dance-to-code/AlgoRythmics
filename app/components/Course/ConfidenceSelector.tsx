@@ -6,11 +6,12 @@ import { Sparkles, HelpCircle, CheckCircle } from 'lucide-react';
 import { useLocale } from '../../i18n/LocaleProvider';
 import type { ConfidenceLevel } from '../../../lib/courses/confidenceEngine';
 
-interface ConfidenceSelectorProps {
+interface ConfidenceSelectorProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
   selected: ConfidenceLevel | null;
   onChange: (level: ConfidenceLevel) => void;
   disabled?: boolean;
   className?: string;
+  'data-mascot-anchor'?: string;
 }
 
 export default function ConfidenceSelector({
@@ -18,6 +19,8 @@ export default function ConfidenceSelector({
   onChange,
   disabled = false,
   className = '',
+  'data-mascot-anchor': dataMascotAnchor,
+  ...rest
 }: ConfidenceSelectorProps) {
   const { t } = useLocale();
 
@@ -68,7 +71,11 @@ export default function ConfidenceSelector({
   ];
 
   return (
-    <div className={`flex flex-col gap-2.5 ${className}`}>
+    <div
+      data-mascot-anchor={dataMascotAnchor}
+      className={`flex flex-col gap-2.5 ${className}`}
+      {...rest}
+    >
       <div className="flex items-center justify-between">
         <span className="font-montserrat font-bold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
           {t('confidence.prompt') || 'Mennyire vagy biztos a válaszban?'}

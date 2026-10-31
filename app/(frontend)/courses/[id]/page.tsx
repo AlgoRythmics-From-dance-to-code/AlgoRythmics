@@ -1,12 +1,10 @@
 import { notFound, redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 import CoursePlayer from '../../../components/Course/CoursePlayer';
 import { getPayloadInstance } from '../../../../lib/payload';
-import {
-  findCourseBySlug,
-  getCourseCatalog,
-  type CourseCollectionDoc,
-} from '../../../../lib/courses/courseCatalog';
+import { findCourseBySlug, type CourseCollectionDoc } from '../../../../lib/courses/courseCatalog';
 import { getServerLocale } from '../../../../lib/i18n-server';
 import { auth } from '../../../../auth';
 
@@ -24,21 +22,31 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
     const payload = await getPayloadInstance();
     const result = await payload.find({
       collection: 'courses',
+      where: {
+        slug: { equals: id },
+      },
       depth: 0,
-      limit: 50,
-      sort: 'title',
+      limit: 1,
       locale: locale as 'all' | 'en' | 'hu' | 'ro',
+      overrideAccess: true,
     });
     docs = result.docs as unknown as CourseCollectionDoc[];
   } catch {
     docs = [];
   }
 
-  const catalog = await getCourseCatalog(docs);
-  const matchedCourse = catalog.find((course) => course.slug === id);
-
-  if (!matchedCourse) {
-    notFound();
+  const rawDoc = docs[0] as Record<string, unknown> | undefined;
+  if (rawDoc && rawDoc.visibility === 'private') {
+    const userRole = session.user?.role;
+    const userId = session.user?.id ? String(session.user.id) : '';
+    const instructorId = rawDoc.instructor
+      ? typeof rawDoc.instructor === 'object'
+        ? String((rawDoc.instructor as Record<string, unknown>).id)
+        : String(rawDoc.instructor)
+      : '';
+    if (userRole !== 'admin' && instructorId !== userId) {
+      notFound();
+    }
   }
 
   const course = findCourseBySlug(id, docs);

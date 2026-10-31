@@ -1,4 +1,3 @@
-import { default as default_aa78e133e28b68f378111d25ad0b2b53 } from '@/app/components/Payload/AIGeneratorField';
 import { IllustrationSelect as IllustrationSelect_4eefed0dcf484a78d185a10421a7d2b1 } from '@/app/components/Payload/AssetSelect';
 import { MascotSelect as MascotSelect_4eefed0dcf484a78d185a10421a7d2b1 } from '@/app/components/Payload/AssetSelect';
 import { PhaseIdSelect as PhaseIdSelect_5f2b2ca6cd74fe344d08ba3c15f3d5bd } from '@/app/components/Payload/AlgorithmSelect';
@@ -27,10 +26,10 @@ import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997e
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client';
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client';
 import { default as default_a7d5e878996b70ed8d719a98fdbc0bb3 } from '../../../app/components/Payload/RoleBodyClass';
+import { default as default_ec5682a02bdbabbc603c2095c76901b8 } from '../../../app/components/Payload/AdminStatsNavLink';
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc';
 
 export const importMap = {
-  '@/app/components/Payload/AIGeneratorField#default': default_aa78e133e28b68f378111d25ad0b2b53,
   '@/app/components/Payload/AssetSelect#IllustrationSelect':
     IllustrationSelect_4eefed0dcf484a78d185a10421a7d2b1,
   '@/app/components/Payload/AssetSelect#MascotSelect':
@@ -86,5 +85,6 @@ export const importMap = {
   '@payloadcms/richtext-lexical/client#ItalicFeatureClient':
     ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   './app/components/Payload/RoleBodyClass#default': default_a7d5e878996b70ed8d719a98fdbc0bb3,
+  './app/components/Payload/AdminStatsNavLink#default': default_ec5682a02bdbabbc603c2095c76901b8,
   '@payloadcms/next/rsc#CollectionCards': CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1,
 };

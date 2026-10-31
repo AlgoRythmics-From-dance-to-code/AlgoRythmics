@@ -1,45 +1,43 @@
 import { MetadataRoute } from 'next';
 import { getPayloadInstance } from '../lib/payload';
+import { ALGORITHMS, VIDEOS } from '../lib/constants';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.algo-rythmics.com';
 
-  // Base routes
-  const routes = ['', '/courses', '/algorithms', '/videos', '/about', '/contact'].map((route) => ({
+  // Publicly accessible base routes (excluding routes that redirect unauthenticated crawlers)
+  const routes = ['', '/algorithms', '/videos', '/big-o', '/about', '/contact'].map((route) => ({
     url: `${baseUrl}${route}`,
-    lastModified: new Date('2024-04-11'),
+    lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: route === '' ? 1 : 0.8,
   }));
 
-  // Dynamic Algorithms
-  const algorithmIds = [
-    'bubble-sort',
-    'insertion-sort',
-    'selection-sort',
-    'merge-sort',
-    'quick-sort',
-    'linear-search',
-    'binary-search',
-    'shell-sort',
-    'heap-sort',
-    'bogosort',
-    'n-queens',
-  ];
-
-  const algorithmRoutes = algorithmIds.map((id) => ({
-    url: `${baseUrl}/algorithms/${id}`,
-    lastModified: new Date('2024-04-11'),
+  // Dynamic Algorithms from single source of truth
+  const algorithmRoutes = ALGORITHMS.map((algo) => ({
+    url: `${baseUrl}/algorithms/${algo.id}`,
+    lastModified: new Date(),
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }));
 
-  // Dynamic Courses from Payload
+  // Dynamic Videos
+  const videoRoutes = VIDEOS.map((video) => ({
+    url: `${baseUrl}/videos/${video.id}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }));
+
+  // Dynamic Public Courses from Payload
   let courseRoutes: MetadataRoute.Sitemap = [];
   try {
     const payload = await getPayloadInstance();
     const result = await payload.find({
       collection: 'courses',
+      where: {
+        visibility: { not_equals: 'private' },
+      },
       limit: 100,
       depth: 0,
       select: {
@@ -58,5 +56,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Sitemap course fetch error:', err);
   }
 
-  return [...routes, ...algorithmRoutes, ...courseRoutes];
+  return [...routes, ...algorithmRoutes, ...videoRoutes, ...courseRoutes];
 }

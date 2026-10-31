@@ -47,6 +47,7 @@ export type CoursePhase = {
 
 export type CourseMascot = {
   enabled: boolean;
+  mode?: 'disabled' | 'ai-only' | 'ai-fallback' | 'manual-only';
   name: string;
   asset: string;
   accentColor: string;
@@ -90,6 +91,20 @@ function humanizeSlug(slug: string) {
     .trim();
 }
 
+function extractString(val: unknown, fallback = ''): string {
+  if (typeof val === 'string') return val;
+  if (val && typeof val === 'object') {
+    const obj = val as Record<string, unknown>;
+    return (
+      (typeof obj.hu === 'string' && obj.hu ? obj.hu : '') ||
+      (typeof obj.en === 'string' && obj.en ? obj.en : '') ||
+      (typeof obj.ro === 'string' && obj.ro ? obj.ro : '') ||
+      fallback
+    );
+  }
+  return fallback;
+}
+
 /**
  * Normalizes string arrays that might come from Payload as objects with a 'text' or 'tip' or 'option' property.
  */
@@ -102,13 +117,17 @@ function toStringArray(value: unknown, property: string = 'text'): string[] {
       if (item && typeof item === 'object') {
         const record = item as Record<string, unknown>;
         const candidate =
-          record[property] ||
-          record.tip ||
-          record.value ||
-          record.label ||
-          record.text ||
-          record.option;
+          record[property] ??
+          record.tip ??
+          record.value ??
+          record.label ??
+          record.text ??
+          record.option ??
+          record.solution;
         if (typeof candidate === 'string') return candidate;
+        if (candidate && typeof candidate === 'object') {
+          return extractString(candidate);
+        }
       }
       return '';
     })
@@ -138,14 +157,14 @@ function toPhases(value: unknown): CoursePhase[] {
 
       return {
         phaseId,
-        title: (current.title as string) || humanizeSlug(phaseId),
+        title: extractString(current.title, humanizeSlug(phaseId)),
         sourceView: (current.sourceView as CourseSourceView) || 'video',
         sourceAlgorithmId: (current.sourceAlgorithmId as string) || 'bubble-sort',
-        summary: (current.summary as string) || '',
-        mascotLine: (current.mascotLine as string) || '',
-        mascotMistakeLine: (current.mascotMistakeLine as string) || '',
-        hintCopy: (current.hintCopy as string) || '',
-        idleHelp: (current.idleHelp as string) || '',
+        summary: extractString(current.summary, ''),
+        mascotLine: extractString(current.mascotLine, ''),
+        mascotMistakeLine: extractString(current.mascotMistakeLine, ''),
+        hintCopy: extractString(current.hintCopy, ''),
+        idleHelp: extractString(current.idleHelp, ''),
         askConfidence: current.askConfidence !== false,
         maxPoints: typeof current.maxPoints === 'number' ? current.maxPoints : 10,
         quiz,
@@ -162,15 +181,13 @@ function toPhases(value: unknown): CoursePhase[] {
               text: (o.text as string) || '',
             }))
           : undefined,
-        debugCode: current.debugCode as string,
-        expectedCode: current.expectedCode as string,
-        gapFillContent: current.gapFillContent as string,
-        gapFillOptions: Array.isArray(current.gapFillOptions)
-          ? current.gapFillOptions.map((o: Record<string, unknown>) => o.option as string)
+        debugCode: current.debugCode ? String(current.debugCode).replace(/\\n/g, '\n') : undefined,
+        expectedCode: current.expectedCode
+          ? String(current.expectedCode).replace(/\\n/g, '\n')
           : undefined,
-        gapFillSolutions: Array.isArray(current.gapFillSolutions)
-          ? current.gapFillSolutions.map((s: Record<string, unknown>) => s.solution as string)
-          : undefined,
+        gapFillContent: extractString(current.gapFillContent),
+        gapFillOptions: toStringArray(current.gapFillOptions, 'option'),
+        gapFillSolutions: toStringArray(current.gapFillSolutions, 'solution'),
       };
     })
     .filter((phase): phase is CoursePhase => phase !== null);
@@ -183,32 +200,40 @@ export function normalizeCourse(doc: Record<string, unknown>): CourseBlueprint {
 
   return {
     slug,
-    title: (doc.title as string) || humanizeSlug(slug),
+    title: extractString(doc.title, humanizeSlug(slug)),
     algorithmId:
       ((phases[0] as Record<string, unknown>)?.sourceAlgorithmId as string) ||
       (doc.algorithmId as string) ||
       slug,
-    summary:
-      (doc.summary as string) ||
+    summary: extractString(
+      doc.summary,
       'A structured course blueprint for learning the algorithm through practice.',
-    heroTagline:
-      (doc.heroTagline as string) || 'Learn by predicting, building, debugging, and reflecting.',
+    ),
+    heroTagline: extractString(
+      doc.heroTagline,
+      'Learn by predicting, building, debugging, and reflecting.',
+    ),
     icon: (doc.icon as string) || '📘',
     accentColor: (doc.accentColor as string) || DEFAULT_ACCENT,
     illustrationAsset: (doc.illustrationAsset as string) || 'algo_group_109.svg',
     estimatedMinutes: Number(doc.estimatedMinutes || 0),
     difficulty: (doc.difficulty as 'Beginner' | 'Intermediate' | 'Advanced') || 'Beginner',
     mascot: {
-      enabled: mascot.enabled !== false,
-      name: (mascot.name as string) || 'Guide',
+      enabled: mascot.enabled !== false && mascot.mode !== 'disabled',
+      mode:
+        (mascot.mode as 'disabled' | 'ai-only' | 'ai-fallback' | 'manual-only') ||
+        (mascot.enabled === false ? 'disabled' : 'manual-only'),
+      name: extractString(mascot.name, 'Guide'),
       asset: (mascot.asset as string) || 'algo_group_109.svg',
       accentColor: (mascot.accentColor as string) || DEFAULT_ACCENT,
       idleTriggerSeconds: Number(mascot.idleTriggerSeconds || 30),
       mistakeTriggerCount: Number(mascot.mistakeTriggerCount || 2),
-      summonLabel: (mascot.summonLabel as string) || 'Summon guide',
-      idlePrompt: (mascot.idlePrompt as string) || 'Need a hint?',
-      mistakePrompt:
-        (mascot.mistakePrompt as string) || 'Let us slow down and inspect the rule again.',
+      summonLabel: extractString(mascot.summonLabel, 'Summon guide'),
+      idlePrompt: extractString(mascot.idlePrompt, 'Need a hint?'),
+      mistakePrompt: extractString(
+        mascot.mistakePrompt,
+        'Let us slow down and inspect the rule again.',
+      ),
       welcomeMessages: toStringArray(mascot.welcomeMessages),
       overconfidentMessages: toStringArray(mascot.overconfidentMessages),
       streakMessages: toStringArray(mascot.streakMessages),

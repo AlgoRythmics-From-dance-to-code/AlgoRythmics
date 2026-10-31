@@ -16,7 +16,10 @@ export function markdownToLexical(markdown: string) {
     };
   }
 
-  const lines = markdown.split(/\r?\n/);
+  // Normalize escaped newlines and pipe delimiters emitted by LLMs
+  let normalized = markdown.replace(/\\n/g, '\n');
+  normalized = normalized.replace(/\s*\|\s*(?=[-#*`A-ZÁÉÍÓÖŐÚÜŰa-záéíóöőúüű0-9])/g, '\n\n');
+  const lines = normalized.split(/\r?\n/);
   const children: any[] = [];
 
   let currentList: {
@@ -239,4 +242,89 @@ function parseTextNode(text: string): any[] {
       version: 1,
     };
   });
+}
+
+/**
+ * Converts a Lexical JSON editor state (or node) back into standard Markdown string.
+ * If input is already a string, it returns the string unchanged.
+ */
+export function lexicalToMarkdown(node: any): string {
+  if (!node) return '';
+  if (typeof node === 'string') return node;
+  if (typeof node !== 'object') return String(node);
+
+  // If node has 'root', start from node.root
+  if (node.root) {
+    return lexicalToMarkdown(node.root);
+  }
+
+  const parseInlineChildren = (children: any[]): string => {
+    if (!Array.isArray(children)) return '';
+    return children
+      .map((child) => {
+        if (!child) return '';
+        if (typeof child === 'string') return child;
+        let text = child.text || '';
+        const format = child.format || 0;
+        // Lexical formats: 1 = bold, 2 = italic, 16 = code
+        if (format & 16) text = `\`${text}\``;
+        if (format & 1 && format & 2) text = `***${text}***`;
+        else if (format & 1) text = `**${text}**`;
+        else if (format & 2) text = `*${text}*`;
+        return text;
+      })
+      .join('');
+  };
+
+  switch (node.type) {
+    case 'root': {
+      if (!Array.isArray(node.children)) return '';
+      return node.children
+        .map(lexicalToMarkdown)
+        .filter((chunk: string) => chunk.trim().length > 0)
+        .join('\n\n');
+    }
+    case 'heading': {
+      const tag = node.tag || 'h2';
+      const level = tag === 'h1' ? '#' : tag === 'h3' ? '###' : '##';
+      return `${level} ${parseInlineChildren(node.children)}`;
+    }
+    case 'paragraph': {
+      return parseInlineChildren(node.children);
+    }
+    case 'quote': {
+      return `> ${parseInlineChildren(node.children)}`;
+    }
+    case 'list': {
+      if (!Array.isArray(node.children)) return '';
+      const isNumber = node.listType === 'number';
+      return node.children
+        .map((item: any, idx: number) => {
+          const prefix = isNumber ? `${idx + 1}. ` : '- ';
+          const content = parseInlineChildren(item.children || item);
+          return `${prefix}${content}`;
+        })
+        .join('\n');
+    }
+    case 'listitem': {
+      return parseInlineChildren(node.children);
+    }
+    case 'code': {
+      const lang = node.language || '';
+      let code = '';
+      if (Array.isArray(node.children)) {
+        code = node.children.map((c: any) => c.text || '').join('\n');
+      }
+      return `\`\`\`${lang}\n${code}\n\`\`\``;
+    }
+    case 'text': {
+      return parseInlineChildren([node]);
+    }
+    default: {
+      if (Array.isArray(node.children)) {
+        return node.children.map(lexicalToMarkdown).join('\n');
+      }
+      return node.text || '';
+    }
+  }
 }

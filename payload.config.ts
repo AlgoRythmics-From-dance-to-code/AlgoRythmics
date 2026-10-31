@@ -14,6 +14,7 @@ import { CourseProgress } from './collections/CourseProgress';
 import { SearchAnalytics } from './collections/SearchAnalytics';
 import { Media } from './collections/Media';
 import { BugReports } from './collections/BugReports';
+import { AISettings } from './globals/AISettings';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -22,7 +23,10 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     components: {
-      afterNav: ['./app/components/Payload/RoleBodyClass#default'],
+      afterNav: [
+        './app/components/Payload/RoleBodyClass#default',
+        './app/components/Payload/AdminStatsNavLink#default',
+      ],
     },
   },
   localization: {
@@ -55,6 +59,7 @@ export default buildConfig({
     Media,
     BugReports,
   ],
+  globals: [AISettings],
   editor: lexicalEditor(),
   secret:
     process.env.PAYLOAD_SECRET ||

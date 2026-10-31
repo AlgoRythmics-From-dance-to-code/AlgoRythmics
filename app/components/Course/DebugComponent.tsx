@@ -13,6 +13,7 @@ import {
 } from '../../../lib/courses/confidenceEngine';
 import ConfidenceSelector from './ConfidenceSelector';
 import AdaptiveFeedbackCard from './AdaptiveFeedbackCard';
+import { useReportMascotScreen } from './MascotScreenContext';
 
 interface DebugComponentProps {
   phase: CoursePhase;
@@ -30,8 +31,8 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
 
   const { trackEvent } = useAnalytics(undefined, 'debug', courseId);
 
-  const debugLines = phase.debugCode?.split('\n') || [];
-  const expectedLines = phase.expectedCode?.split('\n') || [];
+  const debugLines = (phase.debugCode || '').replace(/\\n/g, '\n').split('\n');
+  const expectedLines = (phase.expectedCode || '').replace(/\\n/g, '\n').split('\n');
 
   // Find which line is different (the bug)
   const bugLineIndex = debugLines.findIndex((line, i) => line.trim() !== expectedLines[i]?.trim());
@@ -40,6 +41,24 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
   const [showFeedback, setShowFeedback] = useState(false);
   const [confidence, setConfidence] = useState<ConfidenceLevel>('high');
   const [evaluation, setEvaluation] = useState<ConfidenceEvaluationResult | null>(null);
+
+  useReportMascotScreen(
+    'debug',
+    React.useMemo(
+      () => ({
+        debugLines,
+        selectedIndex,
+        selectedLine: selectedIndex !== null ? debugLines[selectedIndex] : undefined,
+        confidence,
+        isEvaluated: !!evaluation,
+        isCorrect: evaluation
+          ? evaluation.category === 'mastery' || evaluation.category === 'lucky'
+          : undefined,
+        isCompleted: !!isDone,
+      }),
+      [debugLines, selectedIndex, confidence, evaluation, isDone],
+    ),
+  );
 
   const { setCourseConfidenceRating } = useAlgorithmStore();
 
@@ -115,7 +134,10 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
 
   return (
     <div className="flex flex-col items-center gap-8 p-4">
-      <div className="w-full max-w-2xl bg-[#1e1e2e] rounded-3xl overflow-hidden shadow-2xl border border-white/5">
+      <div
+        data-mascot-anchor="debug-editor"
+        className="w-full max-w-2xl bg-[#1e1e2e] rounded-3xl overflow-hidden shadow-2xl border border-white/5"
+      >
         <div className="px-6 py-4 bg-[#181825] border-b border-white/5 flex items-center justify-between">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-500/50" />
@@ -142,6 +164,7 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
             return (
               <div
                 key={i}
+                data-mascot-anchor={`debug-line-${i + 1}`}
                 onClick={() => handleLineClick(i)}
                 className={`group flex items-start gap-6 px-4 py-1.5 rounded-lg border border-transparent transition-all cursor-pointer ${bgClass}`}
               >
@@ -166,6 +189,7 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
         <div className="flex flex-col items-center gap-6 w-full max-w-xl">
           {phase.askConfidence !== false && (
             <ConfidenceSelector
+              data-mascot-anchor="confidence-selector"
               selected={confidence}
               onChange={(lvl) => setConfidence(lvl)}
               className="w-full"
@@ -173,6 +197,7 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
           )}
 
           <button
+            data-mascot-anchor="debug-submit-btn"
             type="button"
             disabled={selectedIndex === null}
             onClick={checkBug}

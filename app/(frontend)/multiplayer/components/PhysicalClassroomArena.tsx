@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useLocale } from '../../../i18n/LocaleProvider';
 import type { MultiplayerRoomState } from '../../../../types/multiplayer';
 import {
   Users,
@@ -38,6 +39,7 @@ export default function PhysicalClassroomArena({
   onCompare,
   onConfirmPosition,
 }: PhysicalClassroomArenaProps) {
+  const { t } = useLocale();
   const localPlayer = room.players.find((p) => p.id === localPlayerId) || room.players[0];
 
   const activeIdxA = room.activeIndices[0];
@@ -495,7 +497,9 @@ export default function PhysicalClassroomArena({
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-md">
           <div className="flex items-center gap-2">
             <Sliders className="w-4 h-4 text-slate-400" />
-            <span className="text-[11px] font-mono text-slate-300">Érzékenység:</span>
+            <span className="text-[11px] font-mono text-slate-300">
+              {t('multiplayer.physical_arena.sensitivity') || 'Érzékenység:'}
+            </span>
             <div className="flex items-center gap-1">
               {(['high', 'normal', 'low'] as const).map((s) => (
                 <button
@@ -517,7 +521,11 @@ export default function PhysicalClassroomArena({
             <button
               onClick={() => setAudioMuted((m) => !m)}
               className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
-              title={audioMuted ? 'Hang bekapcsolása' : 'Hang némítása'}
+              title={
+                audioMuted
+                  ? t('multiplayer.dance_arena.unmute_audio') || 'Hang bekapcsolása'
+                  : t('multiplayer.dance_arena.mute_audio') || 'Hang némítása'
+              }
             >
               {audioMuted ? (
                 <VolumeX className="w-4 h-4" />
@@ -528,7 +536,7 @@ export default function PhysicalClassroomArena({
             <button
               onClick={() => setShowGuide((g) => !g)}
               className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
-              title="Súgó"
+              title={t('common.help') || 'Súgó'}
             >
               <HelpCircle className="w-4 h-4" />
             </button>
@@ -730,19 +738,22 @@ export default function PhysicalClassroomArena({
                 ) : motionDirection === 'arrived' ? (
                   <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 font-black text-xs font-montserrat animate-pulse">
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    <span>✅ MEGÁLLÁS ÉSZLELVE AZ ÚJ HELYEN!</span>
+                    <span>
+                      {t('multiplayer.physical_arena.stop_detected') ||
+                        '✅ MEGÁLLÁS ÉSZLELVE AZ ÚJ HELYEN!'}
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-teal-500/15 border border-teal-500/30 text-teal-300 font-black font-montserrat animate-pulse text-sm">
                     {requiredDirection === 'right' ? (
                       <>
-                        <span>SÉTA JOBBRA</span>
+                        <span>{t('multiplayer.physical_arena.walk_right') || 'SÉTA JOBBRA'}</span>
                         <ArrowRight className="w-5 h-5 animate-ping text-teal-400" />
                       </>
                     ) : (
                       <>
                         <ArrowLeft className="w-5 h-5 animate-ping text-teal-400" />
-                        <span>SÉTA BALRA</span>
+                        <span>{t('multiplayer.physical_arena.walk_left') || 'SÉTA BALRA'}</span>
                       </>
                     )}
                   </div>
@@ -827,7 +838,10 @@ export default function PhysicalClassroomArena({
             myVerificationData?.confirmed ? (
               <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl text-xs font-bold text-emerald-300 font-montserrat flex items-center justify-center gap-2 animate-pulse">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Helyzeted igazolva! Várakozás a társad beállására a sorban...</span>
+                <span>
+                  {t('multiplayer.physical_arena.position_verified') ||
+                    'Helyzeted igazolva! Várakozás a társad beállására a sorban...'}
+                </span>
               </div>
             ) : (
               <button
@@ -878,7 +892,9 @@ export default function PhysicalClassroomArena({
               <div className="text-sm font-bold text-white flex items-center gap-1">
                 {playerA.name}
                 {playerA.id === localPlayerId && (
-                  <span className="text-[10px] text-teal-400">(Te)</span>
+                  <span className="text-[10px] text-teal-400">
+                    ({t('multiplayer.dance_arena.you') || 'Te'})
+                  </span>
                 )}
               </div>
               <div className="text-xs text-slate-400 font-mono">
@@ -913,7 +929,9 @@ export default function PhysicalClassroomArena({
               <div className="text-sm font-bold text-white flex items-center gap-1">
                 {playerB.name}
                 {playerB.id === localPlayerId && (
-                  <span className="text-[10px] text-teal-400">(Te)</span>
+                  <span className="text-[10px] text-teal-400">
+                    ({t('multiplayer.dance_arena.you') || 'Te'})
+                  </span>
                 )}
               </div>
               <div className="text-xs text-slate-400 font-mono">

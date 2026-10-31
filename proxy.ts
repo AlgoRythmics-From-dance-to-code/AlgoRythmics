@@ -22,19 +22,26 @@ export default function middleware(request: NextRequest) {
   // 2. Route categories
   const isApiOrStatic =
     pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname.includes('.');
-  const isAdmin = pathname.startsWith('/admin');
+  const isAdmin = pathname === '/admin' || pathname.startsWith('/admin/');
   const isProtectedRoute =
-    pathname.startsWith(ROUTES.COURSES) || pathname.startsWith(ROUTES.PROFILE);
+    pathname.startsWith(ROUTES.COURSES) ||
+    pathname.startsWith(ROUTES.PROFILE) ||
+    pathname.startsWith(ROUTES.ADMIN_STATISTICS) ||
+    pathname.startsWith(ROUTES.STUDIO);
 
   // 3. Bypass static files and API immediately
   if (isApiOrStatic) {
     return NextResponse.next();
   }
 
-  // 4. Admin Panel Bypass:
-  // Payload CMS handles its own internal authentication logic.
-  // We bypass middleware for all /admin routes to prevent interfering with its internal redirects.
+  // 4. Admin Panel SSO & Bypass:
+  // If user is authenticated on frontend but missing Payload cookie, sync via SSO
   if (isAdmin) {
+    if (!payloadToken && nextAuthToken && !pathname.startsWith('/admin/login')) {
+      const ssoUrl = new URL('/api/auth/sso', request.url);
+      ssoUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(ssoUrl);
+    }
     return NextResponse.next();
   }
 

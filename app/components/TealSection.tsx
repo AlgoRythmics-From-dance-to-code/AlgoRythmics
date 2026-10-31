@@ -123,6 +123,7 @@ export default function TealSection() {
                     alt={`Visual representation of ${card.title}`}
                     width={card.width}
                     height={card.height}
+                    priority
                     sizes="(max-width: 768px) 250px, 200px"
                     className="relative z-10 w-full h-auto pointer-events-none select-none transition-transform duration-500 group-hover:scale-110 group-hover:rotate-2 dark:invert dark:hue-rotate-180"
                     style={{ maxWidth: '200px', width: '85%', height: 'auto' }}

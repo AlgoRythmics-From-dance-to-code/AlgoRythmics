@@ -1,4 +1,4 @@
-import type { CollectionConfig, FieldHook } from 'payload';
+import type { CollectionConfig, FieldHook, Where } from 'payload';
 
 import { ROLES } from '../lib/constants';
 // Helper to parse Markdown strings into Lexical Editor JSON states
@@ -36,29 +36,47 @@ export const Courses: CollectionConfig = {
       'Reusable course blueprints with phases, mascot behavior, confidence prompts, and complexity guidance.',
   },
   access: {
-    read: () => true,
+    read: ({ req: { user } }): boolean | Where => {
+      if (user?.role === ROLES.ADMIN) return true;
+      if (user?.role === ROLES.EDITOR) {
+        return {
+          or: [{ visibility: { not_equals: 'private' } }, { instructor: { equals: user.id } }],
+        };
+      }
+      return { visibility: { not_equals: 'private' } };
+    },
     create: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
-    update: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
-    delete: ({ req: { user } }) => user?.role === ROLES.ADMIN || user?.role === ROLES.EDITOR,
+    update: ({ req: { user } }) => {
+      if (!user) return false;
+      if (user.role === ROLES.ADMIN) return true;
+      if (user.role === ROLES.EDITOR) {
+        return { instructor: { equals: user.id } };
+      }
+      return false;
+    },
+    delete: ({ req: { user } }) => {
+      if (!user) return false;
+      if (user.role === ROLES.ADMIN) return true;
+      if (user.role === ROLES.EDITOR) {
+        return { instructor: { equals: user.id } };
+      }
+      return false;
+    },
+  },
+  hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (operation === 'create' && req?.user && !data.instructor) {
+          data.instructor = req.user.id;
+        }
+        return data;
+      },
+    ],
   },
   fields: [
     {
       type: 'tabs',
       tabs: [
-        {
-          label: 'AI Generator',
-          fields: [
-            {
-              name: 'aiGenerator',
-              type: 'ui',
-              admin: {
-                components: {
-                  Field: '@/app/components/Payload/AIGeneratorField#default',
-                },
-              },
-            },
-          ],
-        },
         {
           label: 'General info',
           fields: [
@@ -141,6 +159,37 @@ export const Courses: CollectionConfig = {
               required: true,
               admin: { description: 'A kurzus nehézségi szintje.' },
             },
+            {
+              name: 'instructor',
+              type: 'relationship',
+              relationTo: 'users',
+              admin: {
+                position: 'sidebar',
+                description: 'A kurzust készítő tanár / oktató.',
+              },
+            },
+            {
+              name: 'visibility',
+              type: 'select',
+              defaultValue: 'public',
+              options: [
+                { label: 'Publikus (Minden tanár látja és klónozhatja)', value: 'public' },
+                { label: 'Privát (Csak a saját kurzusaim között)', value: 'private' },
+              ],
+              admin: {
+                position: 'sidebar',
+                description: 'Láthatóság más tanárok számára a Tanári Stúdióban.',
+              },
+            },
+            {
+              name: 'isOfficial',
+              type: 'checkbox',
+              defaultValue: false,
+              admin: {
+                position: 'sidebar',
+                description: 'Hivatalos AlgoRythmics alapkurzus (mintasablon).',
+              },
+            },
           ],
         },
         {
@@ -156,9 +205,24 @@ export const Courses: CollectionConfig = {
                 {
                   name: 'enabled',
                   type: 'checkbox',
-                  defaultValue: true,
+                  defaultValue: false,
                   admin: {
                     description: 'Ki/Bekapcsolja a kabalát a teljes kurzusra.',
+                  },
+                },
+                {
+                  name: 'mode',
+                  type: 'select',
+                  defaultValue: 'disabled',
+                  options: [
+                    { label: 'Sose legyen kabala', value: 'disabled' },
+                    { label: 'Csak AI kabala', value: 'ai-only' },
+                    { label: 'AI kabala, manuális kabala fallbackkel', value: 'ai-fallback' },
+                    { label: 'Csak manuális kabala', value: 'manual-only' },
+                  ],
+                  admin: {
+                    description:
+                      'A kabala bekapcsolási és működési módja (Kikapcsolva, Csak AI, AI manuális fallbackkel, Csak manuális).',
                   },
                 },
                 {
@@ -301,13 +365,10 @@ export const Courses: CollectionConfig = {
                 {
                   name: 'sourceAlgorithmId',
                   type: 'text',
-                  required: true, // Legyen kötelező a meglévő algoritmusokhoz való kapcsolódás miatt
+                  required: false,
+                  defaultValue: 'general',
                   admin: {
-                    description:
-                      'Az algoritmus technikai neve, amiből a rendszer merít (pl. bubble-sort).',
-                    components: {
-                      Field: '@/app/components/Payload/AlgorithmSelect#AlgorithmIdSelect',
-                    },
+                    description: 'Kapcsolódó algoritmus vagy technikai azonosító (opcionális).',
                   },
                 },
                 {
@@ -333,7 +394,12 @@ export const Courses: CollectionConfig = {
                   localized: true,
                   admin: {
                     description: 'Opcionális: A kabala egyedi bátorító mondata.',
-                    condition: (data) => data?.mascot?.enabled,
+                    condition: (data) =>
+                      Boolean(
+                        data?.mascot?.enabled &&
+                        data?.mascot?.mode !== 'disabled' &&
+                        data?.mascot?.mode !== 'ai-only',
+                      ),
                   },
                 },
                 {
@@ -343,7 +409,12 @@ export const Courses: CollectionConfig = {
                   admin: {
                     description:
                       'Opcionális: Egyedi üzenet sok hiba esetén (pl. "Látom elakadtál ennél a résznél...").',
-                    condition: (data) => data?.mascot?.enabled,
+                    condition: (data) =>
+                      Boolean(
+                        data?.mascot?.enabled &&
+                        data?.mascot?.mode !== 'disabled' &&
+                        data?.mascot?.mode !== 'ai-only',
+                      ),
                   },
                 },
                 {
@@ -352,7 +423,12 @@ export const Courses: CollectionConfig = {
                   localized: true,
                   admin: {
                     description: 'A konkrét szakmai segítség/tipp a fázishoz.',
-                    condition: (data) => data?.mascot?.enabled,
+                    condition: (data) =>
+                      Boolean(
+                        data?.mascot?.enabled &&
+                        data?.mascot?.mode !== 'disabled' &&
+                        data?.mascot?.mode !== 'ai-only',
+                      ),
                   },
                 },
                 {
@@ -361,7 +437,12 @@ export const Courses: CollectionConfig = {
                   localized: true,
                   admin: {
                     description: 'Tipp vagy bátorítás, ha sokáig nem történik semmi a fázisban.',
-                    condition: (data) => data?.mascot?.enabled,
+                    condition: (data) =>
+                      Boolean(
+                        data?.mascot?.enabled &&
+                        data?.mascot?.mode !== 'disabled' &&
+                        data?.mascot?.mode !== 'ai-only',
+                      ),
                   },
                 },
                 {

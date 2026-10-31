@@ -26,6 +26,10 @@ export const ROUTES = {
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
   LEADERBOARD: '/leaderboard',
+  ADMIN: '/admin',
+  ADMIN_STATISTICS: '/admin-statistics',
+  ALGORITHM_STATISTICS: '/admin-statistics/algorithms',
+  STUDIO: '/studio',
 } as const;
 
 export const API_ROUTES = {

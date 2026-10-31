@@ -9,6 +9,7 @@ import { getCodeTemplate, type BlankSlot } from '../../../lib/algorithms/codeTem
 import { simulateCreateTemplate } from '../../../lib/algorithms/liveSimulator';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import LiveSandboxVisualizer from './LiveSandboxVisualizer';
+import { useReportMascotScreen } from '../Course/MascotScreenContext';
 
 interface CodeExerciseProps {
   algorithmId: string;
@@ -89,6 +90,34 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
   const simulation = useMemo(() => {
     return simulateCreateTemplate(algorithmId, blankValues);
   }, [algorithmId, blankValues]);
+
+  useReportMascotScreen(
+    'create',
+    useMemo(
+      () => ({
+        algorithmId,
+        totalBlanks,
+        filledCount: Object.values(blankStates).filter((s) => s.isCorrect === true).length,
+        activeBlank,
+        activeBlankSlot: activeBlank ? blanksMap[activeBlank]?.placeholder : undefined,
+        helpActive,
+        isComplete,
+        mistakes,
+        simulationOutcome: simulation.isCorrect ? 'correct' : simulation.status,
+      }),
+      [
+        algorithmId,
+        totalBlanks,
+        blankStates,
+        activeBlank,
+        blanksMap,
+        helpActive,
+        isComplete,
+        mistakes,
+        simulation,
+      ],
+    ),
+  );
 
   // Check a single blank
   const checkBlank = useCallback(
@@ -314,6 +343,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
               return (
                 <span key={partIdx} className="inline-flex items-center mx-1">
                   <input
+                    data-mascot-anchor={`create-blank-${blankId}`}
                     type="text"
                     value={state.value}
                     onChange={(e) => handleBlankChange(blankId, e.target.value)}
@@ -356,6 +386,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
         <div className="flex items-center gap-3">
           {!helpActive && (
             <button
+              data-mascot-anchor="create-help-btn"
               type="button"
               onClick={handleHelp}
               className="flex items-center gap-2 px-4 py-2 rounded-xl font-montserrat font-bold text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all"
@@ -365,6 +396,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
             </button>
           )}
           <button
+            data-mascot-anchor="create-reset-btn"
             type="button"
             onClick={handleReset}
             className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 transition-all"
@@ -401,7 +433,10 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
       <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Code Editor Column */}
         <div className="lg:col-span-7 flex flex-col gap-4">
-          <div className="rounded-2xl bg-[#1e1e2e] dark:bg-[#0d0d0d] border border-gray-200 dark:border-white/5 shadow-xl overflow-hidden">
+          <div
+            data-mascot-anchor="create-editor"
+            className="rounded-2xl bg-[#1e1e2e] dark:bg-[#0d0d0d] border border-gray-200 dark:border-white/5 shadow-xl overflow-hidden"
+          >
             <div className="flex items-center gap-2 px-4 py-3 bg-[#181825] dark:bg-[#080808] border-b border-white/5">
               <div className="w-3 h-3 rounded-full bg-red-500/60" />
               <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
@@ -462,7 +497,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
         </div>
 
         {/* Live Simulation Sandbox Column */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
+        <div data-mascot-anchor="create-simulation" className="lg:col-span-5 flex flex-col gap-4">
           <LiveSandboxVisualizer simulation={simulation} />
         </div>
       </div>

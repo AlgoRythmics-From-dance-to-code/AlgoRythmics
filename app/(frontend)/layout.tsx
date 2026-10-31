@@ -1,5 +1,5 @@
 import ThemeProviderClient from '../components/ThemeProviderClient';
-import LocaleProvider from '../i18n/LocaleProvider';
+import LocaleProvider, { Locale } from '../i18n/LocaleProvider';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
 import { Montserrat } from 'next/font/google';
@@ -15,7 +15,15 @@ import PWAInstallPrompt from '../components/PWAInstallPrompt';
 import HtmlLangSync from '../components/HtmlLangSync';
 import { auth } from '../../auth';
 import { cookies } from 'next/headers';
-import { Locale } from '../i18n/LocaleProvider';
+import en from '../../locales/en.json';
+import hu from '../../locales/hu.json';
+import ro from '../../locales/ro.json';
+
+const serverDictionaries: Record<Locale, Record<string, unknown>> = {
+  en: en as Record<string, unknown>,
+  hu: hu as Record<string, unknown>,
+  ro: ro as Record<string, unknown>,
+};
 
 const montserrat = Montserrat({
   variable: '--font-montserrat',
@@ -75,7 +83,10 @@ export const viewport = {
 
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
   const [session, cookieStore] = await Promise.all([auth(), cookies()]);
-  const locale = (cookieStore.get('locale')?.value as Locale) || 'hu';
+  const rawLocale = cookieStore.get('locale')?.value;
+  const locale: Locale =
+    rawLocale === 'en' || rawLocale === 'hu' || rawLocale === 'ro' ? rawLocale : 'hu';
+  const initialDictionary = serverDictionaries[locale] || serverDictionaries.hu;
   const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
 
   return (
@@ -112,7 +123,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
         )}
         <NextAuthProvider session={session}>
           <ThemeProviderClient>
-            <LocaleProvider initialLocale={locale}>
+            <LocaleProvider initialLocale={locale} initialDictionary={initialDictionary}>
               <HtmlLangSync />
               <UserProgressSync />
               <Header />

@@ -11,8 +11,7 @@ import type {
   MultiplayerRoomState,
 } from '../../../types/multiplayer';
 import LobbyView from './components/LobbyView';
-import PhysicalClassroomArena from './components/PhysicalClassroomArena';
-import StatsDashboard from './components/StatsDashboard';
+import VisualDanceArena from './components/VisualDanceArena';
 import PostMatchModal from './components/PostMatchModal';
 import MultiplayerHistoryModal from './components/MultiplayerHistoryModal';
 import { ArrowLeft, Lock, LogIn, UserPlus } from 'lucide-react';
@@ -28,7 +27,7 @@ export default function MultiplayerClient() {
   const {
     room,
     localPlayerId,
-    stepLogs,
+    stepLogs: _stepLogs,
     elapsedSeconds,
     choreographyScore,
     audioEnabled,
@@ -38,7 +37,9 @@ export default function MultiplayerClient() {
     startGame,
     executeSwap,
     executeCompare,
-    confirmPosition,
+    confirmPosition: _confirmPosition,
+    addBot,
+    removePlayer,
     broadcastState,
     setRoom,
   } = useMultiplayerEngine(roomParam);
@@ -204,12 +205,7 @@ export default function MultiplayerClient() {
             <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold font-mono">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               {t('multiplayer.live_game') || 'ÉLŐ JÁTÉK'} (
-              {room.controlStyle === 'spatial'
-                ? t('multiplayer.controls.spatial.title')
-                : room.controlStyle === 'physical'
-                  ? t('multiplayer.controls.physical.title')
-                  : t('multiplayer.controls.discrete.title')}
-              )
+              {t('multiplayer.dance_arena.title') || 'Vizuális Táncaréna'})
             </div>
           )}
         </div>
@@ -231,30 +227,22 @@ export default function MultiplayerClient() {
             onSelectControl={handleSelectControl}
             onSetTeamSize={handleSetTeamSize}
             onJoinRoom={joinRoomWithCode}
+            onAddBot={addBot}
+            onRemovePlayer={removePlayer}
             onStart={startGame}
             onOpenHistory={() => setIsHistoryOpen(true)}
           />
         ) : (
-          <div className="space-y-4">
-            {/* Real-time HUD Dashboard */}
-            <StatsDashboard
-              room={room}
-              elapsedSeconds={elapsedSeconds}
-              choreographyScore={choreographyScore}
-              stepLogs={stepLogs}
-              audioEnabled={audioEnabled}
-              onToggleAudio={() => setAudioEnabled((prev) => !prev)}
-            />
-
-            {/* Real-time Physical Classroom Movement Arena */}
-            <PhysicalClassroomArena
-              room={room}
-              localPlayerId={localPlayerId}
-              onSwap={executeSwap}
-              onCompare={executeCompare}
-              onConfirmPosition={confirmPosition}
-            />
-          </div>
+          <VisualDanceArena
+            room={room}
+            localPlayerId={localPlayerId}
+            elapsedSeconds={elapsedSeconds}
+            choreographyScore={choreographyScore}
+            audioEnabled={audioEnabled}
+            onToggleAudio={() => setAudioEnabled((prev) => !prev)}
+            onSwap={executeSwap}
+            onCompare={executeCompare}
+          />
         )}
       </div>
 
@@ -263,22 +251,28 @@ export default function MultiplayerClient() {
         <PostMatchModal
           stats={room.stats}
           onRestart={() => {
-            setRoom((prev) => ({
-              ...prev,
+            const nextRoom: MultiplayerRoomState = {
+              ...room,
               status: 'lobby',
               array: [],
               activeIndices: [0, 1],
-              lastActionMessage: 'Új mérkőzés indítása...',
-            }));
+              lastActionMessage: 'Új táncverseny indítása...',
+              version: (room.version || 1) + 1,
+            };
+            setRoom(nextRoom);
+            broadcastState(nextRoom);
           }}
           onBackToLobby={() => {
-            setRoom((prev) => ({
-              ...prev,
+            const nextRoom: MultiplayerRoomState = {
+              ...room,
               status: 'lobby',
               array: [],
               activeIndices: [0, 1],
               lastActionMessage: 'Visszatérés a lobbyba.',
-            }));
+              version: (room.version || 1) + 1,
+            };
+            setRoom(nextRoom);
+            broadcastState(nextRoom);
           }}
         />
       )}
