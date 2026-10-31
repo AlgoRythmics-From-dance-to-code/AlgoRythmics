@@ -73,9 +73,11 @@ export async function POST(req: Request) {
           { status: 413 },
         );
       }
-      if (screenshotFile.type && !screenshotFile.type.startsWith('image/')) {
+      const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+      const fileType = screenshotFile.type?.toLowerCase() || '';
+      if (!ALLOWED_MIME_TYPES.includes(fileType)) {
         return NextResponse.json(
-          { error: 'Only image files are allowed for screenshots' },
+          { error: 'Only raster images (PNG, JPEG, WebP, GIF) are allowed for screenshots' },
           { status: 400 },
         );
       }

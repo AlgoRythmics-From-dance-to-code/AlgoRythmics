@@ -159,7 +159,6 @@ function FeatureCard({
           alt={`Illustration for ${label}`}
           width={width}
           height={height}
-          priority
           sizes="(max-width: 768px) 100vw, 280px"
           className="w-full h-auto pointer-events-none select-none transition-all duration-300 ease-out dark:invert dark:hue-rotate-180 group-hover:opacity-20 group-hover:blur-md group-hover:scale-90"
           style={{ maxWidth: '280px', width: '100%', height: 'auto' }}

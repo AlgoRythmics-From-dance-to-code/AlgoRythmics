@@ -43,6 +43,18 @@ export async function POST(
       return NextResponse.json({ error: 'Az eredeti kurzus nem található' }, { status: 404 });
     }
 
+    const currentUserId = user.id ? String(user.id) : '';
+    const originalInstructorId = (original as any).instructor
+      ? typeof (original as any).instructor === 'object'
+        ? String((original as any).instructor.id)
+        : String((original as any).instructor)
+      : '';
+    const isPrivate = (original as any).visibility === 'private';
+
+    if (isPrivate && user.role !== ROLES.ADMIN && originalInstructorId !== currentUserId) {
+      return NextResponse.json({ error: 'Nincs jogosultságod más tanár privát kurzusát másolni!' }, { status: 403 });
+    }
+
     // Prepare localized cloned title
     let newTitle: { hu: string; en: string; ro: string };
     if (typeof original.title === 'object' && original.title !== null) {

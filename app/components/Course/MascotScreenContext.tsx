@@ -150,17 +150,29 @@ export function MascotScreenProvider({ children }: { children: React.ReactNode }
   );
 }
 
-export function useMascotScreen() {
+const noopMascotContext: MascotScreenContextValue = {
+  screenState: { sourceView: '', isComplete: false },
+  reportScreenState: () => {},
+  getAvailableAnchors: () => [],
+  activeAnnotations: [],
+  setAnnotations: () => {},
+  clearAnnotations: () => {},
+  scrollAnchorIntoView: () => false,
+};
+
+/**
+ * Hook to access mascot screen state and controls.
+ * Falls back to a safe no-op context when mounted outside MascotScreenProvider (e.g. standalone algo/video pages).
+ */
+export function useMascotScreen(): MascotScreenContextValue {
   const ctx = useContext(MascotScreenContext);
-  if (!ctx) {
-    throw new Error('useMascotScreen must be used within MascotScreenProvider');
-  }
-  return ctx;
+  return ctx || noopMascotContext;
 }
 
 /**
  * Convenient helper hook for phase sub-components to report their state automatically.
  * Serializes data to prevent infinite re-render cycles when callers pass inline literals.
+ * Safe to use outside MascotScreenProvider (no-op).
  */
 export function useReportMascotScreen(
   sourceView: string,

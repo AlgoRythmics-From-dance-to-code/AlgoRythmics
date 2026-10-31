@@ -77,7 +77,7 @@ export async function buildUserLearningDossier(
   phaseId?: string,
   algorithmId?: string,
 ): Promise<UserLearningDossier> {
-  const cacheKey = `${userId}:${courseSlug}:${phaseId || 'general'}`;
+  const cacheKey = `${userId}:${courseSlug}:${phaseId || 'general'}:${algorithmId || 'general'}`;
   const now = Date.now();
   const cached = dossierCache.get(cacheKey);
 

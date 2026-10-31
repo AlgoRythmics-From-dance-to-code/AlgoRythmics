@@ -52,13 +52,17 @@ export const Courses: CollectionConfig = {
     update: ({ req: { user } }) => {
       if (!user) return false;
       if (user.role === ROLES.ADMIN) return true;
-      if (user.role === ROLES.EDITOR) return true;
+      if (user.role === ROLES.EDITOR) {
+        return { instructor: { equals: user.id } };
+      }
       return false;
     },
     delete: ({ req: { user } }) => {
       if (!user) return false;
       if (user.role === ROLES.ADMIN) return true;
-      if (user.role === ROLES.EDITOR) return true;
+      if (user.role === ROLES.EDITOR) {
+        return { instructor: { equals: user.id } };
+      }
       return false;
     },
   },

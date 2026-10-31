@@ -203,24 +203,26 @@ export async function POST(request: Request) {
 
       const existingRecord = rooms.get(cleanRoomId);
 
-      // Verify that if the room already has a host, the update preserves or originates from a known participant/host
-      if (existingRecord && existingRecord.state.players.length > 0) {
+      if (!existingRecord) {
+        return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+      }
+
+      // Verify that if the room already has a host, the update preserves the known host
+      if (existingRecord.state.players.length > 0) {
         const existingHost = existingRecord.state.players.find((p) => p.isHost);
         const incomingPlayers = Array.isArray(roomState.players) ? roomState.players : [];
         if (
           existingHost &&
-          incomingPlayers.length > 0 &&
-          !incomingPlayers.some((p: Player) => p.id === existingHost.id)
+          (!incomingPlayers.some((p: Player) => p.id === existingHost.id && p.isHost))
         ) {
           return NextResponse.json(
-            { error: 'Unauthorized: Cannot remove room host during update' },
+            { error: 'Unauthorized: Cannot remove or demote room host during update' },
             { status: 403 },
           );
         }
       }
 
-      // Auto-heal / re-create room if server state was reset or worker changed
-      const nextVersion = existingRecord ? (existingRecord.state.version || 0) + 1 : 1;
+      const nextVersion = (existingRecord.state.version || 0) + 1;
       const sanitizedState: MultiplayerRoomState = {
         ...roomState,
         roomId: cleanRoomId,

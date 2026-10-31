@@ -322,9 +322,10 @@ function runSortAndCheck(
     const loopLimiter = `if (++globalThis.__loopCount > 10000) throw new Error("Végtelen ciklus vagy túl mély rekurzió észlelve! Kérlek ellenőrizd a leállási feltételeket.");`;
 
     // 1. Guard braceless while/for loops by injecting condition check inside the loop header or body
+    const whileGuard = `((++globalThis.__loopCount <= 10000) ? true : (() => { throw new Error("Végtelen ciklus vagy túl mély rekurzió észlelve! Kérlek ellenőrizd a leállási feltételeket."); })())`;
     safeCode = safeCode.replace(
       /\bwhile\s*\(([^)]+)\)/g,
-      `while ((${loopLimiter.replace('if (', '((').replace(') throw', ') ? (() => { throw') .replace(');', ' })() : true)')} && ($1)))`,
+      `while (${whileGuard} && ($1))`,
     );
 
     // 2. Insert limiter inside opening braces of for, do, function, and arrow function blocks

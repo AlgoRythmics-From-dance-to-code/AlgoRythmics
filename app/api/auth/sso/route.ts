@@ -62,6 +62,7 @@ export async function GET(req: Request) {
       data: {
         sessions: validSessions,
       } as any,
+      overrideAccess: true,
     });
 
     // Sign official Payload JWT token with sid session id

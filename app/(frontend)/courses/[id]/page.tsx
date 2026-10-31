@@ -35,6 +35,20 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
     docs = [];
   }
 
+  const rawDoc = docs[0] as Record<string, unknown> | undefined;
+  if (rawDoc && rawDoc.visibility === 'private') {
+    const userRole = session.user?.role;
+    const userId = session.user?.id ? String(session.user.id) : '';
+    const instructorId = rawDoc.instructor
+      ? typeof rawDoc.instructor === 'object'
+        ? String((rawDoc.instructor as Record<string, unknown>).id)
+        : String(rawDoc.instructor)
+      : '';
+    if (userRole !== 'admin' && instructorId !== userId) {
+      notFound();
+    }
+  }
+
   const course = findCourseBySlug(id, docs);
 
   if (!course) {

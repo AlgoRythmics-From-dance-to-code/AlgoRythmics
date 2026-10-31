@@ -22,7 +22,7 @@ export default function middleware(request: NextRequest) {
   // 2. Route categories
   const isApiOrStatic =
     pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname.includes('.');
-  const isAdmin = pathname.startsWith('/admin');
+  const isAdmin = pathname === '/admin' || pathname.startsWith('/admin/');
   const isProtectedRoute =
     pathname.startsWith(ROUTES.COURSES) ||
     pathname.startsWith(ROUTES.PROFILE) ||

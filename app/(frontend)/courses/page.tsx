@@ -20,11 +20,14 @@ async function getFreshCourses(locale: string): Promise<CourseCollectionDoc[]> {
 
   const result = await payload.find({
     collection: 'courses',
+    where: {
+      visibility: { not_equals: 'private' },
+    },
     depth: 0,
     limit: 100,
     sort: 'title',
     locale: locale as 'en' | 'hu' | 'ro',
-    overrideAccess: true, // Show all accessible courses
+    overrideAccess: true,
   });
 
   return JSON.parse(JSON.stringify(result.docs)) as CourseCollectionDoc[];

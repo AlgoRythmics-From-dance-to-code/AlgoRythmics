@@ -31,6 +31,18 @@ export async function GET(
       return NextResponse.json({ error: 'Kurzus nem található' }, { status: 404 });
     }
 
+    const currentUserId = user.id ? String(user.id) : '';
+    const instructorId = (course as any).instructor
+      ? typeof (course as any).instructor === 'object'
+        ? String((course as any).instructor.id)
+        : String((course as any).instructor)
+      : '';
+    const isPrivate = (course as any).visibility === 'private';
+
+    if (isPrivate && user.role !== ROLES.ADMIN && instructorId !== currentUserId) {
+      return NextResponse.json({ error: 'Nincs jogosultságod megtekinteni ezt a privát kurzust!' }, { status: 403 });
+    }
+
     return NextResponse.json({ course });
   } catch (error) {
     console.error('[Studio Courses Get ID Error]:', error);
@@ -66,9 +78,13 @@ export async function PUT(
 
     // Permission check: Admin can edit any, Editor can edit only their own
     const currentUserId = user.id ? String(user.id) : '';
-    const instructorId = (existing as any).instructor ? String((existing as any).instructor) : '';
-    if (user.role !== ROLES.ADMIN && instructorId && instructorId !== currentUserId) {
-      return NextResponse.json({ error: 'Nincs jogosultságod más tanár kurzusát módosítani!' }, { status: 403 });
+    const instructorId = (existing as any).instructor
+      ? typeof (existing as any).instructor === 'object'
+        ? String((existing as any).instructor.id)
+        : String((existing as any).instructor)
+      : '';
+    if (user.role !== ROLES.ADMIN && instructorId !== currentUserId) {
+      return NextResponse.json({ error: 'Nincs jogosultságod ezt a kurzust módosítani!' }, { status: 403 });
     }
 
     const body = await req.json();
@@ -147,9 +163,13 @@ export async function DELETE(
     }
 
     const currentUserId = user.id ? String(user.id) : '';
-    const instructorId = (existing as any).instructor ? String((existing as any).instructor) : '';
-    if (user.role !== ROLES.ADMIN && instructorId && instructorId !== currentUserId) {
-      return NextResponse.json({ error: 'Nincs jogosultságod más tanár kurzusát törölni!' }, { status: 403 });
+    const instructorId = (existing as any).instructor
+      ? typeof (existing as any).instructor === 'object'
+        ? String((existing as any).instructor.id)
+        : String((existing as any).instructor)
+      : '';
+    if (user.role !== ROLES.ADMIN && instructorId !== currentUserId) {
+      return NextResponse.json({ error: 'Nincs jogosultságod ezt a kurzust törölni!' }, { status: 403 });
     }
 
     await payload.delete({
