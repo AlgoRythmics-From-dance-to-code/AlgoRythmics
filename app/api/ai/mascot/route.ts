@@ -64,6 +64,18 @@ export interface MascotAIResponse {
   quickReplies: string[];
 }
 
+// ── 1. Static, Cache-Friendly System Prompt (Prompt Caching enabled across all requests) ──
+const STATIC_MASCOT_SYSTEM_PROMPT = `You are the friendly AI mascot guide and pedagogical tutor in AlgoRythmics.
+Role: Help the student understand algorithmic concepts and solve exercises step-by-step.
+
+CORE RULES:
+1. Socratic method: NEVER reveal the full answer directly. Provide an intuitive hint, guiding clue, or thought-provoking question.
+2. If student has repeated mistakes, point directly to the relevant UI element to examine.
+3. Brevity: Keep response very short and punchy: 1 to 2 sentences max.
+4. UI Annotations: If pointing to an element, select targetAnchor strictly from the provided availableAnchors list.
+   - effect: 'frame' (boxes), 'underline' (code/text), 'pointer' (inputs/buttons), 'pulse' (hint/submit).
+5. Always respond strictly in the specified Target Language.`;
+
 // In-memory course cache for mascot to avoid hitting Postgres on every single message
 const courseDocCache = new Map<string, { doc: Record<string, unknown>; expiresAt: number }>();
 const COURSE_CACHE_TTL = 60_000; // 60s
@@ -153,89 +165,94 @@ export async function POST(req: NextRequest) {
     // Build user dossier (cached for 40s in mascotContextBuilder)
     const dossier = await buildUserLearningDossier(user.id, courseSlug, phaseId, sourceAlgorithmId);
 
-    // Filter available anchors from screen
-    const availableAnchors = Array.isArray(screenSnapshot.availableAnchors)
+    // ── 2. Dynamic Context Pruning (Exercise data only when asked or on mistake) ──
+    const isExerciseContextNeeded =
+      trigger === 'question' || trigger === 'mistake' || Boolean(userQuery);
+
+    const rawAnchors = Array.isArray(screenSnapshot.availableAnchors)
       ? (screenSnapshot.availableAnchors as string[])
       : [];
+    // Only pass relevant anchors when interacting with exercise, capped at 10 to save tokens
+    const availableAnchors = isExerciseContextNeeded ? rawAnchors.slice(0, 10) : [];
 
     const targetLang = locale === 'en' ? 'English' : locale === 'ro' ? 'Romanian' : 'Hungarian';
 
-    // Streamlined, token-efficient system prompt for rapid Time-To-First-Token (TTFT)
-    const systemPrompt = `You are "${mascotName}", the friendly AI mascot guide in AlgoRythmics.
-Role: Help student ${dossier.identity.firstName} solve this step.
-LANGUAGE: Respond strictly in ${targetLang}.
+    const contextLines: string[] = [
+      `Mascot: "${mascotName}" | Student: ${dossier.identity.firstName || 'Tanuló'} | Language: ${targetLang}`,
+      `Current Step: "${currentPhase?.title || ''}" (${currentPhase?.sourceView || 'general'})`,
+      `Goal: "${currentPhase?.summary || ''}"`,
+      `State: Streak ${dossier.globalStats.currentStreak} | Points ${dossier.globalStats.totalPoints} | Step ${dossier.currentCourseState.activePhaseIndex + 1}/${phases.length}`,
+    ];
 
-RULES:
-1. NEVER reveal the exact answer directly. Give a Socratic hint or guiding clue.
-2. If student has 3+ mistakes, you can point directly to the exact element.
-3. Keep response very short and punchy: 1 to 2 sentences max.
-4. Pointing: Select targetAnchor ONLY from AVAILABLE_ANCHORS list.
-   - effect: 'frame' (boxes), 'underline' (code/text), 'pointer' (inputs/buttons), 'pulse' (hint/submit).
+    if (isExerciseContextNeeded) {
+      if (currentPhase?.hintCopy) {
+        contextLines.push(`Hint: "${currentPhase.hintCopy}"`);
+      }
+      if (currentPhase?.quiz) {
+        const q0 = (currentPhase.quiz as Array<Record<string, unknown>>)[0];
+        if (q0) {
+          contextLines.push(
+            `Quiz Question: "${q0.question || ''}" (Correct Index: ${q0.correctIndex})`,
+          );
+        }
+      }
+      if (currentPhase?.gapFillContent) {
+        contextLines.push(
+          `GapFill: "${String(currentPhase.gapFillContent).slice(0, 160)}" | Solutions: ${JSON.stringify(currentPhase.gapFillSolutions)}`,
+        );
+      }
+      if (availableAnchors.length > 0) {
+        contextLines.push(`Available Anchors: ${JSON.stringify(availableAnchors)}`);
+      }
+      if (screenSnapshot.currentSelection) {
+        contextLines.push(
+          `Draft: ${JSON.stringify(screenSnapshot.currentSelection).slice(0, 100)}`,
+        );
+      }
+    }
 
-STUDENT STATE:
-- Streak: ${dossier.globalStats.currentStreak} | Points: ${dossier.globalStats.totalPoints} | Step: Phase ${dossier.currentCourseState.activePhaseIndex + 1}/${phases.length}
+    const contextBlock = contextLines.join('\n');
 
-CURRENT STEP:
-- Title: "${currentPhase?.title || ''}" (${currentPhase?.sourceView || ''})
-- Goal: "${currentPhase?.summary || ''}"
-${currentPhase?.hintCopy ? `- Hint: "${currentPhase.hintCopy}"` : ''}
-${
-  currentPhase?.quiz
-    ? `- Quiz Question: "${(currentPhase.quiz as Array<Record<string, unknown>>)[0]?.question || ''}"
-- Correct Index: ${(currentPhase.quiz as Array<Record<string, unknown>>)[0]?.correctIndex}`
-    : ''
-}
-${
-  currentPhase?.gapFillContent
-    ? `- GapFill: "${String(currentPhase.gapFillContent).slice(0, 200)}"
-- Solutions: ${JSON.stringify(currentPhase.gapFillSolutions)}`
-    : ''
-}
+    // ── 3. Conversation Messages (Static system prefix + pruned history) ──
+    const messages: OpenRouterMessage[] = [
+      { role: 'system', content: STATIC_MASCOT_SYSTEM_PROMPT },
+    ];
 
-SCREEN:
-- View: "${screenSnapshot.sourceView || currentPhase?.sourceView || 'general'}"
-- Available Anchors: ${JSON.stringify(availableAnchors)}
-- Draft: ${JSON.stringify(screenSnapshot.currentSelection || null)}`;
-
-    // Construct conversation messages (keep only last 2 turns to minimize latency)
-    const messages: OpenRouterMessage[] = [{ role: 'system', content: systemPrompt }];
-
+    // Include last 2 turns, capped to 120 chars each to prevent history accumulation
     if (Array.isArray(chatHistory) && chatHistory.length > 0) {
       chatHistory.slice(-2).forEach((msg) => {
         if (msg.role === 'user' || msg.role === 'assistant') {
-          messages.push({ role: msg.role, content: String(msg.content) });
+          messages.push({
+            role: msg.role,
+            content: String(msg.content).slice(0, 120),
+          });
         }
       });
     }
 
-    if (userQuery) {
-      messages.push({
-        role: 'user',
-        content: `Student: "${userQuery}". Give a 1-2 sentence guiding reply and point to relevant anchors if helpful.`,
-      });
-    } else {
-      messages.push({
-        role: 'user',
-        content: `Trigger: "${trigger}". Give an encouraging 1-sentence tip and point to relevant anchors if helpful.`,
-      });
-    }
+    const userInstruction = userQuery
+      ? `Student: "${userQuery}". Give a 1-2 sentence guiding Socratic reply and point to relevant anchors if helpful.`
+      : `Trigger: "${trigger}". Give an encouraging 1-sentence tip and point to relevant anchors if helpful.`;
 
-    // Call OpenRouter with high throughput, no reasoning, and low maxTokens for maximum speed
+    messages.push({
+      role: 'user',
+      content: `[CONTEXT]\n${contextBlock}\n\n[TASK]\n${userInstruction}`,
+    });
+
+    // Call OpenRouter with high throughput, no reasoning, and low maxTokens (150) for maximum speed and token efficiency
     const { data: aiResponse } = await callOpenRouterStructured<MascotAIResponse>({
       messages,
       schema: mascotResponseSchema,
       schemaName: 'mascot_ai_response',
       timeoutMs: 15_000,
       disableReasoning: true,
-      maxTokens: 180,
+      maxTokens: 150,
       temperature: 0.25,
     });
 
     // Sanitize annotations to only valid client screen anchors
     const validAnnotations = (aiResponse.annotations || []).filter(
-      (a) =>
-        a.targetAnchor &&
-        (availableAnchors.length === 0 || availableAnchors.includes(a.targetAnchor)),
+      (a) => a.targetAnchor && (rawAnchors.length === 0 || rawAnchors.includes(a.targetAnchor)),
     );
 
     return NextResponse.json({

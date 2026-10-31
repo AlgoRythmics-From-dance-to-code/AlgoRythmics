@@ -352,11 +352,10 @@ async function callOpenRouter(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), OPENROUTER_TIMEOUT_MS);
 
-  const systemPrompt = `You are an expert curriculum developer and computer science educator. 
+  const systemPrompt = `You are an expert curriculum developer and computer science educator.
 Your goal is to generate a comprehensive, high-quality programming/algorithm course blueprint.
-You must return valid JSON matching the following schema. You MUST generate high-quality translations for all three languages ("hu", "en", "ro") for all localized properties. Do not include markdown codeblocks or conversational text, just raw JSON.
-Schema:
-${JSON.stringify(schema)}`;
+You must return valid JSON strictly complying with the provided schema. You MUST generate natural, high-quality translations for all three languages ("hu", "en", "ro") for all localized properties.
+Conciseness: Keep summaries, hints, and pedagogical explanations concise (1-2 sentences). Do not include markdown codeblocks or conversational text, just raw JSON.`;
 
   // Try with json_schema first
   let response: Response;
@@ -420,7 +419,10 @@ ${JSON.stringify(schema)}`;
         body: JSON.stringify({
           model: activeModel,
           messages: [
-            { role: 'system', content: systemPrompt },
+            {
+              role: 'system',
+              content: `${systemPrompt}\n\nJSON Schema Reference:\n${JSON.stringify(schema)}`,
+            },
             { role: 'user', content: promptText },
           ],
           response_format: {
@@ -603,6 +605,7 @@ CRITICAL REQUIREMENTS:
    - 'video', 'animation', 'control', 'create', 'alive', 'final-challenge': Standard interactive algorithm visualizations. They do not require any of the above custom parameters (only the common properties like phaseId, title, summary, etc.).
 8. Ensure you fully populate the corresponding fields for the selected 'sourceView' for all three languages.
 9. REMINDER: The "phases" array MUST NOT be empty. Generate at least one phase per step in the outline.
+10. BREVITY & QUALITY: Keep summaries, hints, and explanations brief and punchy (1-2 sentences). Do not generate repetitive filler text.
 `;
 
     // 5. Call OpenRouter API with structured response schema

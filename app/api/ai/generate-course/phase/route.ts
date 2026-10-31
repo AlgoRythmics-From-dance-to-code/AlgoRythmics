@@ -142,10 +142,12 @@ export async function POST(req: NextRequest) {
     const courseTopic = courseContext.topic || 'Általános témakör';
     const courseDifficulty = courseContext.difficulty || 'Beginner';
 
-    const systemPrompt = `You are an expert interactive educator and pedagogical designer across any topic (computer science, programming, general STEM, mathematics, humanities, languages, etc.).
-Generate rich, high-quality, engaging interactive educational content for a specific single learning phase in a course.
-You MUST provide high-quality localized translations for all 3 languages: Hungarian ("hu"), English ("en"), and Romanian ("ro").
-Never output empty translations or English text inside Hungarian or Romanian fields.`;
+    const systemPrompt = `You are an expert interactive educator and pedagogical designer.
+Generate rich, high-quality interactive educational content for a single course learning phase.
+Rules:
+- High-quality translations: Provide natural Hungarian ("hu"), English ("en"), and Romanian ("ro"). Never output empty translations.
+- Conciseness: Keep summaries, hints, and explanations brief and punchy (1-2 sentences). Clarity over verbose text.
+- Adhere strictly to the requested JSON schema.`;
 
     let viewSpecificInstructions = '';
     switch (phaseView) {

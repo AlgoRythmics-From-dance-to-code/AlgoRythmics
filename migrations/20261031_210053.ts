@@ -1,6 +1,6 @@
-import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
+import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres';
 
-export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
+export async function up({ db, payload: _payload, req: _req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
    CREATE TYPE "public"."enum_courses_visibility" AS ENUM('public', 'private');
   CREATE TYPE "public"."enum_courses_mascot_mode" AS ENUM('disabled', 'ai-only', 'ai-fallback', 'manual-only');
@@ -21,10 +21,10 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "courses" ADD COLUMN "mascot_mode" "enum_courses_mascot_mode" DEFAULT 'disabled';
   ALTER TABLE "courses" ADD CONSTRAINT "courses_instructor_id_users_id_fk" FOREIGN KEY ("instructor_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
   CREATE INDEX "courses_instructor_idx" ON "courses" USING btree ("instructor_id");
-  CREATE INDEX "learning_events_tab_idx" ON "learning_events" USING btree ("tab");`)
+  CREATE INDEX "learning_events_tab_idx" ON "learning_events" USING btree ("tab");`);
 }
 
-export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
+export async function down({ db, payload: _payload, req: _req }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
    ALTER TABLE "ai_settings" DISABLE ROW LEVEL SECURITY;
   DROP TABLE "ai_settings" CASCADE;
@@ -40,5 +40,5 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   ALTER TABLE "courses" DROP COLUMN "is_official";
   ALTER TABLE "courses" DROP COLUMN "mascot_mode";
   DROP TYPE "public"."enum_courses_visibility";
-  DROP TYPE "public"."enum_courses_mascot_mode";`)
+  DROP TYPE "public"."enum_courses_mascot_mode";`);
 }
