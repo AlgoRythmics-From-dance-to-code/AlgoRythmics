@@ -44,6 +44,10 @@ import {
   ListFilter,
 } from 'lucide-react';
 
+import ActivityTimelineChart, { type TimelineDataPoint } from './components/ActivityTimelineChart';
+import HourlyActivityHeatmap, { type HeatmapDayData } from './components/HourlyActivityHeatmap';
+import SkillRadarChart, { type CompetencyItem } from './components/SkillRadarChart';
+
 interface BottleneckItem {
   algorithmId: string;
   stepOrBlank: string;
@@ -203,6 +207,9 @@ interface StatisticsResponse {
         };
         hotspots?: MistakeHotspotItem[];
       };
+  timelineTrends?: TimelineDataPoint[];
+  competencyRadar?: CompetencyItem[];
+  hourlyHeatmap?: HeatmapDayData[];
   pedagogy: {
     pesSlowdownPercentage: number;
     avgNormalDurationMs: number;
@@ -1073,6 +1080,11 @@ export default function AdminStatisticsClient() {
               </div>
             </div>
 
+            {/* Daily Activity & Accuracy Timeline Chart */}
+            {data?.timelineTrends && data.timelineTrends.length > 0 && (
+              <ActivityTimelineChart data={data.timelineTrends} />
+            )}
+
             {/* SIDE-BY-SIDE: KURZUSOK ÁTTEKINTÉSE + SIMA ALGORITMUSOK ÁTTEKINTÉSE */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* LEFT (7 cols): ALL COURSES SUMMARY */}
@@ -1379,6 +1391,20 @@ export default function AdminStatisticsClient() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Pedagogical Competency Radar & Weekly Hourly Activity Heatmap */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {data?.competencyRadar && data.competencyRadar.length > 0 && (
+                <div className="lg:col-span-6">
+                  <SkillRadarChart data={data.competencyRadar} />
+                </div>
+              )}
+              {data?.hourlyHeatmap && data.hourlyHeatmap.length > 0 && (
+                <div className="lg:col-span-6">
+                  <HourlyActivityHeatmap data={data.hourlyHeatmap} />
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -2459,6 +2485,20 @@ export default function AdminStatisticsClient() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Pedagogical Competency Radar & Weekly Hourly Activity Heatmap */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {data?.competencyRadar && data.competencyRadar.length > 0 && (
+                <div className="lg:col-span-6">
+                  <SkillRadarChart data={data.competencyRadar} />
+                </div>
+              )}
+              {data?.hourlyHeatmap && data.hourlyHeatmap.length > 0 && (
+                <div className="lg:col-span-6">
+                  <HourlyActivityHeatmap data={data.hourlyHeatmap} />
+                </div>
+              )}
             </div>
           </div>
         )}
