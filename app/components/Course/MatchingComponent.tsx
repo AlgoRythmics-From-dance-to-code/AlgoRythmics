@@ -13,6 +13,7 @@ import {
 } from '../../../lib/courses/confidenceEngine';
 import ConfidenceSelector from './ConfidenceSelector';
 import AdaptiveFeedbackCard from './AdaptiveFeedbackCard';
+import { useReportMascotScreen } from './MascotScreenContext';
 
 import { useAnalytics } from '../../hooks/useAnalytics';
 
@@ -52,6 +53,24 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
   const [confidence, setConfidence] = useState<ConfidenceLevel>('high');
   const [evaluation, setEvaluation] = useState<ConfidenceEvaluationResult | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+
+  useReportMascotScreen(
+    'match',
+    React.useMemo(
+      () => ({
+        pairsCount: initialLeft.length,
+        leftOptions: initialLeft.map((l) => l.text),
+        rightOptions: shuffledRight.map((r) => r.text),
+        selectedLeftText: initialLeft.find((l) => l.id === selectedLeft)?.text,
+        matchesCount: matches.filter((m) => m.rightId !== null).length,
+        confidence,
+        isEvaluated: !!evaluation,
+        isCorrect: evaluation ? evaluation.category === 'mastery' || evaluation.category === 'lucky' : undefined,
+        isCompleted: !!isDone,
+      }),
+      [initialLeft, shuffledRight, selectedLeft, matches, confidence, evaluation, isDone],
+    ),
+  );
 
   const { setCourseConfidenceRating } = useAlgorithmStore();
 
@@ -166,7 +185,7 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
           <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">
             {t('course.quiz.matching_categories')}
           </h4>
-          {initialLeft.map((item) => {
+          {initialLeft.map((item, idx) => {
             const match = matches.find((m) => m.leftId === item.id);
             const isSelected = selectedLeft === item.id;
             const rightItem = shuffledRight.find((r) => r.id === match?.rightId);
@@ -174,6 +193,7 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
             return (
               <button
                 key={item.id}
+                data-mascot-anchor={`match-left-${idx}`}
                 type="button"
                 onClick={() => handleLeftSelect(item.id)}
                 className={`w-full group relative flex items-center justify-between p-4 sm:p-5 rounded-2xl border-2 transition-all text-left ${
@@ -214,11 +234,12 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
             {t('course.quiz.matching_options')}
           </h4>
           <div className="grid grid-cols-1 gap-3">
-            {shuffledRight.map((item) => {
+            {shuffledRight.map((item, idx) => {
               const isUsed = matches.some((m) => m.rightId === item.id);
               return (
                 <button
                   key={item.id}
+                  data-mascot-anchor={`match-right-${idx}`}
                   type="button"
                   disabled={isDone || showFeedback || isUsed}
                   onClick={() => handleRightSelect(item.id)}
@@ -240,6 +261,7 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
         <div className="flex flex-col items-center gap-6 mt-4 w-full max-w-xl mx-auto">
           {isConfidenceEnabled && (
             <ConfidenceSelector
+              data-mascot-anchor="confidence-selector"
               selected={confidence}
               onChange={(lvl) => setConfidence(lvl)}
               className="w-full"
@@ -247,6 +269,7 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
           )}
 
           <button
+            data-mascot-anchor="match-submit-btn"
             type="button"
             disabled={matches.some((m) => m.rightId === null)}
             onClick={checkMatches}

@@ -89,6 +89,8 @@ interface StudentRosterItem {
   timeSpentMinutes: number;
   isCompleted: boolean;
   status: 'completed' | 'struggling' | 'in_progress';
+  mascotHelpCount?: number;
+  improvedAfterMascotCount?: number;
   lastActive: string;
   courseTitle?: string;
   courseId?: string;
@@ -108,6 +110,9 @@ interface CourseEvalItem {
   totalMistakes: number;
   mascotInteractionsTotal: number;
   mascotRetentionBoost: number;
+  mascotHelpedPhasesCount?: number;
+  mascotImprovedPhasesCount?: number;
+  mascotImprovementRate?: number;
   qualityIndex: number;
   dropoffFunnel: DropoffPhase[];
   studentsRoster?: StudentRosterItem[];
@@ -1967,6 +1972,9 @@ export default function AdminStatisticsClient() {
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1">
                         Kabala megtartó hatás: <strong>+{selectedCourseObj.mascotRetentionBoost}%</strong>
+                        {typeof selectedCourseObj.mascotImprovementRate === 'number' && selectedCourseObj.mascotImprovementRate > 0 && (
+                          <span> • Siker javulás: <strong className="text-emerald-600 dark:text-emerald-400">{selectedCourseObj.mascotImprovementRate}%</strong></span>
+                        )}
                       </p>
                     </div>
 
@@ -2101,6 +2109,7 @@ export default function AdminStatisticsClient() {
                               <th className="py-3 px-3">Jelenlegi fázis</th>
                               <th className="py-3 px-3">Pontszám</th>
                               <th className="py-3 px-3">Hibák</th>
+                              <th className="py-3 px-3">Kabala segítség</th>
                               <th className="py-3 px-3">Eltöltött idő</th>
                               <th className="py-3 pl-3 text-right">Státusz</th>
                             </tr>
@@ -2136,6 +2145,21 @@ export default function AdminStatisticsClient() {
                                 </td>
                                 <td className="py-3.5 px-3 font-bold text-emerald-600">{student.points} pt</td>
                                 <td className="py-3.5 px-3 font-bold text-rose-500">{student.totalMistakes} db</td>
+                                <td className="py-3.5 px-3">
+                                  {student.mascotHelpCount ? (
+                                    <span className="inline-flex items-center gap-1 font-bold text-[#269984] dark:text-[#36D6BA]">
+                                      {student.mascotHelpCount}x
+                                      {typeof student.improvedAfterMascotCount === 'number' &&
+                                        student.improvedAfterMascotCount > 0 && (
+                                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                                            ({student.improvedAfterMascotCount}✓)
+                                          </span>
+                                        )}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-400">-</span>
+                                  )}
+                                </td>
                                 <td className="py-3.5 px-3 text-gray-500">{student.timeSpentMinutes} perc</td>
                                 <td className="py-3.5 pl-3 text-right">
                                   {student.status === 'completed' ? (

@@ -41,25 +41,38 @@ export function sanitizeLocalizedField(
   return { hu: defaultText, en: defaultText, ro: defaultText };
 }
 
-interface CallOpenRouterOptions {
+export interface OpenRouterMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+export interface CallOpenRouterOptions {
   apiKey?: string;
   model?: string;
-  systemPrompt: string;
-  userPrompt: string;
+  systemPrompt?: string;
+  userPrompt?: string;
+  messages?: OpenRouterMessage[];
   schema: Record<string, unknown>;
   schemaName: string;
   timeoutMs?: number;
+  disableReasoning?: boolean;
+  temperature?: number;
+  maxTokens?: number;
 }
 
 export async function callOpenRouterStructured<T>(
   options: CallOpenRouterOptions,
 ): Promise<{ data: T; modelUsed: string }> {
   const {
-    systemPrompt,
-    userPrompt,
+    systemPrompt = '',
+    userPrompt = '',
+    messages: customMessages,
     schema,
     schemaName,
     timeoutMs = 90_000,
+    disableReasoning = false,
+    temperature,
+    maxTokens,
   } = options;
 
   const aiConfig = await getOpenRouterConfig();
@@ -72,9 +85,49 @@ export async function callOpenRouterStructured<T>(
     );
   }
 
-  const executeCall = async (modelToUse: string, format: 'json_schema' | 'json_object') => {
+  const finalMessages =
+    customMessages && customMessages.length > 0
+      ? customMessages
+      : [
+          ...(systemPrompt ? [{ role: 'system' as const, content: systemPrompt }] : []),
+          ...(userPrompt ? [{ role: 'user' as const, content: userPrompt }] : []),
+        ];
+
+  const executeCall = async (
+    modelToUse: string,
+    format: 'json_schema' | 'json_object',
+    reasoningMode: 'disabled' | 'excluded' | 'none' = disableReasoning ? 'disabled' : 'none',
+  ) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    const payloadBody: Record<string, unknown> = {
+      model: modelToUse,
+      messages: finalMessages,
+      response_format:
+        format === 'json_schema'
+          ? {
+              type: 'json_schema',
+              json_schema: {
+                name: schemaName,
+                schema,
+              },
+            }
+          : { type: 'json_object' },
+    };
+
+    if (reasoningMode === 'disabled') {
+      payloadBody.reasoning = { enabled: false };
+    } else if (reasoningMode === 'excluded') {
+      payloadBody.reasoning = { exclude: true };
+    }
+
+    if (typeof temperature === 'number') {
+      payloadBody.temperature = temperature;
+    }
+    if (typeof maxTokens === 'number') {
+      payloadBody.max_tokens = maxTokens;
+    }
 
     try {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -85,23 +138,7 @@ export async function callOpenRouterStructured<T>(
           'HTTP-Referer': process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
           'X-Title': 'AlgoRythmics',
         },
-        body: JSON.stringify({
-          model: modelToUse,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          response_format:
-            format === 'json_schema'
-              ? {
-                  type: 'json_schema',
-                  json_schema: {
-                    name: schemaName,
-                    schema,
-                  },
-                }
-              : { type: 'json_object' },
-        }),
+        body: JSON.stringify(payloadBody),
         signal: controller.signal,
       });
 
@@ -116,8 +153,17 @@ export async function callOpenRouterStructured<T>(
     }
   };
 
-  // 1. Try with structured json_schema
+  // 1. Try with structured json_schema (and reasoning disabled if requested)
   let response = await executeCall(activeModel, 'json_schema');
+
+  // 1b. If reasoning: { enabled: false } returned 400 (some models reject disabled reasoning), try excluded
+  if (!response.ok && disableReasoning && response.status === 400) {
+    console.warn(`[OpenRouter] Reasoning disabled rejected for ${activeModel}. Retrying with excluded/none...`);
+    response = await executeCall(activeModel, 'json_schema', 'excluded');
+    if (!response.ok) {
+      response = await executeCall(activeModel, 'json_schema', 'none');
+    }
+  }
 
   // 2. If structured schema call fails with 400 (not supported) or non-ok, try json_object fallback
   if (!response.ok) {

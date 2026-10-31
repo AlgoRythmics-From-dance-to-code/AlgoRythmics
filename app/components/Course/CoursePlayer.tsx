@@ -7,7 +7,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Check, ShieldAlert, Sparkles } from 'lucide-react';
+import { ChevronRight, Check, Sparkles } from 'lucide-react';
+import { MascotScreenProvider, useReportMascotScreen } from './MascotScreenContext';
+import AIMascotWidget from './AIMascotWidget';
 import { RichText } from '../Payload/RichText';
 
 import { useShallow } from 'zustand/react/shallow';
@@ -106,13 +108,26 @@ function InfoComponent({
     state.courseProgress[courseId]?.completedPhases?.includes(phase.phaseId),
   );
 
+  useReportMascotScreen(
+    'info',
+    useMemo(
+      () => ({
+        isRead: !!isRead,
+        contentPreview:
+          typeof phase.infoContent === 'string' ? phase.infoContent.slice(0, 300) : undefined,
+      }),
+      [isRead, phase.infoContent],
+    ),
+  );
+
   return (
     <div className="flex flex-col gap-6 p-4">
-      <div className="markdown-content">
+      <div className="markdown-content" data-mascot-anchor="info-content">
         <RichText content={phase.infoContent} />
       </div>
       {!isRead && (
         <button
+          data-mascot-anchor="info-understand-btn"
           onClick={() => {
             const maxPoints = phase.maxPoints || 10;
             setCoursePhasePoints(courseId, phase.phaseId, {
@@ -172,6 +187,23 @@ function QuizComponent({
   const questions = phase.quiz || [];
   const q = questions[0];
 
+  useReportMascotScreen(
+    'quiz',
+    useMemo(
+      () => ({
+        question: q?.question,
+        options: q?.options,
+        tentativeSelection: tentativeIdx !== null && q?.options ? q.options[tentativeIdx] : undefined,
+        tentativeIndex: tentativeIdx,
+        confidence,
+        isEvaluated: !!evaluation,
+        isCorrect: evaluation ? evaluation.category === 'mastery' || evaluation.category === 'lucky' : undefined,
+        isCompleted: !!isDone,
+      }),
+      [q, tentativeIdx, confidence, evaluation, isDone],
+    ),
+  );
+
   if (!q) return null;
 
   const handleSubmit = (idxToSubmit: number) => {
@@ -224,7 +256,12 @@ function QuizComponent({
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <h3 className="text-xl font-bold text-black dark:text-white leading-snug">{q.question}</h3>
+      <h3
+        data-mascot-anchor="quiz-question"
+        className="text-xl font-bold text-black dark:text-white leading-snug"
+      >
+        {q.question}
+      </h3>
 
       {/* Options List */}
       <div className="grid gap-3">
@@ -256,6 +293,7 @@ function QuizComponent({
           return (
             <button
               key={idx}
+              data-mascot-anchor={`quiz-option-${idx}`}
               type="button"
               disabled={isDone || !!evaluation}
               onClick={() => {
@@ -288,10 +326,14 @@ function QuizComponent({
 
       {/* Confidence Level Selector & Submit Action */}
       {!evaluation && !isDone && (
-        <div className="flex flex-col gap-4 p-4 sm:p-5 rounded-2xl bg-gray-50/80 dark:bg-white/[0.03] border border-gray-200/80 dark:border-white/10 shadow-sm">
+        <div
+          data-mascot-anchor="confidence-selector"
+          className="flex flex-col gap-4 p-4 sm:p-5 rounded-2xl bg-gray-50/80 dark:bg-white/[0.03] border border-gray-200/80 dark:border-white/10 shadow-sm"
+        >
           <ConfidenceSelector selected={confidence} onChange={(level) => setConfidence(level)} />
 
           <button
+            data-mascot-anchor="quiz-submit-btn"
             type="button"
             disabled={tentativeIdx === null}
             onClick={() => tentativeIdx !== null && handleSubmit(tentativeIdx)}
@@ -449,9 +491,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     course.mascot?.enabled !== false &&
     course.mascot?.mode !== 'disabled';
 
-  useEffect(() => {
-    if (!mascotEnabled) setMascotVisible(false);
-  }, [mascotEnabled]);
+
 
   const [phaseMistakesCount, setPhaseMistakesCount] = useState(0);
   const phaseStartTime = useRef(Date.now());
@@ -493,12 +533,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     phases: CoursePhase[];
     x: number;
   } | null>(null);
-  const [mascotVisible, setMascotVisible] = useState(false);
-  const [mascotMood, setMascotMood] = useState<
-    'idle' | 'mistake' | 'confidence' | 'neutral' | 'welcome' | 'streak' | 'overconfident'
-  >('welcome');
-  const [mascotMessage, setMascotMessage] = useState<string>('');
-  const [mascotActions, setMascotActions] = useState<boolean>(false);
+
   const [streak, setStreak] = useState(0);
   const [phaseKey, setPhaseKey] = useState(0);
   const [isFinished, setIsFinished] = useState(!!courseProgress[course.slug]?.isCompleted);
@@ -547,7 +582,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       setActivePhaseIndex(0);
       setIsFinished(false);
       setPhaseKey((v) => v + 1);
-      setMascotVisible(false);
       syncProgress();
     } else if (modalMode === 'checkpoint' && pendingPhaseIndex !== null) {
       resetFutureProgressFrom(pendingPhaseIndex);
@@ -570,91 +604,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     if (!isInternalReset && modalMode === 'restart') router.push('/courses');
   };
 
-  const [mascotDragPos, setMascotDragPos] = useState({ x: 0, y: 0 });
-
-  const getRandomMessage = (pool: string[]) => pool[Math.floor(Math.random() * pool.length)] || '';
-
   const activePhase = course.phases[activePhaseIndex];
-
-  useEffect(() => {
-    if (!activePhase) return;
-    let timeout: NodeJS.Timeout;
-    const resetTimer = () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(
-        () => {
-          setMascotMood('idle');
-          setMascotMessage(activePhase.idleHelp || course.mascot.idlePrompt);
-          setMascotActions(true);
-          if (mascotEnabled) setMascotVisible(true);
-        },
-        (course.mascot.idleTriggerSeconds || 30) * 1000,
-      );
-    };
-    const handleActivity = () => resetTimer();
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-    window.addEventListener('click', handleActivity);
-    resetTimer();
-    return () => {
-      clearTimeout(timeout);
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
-      window.removeEventListener('click', handleActivity);
-    };
-  }, [
-    activePhaseIndex,
-    course.mascot.idleTriggerSeconds,
-    course.mascot.idlePrompt,
-    phaseKey,
-    setMascotActions,
-    setMascotMessage,
-    setMascotMood,
-    setMascotVisible,
-    activePhase,
-    mascotEnabled,
-  ]);
-
-  const currentMistakeTriggered = useMemo(() => {
-    if (!activePhase) return false;
-    const thresh = course.mascot.mistakeTriggerCount || 2;
-    const progress = algorithmProgress[activePhase.sourceAlgorithmId || course.algorithmId] || {};
-    return (
-      (activePhase.sourceView === 'control' && (progress.controlMistakes || 0) >= thresh) ||
-      phaseMistakesCount >= thresh
-    );
-  }, [
-    activePhase,
-    algorithmProgress,
-    course.algorithmId,
-    course.mascot.mistakeTriggerCount,
-    phaseMistakesCount,
-  ]);
-
-  useEffect(() => {
-    if (currentMistakeTriggered) {
-      setMascotMood('mistake');
-      const intro =
-        activePhase.mascotMistakeLine || course.mascot.mistakePrompt || t('course.mistake_prompt');
-      setMascotMessage(activePhase.hintCopy ? `${intro} ${activePhase.hintCopy}` : intro);
-      if (mascotEnabled) setMascotVisible(true);
-      setMascotActions(false);
-      incrementCourseMascotInteraction(course.slug);
-      incrementCourseMistakes(course.slug);
-      mascotHelpedCurrentPhase.current = true;
-      phaseMascotHelpCount.current += 1;
-    }
-  }, [
-    currentMistakeTriggered,
-    activePhase.mascotMistakeLine,
-    activePhase.hintCopy,
-    course.mascot.mistakePrompt,
-    course.slug,
-    incrementCourseMascotInteraction,
-    incrementCourseMistakes,
-    mascotEnabled,
-    t,
-  ]);
 
   const activeProgress =
     algorithmProgress[activePhase?.sourceAlgorithmId || course.algorithmId] || {};
@@ -665,21 +615,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const canOpenPhase = (phaseIndex: number) => phaseIndex <= firstIncompletePhaseIndex;
 
   useEffect(() => {
-    const phaseAdvice = activePhase.mascotLine;
-    if (phaseAdvice) {
-      setMascotMood('welcome');
-      setMascotMessage(phaseAdvice);
-      if (mascotEnabled) setMascotVisible(true);
-      setMascotActions(false);
-      if (activePhase.mascotLine) {
-        incrementCourseMascotInteraction(course.slug);
-        mascotHelpedCurrentPhase.current = true;
-      }
-    }
     phaseStartTime.current = Date.now();
-    phaseMascotHelpCount.current = phaseAdvice ? 1 : 0;
+    phaseMascotHelpCount.current = activePhase.mascotLine ? 1 : 0;
     setPhaseMistakesCount(0);
-    mascotHelpedCurrentPhase.current = !!phaseAdvice;
+    mascotHelpedCurrentPhase.current = !!activePhase.mascotLine;
     trackEvent('course_phase_enter', {
       phaseId: activePhase.phaseId,
       phaseType: activePhase.sourceView,
@@ -696,8 +635,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     activePhase.sourceView,
     activePhase.title,
     activePhase.mascotLine,
-    mascotEnabled,
-    incrementCourseMascotInteraction,
   ]);
 
   useEffect(() => {
@@ -733,21 +670,8 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     if (!hasPointsForThisPhase) {
       if (isFailure) {
         setStreak(0);
-        if ((level === 'very-sure' || level === 'high') && course.mascot.enabled) {
-          setMascotMood('overconfident');
-          setMascotMessage(getRandomMessage(course.mascot.overconfidentMessages));
-          if (mascotEnabled) setMascotVisible(true);
-          setMascotActions(false);
-        }
       } else {
-        const nextStreak = streak + 1;
-        setStreak(nextStreak);
-        if (nextStreak >= 3 && course.mascot.enabled) {
-          setMascotMood('streak');
-          setMascotMessage(getRandomMessage(course.mascot.streakMessages));
-          if (mascotEnabled) setMascotVisible(true);
-          setMascotActions(false);
-        }
+        setStreak((s) => s + 1);
       }
     }
 
@@ -940,8 +864,9 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   if (!activePhase) return null;
 
   return (
-    <section className="relative w-full">
-      <AnimatePresence>
+    <MascotScreenProvider>
+      <section className="relative w-full">
+        <AnimatePresence>
         <RestartCourseModal
           isOpen={showRestartModal}
           onClose={handleCancelRestart}
@@ -1172,7 +1097,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-4 lg:self-center">
-                <div className="flex flex-col items-start lg:items-end">
+                <div data-mascot-anchor="course-score" className="flex flex-col items-start lg:items-end">
                   <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">
                     {t('course.points')}
                   </div>
@@ -1189,7 +1114,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   </div>
                 </div>
                 <div className="h-10 w-px bg-gray-100 dark:bg-white/10 hidden sm:block mx-2" />
-                <div className="flex flex-col items-start lg:items-end">
+                <div data-mascot-anchor="course-phase-counter" className="flex flex-col items-start lg:items-end">
                   <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">
                     {t('course.phase')}
                   </div>
@@ -1206,7 +1131,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             </div>
 
             {/* Progress Navigator */}
-            <div className="mt-6 mb-2">
+            <div data-mascot-anchor="course-progress-bar" className="mt-6 mb-2">
               <div className="mb-3 flex items-center justify-between">
                 <div className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
                   {t('course.learning_path')}
@@ -1575,10 +1500,16 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                     </span>
                   )}
                 </div>
-                <h3 className="text-3xl font-black text-black dark:text-white tracking-tight">
+                <h3
+                  data-mascot-anchor="phase-header"
+                  className="text-3xl font-black text-black dark:text-white tracking-tight"
+                >
                   {activePhase.title}
                 </h3>
-                <p className="max-w-3xl text-base font-medium text-gray-500 dark:text-gray-400 leading-relaxed">
+                <p
+                  data-mascot-anchor="phase-summary"
+                  className="max-w-3xl text-base font-medium text-gray-500 dark:text-gray-400 leading-relaxed"
+                >
                   {activePhase.summary}
                 </p>
               </div>
@@ -1593,12 +1524,14 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
             </div>
             <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
               <button
+                data-mascot-anchor="reset-btn"
                 onClick={handleResetCourse}
                 className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors flex items-center gap-2"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-current" /> {t('course.reset_course')}
               </button>
               <button
+                data-mascot-anchor="continue-btn"
                 onClick={handleContinue}
                 disabled={!phaseComplete}
                 className="group relative inline-flex items-center gap-4 rounded-2xl px-10 py-5 text-sm font-black uppercase tracking-widest text-white shadow-2xl transition-all hover:-translate-y-1 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 overflow-hidden"
@@ -1620,181 +1553,20 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
         </div>
 
         {course.mascot.enabled && mascotEnabled && (
-          <motion.div
-            drag
-            dragMomentum={false}
-            dragConstraints={{
-              left: 0,
-              right: typeof window !== 'undefined' ? window.innerWidth - 100 : 1000,
-              top: typeof window !== 'undefined' ? -window.innerHeight + 100 : -1000,
-              bottom: 0,
+          <AIMascotWidget
+            course={course}
+            activePhase={activePhase}
+            activePhaseIndex={activePhaseIndex}
+            mascotEnabled={mascotEnabled}
+            phaseMistakesCount={phaseMistakesCount}
+            onHelped={() => {
+              mascotHelpedCurrentPhase.current = true;
+              phaseMascotHelpCount.current += 1;
             }}
-            animate={{ x: mascotDragPos.x, y: mascotDragPos.y }}
-            onDragEnd={(_, info) =>
-              setMascotDragPos({
-                x: mascotDragPos.x + info.offset.x,
-                y: mascotDragPos.y + info.offset.y,
-              })
-            }
-            className="fixed bottom-8 left-8 z-[60] pointer-events-none flex flex-col items-start"
-          >
-            <div className="pointer-events-auto">
-              <AnimatePresence mode="wait">
-                {mascotVisible ? (
-                  <motion.div
-                    key="mascot-full"
-                    initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, y: 10 }}
-                    className="flex flex-col items-start gap-4 w-64"
-                  >
-                    <motion.div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-[#269984]/20 relative cursor-default">
-                      <div
-                        className="absolute top-full left-6 w-3 h-3 bg-white dark:bg-gray-900 rotate-45 border-r border-b"
-                        style={{ borderColor: `${course.accentColor}33` }}
-                      />
-                      {mascotMood === 'mistake' && (
-                        <div className="mb-2 flex items-center gap-1.5 text-amber-600 dark:text-amber-500 font-bold text-[10px] uppercase tracking-widest">
-                          <ShieldAlert className="w-3.5 h-3.5" /> {t('course.advice')}
-                        </div>
-                      )}
-                      <p className="font-montserrat text-sm leading-relaxed text-gray-700 dark:text-gray-300 pr-2">
-                        {mascotMessage}
-                      </p>
-                      {mascotActions && mascotMood === 'idle' && (
-                        <div className="mt-4 flex gap-2">
-                          <button
-                            onClick={() => {
-                              setMascotMood('neutral');
-                              setMascotMessage(
-                                activePhase.idleHelp ||
-                                  activePhase.hintCopy ||
-                                  activePhase.mascotLine ||
-                                  activePhase.summary,
-                              );
-                              setMascotActions(false);
-                            }}
-                            className="flex-1 py-1.5 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-opacity hover:opacity-90"
-                            style={{ backgroundColor: course.accentColor }}
-                          >
-                            {t('course.help_yes')}
-                          </button>
-                          <button
-                            onClick={() => setMascotVisible(false)}
-                            className="flex-1 py-1.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400 rounded-lg text-[10px] font-bold uppercase tracking-wider"
-                          >
-                            {t('course.help_no')}
-                          </button>
-                        </div>
-                      )}
-                      {!mascotActions && (
-                        <div className="mt-3 flex flex-col gap-1.5">
-                          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-                            <button
-                              onClick={() =>
-                                setMascotMessage(
-                                  `${activePhase.title}: ${activePhase.hintCopy || activePhase.mascotLine || activePhase.summary}`,
-                                )
-                              }
-                              className="px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
-                              style={{
-                                backgroundColor: `${course.accentColor}15`,
-                                color: course.accentColor,
-                              }}
-                            >
-                              {t('course.how_are_we')}
-                            </button>
-                            <button
-                              onClick={() => setMascotMessage(course.summary)}
-                              className="px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors flex-shrink-0"
-                              style={{
-                                backgroundColor: `${course.accentColor}15`,
-                                color: course.accentColor,
-                              }}
-                            >
-                              {t('course.summary_title')}
-                            </button>
-                          </div>
-                          <button
-                            onClick={() => setMascotVisible(false)}
-                            className="block w-full text-center py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover:text-white"
-                            style={{
-                              backgroundColor: `${course.accentColor}10`,
-                              color: course.accentColor,
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.currentTarget.style.backgroundColor = course.accentColor)
-                            }
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.backgroundColor = `${course.accentColor}10`)
-                            }
-                          >
-                            {t('course.understand')}
-                          </button>
-                        </div>
-                      )}
-                    </motion.div>
-                    <motion.div
-                      className="w-16 h-16 relative cursor-grab active:cursor-grabbing group select-none ml-4"
-                      onClick={() => {
-                        setMascotMood('welcome');
-                        setMascotMessage(getRandomMessage(course.mascot.welcomeMessages));
-                        setMascotActions(false);
-                      }}
-                    >
-                      <div
-                        className="absolute inset-0 rounded-full blur-2xl transition-colors"
-                        style={{ backgroundColor: `${course.accentColor}25` }}
-                      />
-                      <Image
-                        src={`/assets/${course.mascot.asset}`}
-                        alt={course.mascot.name}
-                        width={64}
-                        height={64}
-                        className="drop-shadow-2xl transform active:scale-95 transition-transform"
-                      />
-                    </motion.div>
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    key="summon-btn"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    onClick={() => {
-                      setMascotMood('neutral');
-                      setMascotMessage(
-                        activePhase.mascotLine ||
-                          t('course.currently_at').replace('{title}', activePhase.title),
-                      );
-                      setMascotActions(false);
-                      setMascotVisible(true);
-                    }}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-900 border rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 group cursor-grab active:cursor-grabbing select-none"
-                    style={{ borderColor: `${course.accentColor}33`, color: course.accentColor }}
-                  >
-                    <div
-                      className="w-5 h-5 rounded-full overflow-hidden border pointer-events-none"
-                      style={{ borderColor: `${course.accentColor}20` }}
-                    >
-                      <Image
-                        src={`/assets/${course.mascot.asset}`}
-                        alt="Mascot"
-                        width={20}
-                        height={20}
-                        className="w-full h-auto"
-                      />
-                    </div>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-[#269984] pointer-events-none">
-                      {course.mascot.summonLabel}
-                    </span>
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
+          />
         )}
       </div>
     </section>
-  );
+  </MascotScreenProvider>
+);
 }

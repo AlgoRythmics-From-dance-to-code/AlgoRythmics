@@ -58,6 +58,7 @@ interface RawCourseProgress {
   totalTimeMs?: number;
   totalMistakes?: number;
   mascotInteractionsTotal?: number;
+  detailedStats?: Record<string, unknown>;
   updatedAt?: string;
 }
 
@@ -939,6 +940,26 @@ export async function GET(req: Request) {
           : 0;
       const mascotRetentionBoost = Math.max(0, mascotCompletion - nonMascotCompletion);
 
+      let mascotHelpedPhasesCount = 0;
+      let mascotImprovedPhasesCount = 0;
+
+      enrolled.forEach((cp) => {
+        const stats = (cp.detailedStats || {}) as Record<string, { mascotHelpCount?: number; improvedAfterMascot?: boolean }>;
+        Object.values(stats).forEach((pStat) => {
+          if ((pStat.mascotHelpCount || 0) > 0) {
+            mascotHelpedPhasesCount += pStat.mascotHelpCount || 0;
+            if (pStat.improvedAfterMascot) {
+              mascotImprovedPhasesCount += 1;
+            }
+          }
+        });
+      });
+
+      const mascotImprovementRate =
+        mascotHelpedPhasesCount > 0
+          ? Math.round((mascotImprovedPhasesCount / mascotHelpedPhasesCount) * 100)
+          : 0;
+
       // Quality Index (1-100 score)
       const qualityIndex = enrolledCount > 0
         ? Math.min(
@@ -1044,6 +1065,16 @@ export async function GET(req: Request) {
           ? ('struggling' as const)
           : ('in_progress' as const);
 
+        const detailed = (cp.detailedStats || {}) as Record<string, { mascotHelpCount?: number; improvedAfterMascot?: boolean }>;
+        let studentMascotHelpCount = 0;
+        let studentImprovedCount = 0;
+        Object.values(detailed).forEach((st) => {
+          if ((st.mascotHelpCount || 0) > 0) {
+            studentMascotHelpCount += st.mascotHelpCount || 0;
+            if (st.improvedAfterMascot) studentImprovedCount += 1;
+          }
+        });
+
         return {
           userId: uId,
           name,
@@ -1058,6 +1089,8 @@ export async function GET(req: Request) {
           timeSpentMinutes: timeMinutes,
           isCompleted: cp.isCompleted === true || progressPercent === 100,
           status,
+          mascotHelpCount: studentMascotHelpCount,
+          improvedAfterMascotCount: studentImprovedCount,
           lastActive: cp.updatedAt || new Date().toISOString(),
         };
       });
@@ -1080,6 +1113,9 @@ export async function GET(req: Request) {
         totalMistakes,
         mascotInteractionsTotal: mascotInteractions,
         mascotRetentionBoost,
+        mascotHelpedPhasesCount,
+        mascotImprovedPhasesCount,
+        mascotImprovementRate,
         qualityIndex,
         dropoffFunnel,
         studentsRoster,

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { auth } from '../../../../auth';
 import { getPayloadInstance } from '../../../../lib/payload';
 import { ROLES } from '../../../../lib/constants';
@@ -205,6 +206,13 @@ export async function POST(req: Request) {
     });
 
     console.log(`[Studio Courses] Course created successfully with ID: ${newCourse.id}`);
+
+    try {
+      revalidatePath('/courses');
+    } catch (e) {
+      console.warn('[Studio Courses] Cache revalidation warning:', e);
+    }
+
     return NextResponse.json({ success: true, course: newCourse }, { status: 201 });
   } catch (error) {
     console.error('[Studio Courses Create Error]:', error);

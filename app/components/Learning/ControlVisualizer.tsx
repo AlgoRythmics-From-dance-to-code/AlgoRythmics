@@ -9,6 +9,7 @@ import { useAnalytics } from '../../hooks/useAnalytics';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { getAlgorithm } from '../../../lib/algorithms/registry';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
+import { useReportMascotScreen } from '../Course/MascotScreenContext';
 
 interface ControlVisualizerProps {
   algorithmId: string;
@@ -64,6 +65,25 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
 
   const currentExpected = steps[expectedStepIndex];
   const isFinished = expectedStepIndex >= steps.length - 1;
+
+  useReportMascotScreen(
+    'control',
+    useMemo(
+      () => ({
+        algorithmId,
+        isSorting,
+        isBacktracking,
+        expectedStepIndex,
+        totalSteps: steps.length,
+        selectedIndices,
+        interactionMode,
+        isComplete,
+        mistakes,
+        activeExpectedIndices: currentExpected?.activeIndices,
+      }),
+      [algorithmId, isSorting, isBacktracking, expectedStepIndex, steps.length, selectedIndices, interactionMode, isComplete, mistakes, currentExpected],
+    ),
+  );
 
   React.useEffect(() => {
     return () => {
@@ -448,7 +468,7 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
       )}
 
       {/* Instruction */}
-      <div className="w-full text-center">
+      <div data-mascot-anchor="control-instruction" className="w-full text-center">
         <p className="font-montserrat font-bold text-sm text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-relaxed">
           {isComplete
             ? isSorting
@@ -521,6 +541,7 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
         {isSorting ? (
           interactionMode === 'select' ? (
             <button
+              data-mascot-anchor="control-compare-btn"
               onClick={handleCheck}
               disabled={selectedIndices.length !== selectionLimit || isComplete}
               className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-[#269984] text-white shadow-lg shadow-[#269984]/20 hover:bg-[#1f7a6a] transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
@@ -530,12 +551,14 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
           ) : (
             <>
               <button
+                data-mascot-anchor="control-swap-btn"
                 onClick={() => handleSortingDecision('swap')}
                 className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-orange-500 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95"
               >
                 {t('control.swap')}
               </button>
               <button
+                data-mascot-anchor="control-stay-btn"
                 onClick={() => handleSortingDecision('stay')}
                 className="px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-blue-500 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all active:scale-95"
               >
@@ -562,6 +585,7 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
           </>
         )}
         <button
+          data-mascot-anchor="control-hint-btn"
           onClick={handleHint}
           disabled={isComplete}
           className="p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 text-amber-500 transition-all active:scale-90 disabled:opacity-20"
@@ -570,6 +594,7 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
           <Lightbulb className="w-5 h-5" />
         </button>
         <button
+          data-mascot-anchor="control-reset-btn"
           onClick={handleReset}
           className="p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-400 transition-all active:scale-90"
           title={t('visualizer.controls.reset')}

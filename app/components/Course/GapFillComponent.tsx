@@ -12,6 +12,7 @@ import {
 } from '../../../lib/courses/confidenceEngine';
 import ConfidenceSelector from './ConfidenceSelector';
 import AdaptiveFeedbackCard from './AdaptiveFeedbackCard';
+import { useReportMascotScreen } from './MascotScreenContext';
 
 interface GapFillComponentProps {
   phase: CoursePhase;
@@ -42,6 +43,22 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
   const [showFeedback, setShowFeedback] = useState(false);
   const [confidence, setConfidence] = useState<ConfidenceLevel>('high');
   const [evaluation, setEvaluation] = useState<ConfidenceEvaluationResult | null>(null);
+
+  useReportMascotScreen(
+    'gap-fill',
+    React.useMemo(
+      () => ({
+        blankCount,
+        choices,
+        options,
+        confidence,
+        isEvaluated: !!evaluation,
+        isCorrect: evaluation ? evaluation.category === 'mastery' || evaluation.category === 'lucky' : undefined,
+        isCompleted: !!isDone,
+      }),
+      [blankCount, choices, options, confidence, evaluation, isDone],
+    ),
+  );
 
   const { setCourseConfidenceRating } = useAlgorithmStore();
 
@@ -136,14 +153,14 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
 
   return (
     <div className="flex flex-col items-center gap-10 p-4">
-      <div className="w-full max-w-2xl bg-gray-50/70 dark:bg-white/[0.03] border border-gray-200/80 dark:border-white/10 p-6 sm:p-10 rounded-3xl shadow-sm">
+      <div data-mascot-anchor="gap-box" className="w-full max-w-2xl bg-gray-50/70 dark:bg-white/[0.03] border border-gray-200/80 dark:border-white/10 p-6 sm:p-10 rounded-3xl shadow-sm">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-6 text-lg sm:text-xl leading-relaxed text-gray-800 dark:text-gray-100">
           {parts.map((part, i) => {
             if (part === '[blank]') {
               const currentBlank = blankIdx++;
               const isFilled = !!choices[currentBlank];
               return (
-                <div key={i} className="relative inline-block min-w-[130px]">
+                <div key={i} data-mascot-anchor={`gap-blank-${currentBlank}`} className="relative inline-block min-w-[130px]">
                   <select
                     disabled={isDone || showFeedback || !!evaluation}
                     value={choices[currentBlank]}
@@ -181,6 +198,7 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
         <div className="flex flex-col items-center gap-6 w-full max-w-xl">
           {isConfidenceEnabled && (
             <ConfidenceSelector
+              data-mascot-anchor="confidence-selector"
               selected={confidence}
               onChange={(lvl) => setConfidence(lvl)}
               className="w-full"
@@ -188,6 +206,7 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
           )}
 
           <button
+            data-mascot-anchor="gap-submit-btn"
             type="button"
             disabled={choices.some((c) => c === '')}
             onClick={checkGaps}

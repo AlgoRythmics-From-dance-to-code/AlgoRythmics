@@ -1,11 +1,10 @@
 import { notFound, redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 import CoursePlayer from '../../../components/Course/CoursePlayer';
 import { getPayloadInstance } from '../../../../lib/payload';
-import {
-  findCourseBySlug,
-  type CourseCollectionDoc,
-} from '../../../../lib/courses/courseCatalog';
+import { findCourseBySlug, type CourseCollectionDoc } from '../../../../lib/courses/courseCatalog';
 import { getServerLocale } from '../../../../lib/i18n-server';
 import { auth } from '../../../../auth';
 

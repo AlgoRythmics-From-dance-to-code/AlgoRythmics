@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { auth } from '../../../../../auth';
 import { getPayloadInstance } from '../../../../../lib/payload';
 import { ROLES } from '../../../../../lib/constants';
@@ -104,6 +105,15 @@ export async function PUT(
       locale: 'all' as 'hu',
     });
 
+    try {
+      revalidatePath('/courses');
+      if (existing?.slug) {
+        revalidatePath(`/courses/${existing.slug}`);
+      }
+    } catch (e) {
+      console.warn('[Studio Courses] Cache revalidation warning:', e);
+    }
+
     return NextResponse.json({ success: true, course: updated });
   } catch (error) {
     console.error('[Studio Courses Update Error]:', error);
@@ -146,6 +156,15 @@ export async function DELETE(
       collection: 'courses',
       id,
     });
+
+    try {
+      revalidatePath('/courses');
+      if (existing?.slug) {
+        revalidatePath(`/courses/${existing.slug}`);
+      }
+    } catch (e) {
+      console.warn('[Studio Courses] Cache revalidation warning:', e);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

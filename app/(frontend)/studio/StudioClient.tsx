@@ -160,7 +160,7 @@ export const MASCOT_MODES: Array<{
   {
     id: 'ai-only',
     label: 'Csak AI kabala',
-    badge: 'Hamarosan',
+    badge: 'Élő AI',
     desc: 'Valós idejű mesterséges intelligencia válaszol és segít a feladatoknál.',
     icon: '🤖',
   },
@@ -2297,6 +2297,21 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                         >
                           <ExternalLink className="w-4 h-4" />
                         </Link>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (typeof window !== 'undefined') {
+                              const url = `${window.location.origin}/courses/${course.slug}`;
+                              navigator.clipboard.writeText(url);
+                              toast.success(`Diák közvetlen link kimásolva: /courses/${course.slug}`);
+                            }
+                          }}
+                          className="p-2 rounded-xl text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 dark:text-slate-400 dark:hover:text-emerald-300 dark:hover:bg-white/5 transition-colors"
+                          title="Közvetlen diák URL másolása a vágólapra"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleDeleteCourse(course)}
                           className="p-2 rounded-xl text-slate-600 hover:text-red-600 hover:bg-red-50 dark:text-slate-400 dark:hover:text-red-300 dark:hover:bg-white/5 transition-colors"

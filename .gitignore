@@ -24,6 +24,7 @@
 .DS_Store
 *.pem
 eslint-final.json
+docs/
 
 # debug
 npm-debug.log*

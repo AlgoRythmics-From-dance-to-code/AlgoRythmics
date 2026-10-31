@@ -12,6 +12,7 @@ import {
   type CodeAnalysisResult,
 } from '../../../lib/algorithms/codeAnalysis';
 import { useAlgorithmStore, type AlgorithmProgress } from '../../store/useAlgorithmStore';
+import { useReportMascotScreen } from '../Course/MascotScreenContext';
 
 const DROP_THRESHOLD = 50; // pixels
 const EMPTY_PROGRESS: Readonly<Partial<AlgorithmProgress>> = Object.freeze({});
@@ -33,6 +34,22 @@ export default function AliveVisualizer({ algorithmId, onMistake }: AliveVisuali
   const [helpUsed, setHelpUsed] = useState(false);
   const startTime = useRef(Date.now());
   const lastTickRef = useRef(Date.now());
+
+  useReportMascotScreen(
+    'alive',
+    useMemo(
+      () => ({
+        algorithmId,
+        mode,
+        helpUsed,
+        aliveCompleted: !!progress.aliveCompleted,
+        aliveBestScore: progress.aliveBestScore || 0,
+        submissionsCount: progress.aliveCodeSubmissions || 0,
+        hasLastCode: !!progress.aliveLastCode,
+      }),
+      [algorithmId, mode, helpUsed, progress],
+    ),
+  );
 
   // Unified Reset Function for the component
   const handleReset = useCallback(() => {
@@ -234,6 +251,7 @@ function CodeMode({
         </h3>
         <div className="flex items-center gap-3">
           <button
+            data-mascot-anchor="alive-switch-btn"
             onClick={onSwitchToNodes}
             className="flex items-center gap-2 px-4 py-2 rounded-xl font-montserrat font-bold text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all"
           >
@@ -288,6 +306,7 @@ function CodeMode({
             {code === '' && <span className="text-xs font-mono text-gray-600 leading-6">1</span>}
           </div>
           <textarea
+            data-mascot-anchor="alive-code-editor"
             value={code}
             onChange={(e) => {
               setCode(e.target.value);
@@ -303,6 +322,7 @@ function CodeMode({
       {/* Action buttons */}
       <div className="flex items-center gap-3">
         <button
+          data-mascot-anchor="alive-run-btn"
           onClick={handleRun}
           disabled={!code.trim()}
           className="flex items-center gap-2 px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-[#269984] text-white shadow-lg shadow-[#269984]/20 hover:bg-[#1f7a6a] transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
