@@ -146,63 +146,89 @@ export async function GET(req: Request) {
       cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
     }
 
-    // 1. Fetch Users
-    const { docs: users } = await payload.find({
-      collection: 'users',
-      limit: 1000,
-      depth: 0,
-    });
-
-    // 2. Fetch Algorithm Progress
-    const progressQuery: Where = {};
-    if (algorithmFilter !== 'all') {
-      progressQuery.algorithmId = { equals: algorithmFilter };
-    }
-    if (cutoffDate) {
-      progressQuery.updatedAt = { greater_than_equal: cutoffDate.toISOString() };
+    // 1. Fetch Users (Safeguarded)
+    let users: Array<Record<string, unknown>> = [];
+    try {
+      const res = await payload.find({
+        collection: 'users',
+        limit: 1000,
+        depth: 0,
+      });
+      users = (res?.docs || []) as unknown as Array<Record<string, unknown>>;
+    } catch (err) {
+      console.warn('[AdminStatistics] Failed to fetch users:', err);
     }
 
-    const { docs: rawProgress } = await payload.find({
-      collection: 'algorithm-progress',
-      where: Object.keys(progressQuery).length > 0 ? progressQuery : undefined,
-      limit: 2000,
-      depth: 0,
-    });
-    const progressDocs = rawProgress as unknown as RawProgress[];
+    // 2. Fetch Algorithm Progress (Safeguarded)
+    let progressDocs: RawProgress[] = [];
+    try {
+      const progressQuery: Where = {};
+      if (algorithmFilter !== 'all') {
+        progressQuery.algorithmId = { equals: algorithmFilter };
+      }
+      if (cutoffDate) {
+        progressQuery.updatedAt = { greater_than_equal: cutoffDate.toISOString() };
+      }
 
-    // 3. Fetch Learning Events
-    const eventsQuery: Where = {};
-    if (algorithmFilter !== 'all') {
-      eventsQuery.algorithmId = { equals: algorithmFilter };
+      const res = await payload.find({
+        collection: 'algorithm-progress',
+        where: Object.keys(progressQuery).length > 0 ? progressQuery : undefined,
+        limit: 2000,
+        depth: 0,
+      });
+      progressDocs = (res?.docs || []) as unknown as RawProgress[];
+    } catch (err) {
+      console.warn('[AdminStatistics] Failed to fetch algorithm-progress:', err);
     }
-    if (cutoffDate) {
-      eventsQuery.createdAt = { greater_than_equal: cutoffDate.toISOString() };
+
+    // 3. Fetch Learning Events (Safeguarded)
+    let eventsDocs: RawEvent[] = [];
+    try {
+      const eventsQuery: Where = {};
+      if (algorithmFilter !== 'all') {
+        eventsQuery.algorithmId = { equals: algorithmFilter };
+      }
+      if (cutoffDate) {
+        eventsQuery.createdAt = { greater_than_equal: cutoffDate.toISOString() };
+      }
+
+      const res = await payload.find({
+        collection: 'learning-events',
+        where: Object.keys(eventsQuery).length > 0 ? eventsQuery : undefined,
+        limit: 5000,
+        sort: 'createdAt',
+        depth: 0,
+      });
+      eventsDocs = (res?.docs || []) as unknown as RawEvent[];
+    } catch (err) {
+      console.warn('[AdminStatistics] Failed to fetch learning-events:', err);
     }
 
-    const { docs: rawEvents } = await payload.find({
-      collection: 'learning-events',
-      where: Object.keys(eventsQuery).length > 0 ? eventsQuery : undefined,
-      limit: 5000,
-      sort: 'createdAt',
-      depth: 0,
-    });
-    const eventsDocs = rawEvents as unknown as RawEvent[];
+    // 4. Fetch Course Progress (Safeguarded)
+    let courseProgressDocs: RawCourseProgress[] = [];
+    try {
+      const res = await payload.find({
+        collection: 'course-progress',
+        limit: 1000,
+        depth: 1,
+      });
+      courseProgressDocs = (res?.docs || []) as unknown as RawCourseProgress[];
+    } catch (err) {
+      console.warn('[AdminStatistics] Failed to fetch course-progress:', err);
+    }
 
-    // 4. Fetch Course Progress
-    const { docs: rawCourseProgress } = await payload.find({
-      collection: 'course-progress',
-      limit: 1000,
-      depth: 1,
-    });
-    const courseProgressDocs = rawCourseProgress as unknown as RawCourseProgress[];
-
-    // 5. Fetch Courses
-    const { docs: rawCourses } = await payload.find({
-      collection: 'courses',
-      limit: 100,
-      depth: 1,
-    });
-    let coursesDocs = rawCourses as unknown as Array<RawCourseDoc & { instructor?: unknown }>;
+    // 5. Fetch Courses (Safeguarded)
+    let coursesDocs: Array<RawCourseDoc & { instructor?: unknown }> = [];
+    try {
+      const res = await payload.find({
+        collection: 'courses',
+        limit: 100,
+        depth: 1,
+      });
+      coursesDocs = (res?.docs || []) as unknown as Array<RawCourseDoc & { instructor?: unknown }>;
+    } catch (err) {
+      console.warn('[AdminStatistics] Failed to fetch courses:', err);
+    }
 
     if (activeInstructorFilter) {
       // Filter strictly to courses authored by the active instructor
@@ -260,15 +286,21 @@ export async function GET(req: Request) {
         })
       : eventsDocs;
 
-    // Fetch instructors list for admin dropdown
-    const { docs: rawInstructors } = await payload.find({
-      collection: 'users',
-      where: {
-        or: [{ role: { equals: ROLES.ADMIN } }, { role: { equals: ROLES.EDITOR } }],
-      },
-      limit: 100,
-      depth: 0,
-    });
+    // Fetch instructors list for admin dropdown (Safeguarded)
+    let rawInstructors: Array<Record<string, unknown>> = [];
+    try {
+      const res = await payload.find({
+        collection: 'users',
+        where: {
+          or: [{ role: { equals: ROLES.ADMIN } }, { role: { equals: ROLES.EDITOR } }],
+        },
+        limit: 100,
+        depth: 0,
+      });
+      rawInstructors = (res?.docs || []) as unknown as Array<Record<string, unknown>>;
+    } catch (err) {
+      console.warn('[AdminStatistics] Failed to fetch instructors list:', err);
+    }
 
     const instructorsList = [
       { id: 'all', name: 'Teljes platform (Minden oktató & diák)' },
@@ -281,13 +313,23 @@ export async function GET(req: Request) {
       })),
     ];
 
-    // 6. Fetch Search Analytics
-    const { docs: searchDocs } = await payload.find({
-      collection: 'search-analytics',
-      limit: 500,
-      sort: '-createdAt',
-      depth: 0,
-    });
+    // 6. Fetch Search Analytics (Safeguarded - may not exist in database yet)
+    let searchDocs: Array<{ query?: string; resultsCount?: number; language?: string }> = [];
+    try {
+      const res = await payload.find({
+        collection: 'search-analytics',
+        limit: 500,
+        sort: '-createdAt',
+        depth: 0,
+      });
+      searchDocs = (res?.docs || []) as unknown as Array<{
+        query?: string;
+        resultsCount?: number;
+        language?: string;
+      }>;
+    } catch (err) {
+      console.warn('[AdminStatistics] Search analytics table not available:', err);
+    }
 
     // ─── AGGREGATIONS ───
 
@@ -1548,7 +1590,7 @@ export async function GET(req: Request) {
     }
     if (difficultyFilter !== 'all') {
       filteredMistakesAnalysis = filteredMistakesAnalysis.filter(
-        (m) => m.difficulty.toLowerCase() === difficultyFilter.toLowerCase(),
+        (m) => (m.difficulty || '').toLowerCase() === difficultyFilter.toLowerCase(),
       );
     }
     if (phaseTypeFilter !== 'all') {
@@ -1566,7 +1608,7 @@ export async function GET(req: Request) {
     }
     if (difficultyFilter !== 'all') {
       filteredCoursesEvaluationList = filteredCoursesEvaluationList.filter(
-        (c) => c.difficulty.toLowerCase() === difficultyFilter.toLowerCase(),
+        (c) => (c.difficulty || '').toLowerCase() === difficultyFilter.toLowerCase(),
       );
     }
 
@@ -1853,6 +1895,12 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error('[AdminStatistics] Aggregation error:', error);
-    return NextResponse.json({ error: 'Failed to aggregate statistics' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to aggregate statistics',
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
+    );
   }
 }
