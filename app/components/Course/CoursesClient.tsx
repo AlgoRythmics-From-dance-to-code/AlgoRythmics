@@ -417,17 +417,21 @@ export default function CoursesClient({ courses, title, description }: CoursesCl
 
                         {/* Hover Action */}
                         <div className="mt-8 flex items-center justify-between border-t border-gray-50 pt-6 dark:border-white/5">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 overflow-hidden rounded-full border-2 border-white bg-gray-100 shadow-sm dark:border-[#0a0a0a]">
-                              {/* Mascot placeholder or icon */}
-                              <div className="flex h-full w-full items-center justify-center text-xs">
-                                {'🦖'}
+                          {course.mascot?.mode && course.mascot.mode !== 'disabled' ? (
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 overflow-hidden rounded-full border-2 border-white bg-gray-100 shadow-sm dark:border-[#0a0a0a]">
+                                {/* Mascot placeholder or icon */}
+                                <div className="flex h-full w-full items-center justify-center text-xs">
+                                  {'🦖'}
+                                </div>
                               </div>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                {course.mascot.name}
+                              </span>
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                              {course.mascot.name}
-                            </span>
-                          </div>
+                          ) : (
+                            <div />
+                          )}
                           <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#269984] group-hover:translate-x-1 transition-transform">
                             {t('courses.open')}
                             <ChevronRight size={14} strokeWidth={3} />

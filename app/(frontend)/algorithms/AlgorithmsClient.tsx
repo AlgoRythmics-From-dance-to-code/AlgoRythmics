@@ -126,7 +126,9 @@ export default function AlgorithmsClient() {
 
   // Sliding pill logic with layout stabilization
   useLayoutEffect(() => {
+    let cancelled = false;
     const updatePill = () => {
+      if (cancelled) return;
       const activeBtn = buttonRefs.current[activeCategory];
       if (activeBtn) {
         setPillStyle({
@@ -142,12 +144,24 @@ export default function AlgorithmsClient() {
 
     // Small delay to handle potential layout shifts/font loading
     const timer = setTimeout(updatePill, 100);
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(updatePill).catch(() => {});
+    }
+
+    const activeBtn = buttonRefs.current[activeCategory];
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' && activeBtn ? new ResizeObserver(updatePill) : null;
+    if (resizeObserver && activeBtn) {
+      resizeObserver.observe(activeBtn);
+    }
 
     // Add window resize listener to keep pill aligned
     window.addEventListener('resize', updatePill);
 
     return () => {
+      cancelled = true;
       clearTimeout(timer);
+      resizeObserver?.disconnect();
       window.removeEventListener('resize', updatePill);
     };
   }, [activeCategory, t]);
@@ -206,10 +220,10 @@ export default function AlgorithmsClient() {
         }`}
       >
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-4">
             {/* Elegant Sliding Pilled Category Tabs */}
             <div
-              className={`relative flex items-center p-1 rounded-2xl overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden transition-colors duration-500 ${
+              className={`relative flex min-w-0 items-center p-1 rounded-2xl overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden transition-colors duration-500 ${
                 isScrolled ? 'bg-gray-100/30 dark:bg-white/5' : 'bg-transparent'
               }`}
             >
@@ -232,7 +246,7 @@ export default function AlgorithmsClient() {
                       buttonRefs.current[cat.id] = el;
                     }}
                     onClick={() => handleCategoryChange(cat.id as Category)}
-                    className={`relative px-4 sm:px-5 py-2 rounded-xl font-montserrat font-bold text-[11px] sm:text-xs lg:text-sm transition-colors duration-300 whitespace-nowrap cursor-pointer z-10 ${
+                    className={`relative shrink-0 px-3 sm:px-4 py-2 rounded-xl font-montserrat font-bold text-[11px] sm:text-xs xl:text-sm transition-colors duration-300 whitespace-nowrap cursor-pointer z-10 ${
                       isActive
                         ? 'text-white'
                         : `text-[#999] dark:text-gray-500 hover:text-[#269984] dark:hover:text-gray-300`
@@ -245,9 +259,13 @@ export default function AlgorithmsClient() {
             </div>
 
             {/* Premium Focused Search Input */}
-            <div className={`relative w-full lg:max-w-[340px] group transition-all duration-500`}>
+            <div
+              className={`relative w-full lg:max-w-[240px] xl:max-w-[270px] group transition-all duration-500`}
+            >
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999] dark:text-gray-600 group-focus-within:text-[#269984] transition-colors" />
               <input
+                id="algorithms-search"
+                name="search"
                 type="text"
                 placeholder={t('sidebar.search_placeholder') || 'Find an algorithm...'}
                 value={searchQuery}

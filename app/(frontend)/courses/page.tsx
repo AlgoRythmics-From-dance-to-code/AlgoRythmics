@@ -36,7 +36,7 @@ async function getFreshCourses(locale: string): Promise<CourseCollectionDoc[]> {
 export default async function CoursesPage() {
   const session = await auth();
   if (!session) {
-    redirect('/login?reason=login_required');
+    redirect('/login?reason=login_required&callbackUrl=%2Fcourses');
   }
 
   const locale = await getServerLocale();
@@ -46,7 +46,7 @@ export default async function CoursesPage() {
   const courses = await getCourseCatalog(docs);
 
   return (
-    <main className="w-full bg-[#fcfdfd] dark:bg-[#080808] py-8 sm:py-12 md:py-16">
+    <div className="w-full bg-[#fcfdfd] dark:bg-[#080808] py-8 sm:py-12 md:py-16">
       <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
         <CoursesClient
           courses={courses}
@@ -54,6 +54,6 @@ export default async function CoursesPage() {
           description={t('courses.hero_description')}
         />
       </div>
-    </main>
+    </div>
   );
 }

@@ -572,11 +572,11 @@
       "video": [
         "Egyszerű elmagyarázás: az elemeket párba állítjuk és felcseréljük, ha rossz sorrendben vannak.",
         "Figyeld meg, hogyan mozognak a táncosok a zene ütemére, minden mozdulat egy logikai lépést takar.",
-        "A cél, hogy a legnagyobb elemek a tömb végére 'buborékoljanak'."
+        "Kövesd, hogyan bontja a koreográfia az algoritmus lépéseit érthető, ismétlődő mintákra."
       ],
       "animation": [
-        "Kövesd a vizuális sávok automatikus mozgását a képernyőn.",
-        "A színek segítenek megkülönböztetni az összehasonlítást és a cserét.",
+        "Kövesd a vizuális elemek automatikus mozgását és állapotváltozásait a képernyőn.",
+        "A színek segítenek megkülönböztetni az aktív vizsgálatokat, lépéseket és megoldott állapotokat.",
         "Segítség: Használd az irányító gombokat a sebesség állításához vagy a manuális léptetéshez."
       ],
       "control": [

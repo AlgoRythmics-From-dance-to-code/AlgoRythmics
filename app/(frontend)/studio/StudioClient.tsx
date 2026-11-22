@@ -2714,7 +2714,7 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
       )}
 
       {/* ━━━ MAIN WORKSPACE ━━━ */}
-      <main className="max-w-[1400px] mx-auto px-6 lg:px-12 mt-8">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-12 mt-8">
         {/* Course List Header with Search & Filters (Only shown when not in editor) */}
         {activeTab !== 'course_editor' && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-4">
@@ -6444,7 +6444,7 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
             )}
           </div>
         )}
-      </main>
+      </div>
 
       {/* ━━━ AI ASSISTANT: SINGLE PHASE MODAL (ONLY ONE-BY-ONE) ━━━ */}
       {phaseAiModalOpen && (

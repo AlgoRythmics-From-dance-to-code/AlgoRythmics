@@ -23,17 +23,19 @@ export default function SkillRadarChart({ data }: SkillRadarChartProps) {
     return null;
   }
 
-  const size = 340;
-  const center = size / 2;
-  const radius = size * 0.38;
+  const svgWidth = 500;
+  const svgHeight = 340;
+  const centerX = svgWidth / 2;
+  const centerY = svgHeight / 2;
+  const radius = 112;
   const numAxes = data.length;
 
   // Calculate coordinates on spider chart
   const getCoordinates = (index: number, value: number, max: number) => {
     const angle = ((Math.PI * 2) / numAxes) * index - Math.PI / 2;
     const distance = (value / max) * radius;
-    const x = center + distance * Math.cos(angle);
-    const y = center + distance * Math.sin(angle);
+    const x = centerX + distance * Math.cos(angle);
+    const y = centerY + distance * Math.sin(angle);
     return { x, y, angle };
   };
 
@@ -83,10 +85,7 @@ export default function SkillRadarChart({ data }: SkillRadarChartProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
         {/* Left: Interactive Radar SVG */}
         <div className="lg:col-span-6 flex items-center justify-center relative">
-          <svg
-            viewBox={`0 0 ${size} ${size}`}
-            className="w-full max-w-[340px] h-auto overflow-visible"
-          >
+          <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full max-w-[460px] h-auto">
             <defs>
               <linearGradient id="radarFillGrad" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stopColor="#a855f7" stopOpacity="0.4" />
@@ -121,8 +120,8 @@ export default function SkillRadarChart({ data }: SkillRadarChartProps) {
               return (
                 <line
                   key={idx}
-                  x1={center}
-                  y1={center}
+                  x1={centerX}
+                  y1={centerY}
                   x2={x}
                   y2={y}
                   stroke="currentColor"

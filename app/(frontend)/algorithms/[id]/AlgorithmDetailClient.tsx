@@ -42,7 +42,9 @@ export default function AlgorithmDetailClient({ id }: { id: string }) {
 
   useEffect(() => {
     if (status === 'unauthenticated' && id !== 'bubble-sort') {
-      router.push('/login');
+      router.push(
+        `/login?reason=login_required&callbackUrl=${encodeURIComponent(`/algorithms/${id}`)}`,
+      );
     }
   }, [status, id, router]);
 

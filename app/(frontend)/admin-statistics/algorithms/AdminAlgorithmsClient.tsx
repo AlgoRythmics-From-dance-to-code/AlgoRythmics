@@ -491,7 +491,10 @@ export default function AdminAlgorithmsClient() {
               <Video className="w-5 h-5 text-[#269984]" />
             </div>
             <div className="text-3xl font-black font-montserrat text-[#269984]">
-              -{data?.pedagogy?.videoErrorReductionPercent ?? 0}% hiba
+              {(() => {
+                const v = data?.pedagogy?.videoErrorReductionPercent ?? 0;
+                return v > 0 ? `-${v}% hiba` : v < 0 ? `+${Math.abs(v)}% hiba` : '0% hiba';
+              })()}
             </div>
             <p className="text-xs text-gray-500">A táncvideót megnéző diákoknál</p>
           </div>

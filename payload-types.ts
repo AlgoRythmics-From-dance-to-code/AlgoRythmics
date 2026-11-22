@@ -1223,19 +1223,28 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 export interface AiSetting {
   id: number;
   /**
-   * Főkapcsoló: ha kikapcsolod, az AI kabala egyik kurzusban sem jelenik meg a diákoknak és nem használ tokeneket.
+   * Főkapcsoló: ha kikapcsolod, az AI kabala egyik kurzusban sem jelenik meg a diákoknak és nem használ tokeneket. A Course Studio-ban az AI kurzusgenerálás ettől függetlenül továbbra is működik.
    */
   mascotEnabled?: boolean | null;
   /**
-   * Az AI tananyag generáláshoz használt OpenRouter modell (pl. google/gemini-2.5-flash, openai/gpt-4o-mini, anthropic/claude-3.5-haiku, openrouter/free).
+   * Az AI tananyag generáláshoz és a kabalához használt OpenRouter modell (pl. google/gemini-2.5-flash, openai/gpt-4o-mini, anthropic/claude-3.5-haiku, openrouter/free).
    */
   model: string;
   /**
    * Az OpenRouter hozzáférési kulcs (sk-or-v1-...). Kizárólag a rendszergazdák szerkeszthetik.
    */
   apiKey?: string | null;
+  /**
+   * Egy felhasználó legfeljebb ennyi AI chat választ kérhet naponta a kabalától. A limit elérése után a kabala 0 tokenes helyi tippekre vált.
+   */
   mascotMaxMessagesPerDay?: number | null;
+  /**
+   * Egy adott kurzuslépésen belül legfeljebb ennyi szabad szöveges kérdést tehet fel a diák az AI kabalának.
+   */
   mascotMaxMessagesPerPhase?: number | null;
+  /**
+   * Ennyi másodpercet kell várni két egymást követő AI kabala chat kérdés között (spam védelem).
+   */
   mascotCooldownSeconds?: number | null;
   updatedAt?: string | null;
   createdAt?: string | null;

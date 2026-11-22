@@ -1413,7 +1413,12 @@ export default function AdminStatisticsClient() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold text-[#269984] font-montserrat">
-                    -{loading ? '...' : (data?.pedagogy?.videoErrorReductionPercent ?? 0)}%
+                    {loading
+                      ? '...'
+                      : (() => {
+                          const v = data?.pedagogy?.videoErrorReductionPercent ?? 0;
+                          return v > 0 ? `-${v}%` : v < 0 ? `+${Math.abs(v)}%` : '0%';
+                        })()}
                   </span>
                   <span className="text-xs font-semibold text-gray-500">kevesebb hiba</span>
                 </div>

@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { cookies } from 'next/headers';
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Discord from 'next-auth/providers/discord';
@@ -44,6 +45,15 @@ declare module 'next-auth/jwt' {
 
 import { Session } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
+
+async function clearStaleAdminCookie() {
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete(APP_CONFIG.COOKIE_TOKEN_NAME);
+  } catch {
+    // Ignore if cookies() is unavailable in a non-request context
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -122,6 +132,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               lastName: u.lastName || undefined,
               bio: u.bio || undefined,
               imageUrl: u.imageUrl,
+              authProvider: u.authProvider || 'email',
+              createdAt: u.createdAt,
               completedAlgorithms: u.completedAlgorithms || [],
               mascotEnabled: u.mascotEnabled !== false,
             };
@@ -159,6 +171,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (account.provider === 'credentials') {
+        await clearStaleAdminCookie();
         return true;
       }
 
@@ -234,6 +247,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
+        await clearStaleAdminCookie();
         return true;
       } catch (error) {
         logger.error({ error }, 'NextAuth signIn callback: CRITICAL ERROR');

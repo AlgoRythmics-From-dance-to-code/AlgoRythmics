@@ -575,8 +575,8 @@
         "Urmăriți cum elementele alunecă la locul lor conform ritmului."
       ],
       "animation": [
-        "Urmărește mișcarea barelor vizuale.",
-        "Observă semnificația culorilor (comparare, interschimbare).",
+        "Urmărește mișcarea și schimbările de stare ale elementelor vizuale.",
+        "Observă semnificația culorilor (verificări active, tranziții, stări rezolvate).",
         "Citește textele explicative la fiecare pas."
       ],
       "control": [

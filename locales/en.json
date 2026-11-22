@@ -572,11 +572,11 @@
       "video": [
         "Simple explanation: elements are compared in pairs and swapped if they are in the wrong order.",
         "Watch how the dancers move to the rhythm; every move represents a logical step.",
-        "The goal is to let the largest elements 'bubble up' to the end of the array."
+        "Follow how the choreography breaks the algorithm's steps into clear, repeatable patterns."
       ],
       "animation": [
-        "Follow the automatic movement of the visual bars on the screen.",
-        "Colors help distinguish between comparisons and swap operations.",
+        "Follow the automatic movement and state changes of the visual elements on the screen.",
+        "Colors help distinguish between active checks, state transitions, and resolved states.",
         "Help: Use the control buttons to adjust speed or manually step through the process."
       ],
       "control": [
