@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { Suspense, useEffect, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from '../../../../i18n/LocaleProvider';
 import {
   Copy,
@@ -27,17 +27,20 @@ interface CertificateData {
   completedAt: string;
   points: number;
   certificateId: string;
+  shareToken?: string;
   accentColor: string;
   error?: string;
 }
 
-export default function CertificatePage() {
+function CertificatePageContent() {
   const { t, locale } = useLocale();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const userIdStr = (params?.userId as string) || '';
   const courseSlug = (params?.courseSlug as string) || '';
+  const tokenParam = searchParams.get('token') || '';
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<CertificateData | null>(null);
@@ -52,7 +55,10 @@ export default function CertificatePage() {
     if (!userIdStr || !courseSlug) return;
 
     setLoading(true);
-    fetch(`/api/certificates/${userIdStr}/${courseSlug}`)
+    const query = tokenParam ? `?token=${encodeURIComponent(tokenParam)}` : '';
+    fetch(
+      `/api/certificates/${encodeURIComponent(userIdStr)}/${encodeURIComponent(courseSlug)}${query}`,
+    )
       .then((res) => {
         if (!res.ok) {
           throw new Error('Certificate not found');
@@ -62,19 +68,22 @@ export default function CertificatePage() {
       .then((resData) => {
         setData(resData);
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         setData(null);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [userIdStr, courseSlug]);
+  }, [userIdStr, courseSlug, tokenParam]);
 
   const handleCopyLink = () => {
     if (typeof window === 'undefined') return;
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
+    const effectiveToken = tokenParam || data?.shareToken || '';
+    const shareUrl = new URL(window.location.href);
+    if (effectiveToken) {
+      shareUrl.searchParams.set('token', effectiveToken);
+    }
+    navigator.clipboard.writeText(shareUrl.toString()).then(() => {
       setCopied(true);
       toast.success(tr('certificate_page.copy_link', 'Certificate link copied to clipboard!'));
       setTimeout(() => setCopied(false), 2500);
@@ -163,6 +172,7 @@ export default function CertificatePage() {
           .print-certificate-container {
             border: 6px double #269984 !important;
             background: #ffffff !important;
+            color: #111827 !important;
             box-shadow: none !important;
             width: 100vw !important;
             height: 100vh !important;
@@ -172,6 +182,18 @@ export default function CertificatePage() {
             padding: 1.5rem !important;
             box-sizing: border-box !important;
             page-break-inside: avoid !important;
+          }
+          .print-certificate-container > div {
+            background: #ffffff !important;
+            border-color: rgba(38, 153, 132, 0.35) !important;
+          }
+          .print-certificate-container h1,
+          .print-certificate-container h3,
+          .print-certificate-container span:not(.text-\[\#269984\]) {
+            color: #111827 !important;
+          }
+          .print-certificate-container p {
+            color: #4b5563 !important;
           }
           @page {
             size: landscape;
@@ -200,7 +222,7 @@ export default function CertificatePage() {
               {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
               <span>
                 {copied
-                  ? tr('certificate.copied', 'Copied!')
+                  ? tr('certificate_page.copied', 'Copied!')
                   : tr('certificate_page.copy_link', 'Copy Link')}
               </span>
             </button>
@@ -292,7 +314,7 @@ export default function CertificatePage() {
                   </div>
                 </div>
                 <span className="text-[9px] font-bold text-amber-400/90 uppercase tracking-widest">
-                  ALGORHYTHMICS
+                  ALGORYTHMICS
                 </span>
               </div>
 
@@ -318,5 +340,19 @@ export default function CertificatePage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function CertificatePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[70vh] flex flex-col items-center justify-center bg-[#0d1117] text-white">
+          <Loader2 className="w-12 h-12 text-[#269984] animate-spin mb-4" />
+        </div>
+      }
+    >
+      <CertificatePageContent />
+    </Suspense>
   );
 }

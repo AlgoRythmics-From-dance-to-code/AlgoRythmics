@@ -42,14 +42,17 @@ export function broadcastRoomUpdate(roomId: string, roomState: MultiplayerRoomSt
   for (const dead of deadControllers) {
     roomSubscribers.delete(dead);
   }
+  if (roomSubscribers.size === 0) {
+    subscribers.delete(cleanId);
+  }
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const roomId = searchParams.get('roomId')?.toUpperCase().trim();
 
-  if (!roomId) {
-    return NextResponse.json({ error: 'Room ID is required' }, { status: 400 });
+  if (!roomId || !/^[A-Z0-9_-]{3,24}$/.test(roomId)) {
+    return NextResponse.json({ error: 'Valid Room ID is required' }, { status: 400 });
   }
 
   const encoder = new TextEncoder();
@@ -67,23 +70,39 @@ export async function GET(request: Request) {
       }
       roomSubscribers.add(controller);
 
-      // Send initial room state if room exists in global memory
-      const existingRoom = globalStreamRegistry.__ALGORHYTHMICS_ROOMS__?.get(roomId);
-      if (existingRoom?.state) {
-        const initialPayload = `data: ${JSON.stringify({
-          type: 'ROOM_UPDATE',
-          room: existingRoom.state,
-        })}\n\n`;
-        controller.enqueue(encoder.encode(initialPayload));
+      try {
+        // Send initial room state if room exists in global memory
+        const existingRoom = globalStreamRegistry.__ALGORHYTHMICS_ROOMS__?.get(roomId);
+        if (existingRoom?.state) {
+          const initialPayload = `data: ${JSON.stringify({
+            type: 'ROOM_UPDATE',
+            room: existingRoom.state,
+          })}\n\n`;
+          controller.enqueue(encoder.encode(initialPayload));
+        }
+
+        // Send initial keepalive
+        controller.enqueue(encoder.encode(': keepalive\n\n'));
+      } catch {
+        roomSubscribers.delete(controller);
+        if (roomSubscribers.size === 0) {
+          subscribers.delete(roomId);
+        }
+        return;
       }
 
-      // Send initial keepalive and set up periodic keepalive (every 15s) to prevent proxy timeouts
-      controller.enqueue(encoder.encode(': keepalive\n\n'));
       const keepAliveTimer = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(': keepalive\n\n'));
         } catch {
           clearInterval(keepAliveTimer);
+          const currentSubs = subscribers.get(roomId);
+          if (currentSubs) {
+            currentSubs.delete(controller);
+            if (currentSubs.size === 0) {
+              subscribers.delete(roomId);
+            }
+          }
         }
       }, 15000);
 

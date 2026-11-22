@@ -22,6 +22,15 @@ interface OrderingComponentProps {
   onMistake?: () => void;
 }
 
+function shuffleArray<T>(items: T[]): T[] {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export default function OrderingComponent({ phase, courseId, onMistake }: OrderingComponentProps) {
   const { t } = useLocale();
   const { markCoursePhaseComplete, setCoursePhaseResult, setCoursePhasePoints, syncProgress } =
@@ -32,15 +41,23 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
 
   const { trackEvent } = useAnalytics(undefined, 'order', courseId);
 
-  const initialItems =
-    phase.ordering?.map((o, i) => ({
-      id: `O-${i}`,
-      text: String(o.text || '').replace(/\s*\|\s*/g, ' '),
-      originalIndex: i,
-    })) || [];
+  const initialItems = React.useMemo(
+    () =>
+      phase.ordering?.map((o, i) => ({
+        id: `O-${i}`,
+        text: String(o.text || '').replace(/\s*(?<!\|)\|(?!\|)\s*/g, ' '),
+        originalIndex: i,
+      })) || [],
+    [phase.ordering],
+  );
 
-  // Shuffle for the challenge
-  const [items, setItems] = useState(() => [...initialItems].sort(() => Math.random() - 0.5));
+  // Shuffle deterministically after mount to avoid SSR hydration mismatches and Fisher-Yates bias
+  const [items, setItems] = useState(initialItems);
+  React.useEffect(() => {
+    setItems(initialItems.length > 1 ? shuffleArray(initialItems) : initialItems);
+    setShowFeedback(false);
+    setEvaluation(null);
+  }, [phase.phaseId, initialItems]);
 
   const [showFeedback, setShowFeedback] = useState(false);
   const [confidence, setConfidence] = useState<ConfidenceLevel>('high');
@@ -66,10 +83,14 @@ export default function OrderingComponent({ phase, courseId, onMistake }: Orderi
   const { setCourseConfidenceRating } = useAlgorithmStore();
 
   const checkOrder = () => {
-    // Correct if current text order matches initial order (which was 0, 1, 2...)
-    const correctCount = items.filter((item, idx) => item.originalIndex === idx).length;
     const totalCount = items.length;
-    const matchesOriginal = correctCount === totalCount;
+    if (totalCount === 0) return;
+
+    // Compare step text so duplicate step labels remain valid in either matching position
+    const correctCount = items.filter(
+      (item, idx) => item.text.trim() === (initialItems[idx]?.text ?? '').trim(),
+    ).length;
+    const matchesOriginal = totalCount > 0 && correctCount === totalCount;
 
     if (!matchesOriginal) onMistake?.();
 

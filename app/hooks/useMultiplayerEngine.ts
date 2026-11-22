@@ -108,6 +108,19 @@ export function useMultiplayerEngine(initialRoomId?: string): {
   const channelRef = useRef<BroadcastChannel | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const pendingBroadcastRef = useRef<MultiplayerRoomState | null>(null);
+  const broadcastScheduledRef = useRef(false);
+
+  useEffect(() => {
+    const timers = audioTimersRef.current;
+    return () => {
+      timers.forEach((id) => clearTimeout(id));
+      timers.clear();
+      audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
+    };
+  }, []);
 
   const versionRef = useRef<number>(room.version || 1);
   versionRef.current = room.version || 1;
@@ -165,19 +178,30 @@ export function useMultiplayerEngine(initialRoomId?: string): {
     [audioEnabled],
   );
 
+  const scheduleTone = useCallback(
+    (delayMs: number, freq: number, type: OscillatorType, duration: number) => {
+      const id = setTimeout(() => {
+        audioTimersRef.current.delete(id);
+        playTone(freq, type, duration);
+      }, delayMs);
+      audioTimersRef.current.add(id);
+    },
+    [playTone],
+  );
+
   const playSuccessChord = useCallback(() => {
     playTone(523.25, 'triangle', 0.2); // C5
-    setTimeout(() => playTone(659.25, 'triangle', 0.2), 60); // E5
-    setTimeout(() => playTone(783.99, 'triangle', 0.3), 120); // G5
-    setTimeout(() => playTone(1046.5, 'triangle', 0.4), 180); // C6
-  }, [playTone]);
+    scheduleTone(60, 659.25, 'triangle', 0.2); // E5
+    scheduleTone(120, 783.99, 'triangle', 0.3); // G5
+    scheduleTone(180, 1046.5, 'triangle', 0.4); // C6
+  }, [playTone, scheduleTone]);
 
   const playErrorSound = useCallback(() => {
     playTone(180, 'sawtooth', 0.25);
-    setTimeout(() => playTone(140, 'sawtooth', 0.3), 100);
-  }, [playTone]);
+    scheduleTone(100, 140, 'sawtooth', 0.3);
+  }, [playTone, scheduleTone]);
 
-  // Authoritative state broadcast over BroadcastChannel & Server API
+  // Authoritative state broadcast over BroadcastChannel & Server API (batched asynchronously so React StrictMode updaters stay pure)
   const broadcastState = useCallback((updatedRoom: MultiplayerRoomState) => {
     const nextVersion = (updatedRoom.version || versionRef.current || 1) + 1;
     const roomWithVersion: MultiplayerRoomState = {
@@ -185,26 +209,37 @@ export function useMultiplayerEngine(initialRoomId?: string): {
       version: nextVersion,
     };
     versionRef.current = nextVersion;
+    pendingBroadcastRef.current = roomWithVersion;
 
-    if (channelRef.current) {
-      channelRef.current.postMessage({ type: 'SYNC_ROOM', room: roomWithVersion });
-    }
+    if (!broadcastScheduledRef.current) {
+      broadcastScheduledRef.current = true;
+      queueMicrotask(() => {
+        broadcastScheduledRef.current = false;
+        const payloadRoom = pendingBroadcastRef.current;
+        pendingBroadcastRef.current = null;
+        if (!payloadRoom) return;
 
-    if (roomWithVersion.roomId) {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (participantTokenRef.current) {
-        headers['x-participant-token'] = participantTokenRef.current;
-      }
-      fetch('/api/multiplayer/room', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          action: 'UPDATE_ROOM',
-          roomId: roomWithVersion.roomId,
-          roomState: roomWithVersion,
-          participantToken: participantTokenRef.current || undefined,
-        }),
-      }).catch((err) => console.warn('Room sync error:', err));
+        if (channelRef.current) {
+          channelRef.current.postMessage({ type: 'SYNC_ROOM', room: payloadRoom });
+        }
+
+        if (payloadRoom.roomId) {
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          if (participantTokenRef.current) {
+            headers['x-participant-token'] = participantTokenRef.current;
+          }
+          fetch('/api/multiplayer/room', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              action: 'UPDATE_ROOM',
+              roomId: payloadRoom.roomId,
+              roomState: payloadRoom,
+              participantToken: participantTokenRef.current || undefined,
+            }),
+          }).catch((err) => console.warn('Room sync error:', err));
+        }
+      });
     }
   }, []);
 

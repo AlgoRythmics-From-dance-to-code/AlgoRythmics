@@ -66,6 +66,21 @@ interface CacheEntry {
 
 const dossierCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 40_000; // 40 seconds cache
+const MAX_DOSSIER_CACHE = 1000;
+
+function setDossierCache(key: string, entry: CacheEntry) {
+  const now = Date.now();
+  if (dossierCache.size >= MAX_DOSSIER_CACHE) {
+    for (const [k, v] of dossierCache.entries()) {
+      if (v.expiresAt <= now) dossierCache.delete(k);
+    }
+    if (dossierCache.size >= MAX_DOSSIER_CACHE) {
+      const oldestKey = dossierCache.keys().next().value;
+      if (oldestKey !== undefined) dossierCache.delete(oldestKey);
+    }
+  }
+  dossierCache.set(key, entry);
+}
 
 /**
  * Builds a comprehensive 360-degree dossier of the learner's profile, history,
@@ -76,8 +91,10 @@ export async function buildUserLearningDossier(
   courseSlug: string,
   phaseId?: string,
   algorithmId?: string,
+  options?: { lightweight?: boolean },
 ): Promise<UserLearningDossier> {
-  const cacheKey = `${userId}:${courseSlug}:${phaseId || 'general'}:${algorithmId || 'general'}`;
+  const isLightweight = options?.lightweight ?? true;
+  const cacheKey = `${userId}:${courseSlug}:${phaseId || 'general'}:${algorithmId || 'general'}:${isLightweight ? 'lite' : 'full'}`;
   const now = Date.now();
   const cached = dossierCache.get(cacheKey);
 
@@ -89,7 +106,7 @@ export async function buildUserLearningDossier(
     const payload = await getPayloadInstance();
     const numericUserId = Number(userId);
 
-    // Parallel fetch across collections for maximum speed
+    // Parallel fetch: in lightweight mode (used by Mascot prompt), only query the 2 collections actually needed
     const [userDoc, courseProgressDocs, algoProgressDocs, learningEventDocs, searchDocs] =
       await Promise.all([
         payload
@@ -109,32 +126,38 @@ export async function buildUserLearningDossier(
             limit: 1,
           })
           .catch(() => ({ docs: [] })),
-        payload
-          .find({
-            collection: 'algorithm-progress',
-            where: { user: { equals: numericUserId } },
-            depth: 0,
-            limit: 50,
-          })
-          .catch(() => ({ docs: [] })),
-        payload
-          .find({
-            collection: 'learning-events',
-            where: { user: { equals: numericUserId } },
-            sort: '-createdAt',
-            depth: 0,
-            limit: 10,
-          })
-          .catch(() => ({ docs: [] })),
-        payload
-          .find({
-            collection: 'search-analytics',
-            where: { user: { equals: numericUserId } },
-            sort: '-createdAt',
-            depth: 0,
-            limit: 5,
-          })
-          .catch(() => ({ docs: [] })),
+        isLightweight
+          ? Promise.resolve({ docs: [] })
+          : payload
+              .find({
+                collection: 'algorithm-progress',
+                where: { user: { equals: numericUserId } },
+                depth: 0,
+                limit: 50,
+              })
+              .catch(() => ({ docs: [] })),
+        isLightweight
+          ? Promise.resolve({ docs: [] })
+          : payload
+              .find({
+                collection: 'learning-events',
+                where: { user: { equals: numericUserId } },
+                sort: '-createdAt',
+                depth: 0,
+                limit: 10,
+              })
+              .catch(() => ({ docs: [] })),
+        isLightweight
+          ? Promise.resolve({ docs: [] })
+          : payload
+              .find({
+                collection: 'search-analytics',
+                where: { user: { equals: numericUserId } },
+                sort: '-createdAt',
+                depth: 0,
+                limit: 5,
+              })
+              .catch(() => ({ docs: [] })),
       ]);
 
     const user = userDoc as User | null;
@@ -177,11 +200,13 @@ export async function buildUserLearningDossier(
     const detailedStats = (cpDoc.detailedStats || {}) as Record<string, Record<string, unknown>>;
     const currentPhaseStat = phaseId && detailedStats[phaseId] ? detailedStats[phaseId] : undefined;
 
-    // Algorithm Progress (specific for this phase or generally)
-    const targetAlgoId = algorithmId || 'bubble-sort';
-    const targetAlgoDoc = (algoProgressDocs.docs || []).find(
-      (doc) => (doc as unknown as AlgorithmProgress).algorithmId === targetAlgoId,
-    ) as unknown as AlgorithmProgress | undefined;
+    // Algorithm Progress (specific for this phase if bound to an algorithm)
+    const targetAlgoId = algorithmId;
+    const targetAlgoDoc = targetAlgoId
+      ? ((algoProgressDocs.docs || []).find(
+          (doc) => (doc as unknown as AlgorithmProgress).algorithmId === targetAlgoId,
+        ) as unknown as AlgorithmProgress | undefined)
+      : undefined;
 
     const dossier: UserLearningDossier = {
       identity: {
@@ -221,21 +246,22 @@ export async function buildUserLearningDossier(
         },
         phaseSpecificStat: currentPhaseStat,
       },
-      currentAlgorithmState: targetAlgoDoc
-        ? {
-            algorithmId: targetAlgoId,
-            videoWatched: Boolean(targetAlgoDoc.videoWatched),
-            animationCompleted: Boolean(targetAlgoDoc.animationCompleted),
-            controlCompleted: Boolean(targetAlgoDoc.controlCompleted),
-            controlBestScore: Number(targetAlgoDoc.controlBestScore || 0),
-            controlMistakes: Number(targetAlgoDoc.controlMistakes || 0),
-            createCompleted: Boolean(targetAlgoDoc.createCompleted),
-            createBlanksCorrectFirst: Number(targetAlgoDoc.createBlanksCorrectFirst || 0),
-            aliveCompleted: Boolean(targetAlgoDoc.aliveCompleted),
-            aliveBestScore: Number(targetAlgoDoc.aliveBestScore || 0),
-            aliveLastCode: targetAlgoDoc.aliveLastCode || undefined,
-          }
-        : undefined,
+      currentAlgorithmState:
+        targetAlgoDoc && targetAlgoId
+          ? {
+              algorithmId: targetAlgoId,
+              videoWatched: Boolean(targetAlgoDoc.videoWatched),
+              animationCompleted: Boolean(targetAlgoDoc.animationCompleted),
+              controlCompleted: Boolean(targetAlgoDoc.controlCompleted),
+              controlBestScore: Number(targetAlgoDoc.controlBestScore || 0),
+              controlMistakes: Number(targetAlgoDoc.controlMistakes || 0),
+              createCompleted: Boolean(targetAlgoDoc.createCompleted),
+              createBlanksCorrectFirst: Number(targetAlgoDoc.createBlanksCorrectFirst || 0),
+              aliveCompleted: Boolean(targetAlgoDoc.aliveCompleted),
+              aliveBestScore: Number(targetAlgoDoc.aliveBestScore || 0),
+              aliveLastCode: targetAlgoDoc.aliveLastCode || undefined,
+            }
+          : undefined,
       recentActions: (learningEventDocs.docs || []).map((e) => {
         const ev = e as unknown as Record<string, unknown>;
         return {
@@ -249,7 +275,7 @@ export async function buildUserLearningDossier(
       ),
     };
 
-    dossierCache.set(cacheKey, {
+    setDossierCache(cacheKey, {
       data: dossier,
       expiresAt: now + CACHE_TTL_MS,
     });

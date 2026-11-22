@@ -15,7 +15,7 @@ export const Media: CollectionConfig = {
   },
   upload: {
     staticDir: 'public/uploads',
-    mimeTypes: ['image/*'],
+    mimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
     // Downscale main image to max 480p resolution (max 854x480) on save to conserve disk space
     resizeOptions: {
       width: 854,

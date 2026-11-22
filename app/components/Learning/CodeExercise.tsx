@@ -36,15 +36,31 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
   });
 
   const [helpActive, setHelpActive] = useState(false);
-  const [dragCards] = useState<Record<string, string[]>>(() => {
+  const [dragCards, setDragCards] = useState<Record<string, string[]>>(() => {
     if (!template) return {};
     const cards: Record<string, string[]> = {};
     for (const blank of template.blanks) {
-      // Shuffle options
-      cards[blank.id] = [...blank.options].sort(() => Math.random() - 0.5);
+      cards[blank.id] = [...blank.options];
     }
     return cards;
   });
+
+  React.useEffect(() => {
+    if (!template) {
+      setDragCards({});
+      return;
+    }
+    const cards: Record<string, string[]> = {};
+    for (const blank of template.blanks) {
+      const opts = [...blank.options];
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+      cards[blank.id] = opts;
+    }
+    setDragCards(cards);
+  }, [template]);
   const [activeBlank, setActiveBlank] = useState<string | null>(null);
   const [activeWrongOptions, setActiveWrongOptions] = useState<Record<string, Set<string>>>({});
   const [isComplete, setIsComplete] = useState(false);
@@ -274,6 +290,11 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
         },
       }));
 
+      const nextMistakes = mistakesRef.current + 1;
+      setMistakes(nextMistakes);
+      updateProgress({ createMistakes: nextMistakes });
+      onMistake?.();
+
       trackEvent('create_option_select', { blankId, option: optionValue, correct: false });
     } else {
       trackEvent('create_option_select', { blankId, option: optionValue, correct: true });
@@ -291,6 +312,8 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
       initial[blank.id] = { value: '', isCorrect: null, attempts: 0 };
     }
     setBlankStates(initial);
+    setMistakes(0);
+    startTime.current = Date.now();
     setIsComplete(false);
     setHelpActive(false);
     setActiveWrongOptions({});
@@ -398,6 +421,7 @@ export default function CodeExercise({ algorithmId, onMistake }: CodeExercisePro
           <button
             data-mascot-anchor="create-reset-btn"
             type="button"
+            aria-label={t('common.restart')}
             onClick={handleReset}
             className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 transition-all"
           >

@@ -77,6 +77,6 @@ export async function POST(req: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : t('toasts.register_error');
     logger.error({ error: message }, t('toasts.register_error'));
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: t('toasts.register_error') }, { status: 500 });
   }
 }

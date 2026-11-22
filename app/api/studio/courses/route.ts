@@ -146,7 +146,7 @@ export async function GET() {
   }
 }
 
-import { buildPayloadCourseData } from '../../../../lib/courses/studioHelper';
+import { buildPayloadCourseData, toLocalized } from '../../../../lib/courses/studioHelper';
 
 export async function POST(req: Request) {
   try {
@@ -186,22 +186,44 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generate unique slug if collision
+    // Generate unique slug and localized title if collision occurs
     const existing = await payload.find({
       collection: 'courses',
-      where: { slug: { equals: slug } },
-      limit: 1,
+      limit: 200,
+      depth: 0,
+      locale: 'all' as 'hu',
     });
 
+    const existingDocs = existing.docs as unknown as CourseDoc[];
+    const uniqueTag = Date.now().toString(36).slice(-4).toUpperCase();
+
     let finalSlug = String(slug).trim();
-    if (existing.docs.length > 0) {
+    if (existingDocs.some((doc) => doc.slug === finalSlug)) {
       finalSlug = `${finalSlug}-${Date.now().toString(36)}`;
     }
+
+    const normalizedTitle = toLocalized(title, 'Kurzus');
+    const hasTitleCollision = existingDocs.some((doc) => {
+      const docTitle = toLocalized(doc.title, '');
+      return (
+        docTitle.hu.toLowerCase() === normalizedTitle.hu.toLowerCase() ||
+        docTitle.en.toLowerCase() === normalizedTitle.en.toLowerCase() ||
+        docTitle.ro.toLowerCase() === normalizedTitle.ro.toLowerCase()
+      );
+    });
+
+    const finalTitle = hasTitleCollision
+      ? {
+          hu: `${normalizedTitle.hu} (#${uniqueTag})`,
+          en: `${normalizedTitle.en} (#${uniqueTag})`,
+          ro: `${normalizedTitle.ro} (#${uniqueTag})`,
+        }
+      : normalizedTitle;
 
     const instructorId = user.id ? (isNaN(Number(user.id)) ? user.id : Number(user.id)) : undefined;
 
     const courseData = buildPayloadCourseData({
-      title,
+      title: finalTitle,
       slug: finalSlug,
       summary,
       heroTagline,

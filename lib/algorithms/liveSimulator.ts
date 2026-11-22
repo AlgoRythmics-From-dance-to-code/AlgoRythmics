@@ -82,8 +82,7 @@ export function simulateCreateTemplate(
       normUser === normExpected ||
       (slot.id === 'blank1' && normUser === 'n-1' && normExpected === 'arr.length-1') ||
       (slot.id === 'blank1' && normUser === 'n' && normExpected === 'arr.length') ||
-      (slot.id === 'blank2' && normUser === 'n-i-1' && normExpected === 'arr.length-i-1') ||
-      (slot.id === 'blank2' && normUser === 'low<high' && normExpected === 'low<=high');
+      (slot.id === 'blank2' && normUser === 'n-i-1' && normExpected === 'arr.length-i-1');
 
     if (!isValid) {
       wrongBlanks.push({
@@ -98,7 +97,11 @@ export function simulateCreateTemplate(
   // 3. Check for specific common misconception: reversed sorting (< instead of > in bubble sort)
   const isBubbleSort = algorithmId === 'bubble-sort';
   const b3Op = blanks.blank3?.trim();
-  if (isBubbleSort && (b3Op === '<' || b3Op === '<=')) {
+  if (
+    isBubbleSort &&
+    (b3Op === '<' || b3Op === '<=') &&
+    wrongBlanks.every((w) => w.id === 'blank3')
+  ) {
     const reversedSorted = [...initial].sort((a, b) => b - a);
     return {
       initialArray: initial,

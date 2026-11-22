@@ -102,7 +102,11 @@ export function MascotScreenProvider({ children }: { children: React.ReactNode }
 
   const scrollAnchorIntoView = useCallback((anchorId: string): boolean => {
     if (typeof document === 'undefined') return false;
-    const target = document.querySelector(`[data-mascot-anchor="${anchorId}"]`);
+    const escapedId =
+      typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+        ? CSS.escape(anchorId)
+        : anchorId.replace(/["\\]/g, '\\$&');
+    const target = document.querySelector(`[data-mascot-anchor="${escapedId}"]`);
     if (target) {
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return true;

@@ -167,8 +167,9 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
     // If fewer than selectionLimit are selected, it's a mistake in logic/understanding
     if (selectedIndices.length < selectionLimit) {
       setFeedback('incorrect');
-      setMistakes((m) => m + 1);
-      updateProgress({ controlMistakes: mistakes + 1 });
+      const nextMistakes = mistakes + 1;
+      setMistakes(nextMistakes);
+      updateProgress({ controlMistakes: nextMistakes });
       onMistake?.();
       setAttemptedWrong(true);
       trackEvent('control_selection_incomplete', {
@@ -457,7 +458,7 @@ export default function ControlVisualizer({ algorithmId, onMistake }: ControlVis
   // N-Queens: use dedicated puzzle UI
   if (isBacktracking) {
     const boardSize = algo.defaultArray?.[0] ?? 8;
-    return <QueensControl n={boardSize} algorithmId={algorithmId} />;
+    return <QueensControl n={boardSize} algorithmId={algorithmId} onMistake={onMistake} />;
   }
 
   return (

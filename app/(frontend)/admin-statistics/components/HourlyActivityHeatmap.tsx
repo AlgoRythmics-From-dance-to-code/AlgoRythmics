@@ -31,6 +31,19 @@ export default function HourlyActivityHeatmap({ data }: HourlyActivityHeatmapPro
   }
 
   const slots = data[0].slots;
+  let peakDay = '';
+  let peakSlotLabel = '';
+  let peakCount = 0;
+
+  data.forEach((dayItem) => {
+    dayItem.slots.forEach((slot) => {
+      if (slot.sessionCount > peakCount) {
+        peakCount = slot.sessionCount;
+        peakDay = dayItem.day;
+        peakSlotLabel = slot.slotLabel;
+      }
+    });
+  });
 
   return (
     <motion.div
@@ -114,8 +127,9 @@ export default function HourlyActivityHeatmap({ data }: HourlyActivityHeatmapPro
       <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2.5 font-semibold">
         <Sparkles className="w-5 h-5 shrink-0 text-amber-500" />
         <span>
-          Csúcsidőszak: Hétköznap késő délután (16:00 - 20:00) és vasárnap este tapasztalható a
-          legnagyobb feladatmegoldási és szinkron multiplayer aktivitás.
+          {peakCount > 0
+            ? `Csúcsidőszak: ${peakDay} – ${peakSlotLabel} (${peakCount} rögzített munkamenet).`
+            : 'Csúcsidőszak: Még nincs rögzített tanulási munkamenet ebben az időszakban.'}
         </span>
       </div>
     </motion.div>

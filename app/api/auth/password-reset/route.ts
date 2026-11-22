@@ -1,6 +1,5 @@
-import { getPayload } from 'payload';
+import { getPayloadInstance } from '../../../../lib/payload';
 import type { User } from '../../../../payload-types';
-import configPromise from '../../../../payload.config';
 import { NextResponse } from 'next/server';
 import logger from '../../../../lib/logger';
 import { getT } from '../../../../lib/i18n-server';
@@ -10,12 +9,12 @@ export async function POST(req: Request) {
   try {
     const { token, password } = await req.json();
 
-    const MIN_PASSWORD_LENGTH = 8;
+    const MIN_PASSWORD_LENGTH = 6;
     if (!token || typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
-      return NextResponse.json({ error: t('toasts.unexpected_error_desc') }, { status: 400 });
+      return NextResponse.json({ error: t('toasts.password_min') }, { status: 400 });
     }
 
-    const payload = await getPayload({ config: configPromise });
+    const payload = await getPayloadInstance();
 
     // Call Payload's resetPassword operation
     // This will handle the token verification and hashing the new password
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
     }
 
     logger.error({ error: message }, 'Reset password error');
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: t('toasts.unexpected_error') }, { status: 500 });
   }
 }
 
@@ -60,14 +59,14 @@ export async function GET(req: Request) {
   }
 
   try {
-    const payload = await getPayload({ config: configPromise });
+    const payload = await getPayloadInstance();
 
     // Look for user with this token
     // Payload stores these in internal fields
     const users = await payload.find({
       collection: 'users',
       where: {
-        _resetPasswordToken: {
+        resetPasswordToken: {
           equals: token,
         },
       },

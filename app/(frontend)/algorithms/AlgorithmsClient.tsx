@@ -18,13 +18,14 @@ export default function AlgorithmsClient() {
   const { data: session } = useSession();
   const isAuthenticated = !!session;
 
-  const { activeCategory, setCategory, searchQuery, setSearchQuery, completedIds } =
+  const { activeCategory, setCategory, searchQuery, setSearchQuery, resetFilters, completedIds } =
     useAlgorithmStore(
       useShallow((state) => ({
         activeCategory: state.activeCategory,
         setCategory: state.setCategory,
         searchQuery: state.searchQuery,
         setSearchQuery: state.setSearchQuery,
+        resetFilters: state.resetFilters,
         completedIds: state.completedIds,
       })),
     );
@@ -259,6 +260,8 @@ export default function AlgorithmsClient() {
               />
               {searchQuery && (
                 <button
+                  type="button"
+                  aria-label={t('algorithms.empty.clearFilters')}
                   onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 hover:text-white hover:bg-[#269984] transition-all scale-75 cursor-pointer"
                 >
@@ -271,10 +274,7 @@ export default function AlgorithmsClient() {
       </div>
 
       {/* Main Grid Content */}
-      <div
-        key={`${activeCategory}-${searchQuery}`}
-        className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 md:py-20"
-      >
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 md:py-20">
         {filteredAlgorithms.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
             {filteredAlgorithms.map((algo, index) => {
@@ -302,7 +302,7 @@ export default function AlgorithmsClient() {
               {t('algorithms.empty.adjustSearchOrFilters')}
             </p>
             <button
-              onClick={() => setCategory('all')}
+              onClick={resetFilters}
               className="bg-[#269984] hover:bg-[#1f7a6a] text-white px-6 py-2.5 rounded-xl font-montserrat font-bold text-sm transition-all active:scale-95 shadow-lg shadow-[#269984]/20"
             >
               {t('algorithms.empty.clearFilters')}

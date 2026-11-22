@@ -18,7 +18,7 @@ const clearAuthCookies = () => {
   for (let i = 0; i < cookies.length; i++) {
     const cookie = cookies[i];
     const eqPos = cookie.indexOf('=');
-    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+    const name = eqPos > -1 ? cookie.slice(0, eqPos).trim() : cookie.trim();
     if (name.includes('auth') || name.includes('token') || name.includes('session')) {
       document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
       document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;`;
@@ -55,7 +55,7 @@ export default function RegisterPage() {
     if (!password) newErrors.password = t('register.errors.password_required');
     else if (password.length < 6) newErrors.password = t('register.errors.password_min');
 
-    if (password && confirmPassword && password !== confirmPassword)
+    if (password && password !== confirmPassword)
       newErrors.confirmPassword = t('register.errors.password_mismatch');
 
     if (!acceptTerms) newErrors.terms = t('register.errors.terms_required');
@@ -144,7 +144,7 @@ export default function RegisterPage() {
           <div className="w-full max-w-[500px]">
             {isSuccess ? (
               <div className="text-center animate-in fade-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-[#36D6BA] bg-opacity-20 rounded-full flex items-center justify-center mb-6 mx-auto">
+                <div className="w-20 h-20 bg-[#36D6BA]/20 rounded-full flex items-center justify-center mb-6 mx-auto">
                   <svg
                     width="40"
                     height="40"

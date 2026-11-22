@@ -10,7 +10,7 @@ export const BugReports: CollectionConfig = {
   },
   upload: {
     staticDir: 'public/uploads',
-    mimeTypes: ['image/*'],
+    mimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
     resizeOptions: {
       width: 854,
       height: 480,
@@ -23,8 +23,11 @@ export const BugReports: CollectionConfig = {
     create: ({ req: { user }, data }) => {
       if (!user) return false;
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
-      if (data?.user && data.user !== user.id) return false;
-      return true;
+      const targetUser =
+        typeof data?.user === 'object' && data.user !== null
+          ? (data.user as { id?: string | number }).id
+          : data?.user;
+      return targetUser === undefined || String(targetUser) === String(user.id);
     },
     read: ({ req: { user } }) => {
       if (!user) return false;

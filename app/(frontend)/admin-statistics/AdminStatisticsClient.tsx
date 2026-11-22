@@ -219,10 +219,19 @@ interface StatisticsResponse {
   };
   research?: {
     helpSeekingTransfer: {
-      createWithHelpCount: number;
-      aliveAfterHelpSuccessRate: number;
-      aliveWithoutHelpSuccessRate: number;
-      avgHelpDurationSec: number;
+      withHelp: {
+        count: number;
+        avgScore: number;
+        avgSubmissions: number;
+        completionRate: number;
+      };
+      autonomous: {
+        count: number;
+        avgScore: number;
+        avgSubmissions: number;
+        completionRate: number;
+      };
+      scoreDifferencePercent: number;
     };
     misconceptions: Array<{
       id: string;
@@ -241,8 +250,8 @@ interface StatisticsResponse {
       videoRewatchRecoveryRate: number;
     };
     visualBlocksThreshold: {
-      optimalSwitchSec: number;
-      avgAttemptsBeforeFallback: number;
+      fallbackPercentage: number;
+      avgFailedAttemptsBeforeFallback: number;
       successfulReturnToCodeRate: number;
     };
     cognitiveLoadDynamics: {
@@ -294,8 +303,8 @@ const ALGORITHM_LABELS: Record<string, string> = {
   'heap-sort': 'Kupacrendezés (Heap Sort)',
   'linear-search': 'Lineáris keresés (Linear Search)',
   'binary-search': 'Bináris keresés (Binary Search)',
-  'backtracking-queens': 'Backtracking (N-Királynő)',
-  'recursion-factorial': 'Rekurzió (Faktoriális)',
+  'n-queens': 'N-Királynő (Backtracking)',
+  bogosort: 'Bogosort (Véletlen rendezés)',
 };
 
 const PHASE_TYPE_META: Record<
@@ -396,9 +405,111 @@ export default function AdminStatisticsClient() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Global AI Mascot Master Switch & Anti-Abuse Limits state
+  const [globalMascotEnabled, setGlobalMascotEnabled] = useState<boolean>(true);
+  const [mascotMaxMessagesPerDay, setMascotMaxMessagesPerDay] = useState<number>(30);
+  const [mascotMaxMessagesPerPhase, setMascotMaxMessagesPerPhase] = useState<number>(5);
+  const [mascotCooldownSeconds, setMascotCooldownSeconds] = useState<number>(8);
+  const [aiModel, setAiModel] = useState<string>('google/gemini-2.5-flash');
+  const [aiSaving, setAiSaving] = useState<boolean>(false);
+  const [aiStatusMsg, setAiStatusMsg] = useState<string | null>(null);
+  const [showAiLimitsPanel, setShowAiLimitsPanel] = useState<boolean>(false);
+
   const isAdmin = data?.scope?.isAdmin ?? sessionUser?.role === ROLES.ADMIN;
   const isTeacher = data?.scope?.isTeacher ?? sessionUser?.role === ROLES.EDITOR;
   const _isAdminOrEditor = isAdmin || isTeacher || isAuthorized === true;
+
+  useEffect(() => {
+    if (authLoading) return;
+    let active = true;
+    fetch('/api/admin/ai-settings', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((cfg) => {
+        if (!active || !cfg) return;
+        setGlobalMascotEnabled(cfg.mascotEnabled !== false);
+        if (typeof cfg.mascotMaxMessagesPerDay === 'number') {
+          setMascotMaxMessagesPerDay(cfg.mascotMaxMessagesPerDay);
+        }
+        if (typeof cfg.mascotMaxMessagesPerPhase === 'number') {
+          setMascotMaxMessagesPerPhase(cfg.mascotMaxMessagesPerPhase);
+        }
+        if (typeof cfg.mascotCooldownSeconds === 'number') {
+          setMascotCooldownSeconds(cfg.mascotCooldownSeconds);
+        }
+        if (typeof cfg.model === 'string' && cfg.model) {
+          setAiModel(cfg.model);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [authLoading]);
+
+  const handleToggleGlobalMascot = async () => {
+    if (aiSaving || !isAdmin) return;
+    const nextState = !globalMascotEnabled;
+    setAiSaving(true);
+    setAiStatusMsg(null);
+    try {
+      const res = await fetch('/api/admin/ai-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ mascotEnabled: nextState }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setGlobalMascotEnabled(updated.mascotEnabled !== false);
+        setAiStatusMsg(
+          updated.mascotEnabled !== false
+            ? '✅ Az AI Kabala (Bubi) globálisan BEKAPCSOLVA a kurzusokban!'
+            : '⛔ Az AI Kabala (Bubi) globálisan KIKAPCSOLVA! A kurzusokban a sima manuális kabala tippek megmaradnak (0 AI token), és az AI kurzusgenerálás is aktív.',
+        );
+      } else {
+        setAiStatusMsg('❌ Nem sikerült menteni a kabala állapotát.');
+      }
+    } catch {
+      setAiStatusMsg('❌ Hálózati hiba a mentés során.');
+    } finally {
+      setAiSaving(false);
+    }
+  };
+
+  const handleSaveAiLimits = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (aiSaving || !isAdmin) return;
+    setAiSaving(true);
+    setAiStatusMsg(null);
+    try {
+      const res = await fetch('/api/admin/ai-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          model: aiModel,
+          mascotEnabled: globalMascotEnabled,
+          mascotMaxMessagesPerDay,
+          mascotMaxMessagesPerPhase,
+          mascotCooldownSeconds,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setGlobalMascotEnabled(updated.mascotEnabled !== false);
+        setMascotMaxMessagesPerDay(updated.mascotMaxMessagesPerDay);
+        setMascotMaxMessagesPerPhase(updated.mascotMaxMessagesPerPhase);
+        setMascotCooldownSeconds(updated.mascotCooldownSeconds);
+        setAiStatusMsg('✅ AI Kabala limitek és modell beállítások sikeresen elmentve!');
+      } else {
+        setAiStatusMsg('❌ Hiba a limitek mentésekor.');
+      }
+    } catch {
+      setAiStatusMsg('❌ Hálózati hiba a mentés során.');
+    } finally {
+      setAiSaving(false);
+    }
+  };
 
   // Set default viewMode once user role is known
   useEffect(() => {
@@ -417,7 +528,7 @@ export default function AdminStatisticsClient() {
     try {
       const params = new URLSearchParams({
         timeRange,
-        algorithm: selectedAlgorithm,
+        algorithmId: selectedAlgorithm,
         courseId: 'all',
         difficulty: 'all',
         phaseType: selectedPhaseType,
@@ -438,18 +549,17 @@ export default function AdminStatisticsClient() {
 
       const list =
         json.coursesEvaluation?.allCoursesList || json.coursesEvaluation?.coursesList || [];
-      if (
-        list.length > 0 &&
-        (!activeCourseId || !list.some((c) => c.courseId === activeCourseId))
-      ) {
-        setActiveCourseId(list[0].courseId);
+      if (list.length > 0) {
+        setActiveCourseId((prev) =>
+          prev && list.some((c) => c.courseId === prev) ? prev : list[0].courseId,
+        );
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Hiba történt az adatok lekérésekor.');
     } finally {
       setLoading(false);
     }
-  }, [timeRange, selectedAlgorithm, selectedPhaseType, selectedInstructorId, activeCourseId]);
+  }, [timeRange, selectedAlgorithm, selectedPhaseType, selectedInstructorId]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -511,13 +621,11 @@ export default function AdminStatisticsClient() {
         phaseTitle: m.title || m.phaseTitle,
         phaseType: (m.sourceView as MistakeHotspotItem['phaseType']) || 'quiz',
         mistakeCount: m.mistakeCount,
-        affectedStudents: Math.max(
-          1,
-          Math.round(
-            (m.affectedLearnersPercent / 100) * Math.max(1, allStudentsRoster.length || 5),
-          ),
-        ),
-        avgRetryCount: 1.8,
+        affectedStudents:
+          allStudentsRoster.length > 0 && m.affectedLearnersPercent > 0
+            ? Math.max(1, Math.round((m.affectedLearnersPercent / 100) * allStudentsRoster.length))
+            : 0,
+        avgRetryCount: 0,
         avgTimeOnTaskSec: m.avgHesitationSec,
         topWrongAnswers: m.sampleActual
           ? [
@@ -612,11 +720,17 @@ export default function AdminStatisticsClient() {
       });
     }
 
-    const csvContent =
-      'data:text/csv;charset=utf-8,\uFEFF' + rows.map((e) => e.join(';')).join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const sanitizeCsvCell = (value: string | number) => {
+      const str = String(value ?? '');
+      const neutralized = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+      return `"${neutralized.replace(/"/g, '""')}"`;
+    };
+
+    const csvString = '\uFEFF' + rows.map((row) => row.map(sanitizeCsvCell).join(';')).join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', url);
     link.setAttribute(
       'download',
       `algorythmics_statisztika_${new Date().toISOString().slice(0, 10)}.csv`,
@@ -624,6 +738,7 @@ export default function AdminStatisticsClient() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const renderPhaseIcon = (iconType: string) => {
@@ -747,11 +862,13 @@ export default function AdminStatisticsClient() {
                     <option value="all" className="dark:bg-[#1a1a1a]">
                       👥 Minden tanár kurzusa (Teljes platform)
                     </option>
-                    {data.scope.instructorsList.map((inst) => (
-                      <option key={inst.id} value={inst.id} className="dark:bg-[#1a1a1a]">
-                        👨‍🏫 {inst.name} ({inst.role === 'admin' ? 'Admin' : 'Tanár'})
-                      </option>
-                    ))}
+                    {data.scope.instructorsList
+                      .filter((inst) => inst.id !== 'all')
+                      .map((inst) => (
+                        <option key={inst.id} value={inst.id} className="dark:bg-[#1a1a1a]">
+                          👨‍🏫 {inst.name} ({inst.role === 'admin' ? 'Admin' : 'Tanár'})
+                        </option>
+                      ))}
                   </select>
                 </div>
               )}
@@ -797,6 +914,166 @@ export default function AdminStatisticsClient() {
               </button>
             </div>
           </div>
+
+          {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+          {/* GLOBÁLIS AI KABALA (BUBI) FŐKAPCSOLÓ & VÉDELMI LIMITEK (ADMIN) */}
+          {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+          {isAdmin && (
+            <div
+              className={`mt-6 p-5 rounded-2xl border-2 transition-all ${
+                globalMascotEnabled
+                  ? 'bg-emerald-500/[0.06] dark:bg-emerald-500/[0.08] border-emerald-500/30'
+                  : 'bg-red-500/[0.06] dark:bg-red-500/[0.08] border-red-500/30'
+              }`}
+            >
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-2xl shadow-sm ${
+                      globalMascotEnabled ? 'bg-[#269984] text-white' : 'bg-red-500 text-white'
+                    }`}
+                  >
+                    🤖
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h2 className="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white font-montserrat">
+                        AI Kabala (Bubi) Globális Főkapcsoló
+                      </h2>
+                      <span
+                        className={`px-3 py-0.5 rounded-full text-xs font-black uppercase tracking-wider ${
+                          globalMascotEnabled
+                            ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                            : 'bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/30'
+                        }`}
+                      >
+                        {globalMascotEnabled ? '● AKTÍV A KURZUSOKBAN' : '○ GLOBÁLISAN KIKAPCSOLVA'}
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 max-w-3xl">
+                      {globalMascotEnabled
+                        ? 'Az AI kabala és a szabad szöveges AI chat aktív a kurzusokban (napi limit: ' +
+                          mascotMaxMessagesPerDay +
+                          ' AI válasz/fő/nap, lépésenként: max. ' +
+                          mascotMaxMessagesPerPhase +
+                          ' kérdés, cooldown: ' +
+                          mascotCooldownSeconds +
+                          ' mp).'
+                        : 'Az AI kabala és az AI chat ki van kapcsolva (0 AI tokent fogyaszt). Ha egy kurzusnak van sima manuális kabalája (előre megírt tippekkel), az továbbra is megjelenik! A Course Studio-ban az AI kurzusgenerálás szintén működik.'}
+                    </p>
+                    {aiStatusMsg && (
+                      <p className="text-xs font-bold text-[#269984] dark:text-emerald-400 pt-1">
+                        {aiStatusMsg}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowAiLimitsPanel((v) => !v)}
+                    className="px-4 py-3 rounded-xl bg-white dark:bg-white/10 border border-gray-200 dark:border-white/15 text-xs font-extrabold text-gray-800 dark:text-gray-100 hover:border-[#269984] transition-all"
+                  >
+                    ⚙️ Chat Limitek & Modell ({mascotMaxMessagesPerDay}/nap •{' '}
+                    {mascotMaxMessagesPerPhase}/fázis)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleToggleGlobalMascot}
+                    disabled={aiSaving}
+                    aria-pressed={globalMascotEnabled}
+                    className={`relative inline-flex items-center gap-3 px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider text-white shadow-lg transition-all active:scale-95 disabled:opacity-60 cursor-pointer ${
+                      globalMascotEnabled
+                        ? 'bg-red-600 hover:bg-red-700 shadow-red-600/25'
+                        : 'bg-[#269984] hover:bg-[#1f7d6c] shadow-[#269984]/25'
+                    }`}
+                  >
+                    <span
+                      className={`w-3 h-3 rounded-full ${
+                        globalMascotEnabled ? 'bg-red-200' : 'bg-emerald-200 animate-pulse'
+                      }`}
+                    />
+                    <span>
+                      {aiSaving
+                        ? 'Mentés...'
+                        : globalMascotEnabled
+                          ? 'AI Kabala Kikapcsolása'
+                          : 'AI Kabala Bekapcsolása'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {showAiLimitsPanel && (
+                <form
+                  onSubmit={handleSaveAiLimits}
+                  className="mt-4 pt-4 border-t border-gray-200/70 dark:border-white/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end"
+                >
+                  <div>
+                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-600 dark:text-gray-300 mb-1">
+                      Napi AI Chat Limit (fő / nap)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={mascotMaxMessagesPerDay}
+                      onChange={(e) => setMascotMaxMessagesPerDay(Number(e.target.value) || 30)}
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/15 text-xs font-bold text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-600 dark:text-gray-300 mb-1">
+                      Lépésenkénti Limit (kérdés / fázis)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={mascotMaxMessagesPerPhase}
+                      onChange={(e) => setMascotMaxMessagesPerPhase(Number(e.target.value) || 5)}
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/15 text-xs font-bold text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-600 dark:text-gray-300 mb-1">
+                      Cooldown két kérdés közt (mp)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={120}
+                      value={mascotCooldownSeconds}
+                      onChange={(e) => setMascotCooldownSeconds(Number(e.target.value) ?? 8)}
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/15 text-xs font-bold text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-600 dark:text-gray-300 mb-1">
+                      OpenRouter Modell
+                    </label>
+                    <input
+                      type="text"
+                      value={aiModel}
+                      onChange={(e) => setAiModel(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/15 text-xs font-bold text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <button
+                      type="submit"
+                      disabled={aiSaving}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#269984] hover:bg-[#1f7d6c] text-white text-xs font-black uppercase tracking-wider shadow-sm transition-all disabled:opacity-50"
+                    >
+                      {aiSaving ? 'Mentés...' : 'Limitek Mentése'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
           {/* FŐ NAVIGÁCIÓS NÉZETVÁLTÓ (SZEREPKÖRRE SZABOTT)               */}
@@ -1136,7 +1413,7 @@ export default function AdminStatisticsClient() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold text-[#269984] font-montserrat">
-                    -{loading ? '...' : (data?.pedagogy?.videoErrorReductionPercent ?? 62)}%
+                    -{loading ? '...' : (data?.pedagogy?.videoErrorReductionPercent ?? 0)}%
                   </span>
                   <span className="text-xs font-semibold text-gray-500">kevesebb hiba</span>
                 </div>
@@ -1144,13 +1421,13 @@ export default function AdminStatisticsClient() {
                   <span>
                     Videóval:{' '}
                     <strong className="text-emerald-600">
-                      {data?.pedagogy?.avgMistakesWithVideo ?? 1.2} hiba
+                      {data?.pedagogy?.avgMistakesWithVideo ?? 0} hiba
                     </strong>
                   </span>
                   <span>
                     Videó nélkül:{' '}
                     <strong className="text-rose-600">
-                      {data?.pedagogy?.avgMistakesWithoutVideo ?? 3.1} hiba
+                      {data?.pedagogy?.avgMistakesWithoutVideo ?? 0} hiba
                     </strong>
                   </span>
                 </div>
@@ -1168,7 +1445,7 @@ export default function AdminStatisticsClient() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold text-purple-600 dark:text-purple-400 font-montserrat">
-                    {loading ? '...' : `${data?.pedagogy?.retrySuccessRate ?? 84}%`}
+                    {loading ? '...' : `${data?.pedagogy?.retrySuccessRate ?? 0}%`}
                   </span>
                   <span className="text-xs font-semibold text-gray-500">sikeres önkorrekció</span>
                 </div>
@@ -1176,11 +1453,18 @@ export default function AdminStatisticsClient() {
                   <span>
                     Elsőre helyes:{' '}
                     <strong className="text-gray-800 dark:text-gray-200">
-                      {100 - (data?.kpis?.avgErrorRatePercent ?? 24)}%
+                      {(data?.kpis?.activeLearnersCount ?? 0) > 0 ||
+                      (data?.kpis?.totalMistakesRecorded ?? 0) > 0
+                        ? Math.max(0, 100 - (data?.kpis?.avgErrorRatePercent ?? 0))
+                        : 0}
+                      %
                     </strong>
                   </span>
                   <span>
-                    Átl. próba: <strong className="text-gray-800 dark:text-gray-200">1.8x</strong>
+                    Rögzített hiba:{' '}
+                    <strong className="text-gray-800 dark:text-gray-200">
+                      {data?.kpis?.totalMistakesRecorded ?? 0} db
+                    </strong>
                   </span>
                 </div>
               </div>
@@ -1489,7 +1773,7 @@ export default function AdminStatisticsClient() {
                       ✅ Magabiztos Tudás (Helyes)
                     </span>
                     <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-montserrat">
-                      {data?.pedagogy?.confidenceMatrix?.mastery ?? 62}%
+                      {data?.pedagogy?.confidenceMatrix?.mastery ?? 0}%
                     </span>
                   </div>
                   <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20">
@@ -1497,7 +1781,7 @@ export default function AdminStatisticsClient() {
                       ⚠️ Téves Magabiztosság (Félreértés)
                     </span>
                     <span className="text-2xl font-black text-rose-600 dark:text-rose-400 font-montserrat">
-                      {data?.pedagogy?.confidenceMatrix?.overconfidence ?? 14}%
+                      {data?.pedagogy?.confidenceMatrix?.overconfidence ?? 0}%
                     </span>
                   </div>
                   <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20">
@@ -1505,7 +1789,7 @@ export default function AdminStatisticsClient() {
                       🤔 Bizonytalan, de Helyes
                     </span>
                     <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-montserrat">
-                      {data?.pedagogy?.confidenceMatrix?.hesitant ?? 16}%
+                      {data?.pedagogy?.confidenceMatrix?.hesitant ?? 0}%
                     </span>
                   </div>
                   <div className="p-3.5 rounded-2xl bg-slate-500/10 border border-slate-500/20">
@@ -1513,7 +1797,7 @@ export default function AdminStatisticsClient() {
                       🆘 Felismert Hiányosság
                     </span>
                     <span className="text-2xl font-black text-slate-600 dark:text-slate-400 font-montserrat">
-                      {data?.pedagogy?.confidenceMatrix?.recognizedGap ?? 8}%
+                      {data?.pedagogy?.confidenceMatrix?.recognizedGap ?? 0}%
                     </span>
                   </div>
                 </div>
@@ -1954,10 +2238,10 @@ export default function AdminStatisticsClient() {
                   {data.coursesEvaluation.phaseTypeEffectiveness.map((item, idx) => {
                     const typeKey = item.type || item.sourceView || 'info';
                     const meta = PHASE_TYPE_META[typeKey] || PHASE_TYPE_META.info;
-                    const timeSec = item.avgTimeSec ?? item.avgDurationSec ?? 120;
+                    const timeSec = item.avgTimeSec ?? item.avgDurationSec ?? 0;
                     const mistakes = item.avgMistakes ?? item.totalMistakes ?? 0;
-                    const rate = item.completionRate ?? item.avgAccuracy ?? 85;
-                    const score = item.avgScore ?? item.avgAccuracy ?? 85;
+                    const rate = item.completionRate ?? item.avgAccuracy ?? 0;
+                    const score = item.avgScore ?? item.avgAccuracy ?? 0;
                     return (
                       <div
                         key={`${typeKey}-${idx}`}
@@ -2654,11 +2938,11 @@ export default function AdminStatisticsClient() {
                       Vizuális segítség utáni siker (Alive)
                     </span>
                     <span className="text-2xl font-black text-purple-600 dark:text-purple-400 font-montserrat">
-                      {data?.research?.helpSeekingTransfer?.aliveAfterHelpSuccessRate ?? 84}%
+                      {data?.research?.helpSeekingTransfer?.withHelp?.completionRate ?? 0}%
                     </span>
                     <span className="text-[10px] text-gray-500 block mt-1">
                       Segítség nélkül:{' '}
-                      {data?.research?.helpSeekingTransfer?.aliveWithoutHelpSuccessRate ?? 62}%
+                      {data?.research?.helpSeekingTransfer?.autonomous?.completionRate ?? 0}%
                     </span>
                   </div>
 
@@ -2667,10 +2951,11 @@ export default function AdminStatisticsClient() {
                       Sikeres visszatérés a kódhoz
                     </span>
                     <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-montserrat">
-                      {data?.research?.visualBlocksThreshold?.successfulReturnToCodeRate ?? 78}%
+                      {data?.research?.visualBlocksThreshold?.successfulReturnToCodeRate ?? 0}%
                     </span>
                     <span className="text-[10px] text-gray-500 block mt-1">
-                      Átl. {data?.research?.visualBlocksThreshold?.avgAttemptsBeforeFallback ?? 3.4}{' '}
+                      Átl.{' '}
+                      {data?.research?.visualBlocksThreshold?.avgFailedAttemptsBeforeFallback ?? 0}{' '}
                       próba után
                     </span>
                   </div>
@@ -2684,25 +2969,25 @@ export default function AdminStatisticsClient() {
                     <div className="p-2 rounded-xl bg-white dark:bg-black/30">
                       <span className="text-[10px] text-gray-400 block">Alap reakció</span>
                       <strong>
-                        {data?.research?.cognitiveLoadDynamics?.baselineReactionSec ?? 2.6} mp
+                        {data?.research?.cognitiveLoadDynamics?.baselineReactionSec ?? 0} mp
                       </strong>
                     </div>
                     <div className="p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
                       <span className="text-[10px] block">Hiba után (+1)</span>
                       <strong>
-                        {data?.research?.cognitiveLoadDynamics?.immediatePostErrorSec ?? 4.2} mp
+                        {data?.research?.cognitiveLoadDynamics?.immediatePostErrorSec ?? 0} mp
                       </strong>
                     </div>
                     <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                       <span className="text-[10px] block">2. lépés (+2)</span>
                       <strong>
-                        {data?.research?.cognitiveLoadDynamics?.step2RecoverySec ?? 3.3} mp
+                        {data?.research?.cognitiveLoadDynamics?.step2RecoverySec ?? 0} mp
                       </strong>
                     </div>
                     <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                       <span className="text-[10px] block">3. lépés (+3)</span>
                       <strong>
-                        {data?.research?.cognitiveLoadDynamics?.step3RecoverySec ?? 2.8} mp
+                        {data?.research?.cognitiveLoadDynamics?.step3RecoverySec ?? 0} mp
                       </strong>
                     </div>
                   </div>

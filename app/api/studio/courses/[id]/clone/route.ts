@@ -60,20 +60,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       );
     }
 
-    // Prepare localized cloned title
+    // Prepare unique localized cloned title to satisfy unique constraint on title
+    const copyTag = Date.now().toString(36).slice(-4).toUpperCase();
     let newTitle: { hu: string; en: string; ro: string };
     if (typeof original.title === 'object' && original.title !== null) {
       newTitle = {
-        hu: `(Másolat) ${original.title.hu || 'Kurzus'}`,
-        en: `(Copy) ${original.title.en || 'Course'}`,
-        ro: `(Copie) ${original.title.ro || 'Curs'}`,
+        hu: `(Másolat #${copyTag}) ${original.title.hu || 'Kurzus'}`,
+        en: `(Copy #${copyTag}) ${original.title.en || 'Course'}`,
+        ro: `(Copie #${copyTag}) ${original.title.ro || 'Curs'}`,
       };
     } else {
       const t = String(original.title || 'Kurzus');
       newTitle = {
-        hu: `(Másolat) ${t}`,
-        en: `(Copy) ${t}`,
-        ro: `(Copie) ${t}`,
+        hu: `(Másolat #${copyTag}) ${t}`,
+        en: `(Copy #${copyTag}) ${t}`,
+        ro: `(Copie #${copyTag}) ${t}`,
       };
     }
 

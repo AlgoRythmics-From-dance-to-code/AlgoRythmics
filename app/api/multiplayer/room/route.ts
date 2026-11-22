@@ -79,6 +79,23 @@ export async function POST(request: Request) {
     }
 
     if (action === 'CREATE_ROOM') {
+      const existingRecord = rooms.get(cleanRoomId);
+      if (existingRecord) {
+        const callerToken =
+          request.headers.get('x-participant-token') ||
+          request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+          body.participantToken;
+        const callerAuth = callerToken
+          ? existingRecord.participantTokens?.get(callerToken)
+          : undefined;
+        if (!callerAuth?.isHost) {
+          return NextResponse.json(
+            { error: 'Room already exists. Choose a different code or join it.' },
+            { status: 409 },
+          );
+        }
+      }
+
       if (rooms.size >= MAX_CONCURRENT_ROOMS && !rooms.has(cleanRoomId)) {
         cleanupStaleRooms();
         if (rooms.size >= MAX_CONCURRENT_ROOMS) {
@@ -188,8 +205,28 @@ export async function POST(request: Request) {
       const existingPlayerIdx = currentRoom.players.findIndex((p) => p.id === joiningPlayer.id);
 
       const updatedPlayers = [...currentRoom.players];
+      const callerToken =
+        request.headers.get('x-participant-token') ||
+        request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+        body.participantToken;
+
+      let existingTokenForPlayer: string | undefined;
+      for (const [t, auth] of record.participantTokens.entries()) {
+        if (auth.playerId === joiningPlayer.id) {
+          existingTokenForPlayer = t;
+          break;
+        }
+      }
+
       let isHost = false;
+      let participantToken: string;
       if (existingPlayerIdx >= 0) {
+        if (existingTokenForPlayer && callerToken !== existingTokenForPlayer) {
+          return NextResponse.json(
+            { error: 'Forbidden: Valid participant token required to reclaim existing player' },
+            { status: 403 },
+          );
+        }
         // Update existing player profile while preserving host status
         isHost = updatedPlayers[existingPlayerIdx].isHost ?? false;
         updatedPlayers[existingPlayerIdx] = {
@@ -198,19 +235,19 @@ export async function POST(request: Request) {
           isHost,
           currentSlot: updatedPlayers[existingPlayerIdx].currentSlot ?? existingPlayerIdx,
         };
+        participantToken = existingTokenForPlayer || crypto.randomUUID();
       } else {
         // Enforce maximum players limit (16)
         if (updatedPlayers.length >= 16) {
           return NextResponse.json({ error: 'Room is full (max 16 players)' }, { status: 400 });
         }
 
-        // If duplicate display name exists in room, disambiguate it
+        // Collision-free duplicate display name disambiguation
+        const existingNames = new Set(updatedPlayers.map((p) => p.name));
         let uniqueName = joiningPlayer.name;
-        const matchingNamesCount = updatedPlayers.filter(
-          (p) => p.name === joiningPlayer.name || p.name.startsWith(`${joiningPlayer.name} (`),
-        ).length;
-        if (matchingNamesCount > 0) {
-          uniqueName = `${joiningPlayer.name} (${matchingNamesCount + 1})`;
+        let suffix = 2;
+        while (existingNames.has(uniqueName)) {
+          uniqueName = `${joiningPlayer.name} (${suffix++})`;
         }
 
         // Append new player to next slot
@@ -221,19 +258,9 @@ export async function POST(request: Request) {
           currentSlot: updatedPlayers.length,
         };
         updatedPlayers.push(newPlayerWithSlot);
-      }
-
-      // Reuse existing token if present for this playerId, otherwise generate a new one
-      let participantToken: string | undefined;
-      for (const [t, auth] of record.participantTokens.entries()) {
-        if (auth.playerId === joiningPlayer.id) {
-          participantToken = t;
-          break;
-        }
-      }
-      if (!participantToken) {
         participantToken = crypto.randomUUID();
       }
+
       record.participantTokens.set(participantToken, {
         playerId: joiningPlayer.id,
         isHost,
@@ -355,22 +382,34 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Room or playerId not found' }, { status: 400 });
       }
 
-      // If token provided, verify ownership of playerId
       const token =
         request.headers.get('x-participant-token') ||
         request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
         body.participantToken;
-      if (token && record.participantTokens) {
-        const participant = record.participantTokens.get(token);
-        if (participant && participant.playerId !== body.playerId) {
-          return NextResponse.json(
-            { error: 'Forbidden: Cannot move other players' },
-            { status: 403 },
-          );
-        }
+
+      if (!token || !record.participantTokens) {
+        return NextResponse.json(
+          { error: 'Unauthorized: Participant token is required' },
+          { status: 401 },
+        );
+      }
+      const participant = record.participantTokens.get(token);
+      if (!participant || participant.playerId !== body.playerId) {
+        return NextResponse.json(
+          { error: 'Forbidden: Cannot move other players' },
+          { status: 403 },
+        );
       }
 
       const { playerId, x, y } = body;
+      if (
+        typeof x !== 'number' ||
+        !Number.isFinite(x) ||
+        typeof y !== 'number' ||
+        !Number.isFinite(y)
+      ) {
+        return NextResponse.json({ error: 'Invalid coordinates' }, { status: 400 });
+      }
       record.state.players = record.state.players.map((p) =>
         p.id === playerId ? { ...p, x, y } : p,
       );

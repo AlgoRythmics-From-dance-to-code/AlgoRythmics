@@ -13,28 +13,35 @@ function extractTextFromLexical(node: any): string {
 }
 
 function cleanMarkdownText(raw: string): string {
-  let text = raw.replace(/\\n/g, '\n').replace(/\r\n/g, '\n');
+  const normalized = raw.replace(/\\n/g, '\n').replace(/\r\n/g, '\n');
 
-  // Convert inline code blocks like "yaml apiVersion: ... | A fenti manifestum" into fenced blocks
-  text = text.replace(
-    /(?:^|\s*\|\s*)yaml\s+(apiVersion:[\s\S]*?)(?=\s*\|\s*[A-ZÁÉÍÓÖŐÚÜŰ#]|$)/g,
-    '\n\n```yaml\n$1\n```\n\n',
-  );
+  // Protect fenced code blocks and inline code spans before transforming delimiters/headings
+  const segments = normalized.split(/(```[\s\S]*?```|`[^`\n]+`)/g);
 
-  // Convert pipe separators into double newlines for headings, bullets, numbers, code, or sentences
-  text = text.replace(/\s*\|\s*(?=[-#*`A-ZÁÉÍÓÖŐÚÜŰa-záéíóöőúüű0-9])/g, '\n\n');
-  text = text.replace(/\s*\|\s*/g, '\n\n');
+  const cleanedSegments = segments.map((segment) => {
+    if (segment.startsWith('```') || segment.startsWith('`')) {
+      return segment;
+    }
 
-  // Ensure headings start on new lines
-  text = text.replace(/([^\n])\s*(#{1,6}\s+)/g, '$1\n\n$2');
+    let text = segment;
 
-  // Ensure bullet points start on new lines
-  text = text.replace(/([^\n])\s*([-*]\s+)/g, '$1\n$2');
+    // Convert inline code blocks like "yaml apiVersion: ... | A fenti manifestum" into fenced blocks
+    text = text.replace(
+      /(?:^|\s*(?<!\|)\|(?!\|)\s*)yaml\s+(apiVersion:[\s\S]*?)(?=\s*(?<!\|)\|(?!\|)\s*[A-ZÁÉÍÓÖŐÚÜŰ#]|$)/g,
+      '\n\n```yaml\n$1\n```\n\n',
+    );
 
-  // Ensure numbered lists start on new lines
-  text = text.replace(/([^\n])\s*(\d+\.\s+)/g, '$1\n$2');
+    // Convert single pipe separators into double newlines without corrupting logical OR (||)
+    text = text.replace(/\s*(?<!\|)\|(?!\|)\s*(?=[-#*`A-ZÁÉÍÓÖŐÚÜŰa-záéíóöőúüű0-9])/g, '\n\n');
+    text = text.replace(/\s*(?<!\|)\|(?!\|)\s*/g, '\n\n');
 
-  return text.trim();
+    // Ensure headings start on new lines
+    text = text.replace(/([^\n])\s*(#{1,6}\s+)/g, '$1\n\n$2');
+
+    return text;
+  });
+
+  return cleanedSegments.join('').trim();
 }
 
 const MarkdownRenderer = ({ markdown }: { markdown: string }) => (

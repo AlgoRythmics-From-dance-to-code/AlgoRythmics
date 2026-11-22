@@ -120,7 +120,7 @@ export default function TealSection() {
 
                   <Image
                     src={card.illustration}
-                    alt={`Visual representation of ${card.title}`}
+                    alt={card.title}
                     width={card.width}
                     height={card.height}
                     priority

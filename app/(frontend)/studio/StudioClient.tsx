@@ -439,7 +439,7 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
     });
   }, [myCourses, searchQuery, difficultyFilter]);
 
-  const _filteredCommunityCourses = useMemo(() => {
+  const filteredCommunityCourses = useMemo(() => {
     return communityCourses.filter((c) => {
       const matchSearch =
         c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -474,7 +474,7 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
     }
   };
 
-  const _handleCloneCourse = async (course: CourseItem) => {
+  const handleCloneCourse = async (course: CourseItem) => {
     const toastId = toast.loading(`"${course.title}" klónozása folyamatban...`);
     try {
       const res = await fetch(`/api/studio/courses/${course.id}/clone`, {
@@ -781,19 +781,46 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
             gapFillSolutions: (p.gapFillSolutions || []).map((s: any) => ({
               solution: ensureLocalized(typeof s === 'object' && s?.solution ? s.solution : s),
             })),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            gapFillDecoys: (p.gapFillDecoys || []).map((d: any) => ({
-              decoy: ensureLocalized(typeof d === 'object' && d?.decoy ? d.decoy : d),
-            })),
+            gapFillDecoys: (() => {
+              if (Array.isArray(p.gapFillDecoys) && p.gapFillDecoys.length > 0) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                return p.gapFillDecoys.map((d: any) => ({
+                  decoy: ensureLocalized(typeof d === 'object' && d?.decoy ? d.decoy : d),
+                }));
+              }
+              const solKeys = new Set(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (p.gapFillSolutions || []).map((s: any) => {
+                  const loc = ensureLocalized(
+                    typeof s === 'object' && s?.solution ? s.solution : s,
+                  );
+                  return `${loc.hu.trim()}|${loc.en.trim()}|${loc.ro.trim()}`;
+                }),
+              );
+              return (
+                (p.gapFillOptions || [])
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  .map((opt: any) =>
+                    ensureLocalized(typeof opt === 'object' && opt?.option ? opt.option : opt),
+                  )
+                  .filter(
+                    (loc: LocalizedTextObj) =>
+                      !solKeys.has(`${loc.hu.trim()}|${loc.en.trim()}|${loc.ro.trim()}`),
+                  )
+                  .map((decoy: LocalizedTextObj) => ({ decoy }))
+              );
+            })(),
           };
         });
 
         setPhasesList(phases);
+        setActiveTab('course_editor');
+      } else {
+        toast.error('Nem sikerült betölteni a kurzus részleteit.');
       }
     } catch {
       toast.error('Hiba történt a kurzus részleteinek betöltésekor.');
     }
-    setActiveTab('course_editor');
   };
 
   // Phase reordering and editing helpers
@@ -2926,6 +2953,100 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
           </div>
         )}
 
+        {/* ── TAB 2: KÖZÖSSÉGI TÁR ── */}
+        {activeTab === 'community' && (
+          <div className="mt-8">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                <RefreshCw className="w-8 h-8 animate-spin text-[#269984] mb-3" />
+                <p className="text-sm">Közösségi sablonok betöltése...</p>
+              </div>
+            ) : filteredCommunityCourses.length === 0 ? (
+              <div className="text-center py-20 px-6 rounded-3xl bg-white dark:bg-slate-900/40 border border-dashed border-slate-300 dark:border-white/10">
+                <Globe className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                  Nincs találat a közösségi tárban
+                </h3>
+                <p className="text-sm text-slate-500 max-w-md mx-auto mt-1">
+                  Próbálj meg más keresőszót vagy szűrőt választani.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCommunityCourses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="group flex flex-col justify-between rounded-3xl bg-white dark:bg-slate-900/70 border border-slate-200/90 dark:border-white/10 p-6 shadow-sm hover:shadow-xl hover:border-teal-500/40 transition-all duration-200"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                            course.difficulty === 'Beginner'
+                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                              : course.difficulty === 'Intermediate'
+                                ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
+                                : 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300'
+                          }`}
+                        >
+                          {course.difficulty === 'Beginner'
+                            ? 'Kezdő'
+                            : course.difficulty === 'Intermediate'
+                              ? 'Középhaladó'
+                              : 'Haladó'}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                          <Users className="w-3.5 h-3.5 text-[#269984]" />
+                          {course.instructorName}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-[#269984] transition-colors leading-snug">
+                        {course.title}
+                      </h3>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+                        {course.summary || 'Nincs megadott összefoglaló.'}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-5 pt-4 border-t border-slate-100 dark:border-white/5">
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Layers className="w-4 h-4 text-teal-600" />
+                          {course.phasesCount} Fázis
+                        </span>
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Clock className="w-4 h-4 text-teal-600" />
+                          {course.estimatedMinutes} perc
+                        </span>
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Users className="w-4 h-4 text-blue-500" />
+                          {course.enrolledCount} diák
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 mt-6 pt-4 border-t border-slate-100 dark:border-white/5">
+                      <Link
+                        href={`/courses/${course.slug}`}
+                        target="_blank"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-300 dark:hover:bg-white/5 transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Előnézet
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleCloneCourse(course)}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#269984] hover:bg-[#1e7e6c] text-white text-xs font-bold shadow-md transition-all"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        Klónozás
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── COURSE CREATION / EDITOR PAGE ── */}
         {activeTab === 'course_editor' && (
           <div className="space-y-8">
@@ -3618,7 +3739,10 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                       onChange={(e) =>
                         setCourseForm({
                           ...courseForm,
-                          estimatedMinutes: Number(e.target.value) || 20,
+                          estimatedMinutes:
+                            e.target.value === ''
+                              ? 5
+                              : Math.max(5, Math.min(300, Number(e.target.value))),
                         })
                       }
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-[#269984]"
@@ -4310,7 +4434,10 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                                       ...prev,
                                       mascot: {
                                         ...prev.mascot,
-                                        idleTriggerSeconds: Number(e.target.value) || 30,
+                                        idleTriggerSeconds:
+                                          e.target.value === ''
+                                            ? 10
+                                            : Math.max(10, Math.min(300, Number(e.target.value))),
                                       },
                                     }))
                                   }
@@ -4335,7 +4462,10 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                                       ...prev,
                                       mascot: {
                                         ...prev.mascot,
-                                        mistakeTriggerCount: Number(e.target.value) || 2,
+                                        mistakeTriggerCount:
+                                          e.target.value === ''
+                                            ? 1
+                                            : Math.max(1, Math.min(10, Number(e.target.value))),
                                       },
                                     }))
                                   }
@@ -5843,11 +5973,16 @@ export default function StudioClient({ userRole }: { userRole?: string }) {
                                       min={0}
                                       max={100}
                                       value={phase.maxPoints ?? 10}
-                                      onChange={(e) =>
+                                      onChange={(e) => {
+                                        const rawVal = e.target.value;
+                                        const parsed = Number(rawVal);
                                         updatePhase(idx, {
-                                          maxPoints: Number(e.target.value) || 10,
-                                        })
-                                      }
+                                          maxPoints:
+                                            rawVal === '' || !Number.isFinite(parsed)
+                                              ? 0
+                                              : Math.max(0, Math.min(100, parsed)),
+                                        });
+                                      }}
                                       className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#269984]"
                                     />
                                   </div>

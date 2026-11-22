@@ -43,15 +43,23 @@ export default function BigOClient() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const hash = window.location.hash;
-      const el = document.querySelector(hash);
-      if (el) {
-        setTimeout(() => {
-          el.scrollIntoView({ behavior: 'smooth' });
-        }, 150);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (typeof window !== 'undefined' && window.location.hash.length > 1) {
+      try {
+        const id = decodeURIComponent(window.location.hash.slice(1));
+        const el = document.getElementById(id);
+        if (el) {
+          timer = setTimeout(() => {
+            el.scrollIntoView({ behavior: 'smooth' });
+          }, 150);
+        }
+      } catch {
+        // Ignore malformed hash fragments
       }
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -60,7 +68,7 @@ export default function BigOClient() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/login?callbackUrl=%2Fbig-o');
     }
   }, [status, router]);
 
@@ -348,6 +356,24 @@ export default function BigOClient() {
     currentOpsRightRef.current = 0;
   };
 
+  const toggleRacePlayback = () => {
+    if (!isRunning) {
+      const finalL = stepsLeft[stepsLeft.length - 1];
+      const finalR = stepsRight[stepsRight.length - 1];
+      const totalOpsL = (finalL?.comparisons || 0) + (finalL?.swapCount || 0);
+      const totalOpsR = (finalR?.comparisons || 0) + (finalR?.swapCount || 0);
+      if (currentOpsLeftRef.current >= totalOpsL && currentOpsRightRef.current >= totalOpsR) {
+        setCurrentStepLeft(0);
+        setCurrentStepRight(0);
+        currentOpsLeftRef.current = 0;
+        currentOpsRightRef.current = 0;
+      }
+      setIsRunning(true);
+    } else {
+      setIsRunning(false);
+    }
+  };
+
   // Get active step info
   const activeLeftStepObj = stepsLeft[currentStepLeft] || {
     array: [],
@@ -447,7 +473,7 @@ export default function BigOClient() {
     }
   };
 
-  if (!mounted || status === 'loading') {
+  if (!mounted || status !== 'authenticated') {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#269984] border-t-transparent"></div>
@@ -988,7 +1014,7 @@ export default function BigOClient() {
             <div className="flex flex-col sm:flex-row items-center justify-between border-t border-gray-200/50 dark:border-white/5 pt-6 mt-6 gap-4">
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setIsRunning(!isRunning)}
+                  onClick={toggleRacePlayback}
                   className={`px-8 py-3.5 rounded-2xl font-montserrat font-bold text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer ${
                     isRunning
                       ? 'bg-amber-600 text-white shadow-amber-600/20'

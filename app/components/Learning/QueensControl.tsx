@@ -10,6 +10,7 @@ import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 interface QueensControlProps {
   n: number;
   algorithmId: string;
+  onMistake?: () => void;
 }
 
 function isSafe(board: number[], row: number, col: number): boolean {
@@ -24,7 +25,7 @@ function safeCols(board: number[], row: number, n: number): number[] {
   return Array.from({ length: n }, (_, c) => c).filter((c) => isSafe(board, row, c));
 }
 
-export default function QueensControl({ n, algorithmId }: QueensControlProps) {
+export default function QueensControl({ n, algorithmId, onMistake }: QueensControlProps) {
   const { t } = useLocale();
   const { trackEvent, updateProgress } = useAnalytics(algorithmId, 'control');
   const { resetAlgorithmProgressTab } = useAlgorithmStore();
@@ -36,6 +37,7 @@ export default function QueensControl({ n, algorithmId }: QueensControlProps) {
   const [flashCell, setFlashCell] = useState<{ row: number; col: number; ok: boolean } | null>(
     null,
   );
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hintMode, setHintMode] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
@@ -57,7 +59,8 @@ export default function QueensControl({ n, algorithmId }: QueensControlProps) {
       setGameOver(true);
       trackEvent('control_stuck', { queensPlaced });
 
-      const partialScore = Math.round((queensPlaced / (n + mistakes)) * 100);
+      const denom = n + mistakes;
+      const partialScore = denom > 0 ? Math.round((queensPlaced / denom) * 100) : 0;
       updateProgress(
         {
           controlMistakes: mistakes,
@@ -84,9 +87,10 @@ export default function QueensControl({ n, algorithmId }: QueensControlProps) {
     }
   }, [noMoveLeft, n, queensPlaced, mistakes, trackEvent, updateProgress, algorithmId]);
 
-  // Track time on unmount
+  // Track time and clean up pending flash timer on unmount
   useEffect(() => {
     return () => {
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
       const spentMs = Date.now() - startTime.current;
       const currentTotal = progressRef.current?.controlTotalTimeMs || 0;
       updateProgress({
@@ -102,7 +106,8 @@ export default function QueensControl({ n, algorithmId }: QueensControlProps) {
 
       const ok = isSafe(board, row, col);
       setFlashCell({ row, col, ok });
-      setTimeout(() => setFlashCell(null), ok ? 300 : 700);
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = setTimeout(() => setFlashCell(null), ok ? 300 : 700);
 
       if (ok) {
         const newBoard = [...board];
@@ -151,10 +156,22 @@ export default function QueensControl({ n, algorithmId }: QueensControlProps) {
         }
       } else {
         setMistakes((m) => m + 1);
+        onMistake?.();
         trackEvent('control_wrong_cell', { row, col });
       }
     },
-    [board, currentRow, gameOver, gameWon, n, mistakes, trackEvent, updateProgress, algorithmId],
+    [
+      board,
+      currentRow,
+      gameOver,
+      gameWon,
+      n,
+      mistakes,
+      onMistake,
+      trackEvent,
+      updateProgress,
+      algorithmId,
+    ],
   );
 
   const handleReset = useCallback(() => {

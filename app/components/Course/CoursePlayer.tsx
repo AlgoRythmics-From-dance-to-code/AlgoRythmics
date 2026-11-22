@@ -230,11 +230,13 @@ function QuizComponent({
     setCoursePhaseResult(courseId, phase.phaseId, isCorrect ? 'success' : 'fail');
     setCourseConfidenceRating(courseId, phase.phaseId, confidence);
 
-    const maxPoints = phase.maxPoints || 10;
-    const earned = Math.min(
-      maxPoints + evalResult.bonusPoints,
-      Math.round(maxPoints * evalResult.scoreMultiplier) + evalResult.bonusPoints,
-    );
+    const maxPoints = phase.maxPoints ?? 10;
+    const earned = isCorrect
+      ? Math.min(
+          maxPoints + evalResult.bonusPoints,
+          Math.round(maxPoints * evalResult.scoreMultiplier) + evalResult.bonusPoints,
+        )
+      : 0;
 
     setCoursePhasePoints(courseId, phase.phaseId, {
       earned,
@@ -398,6 +400,15 @@ function PhaseBody({
         />
       );
     case 'video': {
+      if (phase.customVideoId) {
+        return (
+          <VideoPlayer
+            youtubeId={phase.customVideoId}
+            algorithmId={algorithmId}
+            title={phase.title}
+          />
+        );
+      }
       const video =
         VIDEOS.find((item) => item.id === algorithmId) ||
         VIDEOS.find((item) => item.id === 'bubble-sort');
@@ -445,7 +456,13 @@ function PhaseBody({
 
 // --- Main Component ---
 
-export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
+export default function CoursePlayer({
+  course,
+  globalMascotEnabled = true,
+}: {
+  course: CourseBlueprint;
+  globalMascotEnabled?: boolean;
+}) {
   const {
     algorithmProgress,
     resetAlgorithmProgressTab,
@@ -459,6 +476,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     markCourseCompleted,
     updateCoursePhaseStats,
     updateCourseTotalTime,
+    incrementCourseMistakes,
     isRehydrated,
     syncProgress,
   } = useAlgorithmStore(
@@ -475,6 +493,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       markCourseCompleted: state.markCourseCompleted,
       updateCoursePhaseStats: state.updateCoursePhaseStats,
       updateCourseTotalTime: state.updateCourseTotalTime,
+      incrementCourseMistakes: state.incrementCourseMistakes,
       isRehydrated: state.isRehydrated,
       syncProgress: state.syncProgress,
     })),
@@ -484,7 +503,32 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const { t } = useLocale();
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
+  const [liveGlobalMascotEnabled, setLiveGlobalMascotEnabled] =
+    useState<boolean>(globalMascotEnabled);
+
+  useEffect(() => {
+    setLiveGlobalMascotEnabled(globalMascotEnabled);
+  }, [globalMascotEnabled]);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/admin/ai-settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { mascotEnabled?: boolean } | null) => {
+        if (active && data && typeof data.mascotEnabled === 'boolean') {
+          setLiveGlobalMascotEnabled(data.mascotEnabled);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const isGloballyEnabled = globalMascotEnabled !== false && liveGlobalMascotEnabled !== false;
+  const hasManualMascotFallback = course.mascot?.mode !== 'ai-only';
   const mascotEnabled =
+    (isGloballyEnabled || hasManualMascotFallback) &&
     (sessionStatus === 'loading' ? true : (session?.user as BaseUser)?.mascotEnabled !== false) &&
     course.mascot?.enabled !== false &&
     course.mascot?.mode !== 'disabled';
@@ -557,20 +601,31 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     setHasHydrated(true);
     const storedProgress = useAlgorithmStore.getState().courseProgress[course.slug];
     if (storedProgress) {
-      if (typeof storedProgress.activePhaseIndex === 'number')
-        setActivePhaseIndex(Math.min(storedProgress.activePhaseIndex, firstIncompletePhaseIndex));
+      if (typeof storedProgress.activePhaseIndex === 'number' && course.phases.length > 0) {
+        setActivePhaseIndex(
+          Math.max(
+            0,
+            Math.min(
+              storedProgress.activePhaseIndex,
+              firstIncompletePhaseIndex,
+              course.phases.length - 1,
+            ),
+          ),
+        );
+      }
       if (storedProgress.isCompleted) setIsFinished(true);
     }
-  }, [isRehydrated, course.slug, firstIncompletePhaseIndex]);
+  }, [isRehydrated, course.slug, course.phases.length, firstIncompletePhaseIndex]);
 
   useEffect(() => {
+    if (!isRehydrated) return;
     if (courseProgressSnapshotRef.current[course.slug]?.isCompleted && !promptShownRef.current) {
       promptShownRef.current = true;
       setIsInternalReset(false);
       setModalMode('restart');
       setShowRestartModal(true);
     }
-  }, [course.slug]);
+  }, [isRehydrated, course.slug]);
 
   const handleConfirmRestart = () => {
     if (modalMode === 'restart') {
@@ -611,6 +666,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
   const canOpenPhase = (phaseIndex: number) => phaseIndex <= firstIncompletePhaseIndex;
 
   useEffect(() => {
+    if (!activePhase) return;
     phaseStartTime.current = Date.now();
     phaseMascotHelpCount.current = activePhase.mascotLine ? 1 : 0;
     setPhaseMistakesCount(0);
@@ -627,10 +683,11 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     activePhaseIndex,
     course.slug,
     trackEvent,
-    activePhase.phaseId,
-    activePhase.sourceView,
-    activePhase.title,
-    activePhase.mascotLine,
+    activePhase,
+    activePhase?.phaseId,
+    activePhase?.sourceView,
+    activePhase?.title,
+    activePhase?.mascotLine,
   ]);
 
   useEffect(() => {
@@ -716,7 +773,11 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     if (level) setCourseConfidenceRating(course.slug, activePhase.phaseId, level);
 
     const elapsed = Date.now() - phaseStartTime.current;
-    const isAutoSuccess = activePhase.sourceView === 'info' || activePhase.sourceView === 'video';
+    const isAutoSuccess =
+      activePhase.sourceView === 'info' ||
+      activePhase.sourceView === 'video' ||
+      activePhase.sourceView === 'video-custom' ||
+      activePhase.sourceView === 'animation';
     const finalResult =
       courseProgress[course.slug]?.phaseResults?.[activePhase.phaseId] ||
       (isAutoSuccess ? 'success' : null);
@@ -737,7 +798,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       mistakes:
         (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mistakes || 0) +
         phaseMistakesCount,
-      mascotIntentionallyDisabled: !mascotEnabled,
+      mascotIntentionallyDisabled: isGloballyEnabled && !mascotEnabled,
     });
     updateCourseTotalTime(course.slug, elapsed);
     markCoursePhaseComplete(course.slug, activePhase.phaseId);
@@ -799,7 +860,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
       mistakes:
         (courseProgress[course.slug]?.detailedStats?.[activePhase.phaseId]?.mistakes || 0) +
         phaseMistakesCount,
-      mascotIntentionallyDisabled: !mascotEnabled,
+      mascotIntentionallyDisabled: isGloballyEnabled && !mascotEnabled,
     });
     updateCourseTotalTime(course.slug, elapsed);
     phaseStartTime.current = Date.now();
@@ -812,6 +873,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     course.algorithmId,
     course.slug,
     courseProgress,
+    isGloballyEnabled,
     mascotEnabled,
     phaseMistakesCount,
     updateCoursePhaseStats,
@@ -823,7 +885,6 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         savePartialPhaseProgress();
-        syncProgress();
       }
     };
     const handleBeforeUnload = () => {
@@ -861,7 +922,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
 
   return (
     <MascotScreenProvider>
-      <section className="relative w-full">
+      <section className="relative w-full pb-40 sm:pb-48">
         <AnimatePresence>
           <RestartCourseModal
             isOpen={showRestartModal}
@@ -999,17 +1060,14 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                       const max = pp?.max ?? phase.maxPoints ?? 10;
                       const helpUsed = pp?.helpUsed ?? false;
                       const isPartial = pp?.partial ?? false;
-                      const pct = max > 0 ? Math.round((earned / max) * 100) : 0;
+                      const pct = max > 0 ? Math.min(100, Math.round((earned / max) * 100)) : 0;
+                      const isMaxOrBonus = earned >= max;
                       return (
                         <div key={phase.phaseId} className="flex items-center gap-3 px-4 py-3">
                           <div
-                            className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0 ${earned === max ? 'bg-[#269984]' : earned > 0 ? 'bg-amber-500' : 'bg-gray-300 dark:bg-white/20'}`}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0 ${isMaxOrBonus ? 'bg-[#269984]' : earned > 0 ? 'bg-amber-500' : 'bg-gray-300 dark:bg-white/20'}`}
                           >
-                            {earned === max ? (
-                              <Check className="w-3.5 h-3.5 stroke-[3]" />
-                            ) : (
-                              idx + 1
-                            )}
+                            {isMaxOrBonus ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : idx + 1}
                           </div>
                           <div className="flex-1 min-w-0 text-left">
                             <div className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">
@@ -1017,7 +1075,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span
-                                className={`text-[10px] font-bold tabular-nums ${earned === max ? 'text-[#269984]' : earned > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}
+                                className={`text-[10px] font-bold tabular-nums ${isMaxOrBonus ? 'text-[#269984]' : earned > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}
                               >
                                 {earned}/{max} pt
                               </span>
@@ -1038,7 +1096,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                               initial={{ width: 0 }}
                               animate={{ width: `${pct}%` }}
                               transition={{ delay: idx * 0.1, duration: 0.5 }}
-                              className={`h-full rounded-full ${earned === max ? 'bg-[#269984]' : earned > 0 ? 'bg-amber-500' : 'bg-gray-300'}`}
+                              className={`h-full rounded-full ${isMaxOrBonus ? 'bg-[#269984]' : earned > 0 ? 'bg-amber-500' : 'bg-gray-300'}`}
                             />
                           </div>
                         </div>
@@ -1529,7 +1587,10 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
                   phase={activePhase}
                   course={course}
                   accentColor={course.accentColor}
-                  onMistake={() => setPhaseMistakesCount((c) => c + 1)}
+                  onMistake={() => {
+                    setPhaseMistakesCount((c) => c + 1);
+                    incrementCourseMistakes(course.slug);
+                  }}
                 />
               </div>
               <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -1568,6 +1629,7 @@ export default function CoursePlayer({ course }: { course: CourseBlueprint }) {
               activePhase={activePhase}
               activePhaseIndex={activePhaseIndex}
               mascotEnabled={mascotEnabled}
+              globalAiMascotEnabled={isGloballyEnabled}
               phaseMistakesCount={phaseMistakesCount}
               onHelped={() => {
                 mascotHelpedCurrentPhase.current = true;

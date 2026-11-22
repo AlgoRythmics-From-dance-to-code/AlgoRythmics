@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAuthenticatedUser } from '@/lib/ai/aiAuthHelper';
 import { callOpenRouterStructured, type OpenRouterMessage } from '@/lib/ai/openRouterClient';
+import { getOpenRouterConfig } from '@/lib/ai/aiSettingsHelper';
 import { buildUserLearningDossier } from '@/lib/ai/mascotContextBuilder';
 import { getPayloadInstance } from '@/lib/payload';
+import { ROLES } from '@/lib/constants';
 
 export const maxDuration = 30;
 
@@ -11,13 +13,11 @@ const mascotResponseSchema = {
   properties: {
     message: {
       type: 'string',
-      description:
-        'Warm, encouraging, direct mentorship text from the mascot in the student’s language. Be concise (1-2 sentences max).',
+      description: '1-2 sentence guiding hint in Target Language.',
     },
     mood: {
       type: 'string',
       enum: ['neutral', 'welcome', 'idle', 'mistake', 'pointing', 'streak', 'celebrate'],
-      description: 'The visual expression / mood of the mascot character',
     },
     annotations: {
       type: 'array',
@@ -26,28 +26,22 @@ const mascotResponseSchema = {
         properties: {
           targetAnchor: {
             type: 'string',
-            description:
-              'The exact anchor ID to fly to and highlight. MUST ONLY be chosen from the provided availableAnchors list.',
+            description: 'Must be from availableAnchors.',
           },
           effect: {
             type: 'string',
             enum: ['frame', 'underline', 'pointer', 'pulse'],
-            description:
-              'Visual effect: frame (box around element), underline (line under text/code), pointer (directional pointing arrow), pulse (attention ping)',
           },
           badgeText: {
             type: 'string',
-            description: 'Optional 1-3 word mini hint badge above the element, e.g. "Nézd itt!"',
           },
         },
         required: ['targetAnchor', 'effect'],
       },
-      description: 'Visual UI annotations pointing to specific elements on the student’s screen',
     },
     quickReplies: {
       type: 'array',
       items: { type: 'string' },
-      description: '2 short, relevant follow-up question chips for the student',
     },
   },
   required: ['message', 'mood', 'annotations', 'quickReplies'],
@@ -70,42 +64,121 @@ Role: Help the student understand algorithmic concepts and solve exercises step-
 
 CORE RULES:
 1. Socratic method: NEVER reveal the full answer directly. Provide an intuitive hint, guiding clue, or thought-provoking question.
-2. If student has repeated mistakes, point directly to the relevant UI element to examine.
-3. Brevity: Keep response very short and punchy: 1 to 2 sentences max.
-4. UI Annotations: If pointing to an element, select targetAnchor strictly from the provided availableAnchors list.
+2. Only answer questions related to algorithms, programming, computer science, or the current exercise. Politely redirect off-topic queries back to the lesson.
+3. If student has repeated mistakes, point directly to the relevant UI element to examine.
+4. Brevity: Keep response very short and punchy: 1 to 2 sentences max.
+5. UI Annotations: If pointing to an element, select targetAnchor strictly from the provided availableAnchors list.
    - effect: 'frame' (boxes), 'underline' (code/text), 'pointer' (inputs/buttons), 'pulse' (hint/submit).
-5. Always respond strictly in the specified Target Language.`;
+6. Always respond strictly in the specified Target Language.`;
 
 // In-memory course cache for mascot to avoid hitting Postgres on every single message
 const courseDocCache = new Map<string, { doc: Record<string, unknown>; expiresAt: number }>();
 const COURSE_CACHE_TTL = 60_000; // 60s
+const MAX_COURSE_CACHE_ENTRIES = 100;
 
-// In-memory rate limiter per user (max 30 requests per minute)
+// In-memory burst rate limiter per user (max 20 requests per minute)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW = 60_000;
-const MAX_REQUESTS = 30;
+const MAX_REQUESTS_PER_MIN = 20;
+const MAX_RATE_LIMIT_ENTRIES = 5000;
+
+// Multi-layer anti-abuse trackers (cooldown, per-phase question count, daily user quota)
+const lastQuestionTimestampMap = new Map<string, number>();
+const phaseQuestionCountMap = new Map<string, { count: number; expiresAt: number }>();
+const dailyUserQuotaMap = new Map<string, { count: number; dayKey: string }>();
+const MAX_QUERY_CHARS = 200;
+
+// Semantic response cache: caches identical (courseSlug, phaseId, locale, trigger, normalizedQuery, selectionHash) for 30 min (0 tokens!)
+const mascotResponseCache = new Map<string, { response: MascotAIResponse; expiresAt: number }>();
+const RESPONSE_CACHE_TTL = 30 * 60_000; // 30 minutes
+const MAX_RESPONSE_CACHE_ENTRIES = 500;
+
+function setMascotResponseCache(key: string, response: MascotAIResponse) {
+  const now = Date.now();
+  if (mascotResponseCache.size >= MAX_RESPONSE_CACHE_ENTRIES) {
+    for (const [k, v] of mascotResponseCache.entries()) {
+      if (v.expiresAt <= now) mascotResponseCache.delete(k);
+    }
+    if (mascotResponseCache.size >= MAX_RESPONSE_CACHE_ENTRIES) {
+      const oldestKey = mascotResponseCache.keys().next().value;
+      if (oldestKey !== undefined) mascotResponseCache.delete(oldestKey);
+    }
+  }
+  mascotResponseCache.set(key, { response, expiresAt: now + RESPONSE_CACHE_TTL });
+}
+
+function getTodayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function setCourseDocCache(
+  key: string,
+  value: { doc: Record<string, unknown>; expiresAt: number },
+) {
+  const now = Date.now();
+  if (courseDocCache.size >= MAX_COURSE_CACHE_ENTRIES) {
+    for (const [k, v] of courseDocCache.entries()) {
+      if (v.expiresAt <= now) courseDocCache.delete(k);
+    }
+    if (courseDocCache.size >= MAX_COURSE_CACHE_ENTRIES) {
+      const oldestKey = courseDocCache.keys().next().value;
+      if (oldestKey !== undefined) courseDocCache.delete(oldestKey);
+    }
+  }
+  courseDocCache.set(key, value);
+}
+
+function setRateLimitEntry(key: string, value: { count: number; resetAt: number }) {
+  const now = Date.now();
+  if (rateLimitMap.size >= MAX_RATE_LIMIT_ENTRIES) {
+    for (const [k, v] of rateLimitMap.entries()) {
+      if (v.resetAt <= now) rateLimitMap.delete(k);
+    }
+    if (rateLimitMap.size >= MAX_RATE_LIMIT_ENTRIES) {
+      const oldestKey = rateLimitMap.keys().next().value;
+      if (oldestKey !== undefined) rateLimitMap.delete(oldestKey);
+    }
+  }
+  rateLimitMap.set(key, value);
+}
 
 export async function POST(req: NextRequest) {
   try {
+    // ── 0. Check Global AI Mascot Master Switch first (0 DB queries if cached, 0 tokens) ──
+    const aiConfig = await getOpenRouterConfig();
+    if (!aiConfig.mascotEnabled) {
+      return NextResponse.json({
+        success: false,
+        globallyDisabled: true,
+        fallback: true,
+        error: 'AI Mascot is globally disabled by administrator.',
+      });
+    }
+
     const user = await authorizeAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Rate limit check
     const userIdKey = String(user.id);
     const now = Date.now();
+
+    // 1. Burst rate limit check (per minute)
     const rateData = rateLimitMap.get(userIdKey);
     if (rateData && rateData.resetAt > now) {
-      if (rateData.count >= MAX_REQUESTS) {
+      if (rateData.count >= MAX_REQUESTS_PER_MIN) {
         return NextResponse.json(
-          { error: 'Kérlek várj egy pillanatot a következő kérdés előtt (sebességkorlát).' },
+          {
+            success: false,
+            rateLimited: true,
+            error: 'Kérlek várj egy pillanatot a következő kérdés előtt (sebességkorlát).',
+          },
           { status: 429 },
         );
       }
       rateData.count += 1;
     } else {
-      rateLimitMap.set(userIdKey, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+      setRateLimitEntry(userIdKey, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
     }
 
     const body = await req.json();
@@ -121,6 +194,86 @@ export async function POST(req: NextRequest) {
 
     if (!courseSlug) {
       return NextResponse.json({ error: 'courseSlug is required' }, { status: 400 });
+    }
+
+    const sanitizedUserQuery =
+      typeof userQuery === 'string' ? userQuery.trim().slice(0, MAX_QUERY_CHARS) : '';
+    const isDirectQuestion = trigger === 'question' || Boolean(sanitizedUserQuery);
+
+    // ── 2. Multi-Layer Anti-Abuse Limits for Chat Questions ──
+    if (isDirectQuestion) {
+      // 2a. Cooldown between consecutive chat questions
+      const cooldownMs = (aiConfig.mascotCooldownSeconds ?? 8) * 1000;
+      const lastQuestionAt = lastQuestionTimestampMap.get(userIdKey) || 0;
+      if (cooldownMs > 0 && now - lastQuestionAt < cooldownMs) {
+        const remainingSec = Math.max(1, Math.ceil((cooldownMs - (now - lastQuestionAt)) / 1000));
+        const cooldownMsg =
+          locale === 'en'
+            ? `Please wait ${remainingSec}s before asking your next question.`
+            : locale === 'ro'
+              ? `Te rugăm să aștepți ${remainingSec}s înainte de următoarea întrebare.`
+              : `Kérlek várj még ${remainingSec} másodpercet a következő kérdés előtt!`;
+        return NextResponse.json({
+          success: false,
+          rateLimited: true,
+          cooldownRemainingSec: remainingSec,
+          limitMessage: cooldownMsg,
+        });
+      }
+
+      // 2b. Per-Phase Question Cap (prevents infinite chatting on a single step)
+      const maxPerPhase = aiConfig.mascotMaxMessagesPerPhase || 5;
+      const phaseKey = `${userIdKey}:${courseSlug}:${phaseId || 'default'}`;
+      const existingPhaseCount = phaseQuestionCountMap.get(phaseKey);
+      const currentPhaseQuestions =
+        existingPhaseCount && existingPhaseCount.expiresAt > now ? existingPhaseCount.count : 0;
+
+      if (currentPhaseQuestions >= maxPerPhase) {
+        const phaseLimitMsg =
+          locale === 'en'
+            ? `You have reached the ${maxPerPhase}-question limit for this step. Try applying the hints above to solve the task!`
+            : locale === 'ro'
+              ? `Ai atins limita de ${maxPerPhase} întrebări pentru acest pas. Încearcă să aplici indiciile de mai sus!`
+              : `Elérted az ehhez a lépéshez tartozó ${maxPerPhase} kérdéses limitet. Próbáld meg alkalmazni az eddigi tippeket a megoldáshoz!`;
+        return NextResponse.json({
+          success: false,
+          fallback: true,
+          limitReached: 'phase',
+          limitMessage: phaseLimitMsg,
+        });
+      }
+
+      // 2c. Daily Per-User AI Quota (prevents draining OpenRouter credits)
+      const maxPerDay = aiConfig.mascotMaxMessagesPerDay || 30;
+      const todayKey = getTodayKey();
+      const userDaily = dailyUserQuotaMap.get(userIdKey);
+      const currentDailyCount = userDaily && userDaily.dayKey === todayKey ? userDaily.count : 0;
+
+      if (currentDailyCount >= maxPerDay) {
+        const dailyLimitMsg =
+          locale === 'en'
+            ? `You have reached your daily AI chat quota (${maxPerDay} messages/day). Switching to built-in step hints!`
+            : locale === 'ro'
+              ? `Ai atins limita zilnică de chat AI (${maxPerDay} mesaje/zi). Trecem la indiciile locale ale pasului!`
+              : `Elérted a napi AI chat keretedet (${maxPerDay} üzenet/nap). A kabala a beépített lépésenkénti tippekre váltott!`;
+        return NextResponse.json({
+          success: false,
+          fallback: true,
+          limitReached: 'daily',
+          limitMessage: dailyLimitMsg,
+        });
+      }
+
+      // Record question usage
+      lastQuestionTimestampMap.set(userIdKey, now);
+      phaseQuestionCountMap.set(phaseKey, {
+        count: currentPhaseQuestions + 1,
+        expiresAt: now + 2 * 60 * 60 * 1000, // 2h TTL per phase session
+      });
+      dailyUserQuotaMap.set(userIdKey, {
+        count: currentDailyCount + 1,
+        dayKey: todayKey,
+      });
     }
 
     // Load course data (cached for 60s for speed)
@@ -141,7 +294,7 @@ export async function POST(req: NextRequest) {
       });
       courseDoc = courseRes.docs?.[0] as unknown as Record<string, unknown> | undefined;
       if (courseDoc) {
-        courseDocCache.set(cacheKey, { doc: courseDoc, expiresAt: now + COURSE_CACHE_TTL });
+        setCourseDocCache(cacheKey, { doc: courseDoc, expiresAt: now + COURSE_CACHE_TTL });
       }
     }
 
@@ -149,13 +302,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 });
     }
 
-    const phases = (courseDoc.phases || []) as Array<Record<string, unknown>>;
-    const currentPhase =
-      phases.find((p) => p.phaseId === phaseId) ||
-      phases[Number(courseDoc.activePhaseIndex) || 0] ||
-      phases[0];
+    // Enforce visibility access control on private courses
+    if (courseDoc.visibility === 'private') {
+      const rawInstructor = courseDoc.instructor;
+      const instructorId =
+        rawInstructor && typeof rawInstructor === 'object' && 'id' in rawInstructor
+          ? String((rawInstructor as { id: string | number }).id)
+          : rawInstructor !== undefined && rawInstructor !== null
+            ? String(rawInstructor)
+            : '';
+      if (user.role !== ROLES.ADMIN && instructorId !== String(user.id)) {
+        return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      }
+    }
 
-    const sourceAlgorithmId = (currentPhase?.sourceAlgorithmId as string) || 'bubble-sort';
+    const phases = (courseDoc.phases || []) as Array<Record<string, unknown>>;
+    const currentPhase = phases.find((p) => p.phaseId === phaseId) || phases[0];
+
+    const sourceAlgorithmId = (currentPhase?.sourceAlgorithmId as string) || undefined;
     const mascotConfig = (courseDoc.mascot || {}) as Record<string, unknown>;
     const mascotName =
       (typeof mascotConfig.name === 'object' && mascotConfig.name !== null
@@ -165,9 +329,9 @@ export async function POST(req: NextRequest) {
     // Build user dossier (cached for 40s in mascotContextBuilder)
     const dossier = await buildUserLearningDossier(user.id, courseSlug, phaseId, sourceAlgorithmId);
 
-    // ── 2. Dynamic Context Pruning (Exercise data only when asked or on mistake) ──
+    // ── 3. Dynamic Context Pruning (Exercise data only when asked or on mistake) ──
     const isExerciseContextNeeded =
-      trigger === 'question' || trigger === 'mistake' || Boolean(userQuery);
+      trigger === 'question' || trigger === 'mistake' || Boolean(sanitizedUserQuery);
 
     const rawAnchors = Array.isArray(screenSnapshot.availableAnchors)
       ? (screenSnapshot.availableAnchors as string[])
@@ -213,7 +377,7 @@ export async function POST(req: NextRequest) {
 
     const contextBlock = contextLines.join('\n');
 
-    // ── 3. Conversation Messages (Static system prefix + pruned history) ──
+    // ── 4. Conversation Messages (Static system prefix + pruned history) ──
     const messages: OpenRouterMessage[] = [
       { role: 'system', content: STATIC_MASCOT_SYSTEM_PROMPT },
     ];
@@ -230,8 +394,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const userInstruction = userQuery
-      ? `Student: "${userQuery}". Give a 1-2 sentence guiding Socratic reply and point to relevant anchors if helpful.`
+    const userInstruction = sanitizedUserQuery
+      ? `Student: "${sanitizedUserQuery}". Give a 1-2 sentence guiding Socratic reply and point to relevant anchors if helpful.`
       : `Trigger: "${trigger}". Give an encouraging 1-sentence tip and point to relevant anchors if helpful.`;
 
     messages.push({
@@ -239,21 +403,38 @@ export async function POST(req: NextRequest) {
       content: `[CONTEXT]\n${contextBlock}\n\n[TASK]\n${userInstruction}`,
     });
 
-    // Call OpenRouter with high throughput, no reasoning, and low maxTokens (150) for maximum speed and token efficiency
-    const { data: aiResponse } = await callOpenRouterStructured<MascotAIResponse>({
-      messages,
-      schema: mascotResponseSchema,
-      schemaName: 'mascot_ai_response',
-      timeoutMs: 15_000,
-      disableReasoning: true,
-      maxTokens: 150,
-      temperature: 0.25,
-    });
+    // Call OpenRouter (or serve from 0-token response cache if identical query/trigger on same step)
+    const selectionKey = screenSnapshot.currentSelection
+      ? JSON.stringify(screenSnapshot.currentSelection).slice(0, 60)
+      : '';
+    const normalizedQueryKey = sanitizedUserQuery.toLowerCase().replace(/\s+/g, ' ');
+    const responseCacheKey = `${courseSlug}:${phaseId || 'default'}:${locale}:${trigger}:${normalizedQueryKey}:${selectionKey}`;
+    const cachedAiEntry = mascotResponseCache.get(responseCacheKey);
+
+    let aiResponse: MascotAIResponse;
+    if (cachedAiEntry && cachedAiEntry.expiresAt > now) {
+      aiResponse = cachedAiEntry.response;
+    } else {
+      const result = await callOpenRouterStructured<MascotAIResponse>({
+        messages,
+        schema: mascotResponseSchema,
+        schemaName: 'mascot_ai_response',
+        timeoutMs: 15_000,
+        disableReasoning: true,
+        maxTokens: 280,
+        temperature: 0.25,
+      });
+      aiResponse = result.data;
+      setMascotResponseCache(responseCacheKey, aiResponse);
+    }
 
     // Sanitize annotations to only valid client screen anchors
     const validAnnotations = (aiResponse.annotations || []).filter(
-      (a) => a.targetAnchor && (rawAnchors.length === 0 || rawAnchors.includes(a.targetAnchor)),
+      (a) => a.targetAnchor && rawAnchors.includes(a.targetAnchor),
     );
+
+    const phaseKey = `${userIdKey}:${courseSlug}:${phaseId || 'default'}`;
+    const usedInPhase = phaseQuestionCountMap.get(phaseKey)?.count || 0;
 
     return NextResponse.json({
       success: true,
@@ -264,10 +445,19 @@ export async function POST(req: NextRequest) {
         annotations: validAnnotations,
         quickReplies: (aiResponse.quickReplies || []).slice(0, 2),
       },
+      limits: {
+        cooldownSeconds: aiConfig.mascotCooldownSeconds,
+        maxMessagesPerPhase: aiConfig.mascotMaxMessagesPerPhase,
+        usedMessagesInPhase: usedInPhase,
+      },
     });
   } catch (error) {
-    console.error('[Mascot API Route Error]:', error);
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.warn('[Mascot API Route] Falling back to local mascot hint:', message);
+    return NextResponse.json({
+      success: false,
+      fallback: true,
+      error: 'AI service unavailable',
+    });
   }
 }

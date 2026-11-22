@@ -27,7 +27,9 @@ export default function middleware(request: NextRequest) {
     pathname.startsWith(ROUTES.COURSES) ||
     pathname.startsWith(ROUTES.PROFILE) ||
     pathname.startsWith(ROUTES.ADMIN_STATISTICS) ||
-    pathname.startsWith(ROUTES.STUDIO);
+    pathname.startsWith(ROUTES.STUDIO) ||
+    pathname.startsWith(ROUTES.BIG_O) ||
+    pathname.startsWith(ROUTES.LEADERBOARD);
 
   // 3. Bypass static files and API immediately
   if (isApiOrStatic) {

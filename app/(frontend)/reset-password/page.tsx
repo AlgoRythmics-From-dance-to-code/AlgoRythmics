@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -18,35 +18,51 @@ function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(!!token);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   useEffect(() => {
+    let cancelled = false;
     const validateToken = async () => {
       if (!token) {
-        setError(t('login.errors.reset_token_invalid'));
+        setTokenError(tRef.current('login.errors.reset_token_invalid'));
         setIsValidating(false);
         return;
       }
 
-      setError(null);
+      setTokenError(null);
       setIsValidating(true);
       try {
-        const response = await fetch(`${API_ROUTES.AUTH.RESET_PASSWORD}?token=${token}`);
+        const response = await fetch(
+          `${API_ROUTES.AUTH.RESET_PASSWORD}?token=${encodeURIComponent(token)}`,
+        );
+        if (cancelled) return;
         if (!response.ok) {
           const data = await response.json();
-          setError(data.error || t('login.errors.reset_token_invalid'));
+          setTokenError(data.error || tRef.current('login.errors.reset_token_invalid'));
         } else {
-          setError(null);
+          setTokenError(null);
         }
       } catch {
-        setError(t('toasts.unexpected_error_desc'));
+        if (!cancelled) {
+          setTokenError(tRef.current('toasts.unexpected_error_desc'));
+        }
       } finally {
-        setIsValidating(false);
+        if (!cancelled) {
+          setIsValidating(false);
+        }
       }
     };
 
     validateToken();
-  }, [token, t]);
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +78,7 @@ function ResetPasswordForm() {
     }
 
     setIsLoading(true);
-    setError(null);
+    setSubmitError(null);
 
     try {
       const response = await fetch(API_ROUTES.AUTH.RESET_PASSWORD, {
@@ -74,7 +90,7 @@ function ResetPasswordForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error);
+        setSubmitError(data.error);
         toast.error(data.error);
         return;
       }
@@ -82,7 +98,7 @@ function ResetPasswordForm() {
       setIsSubmitted(true);
       toast.success(data.title, { description: data.message });
     } catch {
-      setError(t('toasts.unexpected_error_desc'));
+      setSubmitError(t('toasts.unexpected_error_desc'));
       toast.error(t('toasts.unexpected_error'));
     } finally {
       setIsLoading(false);
@@ -98,7 +114,7 @@ function ResetPasswordForm() {
     );
   }
 
-  if ((!token || error) && !isSubmitted) {
+  if ((!token || tokenError) && !isSubmitted) {
     return (
       <div className="text-center w-full max-w-[400px]">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full mb-6">
@@ -116,10 +132,9 @@ function ResetPasswordForm() {
             />
           </svg>
         </div>
-        <h1 className="font-montserrat font-bold text-2xl text-black dark:text-white mb-4">
-          {error || t('login.errors.reset_token_invalid')}
+        <h1 className="font-montserrat font-bold text-2xl text-black dark:text-white mb-6">
+          {tokenError || t('login.errors.reset_token_invalid')}
         </h1>
-        <p className="font-montserrat text-gray-500 mb-8">{t('login.reset_password_subtitle')}</p>
         <Link
           href={ROUTES.LOGIN}
           className="inline-block font-montserrat font-bold text-white bg-[#269984] px-8 py-3 rounded-lg hover:opacity-90 transition-all"
@@ -141,9 +156,9 @@ function ResetPasswordForm() {
             {t('login.reset_password_subtitle')}
           </p>
 
-          {error && (
+          {submitError && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-6 font-montserrat text-sm text-center">
-              {error}
+              {submitError}
             </div>
           )}
 

@@ -313,7 +313,11 @@ export default function Header() {
                           <GraduationCap className="w-4 h-4 text-emerald-600" />
                         </div>
                         <span className="font-montserrat text-sm font-semibold text-emerald-700">
-                          {t('nav.teacher_studio') || 'Tanári Stúdió'}
+                          {locale === 'en'
+                            ? 'Teacher Studio'
+                            : locale === 'ro'
+                              ? 'Studioul Profesorului'
+                              : 'Tanári Stúdió'}
                         </span>
                       </Link>
 
@@ -327,8 +331,16 @@ export default function Header() {
                         </div>
                         <span className="font-montserrat text-sm font-semibold text-[#269984]">
                           {isAdmin
-                            ? t('admin.pedagogy_statistics') || 'Rendszer Statisztikák'
-                            : 'Saját Statisztikák'}
+                            ? locale === 'en'
+                              ? 'System Statistics'
+                              : locale === 'ro'
+                                ? 'Statistici Sistem'
+                                : 'Rendszer Statisztikák'
+                            : locale === 'en'
+                              ? 'My Statistics'
+                              : locale === 'ro'
+                                ? 'Statisticile Mele'
+                                : 'Saját Statisztikák'}
                         </span>
                       </Link>
 
@@ -342,7 +354,11 @@ export default function Header() {
                             <Zap className="w-4 h-4 text-purple-600" />
                           </div>
                           <span className="font-montserrat text-sm font-semibold text-purple-600">
-                            Algoritmus Statisztikák (Admin)
+                            {locale === 'en'
+                              ? 'Algorithm Statistics'
+                              : locale === 'ro'
+                                ? 'Statistici Algoritmi'
+                                : 'Algoritmus Statisztikák'}
                           </span>
                         </Link>
                       )}
@@ -407,6 +423,9 @@ export default function Header() {
 
         {/* Mobile hamburger */}
         <button
+          type="button"
+          aria-label={t('nav.menu') || 'Toggle navigation menu'}
+          aria-expanded={menuOpen}
           className="md:hidden flex flex-col gap-1.5 p-2"
           onClick={() => setMenuOpen(!menuOpen)}
         >

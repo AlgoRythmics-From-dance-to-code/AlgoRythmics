@@ -69,7 +69,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: profile.id,
           name: profile.global_name || profile.username,
           email: profile.email,
-          image: `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`,
+          image: profile.avatar
+            ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+            : undefined,
         };
       },
     }),
@@ -335,17 +337,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async redirect({ url, baseUrl }) {
       // After social login, redirect to our custom callback ONLY if we're completing sign-in
       // This prevents sign-out or other redirects from being trapped in a loop
-      if (url.includes('/api/auth/callback') || url.includes('callback')) {
-        return `${baseUrl}${API_ROUTES.AUTH.SOCIAL_CALLBACK}`;
+      try {
+        const parsed = new URL(url, baseUrl);
+        if (parsed.origin !== baseUrl) {
+          return baseUrl;
+        }
+        if (parsed.pathname.startsWith('/api/auth/callback')) {
+          return `${baseUrl}${API_ROUTES.AUTH.SOCIAL_CALLBACK}`;
+        }
+        if (url.startsWith('/') && !url.startsWith('//') && !url.includes('\\')) {
+          return `${baseUrl}${url}`;
+        }
+        return url;
+      } catch {
+        return baseUrl;
       }
-
-      // If it's a relative URL, resolve it to our domain
-      if (url.startsWith('/')) return `${baseUrl}${url}`;
-
-      // Allow only same-origin redirects
-      if (new URL(url).origin === baseUrl) return url;
-
-      return baseUrl;
     },
   },
 });

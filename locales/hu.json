@@ -24,9 +24,11 @@
     "all_categories": "Összes kategória",
     "all_difficulties": "Minden nehézség",
     "clear_all": "Szűrők törlése",
-    "loading": "Betöltés..."
+    "loading": "Betöltés...",
+    "help": "Segítség"
   },
   "nav": {
+    "menu": "Menü",
     "big_o": "Big O & Verseny",
     "home": "Kezdőlap",
     "algorithms": "Algoritmusok",
@@ -45,7 +47,9 @@
     "leaderboard": "Ranglista",
     "multiplayer": "Multiplayer",
     "studio": "Stúdió",
-    "teacher_studio": "Tanári Stúdió"
+    "teacher_studio": "Tanári Stúdió",
+    "admin": "Adminisztráció",
+    "videos": "Videók"
   },
   "aria": {
     "go_home": "Ugrás a kezdőlapra",
@@ -114,7 +118,8 @@
     "verify_success": "Sikeres megerősítés!",
     "verify_success_desc": "Most már bejelentkezhetsz a fiókodba.",
     "verify_error": "Megerősítés sikertelen",
-    "verify_error_desc": "A link érvénytelen vagy már lejárt."
+    "verify_error_desc": "A link érvénytelen vagy már lejárt.",
+    "bug_report_submitted": "A hibajelentés sikeresen elküldve!"
   },
   "pwa": {
     "install_title": "AlgoRythmics Alkalmazás",
@@ -256,7 +261,9 @@
       "auth_failed": "Hibás e-mail vagy jelszó, vagy a fiók nincs megerősítve!",
       "rate_limit_error": "Túl sok kérés. Kérjük, várj 15 percet az újabb próbálkozás előtt.",
       "reset_token_invalid": "A visszaállító token érvénytelen vagy lejárt.",
-      "social_account_error": "Ez a fiók közösségi bejelentkezést használ (Google/stb.). Kérjük, jelentkezz be a közösségi szolgáltatóddal."
+      "social_account_error": "Ez a fiók közösségi bejelentkezést használ (Google/stb.). Kérjük, jelentkezz be a közösségi szolgáltatóddal.",
+      "password_too_short": "A jelszónak legalább 6 karakter hosszúnak kell lennie.",
+      "user_already_exists": "Ezzel az email címmel már létezik fiók."
     },
     "forgot_password_title": "Elfelejtett jelszó",
     "forgot_password_subtitle": "Add meg az e-mail címedet, és küldünk egy linket a jelszavad visszaállításához.",
@@ -347,7 +354,9 @@
       "email_required": "Az e-mail cím megadása kötelező",
       "email_invalid": "Érvénytelen e-mail cím",
       "subject_required": "A tárgy megadása kötelező",
-      "message_required": "Az üzenet megadása kötelező"
+      "message_required": "Az üzenet megadása kötelező",
+      "send_failed": "Nem sikerült elküldeni az üzenetet. Kérjük, próbáld meg később.",
+      "rate_limited": "Túl sok üzenetet küldtél rövid időn belül. Kérjük, várj néhány percet."
     }
   },
   "about": {
@@ -742,7 +751,13 @@
       "debug_fail": "Nem ott van a hiba...",
       "debug_success_desc": "Pontosan felismerted a logikai tévedést a kódban.",
       "debug_fail_desc": "Nézd át újra figyelmesen a ciklusokat és a feltételeket!"
-    }
+    },
+    "checkpoints": "Ellenőrzőpontok",
+    "completed": "Teljesítve",
+    "hidden_phases": "rejtett fázis",
+    "idle_help": "Elakadtál? Kattints ide, ha szükséged van egy kis segítségre!",
+    "locked": "Zárolva",
+    "next_up": "Következő"
   },
   "admin": {
     "algorithm_type": "Algoritmus Típusa",
@@ -765,7 +780,8 @@
     "filters": {
       "all": "Összes videó",
       "sorting": "Rendezés",
-      "searching": "Keresés"
+      "searching": "Keresés",
+      "backtracking": "Visszalépéses (Backtracking)"
     },
     "views": "megtekintés",
     "list": {
@@ -911,7 +927,17 @@
     "first_try": "Első próbálkozásra!",
     "attempts": "{count} próbálkozás",
     "test_execution": "Teszt futtatása",
-    "passed": "Sikeres (A tömb helyesen lett rendezve)"
+    "passed": "Sikeres (A tömb helyesen lett rendezve)",
+    "errors": {
+      "infinite_loop": "Végtelen ciklus vagy túl mély rekurzió észlelve! Kérlek ellenőrizd a leállási feltételeket.",
+      "timeout": "Időtúllépés (1.5 mp): valószínűleg végtelen ciklus vagy túl lassú végrehajtás.",
+      "missing_fn": "Kérlek hozz létre egy '{fnName}' nevű függvényt!",
+      "search_mismatch": "Hiba: Hibás keresési eredmény! Kapott: {received}, Várt index pl.: {expected}",
+      "not_array": "Hiba: A kód nem tömböt adott vissza, vagy nem módosította a kapott tömböt!",
+      "length_mismatch": "Hiba: A visszaadott tömb mérete nem egyezik az eredetivel!",
+      "sort_mismatch": "Hiba: A tömb nem lett megfelelően rendezve. Eredményed: [{received}] Várható: [{expected}]",
+      "runtime_error": "Szintaktikai vagy futási hiba történt."
+    }
   },
   "terms_page": {
     "title": "Felhasználási feltételek",
@@ -1044,7 +1070,8 @@
     "back_to_profile": "Vissza a profilhoz",
     "not_found": "A tanúsítvány nem található",
     "not_found_desc": "A keresett oklevél nem létezik vagy érvénytelen azonosítóval rendelkezel.",
-    "official_seal": "Hivatalos AlgoRythmics Tanúsítvány"
+    "official_seal": "Hivatalos AlgoRythmics Tanúsítvány",
+    "copied": "Másolva!"
   },
   "confidence": {
     "prompt": "Mennyire vagy biztos a válaszban?",
@@ -1186,7 +1213,12 @@
       "swap_needed_desc": "👉 {playerA} és {playerB}: Sétáljatok át egymás mellett a teremben és koccintsatok (vagy nyomjátok meg az alábbi gombot)!",
       "ok_desc": "✅ {playerA} és {playerB} már jó sorrendben áll a teremben! Nyomjátok meg a Megkérdeztük gombot a továbblépéshez.",
       "button_ok": "1. Megkérdeztük Egymást (OK)",
-      "button_swap": "2. Koccintottunk / Helyet Cseréltünk!"
+      "button_swap": "2. Koccintottunk / Helyet Cseréltünk!",
+      "position_verified": "Helyzeted igazolva! Várakozás a társad beállására a sorban...",
+      "sensitivity": "Érzékenység:",
+      "stop_detected": "✅ MEGÁLLÁS ÉSZLELVE AZ ÚJ HELYEN!",
+      "walk_left": "SÉTA BALRA",
+      "walk_right": "SÉTA JOBBRA"
     },
     "post_match": {
       "title": "Algoritmus Sikeresen Teljesítve!",
@@ -1250,7 +1282,8 @@
       "stage_preparing": "A táncosok a színpadra lépnek...",
       "waiting_for_partner": "Megerősítve! Várakozás a táncpartner jóváhagyására a szinkron lépéshez...",
       "partner_requested_action": "A partnered lépést kér! Nyomd meg a gombot a közös jóváhagyáshoz!",
-      "synchronizing_pair": "A pár szinkronizációja folyamatban..."
+      "synchronizing_pair": "A pár szinkronizációja folyamatban...",
+      "title": "Vizuális Táncaréna"
     },
     "lobby": {
       "enter_waiting_room": "Belépés a Várakozóterembe",
@@ -1280,6 +1313,17 @@
       "min_players_hint": "A mérkőzés indításához legalább 2 játékos vagy bot szükséges",
       "practice_bot": "Gyakorló robot",
       "teammate": "Csapattárs"
+    },
+    "cyber": {
+      "core_lock": "1. Core Lock: Stabil Rendben (Enter)",
+      "flux_swap": "2. ⚡ FLUX SWAP: Kvantum Csere (Space)",
+      "lock_target": "Célzás Rögzítést (Space)",
+      "multiplier": "1.5x Szorzó",
+      "operator": "Operátorra",
+      "scanner": "Szkennelő:",
+      "send_reaction": "Reakció küldése",
+      "target_reactor": "🎯 Cél Rögzítése a Reaktorhoz (Space)",
+      "unlock_target": "Célzás Feloldása"
     }
   },
   "certificate": {

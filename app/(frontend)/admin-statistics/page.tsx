@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import AdminStatisticsClient from './AdminStatisticsClient';
 
 export const metadata: Metadata = {
-  title: 'Admin Statisztikák & Pedagógiai Elemzés | AlgoRythmics',
+  title: 'Admin Statisztikák & Pedagógiai Elemzés',
   description: 'Részletes tanulási statisztikák, hibagócok és kognitív tanulási mutatók elemzése.',
 };
 

@@ -24,9 +24,11 @@
     "all_categories": "Toate categoriile",
     "all_difficulties": "Toate dificultățile",
     "clear_all": "Șterge tot",
-    "loading": "Se încarcă..."
+    "loading": "Se încarcă...",
+    "help": "Ajutor"
   },
   "nav": {
+    "menu": "Meniu",
     "big_o": "Big O & Cursă",
     "home": "Acasă",
     "algorithms": "Algoritmi",
@@ -45,7 +47,9 @@
     "leaderboard": "Clasament",
     "multiplayer": "Multiplayer",
     "studio": "Studio",
-    "teacher_studio": "Studio Profesor"
+    "teacher_studio": "Studio Profesor",
+    "admin": "Panou Admin",
+    "videos": "Videoclipuri"
   },
   "aria": {
     "go_home": "Mergi la pagina principală",
@@ -114,7 +118,8 @@
     "verify_success": "Verificare reușită!",
     "verify_success_desc": "Acum vă puteți autentifica în contul dvs.",
     "verify_error": "Verificare eșuată",
-    "verify_error_desc": "Link-ul este invalid sau a expirat."
+    "verify_error_desc": "Link-ul este invalid sau a expirat.",
+    "bug_report_submitted": "Raportul de eroare a fost trimis cu succes!"
   },
   "pwa": {
     "install_title": "Aplicația AlgoRythmics",
@@ -146,7 +151,7 @@
       "edit": "Editează profilul",
       "password": "Parolă",
       "security": "Securitate cont",
-      "bug_report": "Raportează o hiba",
+      "bug_report": "Raportează o eroare",
       "delete": "Șterge contul"
     },
     "certificates": {
@@ -161,7 +166,7 @@
     },
     "bug_report": {
       "title": "Raportează o problemă",
-      "subtitle": "Ai găsit o hiba? Descrie-o și atașează o captură de ecran dacă este posibil!",
+      "subtitle": "Ai găsit o eroare? Descrie-o și atașează o captură de ecran dacă este posibil!",
       "form_title": "Trimite un raport de eroare nou",
       "severity_label": "Gravitate",
       "severity_low": "Scăzută (Mică eroare estetică)",
@@ -256,7 +261,9 @@
       "auth_failed": "E-mail sau parolă invalidă, sau cont neverificat!",
       "rate_limit_error": "Prea multe cereri. Vă rugăm să așteptați 15 minute înainte de a încerca din nou.",
       "reset_token_invalid": "Token-ul de resetare este invalid sau a expirat.",
-      "social_account_error": "Acest cont folosește autentificarea socială (Google/etc.). Te rugăm să te autentifici cu furnizorul tău social."
+      "social_account_error": "Acest cont folosește autentificarea socială (Google/etc.). Te rugăm să te autentifici cu furnizorul tău social.",
+      "password_too_short": "Parola trebuie să conțină cel puțin 6 caractere.",
+      "user_already_exists": "Există deja un cont cu această adresă de email."
     },
     "forgot_password_title": "Am uitat parola",
     "forgot_password_subtitle": "Introdu adresa de e-mail și îți vom trimite un link pentru a-ți reseta parola.",
@@ -347,7 +354,9 @@
       "email_required": "Email-ul este obligatoriu",
       "email_invalid": "Email-ul este invalid",
       "subject_required": "Subiectul este obligatoriu",
-      "message_required": "Mesajul este obligatoriu"
+      "message_required": "Mesajul este obligatoriu",
+      "send_failed": "Nu s-a putut trimite mesajul. Te rugăm să încerci din nou mai târziu.",
+      "rate_limited": "Prea multe mesaje trimise. Te rugăm să aștepți câteva minute înainte de a încerca din nou."
     }
   },
   "about": {
@@ -742,7 +751,13 @@
       "debug_fail": "Eroarea nu este acolo...",
       "debug_success_desc": "Ai identificat cu precizie greșeala logică din cod.",
       "debug_fail_desc": "Revizuiește cu atenție buclele și condițiile din nou!"
-    }
+    },
+    "checkpoints": "Puncte de control",
+    "completed": "Finalizat",
+    "hidden_phases": "etape ascunse",
+    "idle_help": "Ai nevoie de un indiciu? Sunt aici să te ajut oricând!",
+    "locked": "Blocat",
+    "next_up": "Următorul"
   },
   "admin": {
     "algorithm_type": "Tip Algoritm",
@@ -765,7 +780,8 @@
     "filters": {
       "all": "Toate videoclipurile",
       "sorting": "Sortare",
-      "searching": "Căutare"
+      "searching": "Căutare",
+      "backtracking": "Backtracking"
     },
     "views": "vizualizări",
     "list": {
@@ -911,7 +927,17 @@
     "first_try": "Din prima încercare!",
     "attempts": "{count} încercări",
     "test_execution": "Execuția testului",
-    "passed": "Reușit (Tabloul a fost sortat corect)"
+    "passed": "Reușit (Tabloul a fost sortat corect)",
+    "errors": {
+      "infinite_loop": "Buclă infinită sau recursivitate prea adâncă detectată! Te rugăm să verifici condițiile de oprire.",
+      "timeout": "Timpul de execuție a expirat (1.5 s): probabil o buclă infinită sau o execuție prea lentă.",
+      "missing_fn": "Te rugăm să creezi o funcție numită '{fnName}'!",
+      "search_mismatch": "Eroare: Rezultat de căutare incorect! Primit: {received}, Index așteptat de ex.: {expected}",
+      "not_array": "Eroare: Codul nu a returnat un tablou și nu a modificat tabloul primit!",
+      "length_mismatch": "Eroare: Lungimea tabloului returnat nu coincide cu cea originală!",
+      "sort_mismatch": "Eroare: Tabloul nu a fost sortat corespunzător. Rezultatul tău: [{received}] Așteptat: [{expected}]",
+      "runtime_error": "A apărut o eroare de sintaxă sau de execuție."
+    }
   },
   "terms_page": {
     "title": "Termeni și Condiții",
@@ -1044,7 +1070,8 @@
     "back_to_profile": "Înapoi la profil",
     "not_found": "Certificatul nu a fost găsit",
     "not_found_desc": "Diplomă căutată nu există sau codul este invalid.",
-    "official_seal": "Certificat Oficial AlgoRythmics"
+    "official_seal": "Certificat Oficial AlgoRythmics",
+    "copied": "Copiat!"
   },
   "confidence": {
     "prompt": "Cât de sigur ești pe răspunsul tău?",
@@ -1186,7 +1213,12 @@
       "swap_needed_desc": "👉 {playerA} și {playerB}: Treceți unul pe lângă celălalt și atingeți telefoanele (sau apăsați butonul de mai jos)!",
       "ok_desc": "✅ {playerA} și {playerB} sunt deja în ordine sortată! Apăsați Am Comparat pentru a continua.",
       "button_ok": "1. Am Comparat (În Ordine)",
-      "button_swap": "2. Am Ciocnit / Am Schimbat Locurile!"
+      "button_swap": "2. Am Ciocnit / Am Schimbat Locurile!",
+      "position_verified": "Poziție confirmată! Se așteaptă partenerul să se alinieze...",
+      "sensitivity": "Sensibilitate:",
+      "stop_detected": "✅ OPRIRE DETECTATĂ ÎN NOUA POZIȚIE!",
+      "walk_left": "MERGI LA STÂNGA",
+      "walk_right": "MERGI LA DREAPTA"
     },
     "post_match": {
       "title": "Algoritm Finalizat cu Succes!",
@@ -1250,7 +1282,8 @@
       "stage_preparing": "Dansatorii intră pe scenă...",
       "waiting_for_partner": "Confirmat! Se așteaptă confirmarea partenerului pentru pasul sincronizat...",
       "partner_requested_action": "Partenerul tău a solicitat o acțiune! Apasă butonul pentru confirmare comună!",
-      "synchronizing_pair": "Sincronizarea perechii în curs..."
+      "synchronizing_pair": "Sincronizarea perechii în curs...",
+      "title": "Arena Vizuală de Dans"
     },
     "lobby": {
       "enter_waiting_room": "Intră în Camera de Așteptare",
@@ -1280,6 +1313,17 @@
       "min_players_hint": "Sunt necesari cel puțin 2 jucători sau boți pentru a începe meciul",
       "practice_bot": "Robot de antrenament",
       "teammate": "Coleg de echipă"
+    },
+    "cyber": {
+      "core_lock": "1. Core Lock: Ordine Confirmată (Enter)",
+      "flux_swap": "2. ⚡ FLUX SWAP: Schimb Cuantic (Space)",
+      "lock_target": "Blocare Țintă (Space)",
+      "multiplier": "Multiplicator 1.5x",
+      "operator": "Operator",
+      "scanner": "Scanner:",
+      "send_reaction": "Trimite reacție",
+      "target_reactor": "🎯 Blochează Ținta pe Reactor (Space)",
+      "unlock_target": "Deblochează Ținta"
     }
   },
   "certificate": {

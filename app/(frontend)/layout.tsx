@@ -105,7 +105,9 @@ export default async function FrontendLayout({ children }: { children: React.Rea
           }}
         />
       </head>
-      <body className={`${montserrat.variable} antialiased min-h-screen flex flex-col`}>
+      <body
+        className={`${montserrat.variable} antialiased min-h-screen flex flex-col bg-white dark:bg-[#0a0a0a] text-black dark:text-white`}
+      >
         {clarityProjectId && (
           <Script
             id="microsoft-clarity"

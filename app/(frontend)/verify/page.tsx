@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import Link from 'next/link';
@@ -14,21 +14,31 @@ function VerifyContent() {
   const token = searchParams.get('token');
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState(t('verify.loading'));
+  const verifiedTokenRef = useRef<string | null>(null);
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setMessage(t('verify.no_token'));
+      setMessage(tRef.current('verify.no_token'));
       return;
     }
+
+    if (verifiedTokenRef.current === token) {
+      return;
+    }
+    verifiedTokenRef.current = token;
 
     const verifyEmail = async () => {
       try {
         await axios.post(API_ROUTES.AUTH.VERIFY_ACCOUNT, { token });
         setStatus('success');
-        setMessage(t('verify.success_msg'));
-        toast.success(t('toasts.verify_success'), {
-          description: t('toasts.verify_success_desc'),
+        setMessage(tRef.current('verify.success_msg'));
+        toast.success(tRef.current('toasts.verify_success'), {
+          description: tRef.current('toasts.verify_success_desc'),
         });
       } catch (err: unknown) {
         interface AxiosErrorResponse {
@@ -47,15 +57,15 @@ function VerifyContent() {
           axiosErr.response?.data?.errors?.[0]?.message ||
           axiosErr.response?.data?.error ||
           axiosErr.message;
-        setMessage(t('verify.error_msg', { error: errDetail || '' }));
-        toast.error(t('toasts.verify_error'), {
-          description: t('toasts.verify_error_desc'),
+        setMessage(tRef.current('verify.error_msg', { error: errDetail || '' }));
+        toast.error(tRef.current('toasts.verify_error'), {
+          description: tRef.current('toasts.verify_error_desc'),
         });
       }
     };
 
     verifyEmail();
-  }, [token, t]);
+  }, [token]);
 
   return (
     <div className="flex flex-col items-center justify-center p-6 text-center">
@@ -72,7 +82,7 @@ function VerifyContent() {
 
         {status === 'success' && (
           <div className="flex flex-col items-center animate-in fade-in zoom-in duration-500">
-            <div className="w-20 h-20 bg-[#36D6BA] bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+            <div className="w-20 h-20 bg-[#36D6BA]/20 rounded-full flex items-center justify-center mb-6">
               <svg
                 width="40"
                 height="40"
@@ -102,7 +112,7 @@ function VerifyContent() {
 
         {status === 'error' && (
           <div className="flex flex-col items-center animate-in fade-in zoom-in duration-500">
-            <div className="w-20 h-20 bg-red-100 dark:bg-red-900 dark:bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-6">
               <svg
                 width="40"
                 height="40"

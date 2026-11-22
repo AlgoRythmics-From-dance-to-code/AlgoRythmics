@@ -27,7 +27,7 @@ function generateId(): string {
 export function useAnalytics(algorithmId?: string, tab?: string, courseId?: string) {
   const { status } = useSession();
   const isAuth = status === 'authenticated';
-  const { updateAlgorithmProgress } = useAlgorithmStore();
+  const updateAlgorithmProgress = useAlgorithmStore((s) => s.updateAlgorithmProgress);
 
   const sessionId = useRef(generateId());
   const lastEventTime = useRef(Date.now());
@@ -88,8 +88,25 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
   }, [flushProgress]);
 
   // --- SYNCHRONOUS FLUSH FOR UNLOAD/VISIBILITY ---
+  const clearScheduledTimers = useCallback(() => {
+    if (flushTimer.current) {
+      clearTimeout(flushTimer.current);
+      flushTimer.current = null;
+    }
+    if (progressFlushTimer.current) {
+      clearTimeout(progressFlushTimer.current);
+      progressFlushTimer.current = null;
+    }
+  }, []);
+
   const syncFlushAll = useCallback(() => {
+    clearScheduledTimers();
     if (!isAuth) return;
+
+    if (flushTimer.current) {
+      clearTimeout(flushTimer.current);
+      flushTimer.current = null;
+    }
 
     if (eventBuffer.current.length > 0) {
       try {
@@ -130,7 +147,7 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
         progressBuffer.current = {};
       }
     }
-  }, [isAuth, algorithmId]);
+  }, [isAuth, algorithmId, clearScheduledTimers]);
 
   const summarizeProgressSnapshot = useCallback((progress: AlgorithmProgress | undefined) => {
     if (!progress) return undefined;
@@ -187,10 +204,14 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
             : 'light',
         device:
           typeof navigator !== 'undefined' ? getCoarseUserAgent(navigator.userAgent) : undefined,
-        audioEnabled:
-          typeof window !== 'undefined'
-            ? localStorage.getItem('algorythmics-muted') !== 'true'
-            : undefined,
+        audioEnabled: (() => {
+          if (typeof window === 'undefined') return undefined;
+          try {
+            return localStorage.getItem('algorythmics-muted') !== 'true';
+          } catch {
+            return undefined;
+          }
+        })(),
       };
 
       // Cap durationMs at 5 minutes to avoid idle gaps inflating time stats
@@ -237,6 +258,10 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
       progressBuffer.current = { ...progressBuffer.current, ...updates };
 
       if (syncNow) {
+        if (progressFlushTimer.current) {
+          clearTimeout(progressFlushTimer.current);
+          progressFlushTimer.current = null;
+        }
         flushProgress();
       } else {
         scheduleProgressFlush();
@@ -283,8 +308,9 @@ export function useAnalytics(algorithmId?: string, tab?: string, courseId?: stri
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      clearScheduledTimers();
     };
-  }, [syncFlushAll]);
+  }, [syncFlushAll, clearScheduledTimers]);
 
   return {
     trackEvent,

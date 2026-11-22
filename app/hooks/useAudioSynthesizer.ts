@@ -4,9 +4,6 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 
 // Use a module-level variable to keep track of the global mute state across instances
 let globalMuted = false;
-if (typeof window !== 'undefined') {
-  globalMuted = localStorage.getItem('algorythmics-muted') === 'true';
-}
 
 const MUTE_EVENT = 'algorythmics-mute-change';
 
@@ -33,20 +30,36 @@ const getPentatonicFreq = (val: number, maxVal: number) => {
 };
 
 export function useAudioSynthesizer() {
-  const [isMuted, setIsMuted] = useState(globalMuted);
+  const [isMuted, setIsMuted] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
-  // Sync state across instances
+  const clearAudioTimers = useCallback(() => {
+    timersRef.current.forEach((timerId) => clearTimeout(timerId));
+    timersRef.current.clear();
+  }, []);
+
+  // Sync mute state after mount (avoids SSR hydration mismatch) and clean up AudioContext/timers
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('algorythmics-muted') === 'true';
+      globalMuted = saved;
+      setIsMuted(saved);
+    } catch {}
+
     const handleMuteChange = () => {
       setIsMuted(globalMuted);
+      if (globalMuted) clearAudioTimers();
     };
 
     window.addEventListener(MUTE_EVENT, handleMuteChange);
     return () => {
       window.removeEventListener(MUTE_EVENT, handleMuteChange);
+      clearAudioTimers();
+      audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
     };
-  }, []);
+  }, [clearAudioTimers]);
 
   // Initialize AudioContext lazily on user interaction (to bypass browser autoplay restrictions)
   const initAudio = useCallback(() => {
@@ -70,11 +83,14 @@ export function useAudioSynthesizer() {
     const nextMuted = !globalMuted;
     globalMuted = nextMuted;
     setIsMuted(nextMuted);
+    if (nextMuted) clearAudioTimers();
     if (typeof window !== 'undefined') {
-      localStorage.setItem('algorythmics-muted', String(nextMuted));
+      try {
+        localStorage.setItem('algorythmics-muted', String(nextMuted));
+      } catch {}
       window.dispatchEvent(new Event(MUTE_EVENT));
     }
-  }, []);
+  }, [clearAudioTimers]);
 
   // Helper to play a warm acoustic chime
   const playChime = useCallback(
@@ -145,6 +161,17 @@ export function useAudioSynthesizer() {
     [isMuted, initAudio],
   );
 
+  const scheduleChime = useCallback(
+    (delayMs: number, frequency: number, durationMs: number, volume = 0.08, isWarm = true) => {
+      const timerId = setTimeout(() => {
+        timersRef.current.delete(timerId);
+        playChime(frequency, durationMs, volume, isWarm);
+      }, delayMs);
+      timersRef.current.add(timerId);
+    },
+    [playChime],
+  );
+
   // Comparison sound: plays a short synthetic pluck/beep
   // Pitch is mapped based on the bar value compared to the max value
   const playCompare = useCallback(
@@ -154,11 +181,9 @@ export function useAudioSynthesizer() {
 
       // Play a dual warm pentatonic chime sequence
       playChime(freq1, 150, 0.08, true);
-      setTimeout(() => {
-        playChime(freq2, 150, 0.08, true);
-      }, 55);
+      scheduleChime(55, freq2, 150, 0.08, true);
     },
-    [playChime],
+    [playChime, scheduleChime],
   );
 
   // Swap sound: slightly brighter double chime sequence
@@ -168,21 +193,19 @@ export function useAudioSynthesizer() {
       const freq2 = getPentatonicFreq(val2, maxVal);
 
       playChime(freq1, 200, 0.09, false);
-      setTimeout(() => {
-        playChime(freq2, 200, 0.09, false);
-      }, 40);
+      scheduleChime(40, freq2, 200, 0.09, false);
     },
-    [playChime],
+    [playChime, scheduleChime],
   );
 
   // Sorted tone: pleasant rising chime
   const playSorted = useCallback(() => {
     // Beautiful rising chord sequence in pentatonic
     playChime(523.25, 250, 0.08, true); // C5
-    setTimeout(() => playChime(659.25, 250, 0.08, true), 50); // E5
-    setTimeout(() => playChime(783.99, 250, 0.08, true), 100); // G5
-    setTimeout(() => playChime(1046.5, 350, 0.08, true), 150); // C6
-  }, [playChime]);
+    scheduleChime(50, 659.25, 250, 0.08, true); // E5
+    scheduleChime(100, 783.99, 250, 0.08, true); // G5
+    scheduleChime(150, 1046.5, 350, 0.08, true); // C6
+  }, [playChime, scheduleChime]);
 
   // Complete song: mini celebratory melody
   const playComplete = useCallback(() => {
@@ -197,11 +220,9 @@ export function useAudioSynthesizer() {
     ];
 
     notes.forEach((note) => {
-      setTimeout(() => {
-        playChime(note.freq, 500, 0.07, true);
-      }, note.delay);
+      scheduleChime(note.delay, note.freq, 500, 0.07, true);
     });
-  }, [playChime]);
+  }, [scheduleChime]);
 
   return {
     isMuted,

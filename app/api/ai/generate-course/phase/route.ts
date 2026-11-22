@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeTeacherOrAdmin } from '@/lib/ai/aiAuthHelper';
+import { ROLES } from '@/lib/constants';
 import {
   callOpenRouterStructured,
   localizedStringSchema,
@@ -227,8 +228,13 @@ ${viewSpecificInstructions}
 Generate the detailed phase content matching the requested schema. Provide natural, friendly mascot mentoring lines and hints in all 3 languages (hu, en, ro).
 `;
 
+    const requestedModel =
+      user.role === ROLES.ADMIN && typeof model === 'string' && model.trim()
+        ? model.trim()
+        : undefined;
+
     const { data: rawPhase, modelUsed } = await callOpenRouterStructured<SinglePhaseRaw>({
-      model,
+      model: requestedModel,
       systemPrompt,
       userPrompt,
       schema: singlePhaseSchema,
@@ -243,7 +249,12 @@ Generate the detailed phase content matching the requested schema. Provide natur
       sourceView: phaseView,
       sourceAlgorithmId: phase.sourceAlgorithmId || 'bubble-sort',
       summary: sanitizeLocalizedField(rawPhase.summary, phaseSummaryHu || ''),
-      maxPoints: Number(phase.maxPoints) || 10,
+      maxPoints:
+        phase.maxPoints !== undefined &&
+        phase.maxPoints !== null &&
+        Number.isFinite(Number(phase.maxPoints))
+          ? Math.max(0, Number(phase.maxPoints))
+          : 10,
       mascotLine: sanitizeLocalizedField(rawPhase.mascotLine, 'Figyeld meg a lépéseket!'),
       mascotMistakeLine: sanitizeLocalizedField(
         rawPhase.mascotMistakeLine,

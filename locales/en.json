@@ -24,9 +24,11 @@
     "all_categories": "All Categories",
     "all_difficulties": "All Difficulties",
     "clear_all": "Clear All",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "help": "Help"
   },
   "nav": {
+    "menu": "Menu",
     "big_o": "Big O & Race",
     "home": "Home",
     "algorithms": "Algorithms",
@@ -45,7 +47,9 @@
     "leaderboard": "Leaderboard",
     "multiplayer": "Multiplayer",
     "studio": "Studio",
-    "teacher_studio": "Teacher Studio"
+    "teacher_studio": "Teacher Studio",
+    "admin": "Admin Panel",
+    "videos": "Videos"
   },
   "aria": {
     "go_home": "Go to homepage",
@@ -114,7 +118,8 @@
     "verify_success": "Verification successful!",
     "verify_success_desc": "You can now log in to your account.",
     "verify_error": "Verification failed",
-    "verify_error_desc": "The link is invalid or expired."
+    "verify_error_desc": "The link is invalid or expired.",
+    "bug_report_submitted": "Bug report submitted successfully"
   },
   "pwa": {
     "install_title": "AlgoRythmics App",
@@ -256,7 +261,9 @@
       "auth_failed": "Invalid email or password, or account not verified!",
       "rate_limit_error": "Too many requests. Please wait 15 minutes before trying again.",
       "reset_token_invalid": "The reset token is invalid or has expired.",
-      "social_account_error": "This account uses social login (Google/etc.). Please sign in with your social provider."
+      "social_account_error": "This account uses social login (Google/etc.). Please sign in with your social provider.",
+      "password_too_short": "Password must be at least 6 characters long.",
+      "user_already_exists": "An account with this email already exists."
     },
     "forgot_password_title": "Forgot Password",
     "forgot_password_subtitle": "Enter your email address and we'll send you a link to reset your password.",
@@ -347,7 +354,9 @@
       "email_required": "Email is required",
       "email_invalid": "Email is invalid",
       "subject_required": "Subject is required",
-      "message_required": "Message is required"
+      "message_required": "Message is required",
+      "send_failed": "Failed to send message. Please try again later.",
+      "rate_limited": "Too many messages sent. Please wait a few minutes before trying again."
     }
   },
   "about": {
@@ -742,7 +751,13 @@
       "debug_fail": "The error is not there...",
       "debug_success_desc": "You precisely identified the logical mistake in the code.",
       "debug_fail_desc": "Carefully review the loops and conditions again!"
-    }
+    },
+    "checkpoints": "Checkpoints",
+    "completed": "Completed",
+    "hidden_phases": "hidden steps",
+    "idle_help": "Need a hint? I'm here whenever you're ready!",
+    "locked": "Locked",
+    "next_up": "Next up"
   },
   "admin": {
     "algorithm_type": "Algorithm Type",
@@ -765,7 +780,8 @@
     "filters": {
       "all": "All Videos",
       "sorting": "Sorting",
-      "searching": "Searching"
+      "searching": "Searching",
+      "backtracking": "Backtracking"
     },
     "views": "views",
     "list": {
@@ -911,7 +927,17 @@
     "first_try": "First try!",
     "attempts": "{count} attempts",
     "test_execution": "Test Execution",
-    "passed": "Passed (Array was sorted correctly)"
+    "passed": "Passed (Array was sorted correctly)",
+    "errors": {
+      "infinite_loop": "Infinite loop or recursion limit exceeded! Please check your termination conditions.",
+      "timeout": "Execution timed out (1.5s): likely an infinite loop or overly slow execution.",
+      "missing_fn": "Please create a function named '{fnName}'!",
+      "search_mismatch": "Error: Incorrect search result! Received: {received}, Expected index e.g.: {expected}",
+      "not_array": "Error: Your code did not return an array or modify the input array!",
+      "length_mismatch": "Error: Returned array length does not match the original!",
+      "sort_mismatch": "Error: The array was not sorted properly. Your result: [{received}] Expected: [{expected}]",
+      "runtime_error": "A syntax or runtime error occurred."
+    }
   },
   "terms_page": {
     "title": "Terms of Service",
@@ -1044,7 +1070,8 @@
     "back_to_profile": "Back to Profile",
     "not_found": "Certificate Not Found",
     "not_found_desc": "The requested certificate does not exist or has an invalid ID.",
-    "official_seal": "Official AlgoRythmics Certificate"
+    "official_seal": "Official AlgoRythmics Certificate",
+    "copied": "Copied!"
   },
   "confidence": {
     "prompt": "How sure are you about your answer?",
@@ -1186,7 +1213,12 @@
       "swap_needed_desc": "👉 {playerA} and {playerB}: Walk across each other and bump phones (or click the button below)!",
       "ok_desc": "✅ {playerA} and {playerB} are already in sorted order! Click Compared to proceed.",
       "button_ok": "1. Compared (In Order)",
-      "button_swap": "2. Bumped / Swapped Positions!"
+      "button_swap": "2. Bumped / Swapped Positions!",
+      "position_verified": "Position verified! Waiting for your partner to line up...",
+      "sensitivity": "Sensitivity:",
+      "stop_detected": "✅ STOP DETECTED AT NEW POSITION!",
+      "walk_left": "WALK LEFT",
+      "walk_right": "WALK RIGHT"
     },
     "post_match": {
       "title": "Algorithm Successfully Completed!",
@@ -1250,7 +1282,8 @@
       "stage_preparing": "Dancers are taking the stage...",
       "waiting_for_partner": "Confirmed! Waiting for your dance partner to confirm the synchronized step...",
       "partner_requested_action": "Your partner requested an action! Press the button to confirm together!",
-      "synchronizing_pair": "Pair synchronization in progress..."
+      "synchronizing_pair": "Pair synchronization in progress...",
+      "title": "Visual Dance Arena"
     },
     "lobby": {
       "enter_waiting_room": "Enter Waiting Room",
@@ -1280,6 +1313,17 @@
       "min_players_hint": "At least 2 players or bots required to start the match",
       "practice_bot": "Practice bot",
       "teammate": "Teammate"
+    },
+    "cyber": {
+      "core_lock": "1. Core Lock: Order Confirmed (Enter)",
+      "flux_swap": "2. ⚡ FLUX SWAP: Quantum Swap (Space)",
+      "lock_target": "Target Lock (Space)",
+      "multiplier": "1.5x Multiplier",
+      "operator": "Operator",
+      "scanner": "Scanner:",
+      "send_reaction": "Send reaction",
+      "target_reactor": "🎯 Lock Target on Reactor (Space)",
+      "unlock_target": "Unlock Target"
     }
   },
   "certificate": {

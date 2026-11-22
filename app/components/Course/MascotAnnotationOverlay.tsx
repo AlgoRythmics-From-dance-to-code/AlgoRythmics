@@ -14,6 +14,13 @@ interface AnchorRect {
   badgeText?: string;
 }
 
+function escapeAttrSelector(val: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(val);
+  }
+  return val.replace(/["\\]/g, '\\$&');
+}
+
 export default function MascotAnnotationOverlay({
   accentColor = '#269984',
 }: {
@@ -31,7 +38,9 @@ export default function MascotAnnotationOverlay({
 
     const calculated: AnchorRect[] = [];
     activeAnnotations.forEach((anno) => {
-      const el = document.querySelector(`[data-mascot-anchor="${anno.targetAnchor}"]`);
+      const el = document.querySelector(
+        `[data-mascot-anchor="${escapeAttrSelector(anno.targetAnchor)}"]`,
+      );
       if (el) {
         const domRect = el.getBoundingClientRect();
         // Only render if visible in viewport

@@ -87,7 +87,13 @@ export function sanitizePhase(
     hintCopy: toLocalized(phase.hintCopy, ''),
     idleHelp: toLocalized(phase.idleHelp, ''),
     askConfidence: phase.askConfidence ?? true,
-    maxPoints: Math.max(0, Number(phase.maxPoints) || 10),
+    maxPoints:
+      phase.maxPoints !== undefined &&
+      phase.maxPoints !== null &&
+      phase.maxPoints !== '' &&
+      Number.isFinite(Number(phase.maxPoints))
+        ? Math.max(0, Number(phase.maxPoints))
+        : 10,
   };
 
   if (phase.customVideoId) {
@@ -161,26 +167,41 @@ export function sanitizePhase(
   if (phase.debugCode) result.debugCode = String(phase.debugCode);
   if (phase.expectedCode) result.expectedCode = String(phase.expectedCode);
 
-  // Gap fill
+  // Gap fill: merge options, solutions, and decoys into gapFillOptions (schema has no separate gapFillDecoys field)
   if (phase.gapFillContent) {
     result.gapFillContent = toLocalized(phase.gapFillContent, '');
+    const mergedOptions: Array<{ option: LocalizedString }> = [];
+    const seenOptions = new Set<string>();
+    const pushOption = (raw: unknown) => {
+      const loc = toLocalized(raw, '');
+      const key = `${loc.hu.trim()}|${loc.en.trim()}|${loc.ro.trim()}`;
+      if ((!loc.hu.trim() && !loc.en.trim() && !loc.ro.trim()) || seenOptions.has(key)) return;
+      seenOptions.add(key);
+      mergedOptions.push({ option: loc });
+    };
+
     if (Array.isArray(phase.gapFillOptions)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      result.gapFillOptions = phase.gapFillOptions.map((g: any) => ({
-        option: toLocalized(typeof g === 'object' && g?.option ? g.option : g, ''),
-      }));
+      phase.gapFillOptions.forEach((g: any) =>
+        pushOption(typeof g === 'object' && g?.option ? g.option : g),
+      );
     }
     if (Array.isArray(phase.gapFillSolutions)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      result.gapFillSolutions = phase.gapFillSolutions.map((s: any) => ({
-        solution: toLocalized(typeof s === 'object' && s?.solution ? s.solution : s, ''),
-      }));
+      result.gapFillSolutions = phase.gapFillSolutions.map((s: any) => {
+        const val = typeof s === 'object' && s?.solution ? s.solution : s;
+        pushOption(val);
+        return { solution: toLocalized(val, '') };
+      });
     }
     if (Array.isArray(phase.gapFillDecoys)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      result.gapFillDecoys = phase.gapFillDecoys.map((d: any) => ({
-        decoy: toLocalized(typeof d === 'object' && d?.decoy ? d.decoy : d, ''),
-      }));
+      phase.gapFillDecoys.forEach((d: any) =>
+        pushOption(typeof d === 'object' && d?.decoy ? d.decoy : d),
+      );
+    }
+    if (mergedOptions.length > 0) {
+      result.gapFillOptions = mergedOptions;
     }
   }
 

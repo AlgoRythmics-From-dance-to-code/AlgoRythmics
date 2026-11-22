@@ -120,6 +120,22 @@ export default function ProfilePage() {
   const [lastName, setLastName] = useState('');
   const [bio, setBio] = useState('');
   const [mascotEnabled, setMascotEnabled] = useState(true);
+  const [globalMascotEnabled, setGlobalMascotEnabled] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/admin/ai-settings')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { mascotEnabled?: boolean } | null) => {
+        if (active && data && typeof data.mascotEnabled === 'boolean') {
+          setGlobalMascotEnabled(data.mascotEnabled);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -136,6 +152,36 @@ export default function ProfilePage() {
   const [bugScreenshot, setBugScreenshot] = useState<File | null>(null);
   const [bugScreenshotPreview, setBugScreenshotPreview] = useState<string | null>(null);
   const [isSubmittingBug, setIsSubmittingBug] = useState(false);
+  const [certTokens, setCertTokens] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const uid = (session?.user as BaseUser | undefined)?.id;
+    if (!uid) return;
+    const missingSlugs = Object.entries(courseProgress)
+      .filter(([slug, p]) => p.isCompleted && !p.shareToken && !certTokens[slug])
+      .map(([slug]) => slug);
+    if (missingSlugs.length === 0) return;
+
+    let cancelled = false;
+    missingSlugs.forEach((slug) => {
+      fetch(`/api/certificates/${encodeURIComponent(String(uid))}/${encodeURIComponent(slug)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: { shareToken?: string } | null) => {
+          if (!cancelled && data?.shareToken) {
+            setCertTokens((prev) =>
+              prev[slug] === data.shareToken ? prev : { ...prev, [slug]: data.shareToken! },
+            );
+          }
+        })
+        .catch(() => {
+          // Ignore background share token lookup error
+        });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user, courseProgress, certTokens]);
 
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -146,10 +192,21 @@ export default function ProfilePage() {
       return;
     }
 
+    if (bugScreenshotPreview) {
+      URL.revokeObjectURL(bugScreenshotPreview);
+    }
     setBugScreenshot(file);
     const objectUrl = URL.createObjectURL(file);
     setBugScreenshotPreview(objectUrl);
   };
+
+  useEffect(() => {
+    return () => {
+      if (bugScreenshotPreview) {
+        URL.revokeObjectURL(bugScreenshotPreview);
+      }
+    };
+  }, [bugScreenshotPreview]);
 
   const handleRemoveScreenshot = () => {
     if (bugScreenshotPreview) {
@@ -721,7 +778,9 @@ export default function ProfilePage() {
                         {Object.entries(courseProgress)
                           .filter(([, p]) => p.isCompleted)
                           .map(([courseSlug, p]) => {
-                            const certUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/certificate/${(user as BaseUser).id}/${courseSlug}`;
+                            const shareToken = p.shareToken || certTokens[courseSlug];
+                            const certPath = `/certificate/${(user as BaseUser).id}/${courseSlug}${shareToken ? `?token=${encodeURIComponent(shareToken)}` : ''}`;
+                            const certUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${certPath}`;
                             const courseTitle = courseSlug
                               .replace(/[-_]+/g, ' ')
                               .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -752,9 +811,34 @@ export default function ProfilePage() {
 
                                 <div className="pt-4 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-3">
                                   <button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(certUrl);
-                                      toast.success(t('profile.certificates.copied_toast'));
+                                    onClick={async () => {
+                                      try {
+                                        if (!navigator.clipboard?.writeText) {
+                                          throw new Error('Clipboard API unavailable');
+                                        }
+                                        let resolvedUrl = certUrl;
+                                        if (!shareToken) {
+                                          const tokenRes = await fetch(
+                                            `/api/certificates/${encodeURIComponent(String((user as BaseUser).id))}/${encodeURIComponent(courseSlug)}`,
+                                          );
+                                          if (tokenRes.ok) {
+                                            const tokenData = (await tokenRes.json()) as {
+                                              shareToken?: string;
+                                            };
+                                            if (tokenData.shareToken) {
+                                              setCertTokens((prev) => ({
+                                                ...prev,
+                                                [courseSlug]: tokenData.shareToken!,
+                                              }));
+                                              resolvedUrl = `${window.location.origin}/certificate/${(user as BaseUser).id}/${courseSlug}?token=${encodeURIComponent(tokenData.shareToken)}`;
+                                            }
+                                          }
+                                        }
+                                        await navigator.clipboard.writeText(resolvedUrl);
+                                        toast.success(t('profile.certificates.copied_toast'));
+                                      } catch {
+                                        toast.error(t('toasts.unexpected_error'));
+                                      }
                                     }}
                                     className="flex items-center gap-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:text-[#269984] transition-colors p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800 hover:bg-[#269984]/10"
                                   >
@@ -763,7 +847,7 @@ export default function ProfilePage() {
                                   </button>
 
                                   <Link
-                                    href={`/certificate/${(user as BaseUser).id}/${courseSlug}`}
+                                    href={certPath}
                                     target="_blank"
                                     className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#269984] hover:bg-[#1f7c6b] transition-all px-4 py-2.5 rounded-xl shadow-md"
                                   >
@@ -788,17 +872,6 @@ export default function ProfilePage() {
                           >
                             {t('nav.courses')}
                           </button>
-
-                          <Link
-                            href={`/certificate/${(user as BaseUser).id || 1}/bubble-sort`}
-                            target="_blank"
-                            className="inline-flex items-center gap-2 bg-neutral-800 text-gray-300 font-bold px-5 py-3 rounded-xl hover:bg-neutral-700 transition-all text-sm border border-neutral-700"
-                          >
-                            <ExternalLink size={16} />
-                            {locale === 'hu'
-                              ? 'Minta Oklevél Megtekintése'
-                              : 'Preview Sample Certificate'}
-                          </Link>
                         </div>
                       </div>
                     )}
@@ -860,9 +933,20 @@ export default function ProfilePage() {
 
                     <div className="p-6 bg-[#f0fbf9] dark:bg-[#269984]/5 rounded-[2rem] border border-[#269984]/20 flex items-center justify-between">
                       <div className="flex-1 pr-4">
-                        <p className="font-montserrat font-black text-[#269984] text-xs uppercase tracking-widest mb-1">
-                          {t('profile.edit.mascot_label')}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <p className="font-montserrat font-black text-[#269984] text-xs uppercase tracking-widest">
+                            {t('profile.edit.mascot_label')}
+                          </p>
+                          {!globalMascotEnabled && (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-extrabold uppercase tracking-wider">
+                              {locale === 'en'
+                                ? 'AI Chat disabled (Manual tips only)'
+                                : locale === 'ro'
+                                  ? 'Chat AI dezactivat (Doar indicii manuale)'
+                                  : 'AI Chat kikapcsolva (Csak manuális kabala tippek)'}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-[#269984]/70 leading-relaxed">
                           {t('profile.edit.mascot_description')}
                         </p>
@@ -1143,7 +1227,7 @@ export default function ProfilePage() {
                           value={deleteConfirmation}
                           onChange={(e) => {
                             setDeleteConfirmation(e.target.value);
-                            setIsDeleteConfirmed(e.target.value === 'DELETE');
+                            setIsDeleteConfirmed(e.target.value.trim().toUpperCase() === 'DELETE');
                           }}
                           className="w-full font-montserrat h-16 border-2 border-gray-100 dark:border-neutral-800 bg-white dark:bg-[#1a1a1a] dark:text-white rounded-3xl px-6 text-xl text-center font-black outline-none focus:border-red-500 transition-all uppercase placeholder:opacity-20 translate-x-0"
                           placeholder={t('profile.delete.placeholder')}

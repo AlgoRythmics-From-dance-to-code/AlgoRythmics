@@ -163,6 +163,10 @@ export const Courses: CollectionConfig = {
               name: 'instructor',
               type: 'relationship',
               relationTo: 'users',
+              access: {
+                create: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+                update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+              },
               admin: {
                 position: 'sidebar',
                 description: 'A kurzust készítő tanár / oktató.',
@@ -185,6 +189,10 @@ export const Courses: CollectionConfig = {
               name: 'isOfficial',
               type: 'checkbox',
               defaultValue: false,
+              access: {
+                create: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+                update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+              },
               admin: {
                 position: 'sidebar',
                 description: 'Hivatalos AlgoRythmics alapkurzus (mintasablon).',

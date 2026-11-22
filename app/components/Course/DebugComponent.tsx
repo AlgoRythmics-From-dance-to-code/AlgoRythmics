@@ -31,11 +31,24 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
 
   const { trackEvent } = useAnalytics(undefined, 'debug', courseId);
 
-  const debugLines = (phase.debugCode || '').replace(/\\n/g, '\n').split('\n');
-  const expectedLines = (phase.expectedCode || '').replace(/\\n/g, '\n').split('\n');
+  const debugLines = React.useMemo(
+    () => (phase.debugCode || '').replace(/\\n/g, '\n').split('\n'),
+    [phase.debugCode],
+  );
+  const expectedLines = React.useMemo(
+    () => (phase.expectedCode || '').replace(/\\n/g, '\n').split('\n'),
+    [phase.expectedCode],
+  );
 
-  // Find which line is different (the bug)
-  const bugLineIndex = debugLines.findIndex((line, i) => line.trim() !== expectedLines[i]?.trim());
+  // Find which line is different (the bug); clamp to last line if expectedCode has extra lines at the end
+  const bugLineIndex = React.useMemo(() => {
+    const diffIdx = debugLines.findIndex((line, i) => line.trim() !== expectedLines[i]?.trim());
+    if (diffIdx !== -1) return diffIdx;
+    if (expectedLines.length > debugLines.length && debugLines.length > 0) {
+      return debugLines.length - 1;
+    }
+    return -1;
+  }, [debugLines, expectedLines]);
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -71,12 +84,12 @@ export default function DebugComponent({ phase, courseId, onMistake }: DebugComp
   const checkBug = () => {
     if (selectedIndex === null) return;
 
-    const correct = selectedIndex === bugLineIndex;
+    const correct = bugLineIndex >= 0 && selectedIndex === bugLineIndex;
     if (!correct) onMistake?.();
 
     const maxPoints = phase.maxPoints ?? 10;
     const selectedLineText = debugLines[selectedIndex]?.trim();
-    const correctLineText = debugLines[bugLineIndex]?.trim();
+    const correctLineText = bugLineIndex >= 0 ? debugLines[bugLineIndex]?.trim() : undefined;
 
     const evalResult = evaluateConfidence({
       isCorrect: correct,

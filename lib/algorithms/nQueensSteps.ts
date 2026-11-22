@@ -9,7 +9,11 @@ import { type SortStep } from './bubbleSortSteps';
  * We represent the board as an array where arr[i] is the column of the queen in row i.
  */
 export function generateNQueensSteps(nValues: number[]): SortStep[] {
-  const n = Array.isArray(nValues) ? nValues[0] : typeof nValues === 'number' ? nValues : 4;
+  const rawN = Array.isArray(nValues) ? nValues[0] : typeof nValues === 'number' ? nValues : 4;
+  const n =
+    typeof rawN === 'number' && Number.isFinite(rawN)
+      ? Math.max(1, Math.min(12, Math.trunc(rawN)))
+      : 4;
   const board: number[] = Array(n).fill(-1);
   const result: SortStep[] = [
     {
@@ -92,6 +96,9 @@ export function generateNQueensSteps(nValues: number[]): SortStep[] {
 
         if (solve(row + 1)) return true;
 
+        // Clear queen before emitting backtrack snapshot so board state matches placedQueens
+        board[row] = -1;
+
         // If we're here, sub-search failed. We need to show this cell failed at this level.
         result.push({
           array: board.map((v, i) => ({ val: v, id: i })),
@@ -112,7 +119,7 @@ export function generateNQueensSteps(nValues: number[]): SortStep[] {
             col,
             action: 'backtrack',
             'board[row]': -1,
-            placedQueens: board.filter((v) => v !== -1).length - 1,
+            placedQueens: board.filter((v) => v !== -1).length,
           },
         });
       } else {
@@ -137,21 +144,22 @@ export function generateNQueensSteps(nValues: number[]): SortStep[] {
             conflict: true,
           },
         });
+        board[row] = -1;
       }
-
-      board[row] = -1;
     }
     return false;
   }
 
-  solve(0);
+  const hasSolution = solve(0);
 
   result.push({
     array: board.map((v, i) => ({ val: v, id: i })),
     activeIndices: [],
     swapping: false,
-    sortedIndices: board.map((_, i) => i),
-    description: `N-Queens solution found! All queens are safely placed.`,
+    sortedIndices: hasSolution ? board.map((_, i) => i) : [],
+    description: hasSolution
+      ? `N-Queens solution found! All queens are safely placed.`
+      : `No N-Queens solution exists for a ${n}x${n} board.`,
     comparisons,
     swapCount: 0,
     pass: 0,
@@ -159,8 +167,8 @@ export function generateNQueensSteps(nValues: number[]): SortStep[] {
     highlightLine: 2,
     variables: {
       n,
-      status: 'All Queens Placed!',
-      solved: true,
+      status: hasSolution ? 'All Queens Placed!' : 'No Solution Exists',
+      solved: hasSolution,
     },
   });
 

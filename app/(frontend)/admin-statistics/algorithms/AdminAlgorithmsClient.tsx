@@ -47,6 +47,7 @@ interface AlgorithmStatisticsData {
   algorithm: string;
   kpis: {
     activeLearnersCount: number;
+    algorithmLearnersCount?: number;
     totalRecordedHours: number;
     formattedTotalTime?: string;
     totalAlgorithmsCompleted: number;
@@ -173,10 +174,34 @@ export default function AdminAlgorithmsClient() {
 
   const exportCSV = () => {
     if (!data) return;
-    let csv = 'Algoritmus;Hibaarany (%);Gondolkodasi ido (mp);Osszes hiba;Tippek;Befejezve (db)\n';
-    data.algorithmHesitationList.forEach((a) => {
-      csv += `${a.algorithmId};${a.errorRate}%;${a.averageHesitationSeconds} mp;${a.totalMistakes};${a.hintsUsed};${a.completedCount}\n`;
-    });
+    const sanitizeCell = (val: string | number) => {
+      const s = String(val ?? '');
+      const neutralized = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+      return `"${neutralized.replace(/"/g, '""')}"`;
+    };
+    const header = [
+      'Algoritmus',
+      'Hibaarany (%)',
+      'Gondolkodasi ido (mp)',
+      'Osszes hiba',
+      'Tippek',
+      'Befejezve (db)',
+    ]
+      .map(sanitizeCell)
+      .join(';');
+    const lines = data.algorithmHesitationList.map((a) =>
+      [
+        a.algorithmId,
+        `${a.errorRate}%`,
+        `${a.averageHesitationSeconds} mp`,
+        a.totalMistakes,
+        a.hintsUsed,
+        a.completedCount,
+      ]
+        .map(sanitizeCell)
+        .join(';'),
+    );
+    const csv = '\uFEFF' + [header, ...lines].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -427,7 +452,7 @@ export default function AdminAlgorithmsClient() {
               <Users className="w-5 h-5 text-blue-500" />
             </div>
             <div className="text-3xl font-black font-montserrat text-gray-900 dark:text-white">
-              {data?.kpis.activeLearnersCount ?? 0}
+              {data?.kpis.algorithmLearnersCount ?? data?.kpis.activeLearnersCount ?? 0}
             </div>
             <p className="text-xs text-gray-500">Önálló algoritmusokat gyakorló tanulók</p>
           </div>
@@ -453,7 +478,7 @@ export default function AdminAlgorithmsClient() {
               <Brain className="w-5 h-5 text-purple-500" />
             </div>
             <div className="text-3xl font-black font-montserrat text-gray-900 dark:text-white">
-              {data?.kpis.avgHesitationSeconds ?? 3.7} mp
+              {data?.kpis.avgHesitationSeconds ?? 0} mp
             </div>
             <p className="text-xs text-gray-500">Döntési és lépési reflexió</p>
           </div>
@@ -466,7 +491,7 @@ export default function AdminAlgorithmsClient() {
               <Video className="w-5 h-5 text-[#269984]" />
             </div>
             <div className="text-3xl font-black font-montserrat text-[#269984]">
-              -{data?.pedagogy?.videoErrorReductionPercent ?? 62}% hiba
+              -{data?.pedagogy?.videoErrorReductionPercent ?? 0}% hiba
             </div>
             <p className="text-xs text-gray-500">A táncvideót megnéző diákoknál</p>
           </div>
@@ -695,7 +720,7 @@ export default function AdminAlgorithmsClient() {
                     Videót Végignéző Tanulók
                   </span>
                   <div className="text-3xl font-black font-montserrat text-emerald-600 dark:text-emerald-400">
-                    {data?.pedagogy?.avgMistakesWithVideo ?? 1.3} hiba / menet
+                    {data?.pedagogy?.avgMistakesWithVideo ?? 0} hiba / menet
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-400">
                     A vizuális-auditív alapozás segít a memóriarögzítésben.
@@ -707,10 +732,14 @@ export default function AdminAlgorithmsClient() {
                     Videót Kihagyó Tanulók
                   </span>
                   <div className="text-3xl font-black font-montserrat text-rose-600 dark:text-rose-400">
-                    {data?.pedagogy?.avgMistakesWithoutVideo ?? 3.4} hiba / menet
+                    {data?.pedagogy?.avgMistakesWithoutVideo ?? 0} hiba / menet
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-400">
-                    2.6x több döntési hibát vétenek az irányítás fázisban.
+                    {(data?.pedagogy?.avgMistakesWithVideo ?? 0) > 0 &&
+                    (data?.pedagogy?.avgMistakesWithoutVideo ?? 0) >
+                      (data?.pedagogy?.avgMistakesWithVideo ?? 0)
+                      ? `${(data!.pedagogy!.avgMistakesWithoutVideo / data!.pedagogy!.avgMistakesWithVideo).toFixed(1)}x több döntési hibát vétenek az irányítás fázisban.`
+                      : 'Vizuális alapozás nélkül nagyobb a döntési bizonytalanság.'}
                   </p>
                 </div>
               </div>
@@ -725,11 +754,11 @@ export default function AdminAlgorithmsClient() {
               <p className="text-xs text-gray-500 leading-relaxed">
                 A hibát vétő tanulók átlagosan{' '}
                 <strong className="text-purple-600 dark:text-purple-400 font-extrabold">
-                  +{data?.pedagogy?.pesSlowdownPercentage ?? 58}%-kal több időt
+                  +{data?.pedagogy?.pesSlowdownPercentage ?? 0}%-kal több időt
                 </strong>{' '}
                 töltenek el a következő lépés átgondolásával (
-                {Math.round(((data?.pedagogy?.avgPostErrorDurationMs ?? 4200) / 1000) * 10) / 10} mp
-                vs {Math.round(((data?.pedagogy?.avgNormalDurationMs ?? 2600) / 1000) * 10) / 10} mp
+                {Math.round(((data?.pedagogy?.avgPostErrorDurationMs ?? 0) / 1000) * 10) / 10} mp vs{' '}
+                {Math.round(((data?.pedagogy?.avgNormalDurationMs ?? 0) / 1000) * 10) / 10} mp
                 normál idő). Ez egészséges kognitív reflexiót jelez.
               </p>
             </div>

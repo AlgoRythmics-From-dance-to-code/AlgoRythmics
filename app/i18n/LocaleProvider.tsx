@@ -1,9 +1,21 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import hu from '../../locales/hu.json';
 
 export type Locale = 'en' | 'hu' | 'ro';
+
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 const loadedDictionaries: Partial<Record<Locale, Record<string, unknown>>> = {
   hu: hu as Record<string, unknown>,
@@ -52,31 +64,41 @@ export default function LocaleProvider({
   initialDictionary?: Record<string, unknown>;
 }) {
   const startLocale: Locale = initialLocale || 'hu';
-  if (initialDictionary && !loadedDictionaries[startLocale]) {
-    loadedDictionaries[startLocale] = initialDictionary;
-  }
+  const requestedLocaleRef = useRef<Locale>(startLocale);
 
   const [locale, setLocaleState] = useState<Locale>(startLocale);
   const [dictionary, setDictionary] = useState<Record<string, unknown>>(
-    () => loadedDictionaries[startLocale] || initialDictionary || (hu as Record<string, unknown>),
+    () => initialDictionary || loadedDictionaries[startLocale] || (hu as Record<string, unknown>),
   );
 
   useEffect(() => {
+    if (initialDictionary && !loadedDictionaries[startLocale]) {
+      loadedDictionaries[startLocale] = initialDictionary;
+    }
+  }, [initialDictionary, startLocale]);
+
+  useEffect(() => {
     if (!initialLocale) {
-      const saved = typeof window !== 'undefined' ? localStorage.getItem('locale') : null;
-      if (saved === 'en' || saved === 'hu' || saved === 'ro') {
-        setLocaleState(saved);
-      }
+      try {
+        const saved = typeof window !== 'undefined' ? localStorage.getItem('locale') : null;
+        if (saved === 'en' || saved === 'hu' || saved === 'ro') {
+          requestedLocaleRef.current = saved;
+          setLocaleState(saved);
+        }
+      } catch {}
     }
   }, [initialLocale]);
 
   useEffect(() => {
     let active = true;
+    requestedLocaleRef.current = locale;
     if (loadedDictionaries[locale]) {
       setDictionary(loadedDictionaries[locale]!);
     } else {
       loadLocaleDictionary(locale).then((dict) => {
-        if (active) setDictionary(dict);
+        if (active && requestedLocaleRef.current === locale) {
+          setDictionary(dict);
+        }
       });
     }
     return () => {
@@ -84,7 +106,8 @@ export default function LocaleProvider({
     };
   }, [locale]);
 
-  function setLocale(l: Locale) {
+  const setLocale = useCallback((l: Locale) => {
+    requestedLocaleRef.current = l;
     try {
       localStorage.setItem('locale', l);
       document.cookie = `locale=${l};path=/;max-age=31536000;SameSite=Lax`;
@@ -94,41 +117,47 @@ export default function LocaleProvider({
       setLocaleState(l);
     } else {
       loadLocaleDictionary(l).then((dict) => {
-        setDictionary(dict);
-        setLocaleState(l);
+        if (requestedLocaleRef.current === l) {
+          setDictionary(dict);
+          setLocaleState(l);
+        }
       });
     }
-  }
+  }, []);
 
-  function t(path: string, vars?: Record<string, string | number>) {
-    const current = getRaw(path);
-    if (current === undefined) return path;
-    let s = String(current);
-    if (vars) {
-      for (const k of Object.keys(vars)) {
-        s = s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(vars[k]));
+  const getRaw = useCallback(
+    (path: string): unknown => {
+      const parts = path.split('.');
+      let current: unknown = dictionary;
+      for (const p of parts) {
+        if (current && typeof current === 'object' && p in (current as Record<string, unknown>)) {
+          current = (current as Record<string, unknown>)[p];
+        } else {
+          current = undefined;
+          break;
+        }
       }
-    }
-    return s;
-  }
-
-  function getRaw(path: string): unknown {
-    const parts = path.split('.');
-    let current: unknown = dictionary;
-    for (const p of parts) {
-      if (current && typeof current === 'object' && p in (current as Record<string, unknown>)) {
-        current = (current as Record<string, unknown>)[p];
-      } else {
-        current = undefined;
-        break;
-      }
-    }
-    return current;
-  }
-
-  return (
-    <LocaleContext.Provider value={{ locale, setLocale, t, getRaw }}>
-      {children}
-    </LocaleContext.Provider>
+      return current;
+    },
+    [dictionary],
   );
+
+  const t = useCallback(
+    (path: string, vars?: Record<string, string | number>) => {
+      const current = getRaw(path);
+      if (current === undefined) return path;
+      let s = String(current);
+      if (vars) {
+        for (const k of Object.keys(vars)) {
+          s = s.replace(new RegExp(`\\{${escapeRegExp(k)}\\}`, 'g'), () => String(vars[k]));
+        }
+      }
+      return s;
+    },
+    [getRaw],
+  );
+
+  const value = useMemo(() => ({ locale, setLocale, t, getRaw }), [locale, setLocale, t, getRaw]);
+
+  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

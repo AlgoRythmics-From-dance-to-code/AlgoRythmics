@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -43,7 +43,19 @@ export default function LoginPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [systemError, setSystemError] = useState<string | null>(null);
 
+  const handledParamsRef = useRef<string | null>(null);
+  const tRef = useRef(t);
   useEffect(() => {
+    tRef.current = t;
+  }, [t]);
+
+  useEffect(() => {
+    const paramsKey = searchParams.toString();
+    if (handledParamsRef.current === paramsKey) {
+      return;
+    }
+    handledParamsRef.current = paramsKey;
+
     clearAuthCookies();
     // Only clear local algorithm progress if explicitly logging out, preserving guest progress on login
     if (searchParams.get('logout') === 'true') {
@@ -53,19 +65,19 @@ export default function LoginPage() {
 
     const error = searchParams.get('error');
     if (error) {
-      const msg = t('login.errors.auth_failed');
+      const msg = tRef.current('login.errors.auth_failed');
       setSystemError(msg);
-      toast.error(t('toasts.login_error'), { description: msg });
+      toast.error(tRef.current('toasts.login_error'), { description: msg });
     }
 
     const reason = searchParams.get('reason');
     if (reason === 'login_required') {
-      toast.info(t('toasts.login_required'), {
-        description: t('toasts.login_required_desc'),
+      toast.info(tRef.current('toasts.login_required'), {
+        description: tRef.current('toasts.login_required_desc'),
         id: 'login-required-toast',
       });
     }
-  }, [searchParams, t, clearStore, router]);
+  }, [searchParams, clearStore, router]);
 
   const socialLogin = (provider: string) => {
     setIsRedirecting(true);
@@ -114,7 +126,10 @@ export default function LoginPage() {
       toast.success(t('toasts.login_success'));
       const callbackUrl = searchParams.get('callbackUrl');
       const targetUrl =
-        callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('//')
+        callbackUrl &&
+        callbackUrl.startsWith('/') &&
+        !callbackUrl.startsWith('//') &&
+        !callbackUrl.includes('\\')
           ? callbackUrl
           : ROUTES.HOME;
       window.location.href = targetUrl;
@@ -190,6 +205,17 @@ export default function LoginPage() {
             <p className="font-montserrat text-sm sm:text-base mb-6 text-[#666] dark:text-gray-400">
               {t('login.subtitle')}
             </p>
+
+            {(searchParams.get('reason') === 'login_required' ||
+              Boolean(searchParams.get('callbackUrl'))) &&
+              !systemError && (
+                <div
+                  role="status"
+                  className="bg-[#269984]/10 border border-[#269984]/30 text-[#1f7a6a] dark:text-[#36D6BA] px-4 py-3 rounded-lg mb-6 font-montserrat text-sm"
+                >
+                  {t('toasts.login_required_desc')}
+                </div>
+              )}
 
             {systemError && (
               <div

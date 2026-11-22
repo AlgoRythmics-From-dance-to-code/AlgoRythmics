@@ -42,6 +42,7 @@ export const API_ROUTES = {
     FORGOT_PASSWORD: '/api/auth/forgot-password',
     RESET_PASSWORD: '/api/auth/password-reset',
   },
+  CONTACT: '/api/contact',
 } as const;
 
 export const ROLES = {

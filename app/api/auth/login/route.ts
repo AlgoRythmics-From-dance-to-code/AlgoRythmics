@@ -8,7 +8,15 @@ import { getT } from '../../../../lib/i18n-server';
 export async function POST(req: Request) {
   const t = await getT();
   try {
-    const { email, password, remember } = await req.json();
+    const body = await req.json();
+    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const password = typeof body?.password === 'string' ? body.password : '';
+    const remember = body?.remember === true;
+
+    if (!email || !password) {
+      return NextResponse.json({ error: t('toasts.login_error') }, { status: 400 });
+    }
+
     const payload = await getPayloadInstance();
 
     const result = await payload.login({
@@ -17,10 +25,9 @@ export async function POST(req: Request) {
     });
 
     if (result.token) {
-      const expiration =
-        remember === true
-          ? APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME
-          : APP_CONFIG.TOKEN_EXPIRATION_DEFAULT;
+      const expiration = remember
+        ? APP_CONFIG.TOKEN_EXPIRATION_REMEMBER_ME
+        : APP_CONFIG.TOKEN_EXPIRATION_DEFAULT;
       const cookieStore = await cookies();
       cookieStore.set(APP_CONFIG.COOKIE_TOKEN_NAME, result.token, {
         path: '/',
@@ -32,10 +39,10 @@ export async function POST(req: Request) {
     }
 
     logger.info({ email }, t('toasts.login_success'));
-    return NextResponse.json(result);
+    return NextResponse.json({ user: result.user });
   } catch (error) {
     const message = error instanceof Error ? error.message : t('toasts.login_error');
     logger.error({ error: message }, t('toasts.login_error'));
-    return NextResponse.json({ error: message }, { status: 401 });
+    return NextResponse.json({ error: t('toasts.login_error') }, { status: 401 });
   }
 }

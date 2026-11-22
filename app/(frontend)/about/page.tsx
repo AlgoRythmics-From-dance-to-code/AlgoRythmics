@@ -135,7 +135,7 @@ export default function AboutPage() {
         </p>
         <a
           href="/register"
-          className="font-montserrat font-bold text-white px-10 py-4 rounded-lg text-lg sm:text-xl hover:opacity-90 transition-all bg-[#36D6BA]"
+          className="font-montserrat font-extrabold text-slate-950 px-10 py-4 rounded-lg text-lg sm:text-xl hover:bg-[#2bc4a8] transition-all bg-[#36D6BA]"
           style={{ textDecoration: 'none' }}
         >
           {t('about.cta_btn')}

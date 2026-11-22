@@ -19,8 +19,11 @@ export const LearningEvents: CollectionConfig = {
       // ADMIN and EDITOR can create anything
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
       // Enforce data.user === req.user.id for non-admins
-      if (data?.user !== user.id) return false;
-      return true;
+      const targetUser =
+        typeof data?.user === 'object' && data.user !== null
+          ? (data.user as { id?: string | number }).id
+          : data?.user;
+      return targetUser !== undefined && String(targetUser) === String(user.id);
     },
     read: ({ req: { user } }) => {
       if (!user) return false;

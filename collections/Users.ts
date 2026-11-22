@@ -61,7 +61,7 @@ export const Users: CollectionConfig = {
     create: () => true,
     update: ({ req: { user } }) => {
       if (!user) return false;
-      if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
+      if (user.role === ROLES.ADMIN) return true;
       return { id: { equals: user.id } };
     },
     delete: ({ req: { user } }) => {
@@ -77,6 +77,9 @@ export const Users: CollectionConfig = {
           const { totalDocs } = await req.payload.count({ collection: 'users' });
           if (totalDocs === 0) {
             data.role = ROLES.ADMIN;
+            data._verified = true;
+          } else if (req.payloadAPI !== 'local' && req.user?.role !== ROLES.ADMIN) {
+            data.role = ROLES.USER;
           }
         }
         return data;
@@ -118,6 +121,7 @@ export const Users: CollectionConfig = {
       defaultValue: ROLES.USER,
       required: true,
       access: {
+        create: ({ req: { user } }) => user?.role === ROLES.ADMIN,
         update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
       },
       admin: {
@@ -148,6 +152,10 @@ export const Users: CollectionConfig = {
       name: 'completedAlgorithms',
       type: 'select',
       hasMany: true,
+      access: {
+        create: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+        update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+      },
       options: ALGORITHMS.map((algo) => ({
         label: algo.id
           .split('-')
@@ -165,6 +173,10 @@ export const Users: CollectionConfig = {
       type: 'relationship',
       relationTo: 'courses',
       hasMany: true,
+      access: {
+        create: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+        update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+      },
       admin: {
         position: 'sidebar',
         description: 'Kurzusok, amiket a felhasználó már teljesített.',
@@ -181,6 +193,10 @@ export const Users: CollectionConfig = {
     {
       name: 'learningStats',
       type: 'group',
+      access: {
+        create: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+        update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+      },
       admin: { description: 'Aggregated learning statistics across all algorithms.' },
       fields: [
         { name: 'totalTimeSpentMs', type: 'number', defaultValue: 0 },
@@ -211,6 +227,10 @@ export const Users: CollectionConfig = {
         { label: 'GitHub', value: AUTH_PROVIDERS.GITHUB },
       ],
       defaultValue: AUTH_PROVIDERS.EMAIL,
+      access: {
+        create: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+        update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+      },
       admin: {
         position: 'sidebar',
         readOnly: true,
@@ -219,6 +239,10 @@ export const Users: CollectionConfig = {
     {
       name: 'authProviderId',
       type: 'text',
+      access: {
+        create: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+        update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+      },
       admin: {
         position: 'sidebar',
         readOnly: true,
@@ -227,6 +251,10 @@ export const Users: CollectionConfig = {
     {
       name: 'lastResetRequest',
       type: 'date',
+      access: {
+        create: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+        update: ({ req: { user } }) => user?.role === ROLES.ADMIN,
+      },
       admin: {
         readOnly: true,
         position: 'sidebar',

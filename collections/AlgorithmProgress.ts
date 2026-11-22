@@ -16,10 +16,11 @@ export const AlgorithmProgress: CollectionConfig = {
     create: ({ req: { user }, data }) => {
       if (!user) return false;
       if (user.role === ROLES.ADMIN || user.role === ROLES.EDITOR) return true;
-      if (data && data.user) {
-        return data.user === user.id;
-      }
-      return true;
+      const targetUser =
+        typeof data?.user === 'object' && data.user !== null
+          ? (data.user as { id?: string | number }).id
+          : data?.user;
+      return targetUser === undefined || String(targetUser) === String(user.id);
     },
     read: ({ req: { user } }) => {
       if (!user) return false;

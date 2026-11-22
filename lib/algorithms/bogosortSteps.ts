@@ -57,37 +57,39 @@ export function generateBogosortSteps(initialValues: number[]): SortStep[] {
       description: `Attempt ${attempts}: Shuffled the entire array!`,
       descriptionKey: 'visualizer.bogosort_attempt',
       descriptionParams: { attempts },
-      comparisons: n - 1,
+      comparisons: Math.max(0, n - 1),
       swapCount: n,
       pass: attempts,
       highlightLine: 3,
       variables: {
         attempts,
-        isSorted: false,
-        comparisons: n - 1,
+        isSorted: isSorted(arr),
+        comparisons: Math.max(0, n - 1),
         shuffledItems: n,
       },
     });
   }
 
-  // Finally, just show the sorted one for the demo, otherwise people wait forever
+  const foundNaturally = isSorted(arr);
   const sortedArr = [...initialValues].sort((a, b) => a - b).map((v, i) => ({ val: v, id: i }));
   result.push({
-    array: sortedArr,
+    array: foundNaturally ? [...arr] : sortedArr,
     activeIndices: [],
     swapping: false,
     sortedIndices: sortedArr.map((_, i) => i),
-    description: `Bogosort finally found the sorted state in ${attempts} attempts!`,
+    description: foundNaturally
+      ? `Bogosort found the sorted state in ${attempts} attempts!`
+      : `Bogosort reached ${attempts} preview shuffles; showing the target sorted array.`,
     descriptionKey: 'visualizer.bogosort_found',
     descriptionParams: { attempts },
-    comparisons: n - 1,
+    comparisons: Math.max(0, n - 1),
     swapCount: 0,
     pass: attempts,
     highlightLine: 5,
     variables: {
       attempts,
       isSorted: true,
-      status: 'Sorted!',
+      status: foundNaturally ? 'Sorted!' : 'Sorted (Demo Cap)',
     },
   });
 

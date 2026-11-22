@@ -2,7 +2,9 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { useLocale } from '../../i18n/LocaleProvider';
+import { API_ROUTES } from '../../../lib/constants';
 
 export default function ContactPage() {
   const { t } = useLocale();
@@ -12,6 +14,7 @@ export default function ContactPage() {
   const [message, setMessage] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -29,19 +32,43 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
     if (!validate()) return;
 
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const res = await fetch(API_ROUTES.CONTACT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          subject: subject.trim(),
+          message: message.trim(),
+        }),
+      });
 
-    setIsSubmitting(false);
-    setIsSuccess(true);
-    setName('');
-    setEmail('');
-    setSubject('');
-    setMessage('');
-    setErrors({});
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        const errMessage = data.error || t('contact.errors.send_failed');
+        setSubmitError(errMessage);
+        toast.error(errMessage);
+        return;
+      }
+
+      setIsSuccess(true);
+      setName('');
+      setEmail('');
+      setSubject('');
+      setMessage('');
+      setErrors({});
+    } catch {
+      const errMessage = t('contact.errors.send_failed');
+      setSubmitError(errMessage);
+      toast.error(errMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -241,7 +268,17 @@ export default function ContactPage() {
                     )}
                   </div>
 
+                  {submitError && (
+                    <div
+                      role="alert"
+                      className="mb-5 rounded-lg border border-red-400 bg-red-50 dark:bg-red-900/30 px-4 py-3 text-sm font-montserrat text-red-700 dark:text-red-300"
+                    >
+                      {submitError}
+                    </div>
+                  )}
+
                   <button
+                    type="submit"
                     className="w-full font-montserrat font-bold text-white h-12 sm:h-13 rounded-lg text-base sm:text-lg hover:opacity-90 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ backgroundColor: '#269984', border: 'none' }}
                     disabled={isSubmitting}

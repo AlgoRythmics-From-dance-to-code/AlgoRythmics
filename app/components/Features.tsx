@@ -156,7 +156,7 @@ function FeatureCard({
         {/* Base Static Illustration */}
         <Image
           src={src}
-          alt={`Illustration for ${label}`}
+          alt={label}
           width={width}
           height={height}
           sizes="(max-width: 768px) 100vw, 280px"

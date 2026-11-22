@@ -12,7 +12,12 @@ function normalizeMonotonicTimeFields(
   const updateRecord = updates as unknown as Record<string, unknown>;
 
   for (const [key, value] of Object.entries(updateRecord)) {
-    if (key === 'totalTimeSpentMs' || !key.endsWith('TimeMs') || typeof value !== 'number') {
+    if (
+      key === 'totalTimeSpentMs' ||
+      key === 'controlBestTimeMs' ||
+      !key.endsWith('TimeMs') ||
+      typeof value !== 'number'
+    ) {
       continue;
     }
     const existingValue = existingRecord[key];
@@ -31,7 +36,12 @@ function computeTotalTimeSpentMs(
 
   let total = 0;
   for (const [key, value] of Object.entries(mergedRecord)) {
-    if (key === 'totalTimeSpentMs' || !key.endsWith('TimeMs') || typeof value !== 'number') {
+    if (
+      key === 'totalTimeSpentMs' ||
+      key === 'controlBestTimeMs' ||
+      !key.endsWith('TimeMs') ||
+      typeof value !== 'number'
+    ) {
       continue;
     }
     total += value;

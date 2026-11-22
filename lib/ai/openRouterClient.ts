@@ -3,9 +3,9 @@ import { getOpenRouterConfig } from './aiSettingsHelper';
 export const localizedStringSchema = {
   type: 'object',
   properties: {
-    hu: { type: 'string', description: 'Hungarian translation' },
-    en: { type: 'string', description: 'English translation' },
-    ro: { type: 'string', description: 'Romanian translation' },
+    hu: { type: 'string' },
+    en: { type: 'string' },
+    ro: { type: 'string' },
   },
   required: ['hu', 'en', 'ro'],
 };
@@ -60,6 +60,10 @@ export interface CallOpenRouterOptions {
   maxTokens?: number;
 }
 
+function isFatalAuthOrQuotaStatus(status: number): boolean {
+  return status === 401 || status === 402 || status === 403;
+}
+
 export async function callOpenRouterStructured<T>(
   options: CallOpenRouterOptions,
 ): Promise<{ data: T; modelUsed: string }> {
@@ -96,7 +100,7 @@ export async function callOpenRouterStructured<T>(
   const executeCall = async (
     modelToUse: string,
     format: 'json_schema' | 'json_object',
-    reasoningMode: 'disabled' | 'excluded' | 'none' = disableReasoning ? 'disabled' : 'none',
+    reasoningMode: 'disabled' | 'none' = disableReasoning ? 'disabled' : 'none',
   ) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -121,8 +125,6 @@ export async function callOpenRouterStructured<T>(
 
     if (reasoningMode === 'disabled') {
       payloadBody.reasoning = { enabled: false, effort: 'none' };
-    } else if (reasoningMode === 'excluded') {
-      payloadBody.reasoning = { exclude: true };
     }
 
     if (typeof temperature === 'number') {
@@ -156,36 +158,32 @@ export async function callOpenRouterStructured<T>(
     }
   };
 
-  // 1. Try with structured json_schema (and reasoning disabled if requested)
+  // 1. Primary call with structured json_schema
   let response = await executeCall(activeModel, 'json_schema');
 
-  // 1b. If reasoning: { enabled: false } returned 400 (some models reject disabled reasoning), try excluded
-  if (!response.ok && disableReasoning && response.status === 400) {
-    console.warn(
-      `[OpenRouter] Reasoning disabled rejected for ${activeModel}. Retrying with excluded/none...`,
-    );
-    response = await executeCall(activeModel, 'json_schema', 'excluded');
-    if (!response.ok) {
-      response = await executeCall(activeModel, 'json_schema', 'none');
-    }
+  // Short-circuit immediately on auth/credit errors (401, 402, 403) to avoid burning redundant retries
+  if (!response.ok && isFatalAuthOrQuotaStatus(response.status)) {
+    const errorText = await response.text();
+    throw new Error(`OpenRouter HTTP hiba (${response.status}): ${errorText}`);
   }
 
-  // 2. If structured schema call fails with 400 (not supported) or non-ok, try json_object fallback
+  // 2. Single fallback to json_object (without reasoning flag) if model rejected schema or reasoning parameter
   if (!response.ok) {
     console.warn(
       `[OpenRouter] Primary schema call failed (${response.status}) for ${activeModel}. Falling back to json_object...`,
     );
-    response = await executeCall(activeModel, 'json_object');
+    response = await executeCall(activeModel, 'json_object', 'none');
+    if (!response.ok && isFatalAuthOrQuotaStatus(response.status)) {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter HTTP hiba (${response.status}): ${errorText}`);
+    }
   }
 
-  // 3. If model doesn't exist or rate-limited on specific model, try free model fallback
+  // 3. Only if model itself is unavailable (404 / 429 / 5xx), try openrouter/free once
   if (!response.ok && activeModel !== 'openrouter/free') {
     console.warn(`[OpenRouter] Model ${activeModel} failed. Falling back to openrouter/free...`);
     activeModel = 'openrouter/free';
-    response = await executeCall(activeModel, 'json_schema');
-    if (!response.ok) {
-      response = await executeCall(activeModel, 'json_object');
-    }
+    response = await executeCall(activeModel, 'json_object', 'none');
   }
 
   if (!response.ok) {

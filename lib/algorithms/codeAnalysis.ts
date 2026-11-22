@@ -43,7 +43,7 @@ export const bubbleSortPatterns: CodePattern[] = [
     id: 'inner-loop',
     label: 'Inner loop',
     pattern:
-      /for\s*\([^)]+\)[\s\S]*for\s*\(\s*(?:let|var|const)?\s*[a-zA-Z_]\w*\s*=\s*\d+\s*;[^;]+;[^)]+\)/i,
+      /for\s*\([^)]+\)[\s\S]{0,400}?for\s*\(\s*(?:let|var|const)?\s*[a-zA-Z_]\w*\s*=\s*\d+\s*;[^;]+;[^)]+\)/i,
     weight: 25,
   },
   {
@@ -109,7 +109,7 @@ export const selectionSortPatterns: CodePattern[] = [
   {
     id: 'min-index-init',
     label: 'Min index initialization',
-    pattern: /(?:let|var|const)?\s*minIndex\s*=\s*[a-zA-Z_]\w*/i,
+    pattern: /(?:let|var|const)?\s*(?:minIndex|minIdx|min_idx|min)\s*=\s*[a-zA-Z_]\w*/i,
     weight: 20,
   },
   {
@@ -123,13 +123,13 @@ export const selectionSortPatterns: CodePattern[] = [
     id: 'comparison',
     label: 'Min comparison',
     pattern:
-      /if\s*\(\s*[a-zA-Z_]\w*\[\s*[a-zA-Z_]\w*\s*\]\s*<\s*[a-zA-Z_]\w*\[\s*minIndex\s*\]\s*\)/i,
+      /if\s*\(\s*(?:[a-zA-Z_]\w*\[\s*[a-zA-Z_]\w*\s*\]\s*<\s*[a-zA-Z_]\w*\[\s*(?:minIndex|minIdx|min_idx|min)\s*\]|[a-zA-Z_]\w*\[\s*(?:minIndex|minIdx|min_idx|min)\s*\]\s*>\s*[a-zA-Z_]\w*\[\s*[a-zA-Z_]\w*\s*\])\s*\)/i,
     weight: 20,
   },
   {
     id: 'swap',
     label: 'Swap operation',
-    pattern: /(?:swap|\[\s*.*\s*\]\s*=\s*\[\s*.*\s*\])/i,
+    pattern: /(?:swap|\[\s*[^\]\n]+\s*\]\s*=\s*\[\s*[^\]\n]+\s*\]|(?:let|var|const)?\s*temp\s*=)/i,
     weight: 20,
   },
 ];
@@ -181,7 +181,7 @@ export const quickSortPatterns: CodePattern[] = [
   {
     id: 'filtering',
     label: 'Array partitioning/filtering',
-    pattern: /filter|for\s*\(.*of.*\)/i,
+    pattern: /filter|for\s*\([^)\n]*\bof\b[^)\n]*\)/i,
     weight: 25,
   },
   {
@@ -247,11 +247,19 @@ export const binarySearchPatterns: CodePattern[] = [
 /**
  * Analyze user code against expected patterns for an algorithm.
  */
-export function analyzeCode(
-  code: string,
-  patterns: CodePattern[],
-  algorithmId?: string,
-): CodeAnalysisResult {
+const EXECUTABLE_ALGORITHMS = new Set([
+  'bubble-sort',
+  'insertion-sort',
+  'selection-sort',
+  'linear-search',
+  'binary-search',
+  'merge-sort',
+  'quick-sort',
+  'shell-sort',
+  'heap-sort',
+]);
+
+function evaluateStaticAnalysis(code: string, patterns: CodePattern[]) {
   const totalWeight = patterns.reduce((sum, p) => sum + p.weight, 0);
   let earnedWeight = 0;
   const matched: string[] = [];
@@ -270,43 +278,210 @@ export function analyzeCode(
     }
   }
 
-  let score = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
+  const score = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
+  return { score, matched, missing, details };
+}
 
-  // Execution validation
+function finalizeAnalysisResult(
+  staticRes: ReturnType<typeof evaluateStaticAnalysis>,
+  testRes: { passed: boolean; error?: string } | null,
+): CodeAnalysisResult {
+  let { score } = staticRes;
   let executionPassed = true;
   let executionError: string | undefined;
 
-  if (
-    algorithmId === 'bubble-sort' ||
-    algorithmId === 'insertion-sort' ||
-    algorithmId === 'selection-sort' ||
-    algorithmId === 'linear-search' ||
-    algorithmId === 'binary-search' ||
-    algorithmId === 'merge-sort' ||
-    algorithmId === 'quick-sort' ||
-    algorithmId === 'shell-sort' ||
-    algorithmId === 'heap-sort'
-  ) {
-    const testRes = runSortAndCheck(code, algorithmId);
-    if (!testRes.passed) {
-      executionPassed = false;
-      executionError = testRes.error;
+  if (testRes && !testRes.passed) {
+    executionPassed = false;
+    executionError = testRes.error;
 
-      // If code didn't execute correctly (syntax error or sorting mistake),
-      // cap the score to 80% maximum regardless of static analysis.
-      score = Math.min(score, 80);
-    }
+    // If code didn't execute correctly (syntax error or sorting mistake),
+    // cap the score to 80% maximum regardless of static analysis.
+    score = Math.min(score, 80);
   }
 
   return {
     isCorrect: score === 100 && executionPassed,
     score,
-    matched,
-    missing,
-    details,
+    matched: staticRes.matched,
+    missing: staticRes.missing,
+    details: staticRes.details,
     executionPassed,
     executionError,
   };
+}
+
+export function analyzeCode(
+  code: string,
+  patterns: CodePattern[],
+  algorithmId?: string,
+): CodeAnalysisResult {
+  const staticRes = evaluateStaticAnalysis(code, patterns);
+  const testRes =
+    algorithmId && EXECUTABLE_ALGORITHMS.has(algorithmId)
+      ? runSortAndCheck(code, algorithmId)
+      : null;
+  return finalizeAnalysisResult(staticRes, testRes);
+}
+
+/**
+ * Asynchronous code analyzer that runs student code in an isolated Blob Web Worker
+ * with a hard timeout so infinite loops or blocking code never freezes the UI thread.
+ */
+export async function analyzeCodeAsync(
+  code: string,
+  patterns: CodePattern[],
+  algorithmId?: string,
+): Promise<CodeAnalysisResult> {
+  const staticRes = evaluateStaticAnalysis(code, patterns);
+  const testRes =
+    algorithmId && EXECUTABLE_ALGORITHMS.has(algorithmId)
+      ? await runSortAndCheckInWorker(code, algorithmId)
+      : null;
+  return finalizeAnalysisResult(staticRes, testRes);
+}
+
+interface PreparedExecution {
+  testArray: number[];
+  expected: number[];
+  isSearch: boolean;
+  searchArray: number[];
+  testTarget: number | null;
+  runnable: string;
+  alternateRunnable: string;
+  initialInput: number[];
+}
+
+function prepareExecution(userCode: string, algorithmId: string): PreparedExecution {
+  const testArray = [5, 2, 9, 1, 5, 6, -3, 8];
+  const expected = [...testArray].sort((a, b) => a - b);
+
+  // Safety: Inject loop and recursion limiter to prevent hangs (even on braceless loops or recursion)
+  let safeCode = userCode;
+  const loopLimiter = `if (++__loopCount > 10000) throw new Error("Végtelen ciklus vagy túl mély rekurzió észlelve! Kérlek ellenőrizd a leállási feltételeket.");`;
+
+  // 1. Guard braceless while/for loops by injecting condition check inside the loop header or body
+  const whileGuard = `((++__loopCount <= 10000) ? true : (() => { throw new Error("Végtelen ciklus vagy túl mély rekurzió észlelve! Kérlek ellenőrizd a leállási feltételeket."); })())`;
+  safeCode = safeCode.replace(/\bwhile\s*\(([^)]+)\)/g, `while (${whileGuard} && ($1))`);
+
+  // 2. Insert limiter inside opening braces of for, do, function, and arrow function blocks
+  safeCode = safeCode.replace(
+    /(for\s*\([^)]*\)\s*\{|do\s*\{|function\s+[a-zA-Z_$][\w$]*\s*\([^)]*\)\s*\{|=>\s*\{)/g,
+    `$1 ${loopLimiter}`,
+  );
+
+  // 3. Also guard braceless for(init; cond; step) by wrapping the condition expression
+  safeCode = safeCode.replace(
+    /\bfor\s*\(([^;]*);([^;]*);([^)]*)\)/g,
+    (_match, init, cond, step) => {
+      const cleanCond = cond.trim() || 'true';
+      return `for (${init}; (++__loopCount <= 10000 ? (${cleanCond}) : (() => { throw new Error("Végtelen ciklus észlelve! Kérlek ellenőrizd a feltételeket."); })()); ${step})`;
+    },
+  );
+
+  const fnMap: Record<string, string> = {
+    'bubble-sort': 'bubbleSort',
+    'insertion-sort': 'insertionSort',
+    'selection-sort': 'selectionSort',
+    'merge-sort': 'mergeSort',
+    'quick-sort': 'quickSort',
+    'linear-search': 'linearSearch',
+    'binary-search': 'binarySearch',
+    'shell-sort': 'shellSort',
+    'heap-sort': 'heapSort',
+    bogosort: 'bogosort',
+    'n-queens': 'solveNQueens',
+  };
+  const fnName = fnMap[algorithmId] || 'sort';
+
+  const isSearch = algorithmId.includes('search');
+  const isBinarySearch = algorithmId === 'binary-search';
+  const testTarget = isSearch ? 5 : null;
+
+  const runnable = `
+    let __loopCount = 0;
+    ${safeCode}
+    
+    if (typeof ${fnName} === 'function') {
+      const inputArr = [...arr];
+      let result = ${fnName}(inputArr${isSearch ? ', ' + testTarget : ''});
+      if (result !== undefined) return result;
+      return inputArr; // return the modified copy if it sorts in place
+    } else {
+      throw new Error("Kérlek hozz létre egy '${fnName}' nevű függvényt!");
+    }
+  `;
+
+  const alternateRunnable = `
+    let __loopCount = 0;
+    let target = ${testTarget};
+    ${safeCode}
+    return typeof result !== 'undefined' ? result : arr;
+  `;
+
+  const searchArray = isBinarySearch ? [...expected] : [...testArray];
+  const initialInput = isSearch ? [...searchArray] : [...testArray];
+
+  return {
+    testArray,
+    expected,
+    isSearch,
+    searchArray,
+    testTarget,
+    runnable,
+    alternateRunnable,
+    initialInput,
+  };
+}
+
+function validateExecutionResult(
+  result: unknown,
+  isSearch: boolean,
+  searchArray: number[],
+  testTarget: number | null,
+  expected: number[],
+): { passed: boolean; error?: string } {
+  if (isSearch) {
+    const expectedIdx = searchArray.indexOf(testTarget!);
+    const isMatch =
+      typeof result === 'number' &&
+      (expectedIdx === -1
+        ? result === -1
+        : result >= 0 && result < searchArray.length && searchArray[result] === testTarget);
+    if (!isMatch) {
+      return {
+        passed: false,
+        error: `Hiba: Hibás keresési eredmény! Kapott: ${result}, Várt index pl.: ${expectedIdx}`,
+      };
+    }
+    return { passed: true };
+  }
+
+  if (!Array.isArray(result)) {
+    return {
+      passed: false,
+      error: 'Hiba: A kód nem tömböt adott vissza, vagy nem módosította a kapott tömböt!',
+    };
+  }
+
+  if (result.length !== expected.length) {
+    return { passed: false, error: 'Hiba: A visszaadott tömb mérete nem egyezik az eredetivel!' };
+  }
+
+  for (let i = 0; i < expected.length; i++) {
+    if (result[i] !== expected[i]) {
+      return {
+        passed: false,
+        error:
+          'Hiba: A tömb nem lett megfelelően rendezve. Eredményed: [' +
+          result.join(', ') +
+          '] Várható: [' +
+          expected.join(', ') +
+          ']',
+      };
+    }
+  }
+
+  return { passed: true };
 }
 
 function runSortAndCheck(
@@ -314,123 +489,30 @@ function runSortAndCheck(
   algorithmId: string,
 ): { passed: boolean; error?: string } {
   try {
-    const testArray = [5, 2, 9, 1, 5, 6, -3, 8];
-    const expected = [...testArray].sort((a, b) => a - b);
+    const prep = prepareExecution(userCode, algorithmId);
+    const sortFn = new Function('arr', prep.runnable);
 
-    // Safety: Inject loop and recursion limiter to prevent browser freeze (even on braceless loops or recursion)
-    let safeCode = userCode;
-    const loopLimiter = `if (++globalThis.__loopCount > 10000) throw new Error("Végtelen ciklus vagy túl mély rekurzió észlelve! Kérlek ellenőrizd a leállási feltételeket.");`;
-
-    // 1. Guard braceless while/for loops by injecting condition check inside the loop header or body
-    const whileGuard = `((++globalThis.__loopCount <= 10000) ? true : (() => { throw new Error("Végtelen ciklus vagy túl mély rekurzió észlelve! Kérlek ellenőrizd a leállási feltételeket."); })())`;
-    safeCode = safeCode.replace(/\bwhile\s*\(([^)]+)\)/g, `while (${whileGuard} && ($1))`);
-
-    // 2. Insert limiter inside opening braces of for, do, function, and arrow function blocks
-    safeCode = safeCode.replace(
-      /(for\s*\([^)]*\)\s*\{|do\s*\{|function\s+[a-zA-Z_$][\w$]*\s*\([^)]*\)\s*\{|=>\s*\{)/g,
-      `$1 ${loopLimiter}`,
-    );
-
-    // 3. Also guard braceless for(init; cond; step) by wrapping the condition expression
-    safeCode = safeCode.replace(
-      /\bfor\s*\(([^;]*);([^;]*);([^)]*)\)/g,
-      (_match, init, cond, step) => {
-        const cleanCond = cond.trim() || 'true';
-        return `for (${init}; (++globalThis.__loopCount <= 10000 ? (${cleanCond}) : (() => { throw new Error("Végtelen ciklus észlelve! Kérlek ellenőrizd a feltételeket."); })()); ${step})`;
-      },
-    );
-
-    const fnMap: Record<string, string> = {
-      'bubble-sort': 'bubbleSort',
-      'insertion-sort': 'insertionSort',
-      'selection-sort': 'selectionSort',
-      'merge-sort': 'mergeSort',
-      'quick-sort': 'quickSort',
-      'linear-search': 'linearSearch',
-      'binary-search': 'binarySearch',
-      'shell-sort': 'shellSort',
-      'heap-sort': 'heapSort',
-      bogosort: 'bogosort',
-      'n-queens': 'solveNQueens',
-    };
-    const fnName = fnMap[algorithmId] || 'sort';
-
-    const isSearch = algorithmId.includes('search');
-    const isBinarySearch = algorithmId === 'binary-search';
-    const testTarget = isSearch ? 5 : null;
-
-    const runnable = `
-      globalThis.__loopCount = 0;
-      ${safeCode}
-      
-      if (typeof ${fnName} === 'function') {
-        let result = ${fnName}([...arr]${isSearch ? ', ' + testTarget : ''});
-        if (result !== undefined) return result;
-        return arr; // return the modified array if it sorts in place
-      } else {
-        throw new Error("Kérlek hozz létre egy '${fnName}' nevű függvényt!");
-      }
-    `;
-
-    const sortFn = new Function('arr', runnable);
-
-    let result;
+    let result: unknown;
     try {
-      result = sortFn(isBinarySearch ? [...expected] : [...testArray]);
+      result = sortFn([...prep.initialInput]);
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes('Kérlek hozz létre')) {
         // Fallback: If they didn't name it correctly, evaluate as a flat script modifying 'arr'
-        const alternateRunnable = `
-          globalThis.__loopCount = 0;
-          let target = ${testTarget};
-          ${safeCode}
-          return typeof result !== 'undefined' ? result : arr;
-        `;
+        const alternateRunnable = prep.alternateRunnable;
         const altFn = new Function('arr', alternateRunnable);
-        result = altFn([...testArray]);
+        result = altFn([...prep.initialInput]);
       } else {
         throw err;
       }
     }
 
-    if (isSearch) {
-      const searchArray = isBinarySearch ? expected : testArray;
-      const expectedIdx = searchArray.indexOf(testTarget!);
-      if (result !== expectedIdx) {
-        return {
-          passed: false,
-          error: `Hiba: Hibás keresési eredmény! Kapott: ${result}, Várt: ${expectedIdx}`,
-        };
-      }
-      return { passed: true };
-    }
-
-    if (!Array.isArray(result)) {
-      return {
-        passed: false,
-        error: 'Hiba: A kód nem tömböt adott vissza, vagy nem módosította a kapott tömböt!',
-      };
-    }
-
-    if (result.length !== expected.length) {
-      return { passed: false, error: 'Hiba: A visszaadott tömb mérete nem egyezik az eredetivel!' };
-    }
-
-    for (let i = 0; i < expected.length; i++) {
-      if (result[i] !== expected[i]) {
-        return {
-          passed: false,
-          error:
-            'Hiba: A tömb nem lett megfelelően rendezve. Eredményed: [' +
-            result.join(', ') +
-            '] Várható: [' +
-            expected.join(', ') +
-            ']',
-        };
-      }
-    }
-
-    return { passed: true };
+    return validateExecutionResult(
+      result,
+      prep.isSearch,
+      prep.searchArray,
+      prep.testTarget,
+      prep.expected,
+    );
   } catch (err: unknown) {
     return {
       passed: false,
@@ -439,13 +521,140 @@ function runSortAndCheck(
   }
 }
 
+const WORKER_SCRIPT = `
+self.onmessage = function(event) {
+  var data = event.data;
+  var blocked = ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'importScripts', 'indexedDB', 'navigator', 'postMessage', 'close', 'self', 'globalThis', 'Worker'];
+  var result;
+  try {
+    var fn = new Function('arr', ...blocked, data.runnable);
+    try {
+      result = fn(data.initialInput.slice());
+    } catch (err) {
+      if (err && typeof err.message === 'string' && err.message.indexOf('Kérlek hozz létre') !== -1) {
+        var altFn = new Function('arr', ...blocked, data.alternateRunnable);
+        result = altFn(data.initialInput.slice());
+      } else {
+        throw err;
+      }
+    }
+    self.postMessage({ ok: true, result: result });
+  } catch (err) {
+    self.postMessage({
+      ok: false,
+      error: (err && err.message) ? String(err.message) : 'Szintaktikai vagy futási hiba történt.'
+    });
+  }
+};
+`;
+
+const WORKER_TIMEOUT_MS = 1500;
+
+function runSortAndCheckInWorker(
+  userCode: string,
+  algorithmId: string,
+): Promise<{ passed: boolean; error?: string }> {
+  if (
+    typeof window === 'undefined' ||
+    typeof Worker === 'undefined' ||
+    typeof Blob === 'undefined' ||
+    typeof URL === 'undefined' ||
+    typeof URL.createObjectURL !== 'function'
+  ) {
+    return Promise.resolve(runSortAndCheck(userCode, algorithmId));
+  }
+
+  let prep: PreparedExecution;
+  try {
+    prep = prepareExecution(userCode, algorithmId);
+  } catch (err: unknown) {
+    return Promise.resolve({
+      passed: false,
+      error: err instanceof Error ? err.message : 'Szintaktikai vagy futási hiba történt.',
+    });
+  }
+
+  return new Promise((resolve) => {
+    const blob = new Blob([WORKER_SCRIPT], { type: 'application/javascript' });
+    const workerUrl = URL.createObjectURL(blob);
+    let worker: Worker | null = null;
+    let settled = false;
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      try {
+        worker?.terminate();
+      } catch {
+        // Ignore worker termination errors
+      }
+      URL.revokeObjectURL(workerUrl);
+    };
+
+    const finish = (outcome: { passed: boolean; error?: string }) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(outcome);
+    };
+
+    const timeoutId = setTimeout(() => {
+      finish({
+        passed: false,
+        error: 'Időtúllépés (1.5 mp): valószínűleg végtelen ciklus vagy túl lassú végrehajtás.',
+      });
+    }, WORKER_TIMEOUT_MS);
+
+    try {
+      worker = new Worker(workerUrl);
+      worker.onmessage = (
+        event: MessageEvent<{ ok: boolean; result?: unknown; error?: string }>,
+      ) => {
+        const payload = event.data;
+        if (!payload || !payload.ok) {
+          finish({
+            passed: false,
+            error: payload?.error || 'Szintaktikai vagy futási hiba történt.',
+          });
+          return;
+        }
+        finish(
+          validateExecutionResult(
+            payload.result,
+            prep.isSearch,
+            prep.searchArray,
+            prep.testTarget,
+            prep.expected,
+          ),
+        );
+      };
+      worker.onerror = (event: ErrorEvent) => {
+        finish({
+          passed: false,
+          error: event.message || 'Szintaktikai vagy futási hiba történt.',
+        });
+      };
+      worker.postMessage({
+        runnable: prep.runnable,
+        alternateRunnable: prep.alternateRunnable,
+        initialInput: prep.initialInput,
+      });
+    } catch (err: unknown) {
+      finish({
+        passed: false,
+        error:
+          err instanceof Error ? err.message : 'Nem sikerült elindítani a végrehajtó környezetet.',
+      });
+    }
+  });
+}
+
 // ─── Shell Sort patterns ──────────────────────────────────────
 
 export const shellSortPatterns: CodePattern[] = [
   {
     id: 'gap-loop',
     label: 'Gap reduction loop',
-    pattern: /while\s*\(\s*gap\s*>\s*0\s*\)|for\s*\(.*gap\s*=\s*gap\s*\/\s*2.*\)/i,
+    pattern: /while\s*\(\s*gap\s*>\s*0\s*\)|for\s*\([^)\n]*gap\s*(?:=|>>=|\/=)[^)\n]*\)/i,
     weight: 30,
   },
   {

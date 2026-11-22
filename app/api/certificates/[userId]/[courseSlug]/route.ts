@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { headers as getHeaders } from 'next/headers';
+import { auth } from '../../../../../auth';
 import { getPayloadInstance } from '../../../../../lib/payload';
 import {
   courseBlueprints,
   findCourseBySlug,
   normalizeCourse,
 } from '../../../../../lib/courses/courseCatalog';
+import { APP_CONFIG, ROLES } from '../../../../../lib/constants';
+import {
+  signCertificateToken,
+  verifyCertificateToken,
+} from '../../../../../lib/certificates/signToken';
 
 export async function GET(
   request: NextRequest,
@@ -18,7 +25,58 @@ export async function GET(
       return NextResponse.json({ error: 'Érvénytelen felhasználói azonosító' }, { status: 400 });
     }
 
+    const token = request.nextUrl.searchParams.get('token');
+    const hasValidToken = verifyCertificateToken(userId, courseSlug, token);
+    let isOwnerOrAdmin = false;
+
+    if (!hasValidToken) {
+      try {
+        const session = await auth();
+        const sessionUser = session?.user as { id?: string | number; role?: string } | undefined;
+        if (
+          sessionUser &&
+          (String(sessionUser.id) === String(userId) ||
+            sessionUser.role === ROLES.ADMIN ||
+            sessionUser.role === ROLES.EDITOR)
+        ) {
+          isOwnerOrAdmin = true;
+        }
+      } catch {
+        // Continue to Payload CMS auth check
+      }
+    }
+
+    const hasPayloadCookie = Boolean(
+      request.cookies.get(APP_CONFIG.COOKIE_TOKEN_NAME)?.value ||
+      request.cookies.get('payload-token')?.value,
+    );
+
+    if (!hasValidToken && !isOwnerOrAdmin && !hasPayloadCookie) {
+      return NextResponse.json({ error: 'A keresett tanúsítvány nem található' }, { status: 404 });
+    }
+
     const payload = await getPayloadInstance();
+
+    if (!hasValidToken && !isOwnerOrAdmin && hasPayloadCookie) {
+      try {
+        const reqHeaders = await getHeaders();
+        const { user: payloadUser } = await payload.auth({ headers: reqHeaders });
+        if (
+          payloadUser &&
+          (String(payloadUser.id) === String(userId) ||
+            payloadUser.role === ROLES.ADMIN ||
+            payloadUser.role === ROLES.EDITOR)
+        ) {
+          isOwnerOrAdmin = true;
+        }
+      } catch {
+        // Not authenticated via Payload CMS cookie
+      }
+    }
+
+    if (!hasValidToken && !isOwnerOrAdmin) {
+      return NextResponse.json({ error: 'A keresett tanúsítvány nem található' }, { status: 404 });
+    }
 
     // 1. Fetch User (public display name only — do not expose email)
     let userName = `Tanuló #${userId}`;
@@ -139,8 +197,9 @@ export async function GET(
       );
     }
 
-    // Generate unique verification ID
-    const certificateId = `ALG-CERT-${userId}-${courseSlug.toUpperCase().replace(/[^A-Z0-9]/g, '')}`;
+    // Generate unique signed verification ID & shareable token
+    const shareToken = signCertificateToken(userId, courseSlug);
+    const certificateId = `ALG-CERT-${userId}-${courseSlug.toUpperCase().replace(/[^A-Z0-9]/g, '')}-${shareToken.slice(0, 8).toUpperCase()}`;
 
     return NextResponse.json({
       success: true,
@@ -153,6 +212,7 @@ export async function GET(
       completedAt: completedAt || new Date().toISOString(),
       points,
       certificateId,
+      shareToken,
       accentColor,
     });
   } catch (error) {

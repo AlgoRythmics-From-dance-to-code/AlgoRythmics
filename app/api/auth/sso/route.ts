@@ -36,8 +36,13 @@ export async function GET(req: Request) {
     const dbUser = result.docs[0] as unknown as {
       id: string | number;
       email: string;
+      role?: string;
       sessions?: Array<{ id: string; createdAt: string; expiresAt: string }>;
     };
+
+    if (dbUser.role !== ROLES.ADMIN && dbUser.role !== ROLES.EDITOR) {
+      return NextResponse.redirect(new URL(ROUTES.LOGIN, req.url));
+    }
 
     // Create session in Payload database
     const sid = randomUUID();
@@ -92,6 +97,6 @@ export async function GET(req: Request) {
     return response;
   } catch (error) {
     console.error('[SSO Error]:', error);
-    return NextResponse.redirect(new URL(ROUTES.ADMIN, req.url));
+    return NextResponse.redirect(new URL(ROUTES.LOGIN, req.url));
   }
 }

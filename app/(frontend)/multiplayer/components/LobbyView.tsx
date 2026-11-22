@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type {
   MultiplayerGameMode,
@@ -97,18 +97,31 @@ export default function LobbyView({
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
 
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     if (initialStep) {
       setStep(initialStep);
     }
   }, [initialStep]);
 
-  const copyRoomLink = () => {
+  const copyRoomLink = async () => {
     if (typeof window === 'undefined') return;
     const url = `${window.location.origin}/multiplayer?room=${roomId}`;
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2200);
+    try {
+      await navigator.clipboard?.writeText(url);
+      setCopied(true);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(false), 2200);
+    } catch {
+      // Ignore clipboard failures on insecure origins
+    }
   };
 
   const handleJoinWithCode = async (e: React.FormEvent) => {
@@ -120,7 +133,11 @@ export default function LobbyView({
     setIsJoining(true);
     try {
       if (onJoinRoom) {
-        await onJoinRoom(formattedCode);
+        const joined = await onJoinRoom(formattedCode);
+        if (joined === false) {
+          setJoinError('Nem sikerült csatlakozni a szobához. Ellenőrizd a kódot!');
+          return;
+        }
       }
       router.push(`/multiplayer?room=${encodeURIComponent(formattedCode)}`);
       setStep('waiting_room');

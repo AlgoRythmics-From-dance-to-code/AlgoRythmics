@@ -16,9 +16,16 @@ export function markdownToLexical(markdown: string) {
     };
   }
 
-  // Normalize escaped newlines and pipe delimiters emitted by LLMs
+  // Normalize escaped newlines and single pipe delimiters outside fenced code blocks
   let normalized = markdown.replace(/\\n/g, '\n');
-  normalized = normalized.replace(/\s*\|\s*(?=[-#*`A-ZÁÉÍÓÖŐÚÜŰa-záéíóöőúüű0-9])/g, '\n\n');
+  normalized = normalized
+    .split(/(```[\s\S]*?```)/g)
+    .map((segment) =>
+      segment.startsWith('```')
+        ? segment
+        : segment.replace(/\s*(?<!\|)\|(?!\|)\s*(?=[-#*`A-ZÁÉÍÓÖŐÚÜŰa-záéíóöőúüű0-9])/g, '\n\n'),
+    )
+    .join('');
   const lines = normalized.split(/\r?\n/);
   const children: any[] = [];
 
@@ -213,21 +220,21 @@ function parseTextNode(text: string): any[] {
     ];
   }
 
-  // Tokenize by **, *, `
-  const regex = /(\*\*.*?\*\*|\*.*\*|`.*?`|[^\*`]+)/g;
+  // Tokenize by **, *, ` lazily while preserving unmatched * or ` characters (e.g. multiplication "a * b")
+  const regex = /(\*\*[^*\n]+?\*\*|\*[^*\n]+?\*|`[^`\n]+?`|[^*`]+|[*`])/g;
   const matches = text.match(regex) || [text];
 
   return matches.map((token) => {
     let cleanText = token;
     let format = 0;
 
-    if (token.startsWith('**') && token.endsWith('**')) {
+    if (token.length > 4 && token.startsWith('**') && token.endsWith('**')) {
       cleanText = token.slice(2, -2);
       format = 1; // Bold
-    } else if (token.startsWith('*') && token.endsWith('*')) {
+    } else if (token.length > 2 && token.startsWith('*') && token.endsWith('*')) {
       cleanText = token.slice(1, -1);
       format = 2; // Italic
-    } else if (token.startsWith('`') && token.endsWith('`')) {
+    } else if (token.length > 2 && token.startsWith('`') && token.endsWith('`')) {
       cleanText = token.slice(1, -1);
       format = 16; // Code
     }

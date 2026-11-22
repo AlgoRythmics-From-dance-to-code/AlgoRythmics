@@ -28,9 +28,9 @@ interface GapFillComponentProps {
 function formatYamlOrCode(raw: string): string {
   let text = raw.replace(/\\n/g, '\n').replace(/\r\n/g, '\n');
 
-  // Replace pipe delimiters with clean newlines
-  if (text.includes('|')) {
-    text = text.replace(/\s*\|\s*/g, '\n');
+  // Replace single pipe delimiters with clean newlines without breaking logical OR (||)
+  if (/(?<!\|)\|(?!\|)/.test(text)) {
+    text = text.replace(/\s*(?<!\|)\|(?!\|)\s*/g, '\n');
   }
 
   // If text already contains genuine line breaks, preserve its formatting
@@ -109,8 +109,8 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
   const rawOptions = useMemo(() => phase.gapFillOptions || [], [phase.gapFillOptions]);
   const rawSolutions = useMemo(() => phase.gapFillSolutions || [], [phase.gapFillSolutions]);
 
-  // Detect whether this gap-fill is code / YAML manifest vs prose text
-  const isCodeOrYaml = useMemo(() => {
+  // Detect YAML manifests separately from general programming code
+  const isYamlManifest = useMemo(() => {
     const lower = rawContent.toLowerCase();
     const titleLower = (phase.title || '').toLowerCase();
     return (
@@ -119,17 +119,25 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
       lower.includes('spec:') ||
       lower.includes('metadata:') ||
       lower.includes('containers:') ||
+      titleLower.includes('yaml') ||
+      titleLower.includes('manifest')
+    );
+  }, [rawContent, phase.title]);
+
+  const isCodeOrYaml = useMemo(() => {
+    if (isYamlManifest) return true;
+    const lower = rawContent.toLowerCase();
+    const titleLower = (phase.title || '').toLowerCase();
+    return (
       lower.includes('def ') ||
       lower.includes('class ') ||
       lower.includes('function ') ||
       lower.includes('import ') ||
       lower.includes('return ') ||
       titleLower.includes('kód') ||
-      titleLower.includes('yaml') ||
-      titleLower.includes('manifest') ||
       titleLower.includes('code')
     );
-  }, [rawContent, phase.title]);
+  }, [rawContent, phase.title, isYamlManifest]);
 
   // Format content with proper line structure
   const formattedContent = useMemo(() => {
@@ -139,7 +147,7 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
     return rawContent
       .replace(/\\n/g, '\n')
       .replace(/\r\n/g, '\n')
-      .replace(/\s*\|\s*/g, '\n\n');
+      .replace(/\s*(?<!\|)\|(?!\|)\s*/g, '\n\n');
   }, [rawContent, isCodeOrYaml]);
 
   // Normalize markers to [blank]
@@ -168,8 +176,8 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
       if (typeof s === 'string' && s.trim()) optsSet.add(s.trim());
     });
 
-    // If options are still sparse for a YAML/code phase, provide reasonable common distractors
-    if (optsSet.size < 4 && isCodeOrYaml) {
+    // If options are still sparse for a YAML manifest phase, provide reasonable Kubernetes distractors
+    if (optsSet.size < 4 && isYamlManifest) {
       [
         'apps/v1',
         'v1',
@@ -184,7 +192,7 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
     }
 
     return Array.from(optsSet);
-  }, [rawOptions, rawSolutions, isCodeOrYaml]);
+  }, [rawOptions, rawSolutions, isYamlManifest]);
 
   const [choices, setChoices] = useState<string[]>(() => new Array(blankCount).fill(''));
   const [showFeedback, setShowFeedback] = useState(false);
@@ -220,13 +228,14 @@ export default function GapFillComponent({ phase, courseId, onMistake }: GapFill
   };
 
   const checkGaps = () => {
-    const allFilled = choices.every((c) => c !== '');
+    if (blankCount === 0) return;
+    const allFilled = choices.length === blankCount && choices.every((c) => c !== '');
     if (!allFilled) return;
 
     let correct = 0;
     if (rawSolutions.length > 0) {
       choices.forEach((c, i) => {
-        if (c === rawSolutions[i]) correct++;
+        if (c.trim() === String(rawSolutions[i] ?? '').trim()) correct++;
       });
     } else {
       correct = blankCount;

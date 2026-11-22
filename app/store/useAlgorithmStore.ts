@@ -75,6 +75,7 @@ interface AlgorithmState {
         lastConfidenceRating?: string;
         phaseResults?: Record<string, 'success' | 'fail'>;
         isCompleted?: boolean;
+        shareToken?: string;
       }
     >;
   }) => void;
@@ -89,6 +90,7 @@ interface AlgorithmState {
       phaseResults?: Record<string, 'success' | 'fail'>;
       points?: number;
       isCompleted?: boolean;
+      shareToken?: string;
       totalTimeMs?: number;
       totalMistakes?: number;
       mascotInteractionsTotal?: number;
@@ -680,6 +682,14 @@ export const useAlgorithmStore = create<AlgorithmState>()(
     }),
     {
       name: 'algorythmics-learning-storage',
+      partialize: (state) => ({
+        activeCategory: state.activeCategory,
+        searchQuery: state.searchQuery,
+        completedIds: state.completedIds,
+        visualizerProgress: state.visualizerProgress,
+        algorithmProgress: state.algorithmProgress,
+        courseProgress: state.courseProgress,
+      }),
       onRehydrateStorage: () => (state) => {
         state?.setHasRehydrated(true);
       },

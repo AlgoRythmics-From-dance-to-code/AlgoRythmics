@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeTeacherOrAdmin } from '@/lib/ai/aiAuthHelper';
+import { ROLES } from '@/lib/constants';
 import {
   callOpenRouterStructured,
   localizedStringSchema,
@@ -15,24 +16,24 @@ const outlineSchema = {
     title: localizedStringSchema,
     slug: {
       type: 'string',
-      description: 'URL slug for the course in lowercase kebab-case, e.g. selection-sort-basics',
+      description: 'kebab-case slug',
     },
     summary: localizedStringSchema,
     heroTagline: localizedStringSchema,
     icon: {
       type: 'string',
-      description: 'A single, relevant emoji for the course card, e.g. 🧠, 💻, 📊, 🔍, ⚡',
+      description: 'Single emoji',
     },
     accentColor: {
       type: 'string',
-      description: 'Hex color string matching the course theme, e.g. #269984, #4F46E5, #059669',
+      description: 'Hex color',
     },
     illustrationAsset: {
       type: 'string',
       description:
-        'Filename of illustration SVG, choose from: algo_group_109.svg, algo_group_119.svg, algo_group_132.svg, algo_group_142.svg, algo_group_166.svg, algo_group_167.svg, algo_group_168.svg, algo_group_170.svg, algo_group_174.svg, algo_group_176.svg, algo_group_177.svg, algo_group_181.svg, algo_group_182.svg, algo_group_184.svg, algo_sorting_icon.svg',
+        'One of: algo_group_109.svg, algo_group_119.svg, algo_group_132.svg, algo_group_142.svg, algo_group_166.svg, algo_group_167.svg, algo_group_168.svg, algo_group_170.svg, algo_group_174.svg, algo_group_176.svg, algo_group_177.svg, algo_group_181.svg, algo_group_182.svg, algo_group_184.svg, algo_sorting_icon.svg',
     },
-    estimatedMinutes: { type: 'integer', description: 'Estimated minutes to complete' },
+    estimatedMinutes: { type: 'integer' },
     difficulty: { type: 'string', enum: ['Beginner', 'Intermediate', 'Advanced'] },
     mascot: {
       type: 'object',
@@ -41,8 +42,7 @@ const outlineSchema = {
         name: localizedStringSchema,
         asset: {
           type: 'string',
-          description:
-            'Filename of mascot asset, choose from: bubble_dragon.png, algo_group_109.svg, algo_group_184.svg',
+          description: 'One of: bubble_dragon.png, algo_group_109.svg, algo_group_184.svg',
         },
         accentColor: { type: 'string' },
         idleTriggerSeconds: { type: 'integer' },
@@ -212,8 +212,13 @@ Diversity of phase views to choose from: 'video', 'control', 'quiz', 'gap-fill',
 Ensure the 'sourceAlgorithmId' logically fits the algorithm (e.g. 'insertion-sort', 'binary-search', 'bubble-sort', 'linear-search', etc.).
 `;
 
+    const requestedModel =
+      user.role === ROLES.ADMIN && typeof model === 'string' && model.trim()
+        ? model.trim()
+        : undefined;
+
     const { data: rawOutline, modelUsed } = await callOpenRouterStructured<AIOutlineRaw>({
-      model,
+      model: requestedModel,
       systemPrompt,
       userPrompt,
       schema: outlineSchema,

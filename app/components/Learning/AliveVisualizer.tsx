@@ -1,14 +1,22 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, Reorder, PanInfo } from 'framer-motion';
-import { Play, Trash2, HelpCircle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import {
+  Play,
+  Trash2,
+  HelpCircle,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Loader2,
+} from 'lucide-react';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useLocale } from '../../i18n/LocaleProvider';
 import { getAlgorithmNodes, type AlgorithmNode } from '../../../lib/algorithms/nodeDefinitions';
 import {
   getCodePatterns,
-  analyzeCode,
+  analyzeCodeAsync,
   type CodeAnalysisResult,
 } from '../../../lib/algorithms/codeAnalysis';
 import { useAlgorithmStore, type AlgorithmProgress } from '../../store/useAlgorithmStore';
@@ -16,6 +24,59 @@ import { useReportMascotScreen } from '../Course/MascotScreenContext';
 
 const DROP_THRESHOLD = 50; // pixels
 const EMPTY_PROGRESS: Readonly<Partial<AlgorithmProgress>> = Object.freeze({});
+
+function formatAliveExecutionError(
+  rawError: string | undefined,
+  t: (key: string) => string,
+): string {
+  if (!rawError) return t('alive.errors.runtime_error');
+
+  if (rawError.startsWith('Végtelen ciklus')) {
+    return t('alive.errors.infinite_loop');
+  }
+  if (rawError.startsWith('Időtúllépés')) {
+    return t('alive.errors.timeout');
+  }
+
+  const missingFnMatch = rawError.match(/Kérlek hozz létre egy '([^']+)' nevű függvényt!/);
+  if (missingFnMatch) {
+    return t('alive.errors.missing_fn').replace('{fnName}', missingFnMatch[1]);
+  }
+
+  const searchMatch = rawError.match(
+    /Hiba: Hibás keresési eredmény! Kapott: (.*), Várt index pl\.: (.*)/,
+  );
+  if (searchMatch) {
+    return t('alive.errors.search_mismatch')
+      .replace('{received}', searchMatch[1])
+      .replace('{expected}', searchMatch[2]);
+  }
+
+  if (rawError.includes('nem tömböt adott vissza')) {
+    return t('alive.errors.not_array');
+  }
+  if (rawError.includes('mérete nem egyezik')) {
+    return t('alive.errors.length_mismatch');
+  }
+
+  const sortMatch = rawError.match(
+    /Hiba: A tömb nem lett megfelelően rendezve\. Eredményed: \[(.*)\] Várható: \[(.*)\]/,
+  );
+  if (sortMatch) {
+    return t('alive.errors.sort_mismatch')
+      .replace('{received}', sortMatch[1])
+      .replace('{expected}', sortMatch[2]);
+  }
+
+  if (
+    rawError === 'Szintaktikai vagy futási hiba történt.' ||
+    rawError === 'Nem sikerült elindítani a végrehajtó környezetet.'
+  ) {
+    return t('alive.errors.runtime_error');
+  }
+
+  return rawError;
+}
 
 interface AliveVisualizerProps {
   algorithmId: string;
@@ -168,63 +229,87 @@ function CodeMode({
   const [code, setCode] = useState('');
   const [result, setResult] = useState<CodeAnalysisResult | null>(null);
   const [submissions, setSubmissions] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const runIdRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      runIdRef.current += 1;
+    };
+  }, []);
 
   const patterns = useMemo(() => getCodePatterns(algorithmId), [algorithmId]);
 
-  const handleRun = useCallback(() => {
-    if (!patterns) return;
+  const handleRun = useCallback(async () => {
+    if (!patterns || isRunning) return;
 
-    const analysis = analyzeCode(code, patterns, algorithmId);
-    setResult(analysis);
-    setSubmissions((s) => s + 1);
+    const runId = ++runIdRef.current;
+    setIsRunning(true);
 
-    trackEvent('alive_code_submit', {
-      code,
-      score: analysis.score,
-      isCorrect: analysis.isCorrect,
-      matched: analysis.matched,
-      missing: analysis.missing,
-      attempt: submissions + 1,
-    });
+    try {
+      const analysis = await analyzeCodeAsync(code, patterns, algorithmId);
+      if (!isMountedRef.current || runIdRef.current !== runId) return;
 
-    const bestScore = Math.max(progress?.aliveBestScore || 0, analysis.score);
+      const attemptNum = submissions + 1;
+      setResult(analysis);
+      setSubmissions(attemptNum);
 
-    if (analysis.isCorrect) {
-      trackEvent('alive_code_success', {
+      trackEvent('alive_code_submit', {
         code,
-        attempts: submissions + 1,
-        timeMs: Date.now() - startTime,
-      });
-      updateProgress({
-        aliveCompleted: true,
-        aliveHelpUsed: helpUsed,
-        aliveCodeSubmissions: submissions + 1,
-        aliveLastCode: code,
-        aliveBestScore: bestScore,
-        aliveCompletedAt: new Date().toISOString(),
-      });
-    } else {
-      onMistake?.();
-      trackEvent('alive_code_error', {
-        missing: analysis.missing,
         score: analysis.score,
+        isCorrect: analysis.isCorrect,
+        matched: analysis.matched,
+        missing: analysis.missing,
+        attempt: attemptNum,
       });
 
-      const meetsCompletionThreshold = analysis.score >= 50;
-      const isNewlyCompleted = meetsCompletionThreshold && !progress?.aliveCompleted;
+      const bestScore = Math.max(progress?.aliveBestScore || 0, analysis.score);
 
-      updateProgress({
-        aliveCompleted: meetsCompletionThreshold || (progress?.aliveCompleted ?? false),
-        aliveLastCode: code,
-        aliveBestScore: bestScore,
-        aliveCodeSubmissions: submissions + 1,
-        aliveLastActivityAt: new Date().toISOString(),
-        ...(isNewlyCompleted ? { aliveCompletedAt: new Date().toISOString() } : {}),
-      });
+      if (analysis.isCorrect) {
+        trackEvent('alive_code_success', {
+          code,
+          attempts: attemptNum,
+          timeMs: Date.now() - startTime,
+        });
+        updateProgress({
+          aliveCompleted: true,
+          aliveHelpUsed: helpUsed,
+          aliveCodeSubmissions: attemptNum,
+          aliveLastCode: code,
+          aliveBestScore: bestScore,
+          aliveCompletedAt: new Date().toISOString(),
+        });
+      } else {
+        onMistake?.();
+        trackEvent('alive_code_error', {
+          missing: analysis.missing,
+          score: analysis.score,
+        });
+
+        const meetsCompletionThreshold = analysis.score >= 50;
+        const isNewlyCompleted = meetsCompletionThreshold && !progress?.aliveCompleted;
+
+        updateProgress({
+          aliveCompleted: meetsCompletionThreshold || (progress?.aliveCompleted ?? false),
+          aliveLastCode: code,
+          aliveBestScore: bestScore,
+          aliveCodeSubmissions: attemptNum,
+          aliveLastActivityAt: new Date().toISOString(),
+          ...(isNewlyCompleted ? { aliveCompletedAt: new Date().toISOString() } : {}),
+        });
+      }
+    } finally {
+      if (isMountedRef.current && runIdRef.current === runId) {
+        setIsRunning(false);
+      }
     }
   }, [
     code,
     patterns,
+    isRunning,
     algorithmId,
     submissions,
     startTime,
@@ -237,6 +322,8 @@ function CodeMode({
   ]);
 
   const handleClear = () => {
+    runIdRef.current += 1;
+    setIsRunning(false);
     setCode('');
     setResult(null);
     handleReset();
@@ -324,10 +411,14 @@ function CodeMode({
         <button
           data-mascot-anchor="alive-run-btn"
           onClick={handleRun}
-          disabled={!code.trim()}
+          disabled={!code.trim() || isRunning}
           className="flex items-center gap-2 px-6 py-3 rounded-2xl font-montserrat font-bold text-sm bg-[#269984] text-white shadow-lg shadow-[#269984]/20 hover:bg-[#1f7a6a] transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          <Play className="w-4 h-4 fill-current" />
+          {isRunning ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Play className="w-4 h-4 fill-current" />
+          )}
           {t('alive.run')}
         </button>
         <button
@@ -406,7 +497,9 @@ function CodeMode({
                     ) : (
                       <div className="flex items-start gap-2 text-red-600 dark:text-red-400 bg-red-500/5 p-2 rounded-lg border border-red-500/10">
                         <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span className="text-xs font-bold font-mono">{result.executionError}</span>
+                        <span className="text-xs font-bold font-mono">
+                          {formatAliveExecutionError(result.executionError, t)}
+                        </span>
                       </div>
                     )}
                   </div>

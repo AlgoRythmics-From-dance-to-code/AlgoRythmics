@@ -1,12 +1,12 @@
 import { MetadataRoute } from 'next';
 import { getPayloadInstance } from '../lib/payload';
-import { ALGORITHMS, VIDEOS } from '../lib/constants';
+import { ALGORITHMS } from '../lib/constants';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.algo-rythmics.com';
 
   // Publicly accessible base routes (excluding routes that redirect unauthenticated crawlers)
-  const routes = ['', '/algorithms', '/videos', '/big-o', '/about', '/contact'].map((route) => ({
+  const routes = ['', '/algorithms', '/about', '/contact'].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
@@ -16,14 +16,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic Algorithms from single source of truth
   const algorithmRoutes = ALGORITHMS.map((algo) => ({
     url: `${baseUrl}/algorithms/${algo.id}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly' as const,
-    priority: 0.7,
-  }));
-
-  // Dynamic Videos
-  const videoRoutes = VIDEOS.map((video) => ({
-    url: `${baseUrl}/videos/${video.id}`,
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
     priority: 0.7,
@@ -56,5 +48,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Sitemap course fetch error:', err);
   }
 
-  return [...routes, ...algorithmRoutes, ...videoRoutes, ...courseRoutes];
+  return [...routes, ...algorithmRoutes, ...courseRoutes];
 }

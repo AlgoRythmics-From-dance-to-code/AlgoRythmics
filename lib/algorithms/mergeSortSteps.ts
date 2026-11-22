@@ -59,9 +59,20 @@ export function generateMergeSortSteps(initialValues: number[]): SortStep[] {
 
     while (i < leftArr.length && j < rightArr.length) {
       comparisons++;
+      const leftCurrentIdx = arr.findIndex(
+        (item, idx) => idx >= k && idx <= end && item.id === leftArr[i].id,
+      );
+      const rightCurrentIdx = arr.findIndex(
+        (item, idx) => idx >= k && idx <= end && item.id === rightArr[j].id,
+      );
+      const activeIndices: number[] = [];
+      if (leftCurrentIdx !== -1) activeIndices.push(leftCurrentIdx);
+      if (rightCurrentIdx !== -1 && rightCurrentIdx !== leftCurrentIdx)
+        activeIndices.push(rightCurrentIdx);
+
       result.push({
         array: [...arr],
-        activeIndices: [start + i, mid + 1 + j],
+        activeIndices: activeIndices.length > 0 ? activeIndices : [k],
         swapping: false,
         sortedIndices: [...sorted],
         description: `Comparing elements: ${leftArr[i].val} and ${rightArr[j].val}`,

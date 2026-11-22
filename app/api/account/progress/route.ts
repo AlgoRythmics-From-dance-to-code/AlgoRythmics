@@ -2,6 +2,7 @@ import { auth } from '../../../../auth';
 import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
 import type { User, AlgorithmProgress } from '../../../../payload-types';
+import { signCertificateToken } from '../../../../lib/certificates/signToken';
 
 export async function GET() {
   const session = await auth();
@@ -13,6 +14,9 @@ export async function GET() {
   try {
     const payload = await getPayloadInstance();
     const userId = Number(session.user.id);
+    if (!Number.isFinite(userId)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const [user, progressDocs, courseProgressDocs] = await Promise.all([
       payload.findByID({
         collection: 'users',
@@ -65,6 +69,7 @@ export async function GET() {
         phaseResults: pDoc.phaseResults,
         points: pDoc.points || 0,
         isCompleted: !!pDoc.isCompleted,
+        shareToken: pDoc.isCompleted ? signCertificateToken(userId, pDoc.courseId) : undefined,
         totalTimeMs: pDoc.totalTimeMs || 0,
         totalMistakes: pDoc.totalMistakes || 0,
         mascotInteractionsTotal: pDoc.mascotInteractionsTotal || 0,
@@ -113,6 +118,9 @@ export async function POST(req: Request) {
 
     const payload = await getPayloadInstance();
     const userId = Number(session.user.id);
+    if (!Number.isFinite(userId)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     // Fetch user and existing progress records in parallel upfront (avoids duplicate queries at the end)
     const [userDoc, allAlgoDocsResult, allCourseDocsResult] = await Promise.all([
@@ -130,24 +138,6 @@ export async function POST(req: Request) {
         depth: 0,
       }),
     ]);
-
-    // Get completed course IDs from slugs
-    let completedCourseIds: (string | number)[] = [];
-    if (courseProgress && typeof courseProgress === 'object') {
-      const completedSlugs = Object.entries(courseProgress)
-        .filter(([, data]) => data && (data as { isCompleted?: boolean }).isCompleted)
-        .map(([slug]) => slug);
-
-      if (completedSlugs.length > 0) {
-        const { docs: courseDocs } = await payload.find({
-          collection: 'courses',
-          where: { slug: { in: completedSlugs } },
-          depth: 0,
-          limit: 100,
-        });
-        completedCourseIds = courseDocs.map((c) => c.id);
-      }
-    }
 
     const existingByAlgoId = new Map(
       allAlgoDocsResult.docs.map((doc) => [
@@ -184,10 +174,6 @@ export async function POST(req: Request) {
       await Promise.all(
         progressEntries.map(async ([id, data]) => {
           const existingDoc = existingByAlgoId.get(id);
-          const merged = {
-            ...(existingDoc || {}),
-            ...(data as Record<string, unknown>),
-          };
 
           const updates = { ...(data as Record<string, unknown>) };
           delete updates.user;
@@ -276,17 +262,17 @@ export async function POST(req: Request) {
             }
           }
 
-          const totalTime =
-            ((merged.videoWatchTimeMs as number) || 0) +
-            ((merged.animationTotalTimeMs as number) || 0) +
-            ((merged.controlTotalTimeMs as number) || 0) +
-            ((merged.createTotalTimeMs as number) || 0) +
-            ((merged.aliveTotalTimeMs as number) || 0);
-
           const protectedMerged = {
             ...(existingDoc || {}),
             ...updates,
           };
+
+          const totalTime =
+            ((protectedMerged.videoWatchTimeMs as number) || 0) +
+            ((protectedMerged.animationTotalTimeMs as number) || 0) +
+            ((protectedMerged.controlTotalTimeMs as number) || 0) +
+            ((protectedMerged.createTotalTimeMs as number) || 0) +
+            ((protectedMerged.aliveTotalTimeMs as number) || 0);
 
           let overall = 0;
           if (protectedMerged.videoWatched) overall += 20;
@@ -385,6 +371,22 @@ export async function POST(req: Request) {
     const allAlgoDocs = Array.from(existingByAlgoId.values());
     const allCourseDocs = Array.from(existingBySlug.values());
 
+    // Derive completedCourseIds from all persisted CourseProgress docs so partial updates don't wipe completedCourses
+    let completedCourseIds: (string | number)[] = [];
+    const completedCourseSlugs = allCourseDocs
+      .filter((doc) => doc.isCompleted)
+      .map((doc) => doc.courseId)
+      .filter(Boolean);
+    if (completedCourseSlugs.length > 0) {
+      const { docs: courseDocs } = await payload.find({
+        collection: 'courses',
+        where: { slug: { in: completedCourseSlugs } },
+        depth: 0,
+        limit: 100,
+      });
+      completedCourseIds = courseDocs.map((c) => c.id);
+    }
+
     let totalTimeSpentMs = 0;
     let totalMistakes = 0;
     let totalHintsUsed = 0;
@@ -417,7 +419,11 @@ export async function POST(req: Request) {
     });
 
     const existingStats = (userDoc.learningStats || {}) as Record<string, unknown>;
-    const totalAlgorithmsCompleted = completedIds?.length || 0;
+    const existingCompletedAlgorithms = Array.isArray(userDoc.completedAlgorithms)
+      ? userDoc.completedAlgorithms
+      : [];
+    const totalAlgorithmsCompleted =
+      completedIds !== undefined ? completedIds.length : existingCompletedAlgorithms.length;
     const totalCoursesCompleted = allCourseDocs.filter((doc) => doc.isCompleted).length;
     const totalCoursesStarted = allCourseDocs.length;
 
@@ -474,7 +480,8 @@ export async function POST(req: Request) {
     const averageScore = scoreCount > 0 ? Math.round(totalScoreSum / scoreCount) : 0;
 
     // --- Preferred Speed Calculation ---
-    let preferredSpeed = 1;
+    let preferredSpeed =
+      typeof existingStats.preferredSpeed === 'number' ? existingStats.preferredSpeed : 1;
     if (visualizerProgress && typeof visualizerProgress === 'object') {
       const speeds = Object.values(visualizerProgress)
         .map((v) => (v as { speed?: number })?.speed)
@@ -484,34 +491,41 @@ export async function POST(req: Request) {
       }
     }
 
+    const userUpdateData: Partial<User> = {
+      completedCourses: completedCourseIds as User['completedCourses'],
+      learningStats: {
+        ...existingStats,
+        totalTimeSpentMs,
+        totalMistakes,
+        totalHintsUsed,
+        totalPoints,
+        totalControlAttempts,
+        totalCreateAttempts,
+        totalAliveAttempts,
+        totalAlgorithmsStarted,
+        totalAlgorithmsCompleted,
+        totalCoursesStarted,
+        totalCoursesCompleted,
+        currentStreak,
+        longestStreak,
+        averageScore,
+        preferredSpeed,
+        lastActiveDate: new Date().toISOString(),
+      },
+    };
+
+    if (completedIds !== undefined) {
+      userUpdateData.completedAlgorithms = completedIds as User['completedAlgorithms'];
+    }
+    if (visualizerProgress !== undefined) {
+      userUpdateData.visualizerProgress = visualizerProgress as User['visualizerProgress'];
+    }
+
     // Single combined user update for both completed arrays and learningStats
     await payload.update({
       collection: 'users',
       id: userId,
-      data: {
-        completedAlgorithms: completedIds as User['completedAlgorithms'],
-        completedCourses: completedCourseIds as User['completedCourses'],
-        visualizerProgress: (visualizerProgress || {}) as User['visualizerProgress'],
-        learningStats: {
-          ...existingStats,
-          totalTimeSpentMs,
-          totalMistakes,
-          totalHintsUsed,
-          totalPoints,
-          totalControlAttempts,
-          totalCreateAttempts,
-          totalAliveAttempts,
-          totalAlgorithmsStarted,
-          totalAlgorithmsCompleted,
-          totalCoursesStarted,
-          totalCoursesCompleted,
-          currentStreak,
-          longestStreak,
-          averageScore,
-          preferredSpeed,
-          lastActiveDate: new Date().toISOString(),
-        },
-      },
+      data: userUpdateData,
     });
 
     return NextResponse.json({ success: true });

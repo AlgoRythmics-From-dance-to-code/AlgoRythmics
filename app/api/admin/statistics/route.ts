@@ -58,6 +58,8 @@ interface RawCourseProgress {
   totalTimeMs?: number;
   totalMistakes?: number;
   mascotInteractionsTotal?: number;
+  confidenceResults?: Record<string, string>;
+  phaseResults?: Record<string, string>;
   detailedStats?: Record<string, unknown>;
   updatedAt?: string;
 }
@@ -196,10 +198,10 @@ export async function GET(req: Request) {
         collection: 'learning-events',
         where: Object.keys(eventsQuery).length > 0 ? eventsQuery : undefined,
         limit: 5000,
-        sort: 'createdAt',
+        sort: '-createdAt',
         depth: 0,
       });
-      eventsDocs = (res?.docs || []) as unknown as RawEvent[];
+      eventsDocs = ((res?.docs || []) as unknown as RawEvent[]).reverse();
     } catch (err) {
       console.warn('[AdminStatistics] Failed to fetch learning-events:', err);
     }
@@ -207,8 +209,12 @@ export async function GET(req: Request) {
     // 4. Fetch Course Progress (Safeguarded)
     let courseProgressDocs: RawCourseProgress[] = [];
     try {
+      const cpQuery: Where | undefined = cutoffDate
+        ? { updatedAt: { greater_than_equal: cutoffDate.toISOString() } }
+        : undefined;
       const res = await payload.find({
         collection: 'course-progress',
+        where: cpQuery,
         limit: 1000,
         depth: 1,
       });
@@ -314,19 +320,40 @@ export async function GET(req: Request) {
     ];
 
     // 6. Fetch Search Analytics (Safeguarded - may not exist in database yet)
-    let searchDocs: Array<{ query?: string; resultsCount?: number; language?: string }> = [];
+    let searchDocs: Array<{
+      query?: string;
+      resultsCount?: number;
+      language?: string;
+      user?: unknown;
+    }> = [];
     try {
+      const searchQueryFilter: Where | undefined = cutoffDate
+        ? { createdAt: { greater_than_equal: cutoffDate.toISOString() } }
+        : undefined;
       const res = await payload.find({
         collection: 'search-analytics',
+        where: searchQueryFilter,
         limit: 500,
         sort: '-createdAt',
         depth: 0,
       });
-      searchDocs = (res?.docs || []) as unknown as Array<{
+      const rawSearches = (res?.docs || []) as unknown as Array<{
         query?: string;
         resultsCount?: number;
         language?: string;
+        user?: unknown;
       }>;
+      searchDocs = activeInstructorFilter
+        ? rawSearches.filter((s) => {
+            const uid =
+              typeof s.user === 'object' && s.user !== null && 'id' in s.user
+                ? String((s.user as { id: string | number }).id)
+                : s.user !== null && s.user !== undefined
+                  ? String(s.user)
+                  : '';
+            return enrolledStudentUserIds.has(uid);
+          })
+        : rawSearches;
     } catch (err) {
       console.warn('[AdminStatistics] Search analytics table not available:', err);
     }
@@ -439,8 +466,10 @@ export async function GET(req: Request) {
               };
             }
             stepBottlenecks[key].mistakeCount++;
-            stepBottlenecks[key].avgHesitationMs += evt.durationMs || 3000;
-            stepBottlenecks[key].sampleTotal++;
+            if (evt.durationMs && evt.durationMs > 0) {
+              stepBottlenecks[key].avgHesitationMs += evt.durationMs;
+              stepBottlenecks[key].sampleTotal++;
+            }
           }
         }
       } else if (evt.eventType === 'create_blank_attempt') {
@@ -459,8 +488,10 @@ export async function GET(req: Request) {
             };
           }
           stepBottlenecks[key].mistakeCount++;
-          stepBottlenecks[key].avgHesitationMs += evt.durationMs || 4000;
-          stepBottlenecks[key].sampleTotal++;
+          if (evt.durationMs && evt.durationMs > 0) {
+            stepBottlenecks[key].avgHesitationMs += evt.durationMs;
+            stepBottlenecks[key].sampleTotal++;
+          }
         }
       }
     }
@@ -525,35 +556,36 @@ export async function GET(req: Request) {
         ? Math.round(
             normalActionDurations.reduce((a, b) => a + b, 0) / normalActionDurations.length,
           )
-        : 3600;
+        : 0;
 
     const avgPostErrorDurationMs =
       postErrorDurationsStep1.length > 0
         ? Math.round(
             postErrorDurationsStep1.reduce((a, b) => a + b, 0) / postErrorDurationsStep1.length,
           )
-        : Math.round(avgNormalDurationMs * 1.58);
+        : 0;
 
     const avgPostErrorStep2Ms =
       postErrorDurationsStep2.length > 0
         ? Math.round(
             postErrorDurationsStep2.reduce((a, b) => a + b, 0) / postErrorDurationsStep2.length,
           )
-        : Math.round(avgNormalDurationMs * 1.25);
+        : 0;
 
     const avgPostErrorStep3Ms =
       postErrorDurationsStep3.length > 0
         ? Math.round(
             postErrorDurationsStep3.reduce((a, b) => a + b, 0) / postErrorDurationsStep3.length,
           )
-        : Math.round(avgNormalDurationMs * 1.05);
+        : 0;
 
-    const pesSlowdownPercentage = Math.round(
-      ((avgPostErrorDurationMs - avgNormalDurationMs) / avgNormalDurationMs) * 100,
-    );
+    const pesSlowdownPercentage =
+      avgNormalDurationMs > 0 && postErrorDurationsStep1.length > 0
+        ? Math.round(((avgPostErrorDurationMs - avgNormalDurationMs) / avgNormalDurationMs) * 100)
+        : 0;
 
     const retrySuccessRate =
-      retryAttempt1Total > 0 ? Math.round((retryAttempt1Success / retryAttempt1Total) * 100) : 74;
+      retryAttempt1Total > 0 ? Math.round((retryAttempt1Success / retryAttempt1Total) * 100) : 0;
 
     // D. Video Impact Comparison
     const withVideoMistakes: number[] = [];
@@ -572,7 +604,7 @@ export async function GET(req: Request) {
         ? Number(
             (withVideoMistakes.reduce((a, b) => a + b, 0) / withVideoMistakes.length).toFixed(1),
           )
-        : 1.3;
+        : 0;
     const avgMistakesWithoutVideo =
       withoutVideoMistakes.length > 0
         ? Number(
@@ -580,14 +612,17 @@ export async function GET(req: Request) {
               1,
             ),
           )
-        : 3.4;
+        : 0;
 
-    const videoErrorReductionPercent = Math.round(
-      Math.max(
-        0,
-        ((avgMistakesWithoutVideo - avgMistakesWithVideo) / (avgMistakesWithoutVideo || 1)) * 100,
-      ),
-    );
+    const videoErrorReductionPercent =
+      withVideoMistakes.length > 0 && withoutVideoMistakes.length > 0 && avgMistakesWithoutVideo > 0
+        ? Math.round(
+            Math.max(
+              0,
+              ((avgMistakesWithoutVideo - avgMistakesWithVideo) / avgMistakesWithoutVideo) * 100,
+            ),
+          )
+        : 0;
 
     // ─── 5 ADVANCED RESEARCH METRICS ───
 
@@ -600,13 +635,13 @@ export async function GET(req: Request) {
         ? Math.round(
             helpCohort.reduce((s, p) => s + (p.aliveBestScore || 0), 0) / helpCohort.length,
           )
-        : 72;
+        : 0;
     const autoAliveAvgScore =
       autoCohort.length > 0
         ? Math.round(
             autoCohort.reduce((s, p) => s + (p.aliveBestScore || 0), 0) / autoCohort.length,
           )
-        : 88;
+        : 0;
 
     const helpAliveSubmissions =
       helpCohort.length > 0
@@ -615,7 +650,7 @@ export async function GET(req: Request) {
               helpCohort.reduce((s, p) => s + (p.aliveCodeSubmissions || 0), 0) / helpCohort.length
             ).toFixed(1),
           )
-        : 3.8;
+        : 0;
     const autoAliveSubmissions =
       autoCohort.length > 0
         ? Number(
@@ -623,102 +658,75 @@ export async function GET(req: Request) {
               autoCohort.reduce((s, p) => s + (p.aliveCodeSubmissions || 0), 0) / autoCohort.length
             ).toFixed(1),
           )
-        : 2.1;
+        : 0;
 
     const helpAliveCompletionRate =
       helpCohort.length > 0
         ? Math.round((helpCohort.filter((p) => p.aliveCompleted).length / helpCohort.length) * 100)
-        : 68;
+        : 0;
     const autoAliveCompletionRate =
       autoCohort.length > 0
         ? Math.round((autoCohort.filter((p) => p.aliveCompleted).length / autoCohort.length) * 100)
-        : 89;
+        : 0;
 
-    const totalCohortLearners = scopedProgressDocs.length;
     const helpSeekingTransfer = {
       withHelp: {
-        count: helpCohort.length || Math.round(totalCohortLearners * 0.42),
+        count: helpCohort.length,
         avgScore: helpAliveAvgScore,
         avgSubmissions: helpAliveSubmissions,
         completionRate: helpAliveCompletionRate,
       },
       autonomous: {
-        count: autoCohort.length || Math.round(totalCohortLearners * 0.58),
+        count: autoCohort.length,
         avgScore: autoAliveAvgScore,
         avgSubmissions: autoAliveSubmissions,
         completionRate: autoAliveCompletionRate,
       },
-      scoreDifferencePercent: Math.round(
-        ((autoAliveAvgScore - helpAliveAvgScore) / (autoAliveAvgScore || 1)) * 100,
-      ),
+      scoreDifferencePercent:
+        helpCohort.length > 0 && autoCohort.length > 0 && autoAliveAvgScore > 0
+          ? Math.round(((autoAliveAvgScore - helpAliveAvgScore) / autoAliveAvgScore) * 100)
+          : 0,
     };
 
-    // 2. Misconceptions Analysis (Mental Model Bugs)
-    const misconceptionsList = [
-      {
-        id: 'bubble-inner-bound',
-        algorithmId: 'bubble-sort',
-        title: 'Belső ciklus határának tévesztése',
-        description:
-          'A diákok a belső ciklusnál elfelejtik lecsökkenteni a határt (arr.length - i - 1), és a már rendezett végére is ráfutnak.',
-        affectedPercentage: 42,
-        sampleExpected: 'j < length - i - 1',
-        sampleActual: 'j < length - 1',
+    // 2. Misconceptions Analysis (derived purely from recorded step bottlenecks)
+    const uniqueAlgoLearners = Math.max(
+      1,
+      new Set(
+        scopedProgressDocs.map((p) =>
+          String(typeof p.user === 'object' && p.user !== null ? p.user.id : p.user),
+        ),
+      ).size,
+    );
+    const totalBottleneckMistakes = Object.values(stepBottlenecks).reduce(
+      (sum, b) => sum + b.mistakeCount,
+      0,
+    );
+    const misconceptionsList = Object.entries(stepBottlenecks)
+      .sort((a, b) => b[1].mistakeCount - a[1].mistakeCount)
+      .slice(0, 6)
+      .map(([key, b]) => ({
+        id: key,
+        algorithmId: b.algorithmId,
+        title: `${b.stepOrBlank} elakadás`,
+        description: `Rögzített tanulói hibák (${b.mistakeCount} db) a(z) "${b.stepOrBlank}" lépésnél (${b.tab} fázis).`,
+        affectedPercentage:
+          totalBottleneckMistakes > 0
+            ? Math.min(
+                100,
+                Math.round(
+                  (b.mistakeCount / Math.max(uniqueAlgoLearners, totalBottleneckMistakes)) * 100,
+                ),
+              )
+            : 0,
+        sampleExpected: '',
+        sampleActual: '',
         recommendation:
-          'Hangsúlyozzuk a táncos hasonlatot: a legnagyobb elemek a helyükre kerülve "megpihennek", nem kell velük tovább foglalkozni.',
-      },
-      {
-        id: 'reverse-comparator',
-        algorithmId: 'bubble-sort',
-        title: 'Fordított cserefeltétel',
-        description:
-          'Növekvő sorrend helyett csökkenő logikát alkalmaznak (arr[j] < arr[j+1] cserével).',
-        affectedPercentage: 28,
-        sampleExpected: 'arr[j] > arr[j + 1]',
-        sampleActual: 'arr[j] < arr[j + 1]',
-        recommendation:
-          'Gyakoroltassuk a Control fázist, ahol vizuálisan azonnal látszik, ha kisebb szám vándorol hátra.',
-      },
-      {
-        id: 'quick-pivot-partition',
-        algorithmId: 'quick-sort',
-        title: 'Pivot elem rendezetlen kihagyása',
-        description:
-          'A partícionálás után nem cserélik be a pivot elemet a két rész közé, így a rekurzió végtelen ciklusba kerül.',
-        affectedPercentage: 35,
-        sampleExpected: 'swap(arr, i + 1, high)',
-        sampleActual: 'return i',
-        recommendation:
-          'A táncos koreográfiában a Pivot táncos mindig a középpontba áll be a partíció végén.',
-      },
-      {
-        id: 'binary-search-mid-formula',
-        algorithmId: 'binary-search',
-        title: 'Középső index eltolása (Túlcsordulás / Infinite Loop)',
-        description:
-          'A felezőpont vizsgálata után a low/high mutatót nem léptetik át a mid elemen (pl. low = mid ahelyett, hogy low = mid + 1 lenne).',
-        affectedPercentage: 31,
-        sampleExpected: 'low = mid + 1',
-        sampleActual: 'low = mid',
-        recommendation:
-          'Hívjuk fel a figyelmet arra, hogy ha arr[mid] már nem egyezik, azt a résztartományból teljesen kizárhatjuk.',
-      },
-      {
-        id: 'insertion-shift-overwrite',
-        algorithmId: 'insertion-sort',
-        title: 'Kulcs elem felülírása mozgatáskor',
-        description:
-          'A diákok nem mentik el a beszúrandó kulcselem értékét a while ciklus előtt, így a jobbra tolt elemek felülírják azt.',
-        affectedPercentage: 26,
-        sampleExpected: 'key = arr[i]; while (j >= 0 ...)',
-        sampleActual: 'while (j >= 0 && arr[j] > arr[j+1])',
-        recommendation:
-          'Használjuk a kártyás hasonlatot: "vedd kézbe a kártyát, mielőtt a többit elcsúsztatnád a pakliban".',
-      },
-    ];
+          b.tab === 'create'
+            ? 'Érdemes közösen áttekinteni a ciklus- és feltétel-kiegészítés szintaxisát.'
+            : 'Javasolt a vizuális animáció és a lépésenkénti irányítás közös elemzése.',
+      }));
 
     // 3. Process Mining & Learning Trajectories
-    // Identify user paths: Linear vs Code-First vs Visual Explorer
     const userSessionPath: Record<string, string[]> = {};
     for (const evt of scopedEventsDocs) {
       if (evt.tab) {
@@ -733,43 +741,84 @@ export async function GET(req: Request) {
       }
     }
 
-    let linearCount = 0;
-    let codeFirstCount = 0;
-    let visualExplorerCount = 0;
+    const linearUsers = new Set<string>();
+    const codeFirstUsers = new Set<string>();
+    const visualExplorerUsers = new Set<string>();
 
-    for (const [_uId, path] of Object.entries(userSessionPath)) {
+    for (const [uId, path] of Object.entries(userSessionPath)) {
       if (path.length >= 3 && path[0] === 'video' && path[1] === 'animation') {
-        linearCount++;
+        linearUsers.add(uId);
       } else if (path[0] === 'create' || path[0] === 'alive') {
-        codeFirstCount++;
+        codeFirstUsers.add(uId);
       } else {
-        visualExplorerCount++;
+        visualExplorerUsers.add(uId);
       }
     }
 
-    const totalPathLearners = linearCount + codeFirstCount + visualExplorerCount || 1;
+    const computePathMetrics = (cohortUsers: Set<string>) => {
+      if (cohortUsers.size === 0) {
+        return { avgCompletionMinutes: 0, completionRate: 0 };
+      }
+      const cohortDocs = scopedProgressDocs.filter((p) => {
+        const uid = String(typeof p.user === 'object' && p.user !== null ? p.user.id : p.user);
+        return cohortUsers.has(uid);
+      });
+      if (cohortDocs.length === 0) {
+        return { avgCompletionMinutes: 0, completionRate: 0 };
+      }
+      const completedDocs = cohortDocs.filter((p) => (p.overallProgress || 0) >= 100);
+      const totalMs = cohortDocs.reduce((sum, p) => sum + (p.totalTimeSpentMs || 0), 0);
+      return {
+        avgCompletionMinutes: Number((totalMs / cohortDocs.length / 60000).toFixed(1)),
+        completionRate: Math.round((completedDocs.length / cohortDocs.length) * 100),
+      };
+    };
+
+    const linearMetrics = computePathMetrics(linearUsers);
+    const codeFirstMetrics = computePathMetrics(codeFirstUsers);
+    const visualMetrics = computePathMetrics(visualExplorerUsers);
+
+    const rawPathTotal = linearUsers.size + codeFirstUsers.size + visualExplorerUsers.size;
+    const strategyCandidates = [
+      {
+        label: 'Lineáris / Módszeres',
+        count: linearUsers.size,
+        rate: linearMetrics.completionRate,
+      },
+      { label: 'Kód-központú', count: codeFirstUsers.size, rate: codeFirstMetrics.completionRate },
+      {
+        label: 'Vizuális felfedező',
+        count: visualExplorerUsers.size,
+        rate: visualMetrics.completionRate,
+      },
+    ].filter((c) => c.count > 0);
+    strategyCandidates.sort((a, b) => b.rate - a.rate || b.count - a.count);
+
     const processMining = {
       linearMethodical: {
-        sharePercent: Math.round((linearCount / totalPathLearners) * 100) || 54,
-        avgCompletionMinutes: 18.5,
-        completionRate: 92,
+        sharePercent: rawPathTotal > 0 ? Math.round((linearUsers.size / rawPathTotal) * 100) : 0,
+        avgCompletionMinutes: linearMetrics.avgCompletionMinutes,
+        completionRate: linearMetrics.completionRate,
         description:
           'Módszeres haladás: Videó → Animáció → Irányítás → Kódkiegészítés → Önálló kód',
       },
       codeFirstExpedited: {
-        sharePercent: Math.round((codeFirstCount / totalPathLearners) * 100) || 28,
-        avgCompletionMinutes: 24.2,
-        completionRate: 64,
+        sharePercent: rawPathTotal > 0 ? Math.round((codeFirstUsers.size / rawPathTotal) * 100) : 0,
+        avgCompletionMinutes: codeFirstMetrics.avgCompletionMinutes,
+        completionRate: codeFirstMetrics.completionRate,
         description: 'Kód-központú: Azonnali ugrás a kódra, csak elakadás esetén néznek vissza',
       },
       visualExploratory: {
-        sharePercent: Math.round((visualExplorerCount / totalPathLearners) * 100) || 18,
-        avgCompletionMinutes: 21.0,
-        completionRate: 84,
+        sharePercent:
+          rawPathTotal > 0 ? Math.round((visualExplorerUsers.size / rawPathTotal) * 100) : 0,
+        avgCompletionMinutes: visualMetrics.avgCompletionMinutes,
+        completionRate: visualMetrics.completionRate,
         description: 'Vizuális felfedező: Többszöri animáció és szimuláció lejátszás',
       },
       recommendedStrategy:
-        'Lineáris / Módszeres (28%-kal gyorsabb elsajátítás és 92%-os sikeresség)',
+        strategyCandidates.length > 0
+          ? `${strategyCandidates[0].label} (${strategyCandidates[0].rate}%-os teljesítési arány)`
+          : 'Nincs még elegendő adat',
     };
 
     // 4. Static Code vs Visual Blocks (Frustration Threshold)
@@ -780,15 +829,17 @@ export async function GET(req: Request) {
     for (const p of scopedProgressDocs) {
       if (p.aliveHelpUsed) {
         fallbackCount++;
-        failedAttemptsList.push(Math.max(1, p.aliveCodeSubmissions || 3));
+        failedAttemptsList.push(p.aliveCodeSubmissions || 0);
         if (p.aliveCompleted) returnToCodeCount++;
       }
     }
 
-    const totalAliveLearners =
-      scopedProgressDocs.filter((p) => (p.aliveCodeSubmissions || 0) > 0).length || 1;
+    const rawAliveLearners = scopedProgressDocs.filter(
+      (p) => (p.aliveCodeSubmissions || 0) > 0,
+    ).length;
     const visualBlocksThreshold = {
-      fallbackPercentage: Math.round((fallbackCount / totalAliveLearners) * 100) || 34,
+      fallbackPercentage:
+        rawAliveLearners > 0 ? Math.round((fallbackCount / rawAliveLearners) * 100) : 0,
       avgFailedAttemptsBeforeFallback:
         failedAttemptsList.length > 0
           ? Number(
@@ -796,21 +847,30 @@ export async function GET(req: Request) {
                 1,
               ),
             )
-          : 3.4,
+          : 0,
       successfulReturnToCodeRate:
-        fallbackCount > 0 ? Math.round((returnToCodeCount / fallbackCount) * 100) : 78,
+        fallbackCount > 0 ? Math.round((returnToCodeCount / fallbackCount) * 100) : 0,
     };
 
     // 5. Cognitive Load Recovery Dynamics
+    const hasCognitiveData = normalActionDurations.length > 0 || retryAttempt1Total > 0;
     const cognitiveLoadDynamics = {
       baselineReactionSec: Number((avgNormalDurationMs / 1000).toFixed(1)),
       immediatePostErrorSec: Number((avgPostErrorDurationMs / 1000).toFixed(1)),
       step2RecoverySec: Number((avgPostErrorStep2Ms / 1000).toFixed(1)),
       step3RecoverySec: Number((avgPostErrorStep3Ms / 1000).toFixed(1)),
-      overloadIndex: Math.min(
-        100,
-        Math.round((pesSlowdownPercentage / 100) * 45 + (100 - retrySuccessRate) * 0.55),
-      ),
+      overloadIndex: hasCognitiveData
+        ? Math.max(
+            0,
+            Math.min(
+              100,
+              Math.round(
+                (Math.max(0, pesSlowdownPercentage) / 100) * 45 +
+                  (retryAttempt1Total > 0 ? (100 - retrySuccessRate) * 0.55 : 0),
+              ),
+            ),
+          )
+        : 0,
     };
 
     // E. Algorithm Hesitation List
@@ -819,12 +879,7 @@ export async function GET(req: Request) {
       const avgDuration =
         algoEvents.length > 0
           ? Math.round(algoEvents.reduce((s, e) => s + (e.durationMs || 0), 0) / algoEvents.length)
-          : Math.round(
-              avgNormalDurationMs *
-                (algoId.includes('quick') || algoId.includes('merge') || algoId.includes('queens')
-                  ? 1.35
-                  : 0.95),
-            );
+          : 0;
 
       const totalMistakes = data.totalMistakes || 0;
       const totalDecisions = (data.decisionsWrong || 0) + (data.decisionsCorrect || 0);
@@ -853,7 +908,7 @@ export async function GET(req: Request) {
       .map((b) => ({
         ...b,
         avgHesitationSeconds:
-          b.sampleTotal > 0 ? Number((b.avgHesitationMs / b.sampleTotal / 1000).toFixed(1)) : 4.2,
+          b.sampleTotal > 0 ? Number((b.avgHesitationMs / b.sampleTotal / 1000).toFixed(1)) : 0,
       }))
       .sort((a, b) => b.mistakeCount - a.mistakeCount)
       .slice(0, 8);
@@ -878,12 +933,12 @@ export async function GET(req: Request) {
     const totalConfRatings =
       highConfCorrect + highConfIncorrect + lowConfCorrect + lowConfIncorrect;
     const confidenceMatrix = {
-      mastery: totalConfRatings > 0 ? Math.round((highConfCorrect / totalConfRatings) * 100) : 62,
+      mastery: totalConfRatings > 0 ? Math.round((highConfCorrect / totalConfRatings) * 100) : 0,
       overconfidence:
-        totalConfRatings > 0 ? Math.round((highConfIncorrect / totalConfRatings) * 100) : 14,
-      hesitant: totalConfRatings > 0 ? Math.round((lowConfCorrect / totalConfRatings) * 100) : 16,
+        totalConfRatings > 0 ? Math.round((highConfIncorrect / totalConfRatings) * 100) : 0,
+      hesitant: totalConfRatings > 0 ? Math.round((lowConfCorrect / totalConfRatings) * 100) : 0,
       recognizedGap:
-        totalConfRatings > 0 ? Math.round((lowConfIncorrect / totalConfRatings) * 100) : 8,
+        totalConfRatings > 0 ? Math.round((lowConfIncorrect / totalConfRatings) * 100) : 0,
     };
 
     // G. Search Analytics
@@ -919,26 +974,7 @@ export async function GET(req: Request) {
       .slice(0, 6);
 
     // ─── COURSES EVALUATION & DROPOFF FUNNEL ───
-    const coursesToEvaluate = activeInstructorFilter
-      ? coursesDocs
-      : coursesDocs.length > 0
-        ? coursesDocs
-        : [
-            {
-              id: 'bubble-sort-basics',
-              slug: 'bubble-sort-basics',
-              title: 'Buborékrendezés Alapjai & Koreográfia',
-              difficulty: 'Beginner',
-              estimatedMinutes: 20,
-              phases: [
-                { phaseId: 'phase-1', title: 'Videó Alapozás', sourceView: 'video' },
-                { phaseId: 'phase-2', title: 'Interaktív Irányítás', sourceView: 'control' },
-                { phaseId: 'phase-3', title: 'Kvíz & Logika', sourceView: 'quiz' },
-                { phaseId: 'phase-4', title: 'Kód Hibakeresés (Debug)', sourceView: 'debug' },
-                { phaseId: 'phase-5', title: 'Záró Szimuláció', sourceView: 'final-challenge' },
-              ],
-            },
-          ];
+    const coursesToEvaluate = coursesDocs;
 
     const coursesEvaluationList = coursesToEvaluate.map((course) => {
       const courseSlug = course.slug || String(course.id);
@@ -956,9 +992,12 @@ export async function GET(req: Request) {
       const actualAvgMinutes =
         enrolled.length > 0 && totalTimeMs > 0
           ? Math.round(totalTimeMs / enrolled.length / 60000)
-          : estimatedMinutes;
+          : 0;
 
-      const pacingRatio = Number((actualAvgMinutes / estimatedMinutes).toFixed(2));
+      const pacingRatio =
+        actualAvgMinutes > 0 && estimatedMinutes > 0
+          ? Number((actualAvgMinutes / estimatedMinutes).toFixed(2))
+          : 0;
 
       const totalPoints = enrolled.reduce((sum, cp) => sum + (cp.points || 0), 0);
       const avgScore =
@@ -1022,7 +1061,7 @@ export async function GET(req: Request) {
                   Math.max(0, 20 - Math.abs(pacingRatio - 1) * 20),
               ),
             )
-          : 100;
+          : 0;
 
       // Phase drop-off funnel
       const phases = course.phases && course.phases.length > 0 ? course.phases : [];
@@ -1036,15 +1075,33 @@ export async function GET(req: Request) {
 
         const retentionRate =
           enrolledCount > 0 ? Math.min(100, Math.round((reachedCount / enrolledCount) * 100)) : 0;
-        const avgTimeMinutes = Number(
-          (
-            (actualAvgMinutes / (phases.length || 1)) *
-            (phase.sourceView === 'debug' ? 1.4 : 0.9)
-          ).toFixed(1),
-        );
-        const mistakeCount = Math.round(
-          (totalMistakes / (phases.length || 1)) * (phase.sourceView === 'debug' ? 1.5 : 0.8),
-        );
+
+        let phaseStatSamples = 0;
+        let phaseTotalTimeMs = 0;
+        let phaseTotalMistakesFromStats = 0;
+        enrolled.forEach((cp) => {
+          const stat = (cp.detailedStats || {})[phase.phaseId] as
+            | { timeSpentMs?: number; mistakes?: number }
+            | undefined;
+          if (stat) {
+            phaseStatSamples++;
+            phaseTotalTimeMs += stat.timeSpentMs || 0;
+            phaseTotalMistakesFromStats += stat.mistakes || 0;
+          }
+        });
+
+        const avgTimeMinutes =
+          phaseStatSamples > 0
+            ? Number((phaseTotalTimeMs / phaseStatSamples / 60000).toFixed(1))
+            : actualAvgMinutes > 0 && phases.length > 0
+              ? Number((actualAvgMinutes / phases.length).toFixed(1))
+              : 0;
+        const mistakeCount =
+          phaseStatSamples > 0
+            ? phaseTotalMistakesFromStats
+            : phases.length > 0
+              ? Math.round(totalMistakes / phases.length)
+              : 0;
 
         const phaseTitle =
           typeof phase.title === 'object' && phase.title !== null
@@ -1103,14 +1160,14 @@ export async function GET(req: Request) {
             : userEmail
               ? userEmail.split('@')[0]
               : `Tanuló #${sIdx + 1}`;
-        const email = userEmail || `diak${sIdx + 1}@algorythmics.com`;
+        const email = userEmail;
         const completedPhases = cp.completedPhases || [];
         const completedCount = completedPhases.length;
         const totalPhases = phases.length || 1;
         const progressPercent = cp.isCompleted
           ? 100
           : Math.min(100, Math.round((completedCount / totalPhases) * 100));
-        const timeMinutes = Math.round((cp.totalTimeMs || 0) / 60000) || 1;
+        const timeMinutes = Math.round((cp.totalTimeMs || 0) / 60000);
         const currentPhaseIdx = cp.activePhaseIndex || 0;
         const currentPhase = phases[currentPhaseIdx] || phases[0];
         const currentPhaseTitle = currentPhase
@@ -1229,7 +1286,7 @@ export async function GET(req: Request) {
       const courseAvgScore =
         enrolled.length > 0
           ? Math.round(enrolled.reduce((sum, cp) => sum + (cp.points || 0), 0) / enrolled.length)
-          : 85;
+          : 0;
 
       phases.forEach((p) => {
         const type = p.sourceView || 'info';
@@ -1246,13 +1303,13 @@ export async function GET(req: Request) {
           phases.length > 0 ? Math.round(courseTotalMistakes / phases.length) : 0;
         phaseTypeStatsMap[type].totalMistakes += phaseMistakes;
         const phaseTimeSec =
-          enrolled.length > 0 && phases.length > 0
+          enrolled.length > 0 && phases.length > 0 && courseTotalTimeSec > 0
             ? Math.round(courseTotalTimeSec / enrolled.length / phases.length)
-            : course.estimatedMinutes
-              ? Math.round((course.estimatedMinutes * 60) / (phases.length || 1))
-              : 120;
+            : 0;
         phaseTypeStatsMap[type].totalTimesSec.push(phaseTimeSec);
-        phaseTypeStatsMap[type].totalScores.push(courseAvgScore);
+        if (enrolled.length > 0) {
+          phaseTypeStatsMap[type].totalScores.push(courseAvgScore);
+        }
       });
     });
 
@@ -1260,11 +1317,12 @@ export async function GET(req: Request) {
       const avgScore =
         stats.totalScores.length > 0
           ? Math.round(stats.totalScores.reduce((a, b) => a + b, 0) / stats.totalScores.length)
-          : 100;
+          : 0;
+      const nonZeroTimes = stats.totalTimesSec.filter((t) => t > 0);
       const avgDuration =
-        stats.totalTimesSec.length > 0
-          ? Math.round(stats.totalTimesSec.reduce((a, b) => a + b, 0) / stats.totalTimesSec.length)
-          : 120;
+        nonZeroTimes.length > 0
+          ? Math.round(nonZeroTimes.reduce((a, b) => a + b, 0) / nonZeroTimes.length)
+          : 0;
       return {
         type,
         sourceView: type,
@@ -1299,22 +1357,49 @@ export async function GET(req: Request) {
       };
     });
 
-    // Confidence Trajectory from Course Start to Course End
+    // Confidence Trajectory from Course Start to Course End (computed from recorded course confidence ratings)
+    const initBuckets = { hc: 0, hi: 0, lc: 0, li: 0 };
+    const finalBuckets = { hc: 0, hi: 0, lc: 0, li: 0 };
+    filteredCourseProgress.forEach((cp) => {
+      const entries = Object.entries(cp.confidenceResults || {});
+      if (entries.length === 0) return;
+      const pResults = cp.phaseResults || {};
+      const classify = (rating: string, phaseId: string, bucket: typeof initBuckets) => {
+        const isHigh = rating === 'high' || rating === 'confident';
+        const isCorrect = pResults[phaseId] === 'success' || cp.isCompleted === true;
+        if (isHigh && isCorrect) bucket.hc++;
+        else if (isHigh && !isCorrect) bucket.hi++;
+        else if (!isHigh && isCorrect) bucket.lc++;
+        else bucket.li++;
+      };
+      const [firstPhaseId, firstRating] = entries[0];
+      classify(firstRating, firstPhaseId, initBuckets);
+      const [lastPhaseId, lastRating] = entries[entries.length - 1];
+      classify(lastRating, lastPhaseId, finalBuckets);
+    });
+    const toMatrix = (b: typeof initBuckets) => {
+      const total = b.hc + b.hi + b.lc + b.li;
+      if (total === 0) {
+        return { mastery: 0, overconfidence: 0, hesitant: 0, recognizedGap: 0 };
+      }
+      return {
+        mastery: Math.round((b.hc / total) * 100),
+        overconfidence: Math.round((b.hi / total) * 100),
+        hesitant: Math.round((b.lc / total) * 100),
+        recognizedGap: Math.round((b.li / total) * 100),
+      };
+    };
+    const initialConf = toMatrix(initBuckets);
+    const finalConf = toMatrix(finalBuckets);
+    const hasConfidenceTrajectory =
+      initBuckets.hc + initBuckets.hi + initBuckets.lc + initBuckets.li > 0;
     const confidenceTrajectory = {
-      initialPhase: {
-        mastery: 48,
-        overconfidence: 26,
-        hesitant: 16,
-        recognizedGap: 10,
-      },
-      finalPhase: {
-        mastery: 79,
-        overconfidence: 7,
-        hesitant: 9,
-        recognizedGap: 5,
-      },
-      masteryGrowthPercent: 31,
-      overconfidenceDropPercent: -19,
+      initialPhase: initialConf,
+      finalPhase: finalConf,
+      masteryGrowthPercent: hasConfidenceTrajectory ? finalConf.mastery - initialConf.mastery : 0,
+      overconfidenceDropPercent: hasConfidenceTrajectory
+        ? finalConf.overconfidence - initialConf.overconfidence
+        : 0,
     };
 
     // ─── REAL MISTAKE HOTSPOT & PEDAGOGICAL ANALYSIS (WHERE & WHY) ───
@@ -1338,64 +1423,6 @@ export async function GET(req: Request) {
       sampleActual?: string;
       recommendation: string;
     }> = [];
-
-    // Optional known algorithm misconceptions: ONLY apply to courses that explicitly match the algorithm!
-    const algorithmKnownMisconceptions = [
-      {
-        id: 'bubble-inner-bound',
-        algorithmId: 'bubble-sort',
-        courseKeyword: 'buborék',
-        sourceView: 'debug',
-        difficulty: 'Beginner',
-        title: 'Belső ciklus határának tévesztése (arr.length - i - 1)',
-        description:
-          'A diákok a belső ciklusnál elfelejtik lecsökkenteni a határt (- i - 1), és a már véglegesen rendezett elemekre is ráfutnak.',
-        sampleExpected: 'j < length - i - 1',
-        sampleActual: 'j < length - 1',
-        avgHesitationSec: 14.2,
-        mistakeCount: 16,
-        affectedLearnersPercent: 42,
-        confidenceType: 'overconfident' as const,
-        recommendation:
-          'Hangsúlyozzuk: a legnagyobb elemek a helyükre kerülve megpihennek, a ciklushatárt minden külső menetben 1-gyel csökkenteni kell.',
-      },
-      {
-        id: 'quick-pivot-partition',
-        algorithmId: 'quick-sort',
-        courseKeyword: 'gyors',
-        sourceView: 'debug',
-        difficulty: 'Intermediate',
-        title: 'Pivot elem becserélésének elmaradása partícionálás után',
-        description:
-          'A partícionáló while ciklus lefutása után a diákok nem cserélik be a pivot elemet a két rész közé (swap(arr, i + 1, high)).',
-        sampleExpected: 'swap(arr, i + 1, high); return i + 1;',
-        sampleActual: 'return i;',
-        avgHesitationSec: 21.8,
-        mistakeCount: 15,
-        affectedLearnersPercent: 35,
-        confidenceType: 'overconfident' as const,
-        recommendation:
-          'A táncos koreográfiában a Pivot táncos mindig a választóvonal középpontjába áll be a partíció végén.',
-      },
-      {
-        id: 'binary-search-mid-formula',
-        algorithmId: 'binary-search',
-        courseKeyword: 'bináris',
-        sourceView: 'debug',
-        difficulty: 'Beginner',
-        title: 'Felezőpont eltolása (low = mid ahelyett, hogy low = mid + 1)',
-        description:
-          'A felezőpont vizsgálata után a mutatót nem léptetik át a mid elemen, ami két elemű tartománynál végtelen ciklust okozhat.',
-        sampleExpected: 'low = mid + 1',
-        sampleActual: 'low = mid',
-        avgHesitationSec: 13.6,
-        mistakeCount: 13,
-        affectedLearnersPercent: 38,
-        confidenceType: 'misconception' as const,
-        recommendation:
-          'Ha arr[mid] már nem egyezik a keresett elemmel, azt a résztartományból teljesen kizárhatjuk.',
-      },
-    ];
 
     coursesToEvaluate.forEach((course) => {
       const courseSlug = course.slug || String(course.id);
@@ -1427,34 +1454,7 @@ export async function GET(req: Request) {
             (e.eventData.correct === false || e.eventData.isCorrect === false)),
       );
 
-      // Check if this course genuinely matches an algorithm course
-      const titleLower = courseTitle.toLowerCase();
-      const slugLower = courseSlug.toLowerCase();
-      const matchedAlgoMisconception = algorithmKnownMisconceptions.find(
-        (m) => titleLower.includes(m.courseKeyword) || slugLower.includes(m.algorithmId),
-      );
-
-      if (matchedAlgoMisconception) {
-        // STRICT MATCH: ONLY add algorithm misconception if the course is actually about that algorithm
-        allMistakesAnalysis.push({
-          id: `${courseSlug}-${matchedAlgoMisconception.id}`,
-          courseId: courseSlug,
-          courseTitle,
-          phaseId: `${matchedAlgoMisconception.algorithmId}-${matchedAlgoMisconception.sourceView}`,
-          phaseTitle: matchedAlgoMisconception.title,
-          sourceView: matchedAlgoMisconception.sourceView,
-          difficulty: course.difficulty || matchedAlgoMisconception.difficulty,
-          mistakeCount: Math.max(matchedAlgoMisconception.mistakeCount, courseTotalMistakes),
-          affectedLearnersPercent: matchedAlgoMisconception.affectedLearnersPercent,
-          avgHesitationSec: matchedAlgoMisconception.avgHesitationSec,
-          confidenceType: matchedAlgoMisconception.confidenceType,
-          title: matchedAlgoMisconception.title,
-          description: matchedAlgoMisconception.description,
-          sampleExpected: matchedAlgoMisconception.sampleExpected,
-          sampleActual: matchedAlgoMisconception.sampleActual,
-          recommendation: matchedAlgoMisconception.recommendation,
-        });
-      } else if (mistakeEvents.length > 0) {
+      if (mistakeEvents.length > 0) {
         // Process REAL mistake events logged by students
         const groupedEvents: Record<string, typeof mistakeEvents> = {};
         mistakeEvents.forEach((evt) => {
@@ -1473,8 +1473,13 @@ export async function GET(req: Request) {
                 matchingPhase.phaseId
             : `Fázis #${gIdx + 1}`;
           const sourceView = matchingPhase?.sourceView || 'quiz';
+          const measuredEvts = evts.filter((e) => (e.durationMs || 0) > 0);
           const avgDuration =
-            evts.reduce((sum, e) => sum + (e.durationMs || 10000), 0) / evts.length / 1000;
+            measuredEvts.length > 0
+              ? measuredEvts.reduce((sum, e) => sum + (e.durationMs || 0), 0) /
+                measuredEvts.length /
+                1000
+              : 0;
           const sampleExpected = evts.find(
             (e) => e.eventData?.expectedAnswer || e.eventData?.correctAnswer,
           )?.eventData as Record<string, unknown> | undefined;
@@ -1494,10 +1499,14 @@ export async function GET(req: Request) {
             affectedLearnersPercent:
               enrolledCount > 0
                 ? Math.min(100, Math.round((evts.length / enrolledCount) * 100))
-                : 30,
+                : 0,
             avgHesitationSec: Number(avgDuration.toFixed(1)),
             confidenceType:
-              avgDuration < 4 ? 'blind_guess' : avgDuration > 18 ? 'hesitant' : 'misconception',
+              avgDuration > 0 && avgDuration < 4
+                ? 'blind_guess'
+                : avgDuration > 18
+                  ? 'hesitant'
+                  : 'misconception',
             title: `Tanulói elakadás a(z) "${phaseTitle}" feladatnál`,
             description: `A diákok több alkalommal választottak helytelen megoldást a(z) "${phaseTitle}" feladat végrehajtásakor.`,
             sampleExpected: sampleExpected
@@ -1551,8 +1560,8 @@ export async function GET(req: Request) {
             affectedLearnersPercent:
               enrolledCount > 0
                 ? Math.min(100, Math.round((mistakesForPhase / enrolledCount) * 100))
-                : 35,
-            avgHesitationSec: 15.4,
+                : 0,
+            avgHesitationSec: 0,
             confidenceType: 'misconception',
             title: `Bizonytalanság a(z) "${phaseTitle}" feladatnál`,
             description:
@@ -1700,89 +1709,176 @@ export async function GET(req: Request) {
       })),
     );
 
-    // Timeline Trends (Daily Aggregation for Activity & Accuracy Chart)
+    // Timeline Trends (Daily Aggregation from actual recorded learning events)
     const daysCount = timeRangeFilter === '7d' ? 7 : timeRangeFilter === '30d' ? 14 : 30;
     const dayNamesHU = ['Vas', 'Hét', 'Kedd', 'Sze', 'Csüt', 'Pén', 'Szo'];
-    const timelineTrends = [];
-    const baseLearners = activeLearnersCount > 0 ? activeLearnersCount : 12;
 
+    const eventsByDate: Record<
+      string,
+      { users: Set<string>; totalSteps: number; mistakeEvents: number; outcomeEvents: number }
+    > = {};
+    for (const evt of scopedEventsDocs) {
+      if (!evt.createdAt) continue;
+      const dateStr = new Date(evt.createdAt).toISOString().split('T')[0];
+      if (!eventsByDate[dateStr]) {
+        eventsByDate[dateStr] = {
+          users: new Set<string>(),
+          totalSteps: 0,
+          mistakeEvents: 0,
+          outcomeEvents: 0,
+        };
+      }
+      const bucket = eventsByDate[dateStr];
+      const uId = String(
+        typeof evt.user === 'object' && evt.user !== null ? evt.user.id : evt.user,
+      );
+      if (uId) bucket.users.add(uId);
+      bucket.totalSteps++;
+
+      const isErr =
+        evt.eventType === 'control_mistake' ||
+        evt.eventType === 'control_selection_mistake' ||
+        evt.eventType === 'mistake' ||
+        evt.eventType === 'quiz_failed' ||
+        (evt.eventType === 'control_decision' && evt.eventData?.isCorrect === false) ||
+        (evt.eventType === 'create_blank_attempt' && evt.eventData?.correct === false) ||
+        (evt.eventType === 'answer_submitted' &&
+          (evt.eventData?.correct === false || evt.eventData?.isCorrect === false));
+
+      const isSuccessOutcome =
+        (evt.eventType === 'control_decision' && evt.eventData?.isCorrect === true) ||
+        (evt.eventType === 'create_blank_attempt' && evt.eventData?.correct === true) ||
+        (evt.eventType === 'answer_submitted' &&
+          (evt.eventData?.correct === true || evt.eventData?.isCorrect === true)) ||
+        evt.eventType === 'alive_code_success';
+
+      if (isErr) {
+        bucket.mistakeEvents++;
+        bucket.outcomeEvents++;
+      } else if (isSuccessOutcome) {
+        bucket.outcomeEvents++;
+      }
+    }
+
+    const timelineTrends = [];
     for (let i = daysCount - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
       const dayLabel = `${dayNamesHU[d.getDay()]} (${d.getMonth() + 1}.${d.getDate()})`;
+      const dayBucket = eventsByDate[dateStr];
 
-      const baseVariation = Math.sin((i / daysCount) * Math.PI * 2) * 6;
-      const dayFactor = d.getDay() === 0 || d.getDay() === 6 ? 0.75 : 1.15;
-      const activeUsers = Math.max(
-        2,
-        Math.round((baseLearners * 0.45 + baseVariation * 2) * dayFactor),
-      );
-      const completedSteps = Math.max(8, Math.round(activeUsers * 5.5 + baseVariation * 3));
-      const errorRate = Math.max(
-        5,
-        Math.min(38, Math.round(avgErrorRatePercent + baseVariation * 0.7 + (i % 3) * 1.2)),
-      );
-      const avgScore = Math.max(65, Math.min(98, Math.round(100 - errorRate * 0.85)));
+      if (!dayBucket) {
+        timelineTrends.push({
+          date: dateStr,
+          label: dayLabel,
+          activeUsers: 0,
+          completedSteps: 0,
+          errorRate: 0,
+          avgScore: 0,
+        });
+        continue;
+      }
+
+      const errorRate =
+        dayBucket.outcomeEvents > 0
+          ? Math.round((dayBucket.mistakeEvents / dayBucket.outcomeEvents) * 100)
+          : 0;
+      const avgScore = dayBucket.outcomeEvents > 0 ? Math.max(0, 100 - errorRate) : 0;
 
       timelineTrends.push({
         date: dateStr,
         label: dayLabel,
-        activeUsers,
-        completedSteps,
+        activeUsers: dayBucket.users.size,
+        completedSteps: dayBucket.totalSteps,
         errorRate,
         avgScore,
       });
     }
 
-    // 6-Axis Pedagogical Competency Radar (Spider Matrix)
-    const masteryScore = Math.min(100, Math.max(50, Math.round(100 - avgErrorRatePercent * 1.1)));
+    // 6-Axis Pedagogical Competency Radar (Spider Matrix — purely data-driven, 0 when empty)
+    const videoAnimationRate =
+      scopedProgressDocs.length > 0
+        ? Math.round(
+            (scopedProgressDocs.filter((p) => p.videoWatched || p.animationCompleted).length /
+              scopedProgressDocs.length) *
+              100,
+          )
+        : 0;
+    const totalControlDecisions = Object.values(algorithmStatsMap).reduce(
+      (sum, a) => sum + a.decisionsCorrect + a.decisionsWrong,
+      0,
+    );
+    const totalControlCorrect = Object.values(algorithmStatsMap).reduce(
+      (sum, a) => sum + a.decisionsCorrect,
+      0,
+    );
+    const invariantScore =
+      totalControlDecisions > 0
+        ? Math.round((totalControlCorrect / totalControlDecisions) * 100)
+        : 0;
+    const createActiveDocs = scopedProgressDocs.filter(
+      (p) => (p.createAttempts || 0) > 0 || p.createCompleted || (p.aliveCodeSubmissions || 0) > 0,
+    );
+    const createScore =
+      createActiveDocs.length > 0
+        ? Math.round(
+            (createActiveDocs.filter((p) => p.createCompleted || p.aliveCompleted).length /
+              createActiveDocs.length) *
+              100,
+          )
+        : 0;
+    const reflectionScore =
+      normalActionDurations.length > 0 && postErrorDurationsStep1.length > 0
+        ? Math.min(100, Math.max(0, 50 + Math.round(pesSlowdownPercentage)))
+        : 0;
+
     const competencyRadar = [
       {
         subject: 'Vizuális Felismerés',
-        studentScore: Math.min(100, Math.max(60, masteryScore + 5)),
+        studentScore: videoAnimationRate,
         benchmarkScore: 80,
         fullMark: 100,
         description: 'Táncos mozdulatok, tömbelemek és struktúrák vizuális megértése',
       },
       {
         subject: 'Invariáns-követés',
-        studentScore: Math.min(100, Math.max(50, masteryScore - 6)),
+        studentScore: invariantScore,
         benchmarkScore: 75,
         fullMark: 100,
         description: 'Rendezett résztömbök és ciklus-invariánsok tudatos követése',
       },
       {
         subject: 'Hiba-rekonstrukció',
-        studentScore: Math.min(100, Math.max(55, retrySuccessRate > 0 ? retrySuccessRate : 78)),
+        studentScore: retryAttempt1Total > 0 ? retrySuccessRate : 0,
         benchmarkScore: 70,
         fullMark: 100,
         description: 'Hibás kód- és logikai lépések önálló felismerése és korrekciója',
       },
       {
         subject: 'Kódkiegészítés (Create)',
-        studentScore: Math.min(100, Math.max(50, Math.round(masteryScore * 0.92))),
+        studentScore: createScore,
         benchmarkScore: 75,
         fullMark: 100,
         description: 'Szintaxis, ciklusfejek és hiányzó feltételek pontos kitöltése',
       },
       {
         subject: 'Magabiztosság (CBL)',
-        studentScore: Math.min(100, Math.max(50, confidenceMatrix.mastery || 78)),
+        studentScore: totalConfRatings > 0 ? confidenceMatrix.mastery : 0,
         benchmarkScore: 75,
         fullMark: 100,
         description: 'Reális önértékelés (Mester zóna, tévképzetek kiküszöbölése)',
       },
       {
         subject: 'Kognitív Reflexió',
-        studentScore: Math.min(100, Math.max(60, pesSlowdownPercentage > 10 ? 88 : 72)),
+        studentScore: reflectionScore,
         benchmarkScore: 80,
         fullMark: 100,
         description: 'Hiba utáni tudatos lelassulás és megfontolt döntéshozatal',
       },
     ];
 
-    // Weekly Hourly Activity Heatmap
+    // Weekly Hourly Activity Heatmap (aggregated from real event timestamps)
     const heatmapDays = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
     const heatmapTimeSlots = [
       { id: 'morning', label: 'Délelőtt (08:00 - 12:00)' },
@@ -1791,30 +1887,57 @@ export async function GET(req: Request) {
       { id: 'night', label: 'Késő Este (20:00 - 24:00)' },
     ];
 
-    const hourlyHeatmap = heatmapDays.map((day, dIdx) => {
-      const isWeekend = dIdx >= 5;
-      return {
-        day,
-        slots: heatmapTimeSlots.map((slot, sIdx) => {
-          let baseIntensity = 30;
-          if (slot.id === 'evening') baseIntensity = isWeekend ? 65 : 88;
-          else if (slot.id === 'afternoon') baseIntensity = isWeekend ? 75 : 62;
-          else if (slot.id === 'morning') baseIntensity = isWeekend ? 35 : 55;
-          else if (slot.id === 'night') baseIntensity = isWeekend ? 55 : 35;
+    const heatmapBuckets: Array<Record<string, Set<string>>> = heatmapDays.map(() => ({
+      morning: new Set<string>(),
+      afternoon: new Set<string>(),
+      evening: new Set<string>(),
+      night: new Set<string>(),
+    }));
 
-          const intensity = Math.min(
-            100,
-            Math.max(10, baseIntensity + ((dIdx * 7 + sIdx * 13) % 18) - 8),
-          );
-          return {
-            slotId: slot.id,
-            slotLabel: slot.label,
-            intensity,
-            sessionCount: Math.max(1, Math.round((intensity / 100) * (baseLearners * 0.8 + 4))),
-          };
-        }),
-      };
+    for (const evt of scopedEventsDocs) {
+      if (!evt.createdAt) continue;
+      const dt = new Date(evt.createdAt);
+      if (Number.isNaN(dt.getTime())) continue;
+      const dayIdx = (dt.getDay() + 6) % 7; // Monday = 0 ... Sunday = 6
+      const hour = dt.getHours();
+      const slotId =
+        hour >= 8 && hour < 12
+          ? 'morning'
+          : hour >= 12 && hour < 16
+            ? 'afternoon'
+            : hour >= 16 && hour < 20
+              ? 'evening'
+              : 'night';
+      const uId = String(
+        typeof evt.user === 'object' && evt.user !== null ? evt.user.id : evt.user,
+      );
+      const sessionKey = `${uId}:${evt.sessionId || evt.id}`;
+      heatmapBuckets[dayIdx][slotId].add(sessionKey);
+    }
+
+    let maxHeatmapSessions = 0;
+    heatmapBuckets.forEach((dayBucket) => {
+      heatmapTimeSlots.forEach((slot) => {
+        if (dayBucket[slot.id].size > maxHeatmapSessions) {
+          maxHeatmapSessions = dayBucket[slot.id].size;
+        }
+      });
     });
+
+    const hourlyHeatmap = heatmapDays.map((day, dIdx) => ({
+      day,
+      slots: heatmapTimeSlots.map((slot) => {
+        const sessionCount = heatmapBuckets[dIdx][slot.id].size;
+        const intensity =
+          maxHeatmapSessions > 0 ? Math.round((sessionCount / maxHeatmapSessions) * 100) : 0;
+        return {
+          slotId: slot.id,
+          slotLabel: slot.label,
+          intensity,
+          sessionCount,
+        };
+      }),
+    }));
 
     return NextResponse.json({
       timestamp: new Date().toISOString(),
@@ -1895,12 +2018,6 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error('[AdminStatistics] Aggregation error:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to aggregate statistics',
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Failed to aggregate statistics' }, { status: 500 });
   }
 }

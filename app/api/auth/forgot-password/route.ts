@@ -1,5 +1,4 @@
-import { getPayload } from 'payload';
-import configPromise from '../../../../payload.config';
+import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
 import logger from '../../../../lib/logger';
 import { getT } from '../../../../lib/i18n-server';
@@ -9,17 +8,18 @@ export async function POST(req: Request) {
   try {
     const { email } = await req.json();
 
-    if (!email) {
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    if (!normalizedEmail) {
       return NextResponse.json({ error: t('login.errors.email_required') }, { status: 400 });
     }
 
-    const payload = await getPayload({ config: configPromise });
+    const payload = await getPayloadInstance();
 
     const users = await payload.find({
       collection: 'users',
       where: {
         email: {
-          equals: email,
+          equals: normalizedEmail,
         },
       },
       limit: 1,
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     await payload.forgotPassword({
       collection: 'users',
       data: {
-        email,
+        email: normalizedEmail,
       },
     });
 
@@ -85,6 +85,6 @@ export async function POST(req: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : t('toasts.unexpected_error');
     logger.error({ error: message }, 'Forgot password error');
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: t('toasts.unexpected_error') }, { status: 500 });
   }
 }

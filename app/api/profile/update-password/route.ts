@@ -1,5 +1,4 @@
-import { getPayload } from 'payload';
-import configPromise from '../../../../payload.config';
+import { getPayloadInstance } from '../../../../lib/payload';
 import { NextResponse } from 'next/server';
 import { auth } from '../../../../auth';
 import { getT } from '../../../../lib/i18n-server';
@@ -15,26 +14,13 @@ export async function POST(req: Request) {
 
     const { currentPassword, newPassword } = await req.json();
 
-    if (!newPassword || newPassword.length < 6) {
+    if (typeof newPassword !== 'string' || newPassword.length < 6) {
       return NextResponse.json({ error: t('toasts.password_min') }, { status: 400 });
     }
 
-    const payload = await getPayload({ config: configPromise });
+    const payload = await getPayloadInstance();
 
-    // Verify current password first to ensure requester is the account owner
-    try {
-      await payload.login({
-        collection: 'users',
-        data: {
-          email: session.user.email,
-          password: currentPassword,
-        },
-      });
-    } catch {
-      return NextResponse.json({ error: t('toasts.password_current_incorrect') }, { status: 400 });
-    }
-
-    // Find the user by email
+    // Find the user by email first to reject social accounts with a clear message
     const result = await payload.find({
       collection: 'users',
       where: { email: { equals: session.user.email } },
@@ -53,6 +39,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: t('toasts.password_social_error') }, { status: 400 });
     }
 
+    if (typeof currentPassword !== 'string' || !currentPassword) {
+      return NextResponse.json({ error: t('toasts.password_current_incorrect') }, { status: 400 });
+    }
+
+    // Verify current password to ensure requester is the account owner
+    try {
+      await payload.login({
+        collection: 'users',
+        data: {
+          email: session.user.email,
+          password: currentPassword,
+        },
+      });
+    } catch {
+      return NextResponse.json({ error: t('toasts.password_current_incorrect') }, { status: 400 });
+    }
+
     // Update the password - Payload handles hashing automatically for the 'password' field
     await payload.update({
       collection: 'users',
@@ -67,6 +70,6 @@ export async function POST(req: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : t('toasts.password_update_error');
     logger.error({ error: message }, t('toasts.password_update_error'));
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: t('toasts.password_update_error') }, { status: 400 });
   }
 }

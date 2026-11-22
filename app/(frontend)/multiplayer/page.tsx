@@ -5,7 +5,7 @@ import { getT } from '../../../lib/i18n-server';
 export async function generateMetadata() {
   const t = await getT();
   return {
-    title: `${t('nav.multiplayer') || 'Multiplayer'} - AlgoRythmics`,
+    title: t('nav.multiplayer') || 'Multiplayer',
     description:
       'Valós idejű többjátékos algoritmus tanulás és aréna térbeli mozgással és diszkrét irányítással.',
   };

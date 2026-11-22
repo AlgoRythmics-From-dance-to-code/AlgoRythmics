@@ -6,6 +6,7 @@ import CoursePlayer from '../../../components/Course/CoursePlayer';
 import { getPayloadInstance } from '../../../../lib/payload';
 import { findCourseBySlug, type CourseCollectionDoc } from '../../../../lib/courses/courseCatalog';
 import { getServerLocale } from '../../../../lib/i18n-server';
+import { getOpenRouterConfig } from '../../../../lib/ai/aiSettingsHelper';
 import { auth } from '../../../../auth';
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -55,6 +56,22 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
     notFound();
   }
 
+  const aiConfig = await getOpenRouterConfig();
+  if (!aiConfig.mascotEnabled && course.mascot) {
+    if (course.mascot.mode === 'ai-only') {
+      course.mascot = {
+        ...course.mascot,
+        enabled: false,
+        mode: 'disabled',
+      };
+    } else if (course.mascot.enabled && course.mascot.mode !== 'disabled') {
+      course.mascot = {
+        ...course.mascot,
+        mode: 'manual-only',
+      };
+    }
+  }
+
   return (
     <main className="relative min-h-screen w-full bg-[#fdfdfd] dark:bg-[#080808] overflow-hidden">
       {/* Background Decorative Elements */}
@@ -64,7 +81,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
       </div>
 
       <div className="relative mx-auto max-w-[1500px] px-0 py-0 sm:px-4 lg:pt-6 lg:pb-12">
-        <CoursePlayer course={course} />
+        <CoursePlayer course={course} globalMascotEnabled={aiConfig.mascotEnabled} />
       </div>
     </main>
   );

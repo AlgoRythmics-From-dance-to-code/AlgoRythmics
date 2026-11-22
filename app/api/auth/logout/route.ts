@@ -6,15 +6,17 @@ import { APP_CONFIG, ROUTES } from '../../../../lib/constants';
  * Unified logout handler that clears all possible authentication sessions
  * including Payload CMS admin tokens and NextAuth session cookies.
  */
-export async function GET() {
-  return await performLogout();
+export async function GET(req: Request) {
+  await clearAuthSessionCookies();
+  return NextResponse.redirect(new URL(ROUTES.LOGIN, req.url));
 }
 
 export async function POST() {
-  return await performLogout();
+  await clearAuthSessionCookies();
+  return NextResponse.json({ success: true });
 }
 
-async function performLogout() {
+async function clearAuthSessionCookies() {
   const cookieStore = await cookies();
 
   // 1. Clear Payload CMS Admin cookie
@@ -33,8 +35,4 @@ async function performLogout() {
   authCookies.forEach((name) => {
     cookieStore.delete(name);
   });
-
-  // 3. For API calls, return JSON success, otherwise redirect to login
-  // We check if it's an RSC or API request vs a browser navigation
-  return NextResponse.redirect(new URL(ROUTES.LOGIN, APP_CONFIG.BASE_URL));
 }

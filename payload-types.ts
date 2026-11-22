@@ -1223,6 +1223,10 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 export interface AiSetting {
   id: number;
   /**
+   * Főkapcsoló: ha kikapcsolod, az AI kabala egyik kurzusban sem jelenik meg a diákoknak és nem használ tokeneket.
+   */
+  mascotEnabled?: boolean | null;
+  /**
    * Az AI tananyag generáláshoz használt OpenRouter modell (pl. google/gemini-2.5-flash, openai/gpt-4o-mini, anthropic/claude-3.5-haiku, openrouter/free).
    */
   model: string;
@@ -1230,6 +1234,9 @@ export interface AiSetting {
    * Az OpenRouter hozzáférési kulcs (sk-or-v1-...). Kizárólag a rendszergazdák szerkeszthetik.
    */
   apiKey?: string | null;
+  mascotMaxMessagesPerDay?: number | null;
+  mascotMaxMessagesPerPhase?: number | null;
+  mascotCooldownSeconds?: number | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1238,8 +1245,12 @@ export interface AiSetting {
  * via the `definition` "ai-settings_select".
  */
 export interface AiSettingsSelect<T extends boolean = true> {
+  mascotEnabled?: T;
   model?: T;
   apiKey?: T;
+  mascotMaxMessagesPerDay?: T;
+  mascotMaxMessagesPerPhase?: T;
+  mascotCooldownSeconds?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -4,7 +4,7 @@ import { ROLES, ROUTES } from '../../../lib/constants';
 import StudioClient from './StudioClient';
 
 export const metadata = {
-  title: 'Tanári Stúdió | AlgoRythmics',
+  title: 'Tanári Stúdió',
   description: 'Interaktív kurzusszerkesztő, AI tananyag-generátor és tanári vezérlőpult.',
 };
 

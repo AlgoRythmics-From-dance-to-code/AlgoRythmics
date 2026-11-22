@@ -27,6 +27,7 @@ interface AIMascotWidgetProps {
   activePhase: CoursePhase;
   activePhaseIndex: number;
   mascotEnabled: boolean;
+  globalAiMascotEnabled?: boolean;
   phaseMistakesCount: number;
   onHelped?: () => void;
 }
@@ -60,23 +61,44 @@ const markdownComponents = {
   li: ({ children }: { children?: React.ReactNode }) => <li>{children}</li>,
 };
 
+function escapeAttrSelector(val: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(val);
+  }
+  return val.replace(/["\\]/g, '\\$&');
+}
+
 export default function AIMascotWidget({
   course,
   activePhase,
   activePhaseIndex: _activePhaseIndex,
   mascotEnabled,
+  globalAiMascotEnabled = true,
   phaseMistakesCount,
   onHelped,
 }: AIMascotWidgetProps) {
   const { t, locale } = useLocale();
-  const { incrementCourseMascotInteraction, incrementCourseMistakes } = useAlgorithmStore();
+  const incrementCourseMascotInteraction = useAlgorithmStore(
+    (s) => s.incrementCourseMascotInteraction,
+  );
   const { trackEvent } = useAnalytics(course.algorithmId, undefined, course.slug);
 
   const { screenState, getAvailableAnchors, setAnnotations, clearAnnotations } = useMascotScreen();
 
   const mascotConfig = course.mascot;
-  const isEnabled = mascotEnabled && mascotConfig.enabled && mascotConfig.mode !== 'disabled';
-  const mode = mascotConfig.mode || 'ai-fallback';
+  const [isGloballyDisabled, setIsGloballyDisabled] = useState(!globalAiMascotEnabled);
+
+  useEffect(() => {
+    setIsGloballyDisabled(!globalAiMascotEnabled);
+  }, [globalAiMascotEnabled]);
+
+  const isAiAllowed = globalAiMascotEnabled && !isGloballyDisabled;
+  const mode = !isAiAllowed
+    ? mascotConfig.mode === 'ai-only'
+      ? 'disabled'
+      : 'manual-only'
+    : mascotConfig.mode || 'ai-fallback';
+  const isEnabled = mascotEnabled && mascotConfig.enabled && mode !== 'disabled';
 
   // Floating & Position State
   const [mascotVisible, setMascotVisible] = useState(false);
@@ -99,6 +121,19 @@ export default function AIMascotWidget({
   const [userQueryInput, setUserQueryInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [cooldownSec, setCooldownSec] = useState(0);
+  const [phaseLimitsInfo, setPhaseLimitsInfo] = useState<{
+    used: number;
+    max: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (cooldownSec <= 0) return;
+    const interval = setInterval(() => {
+      setCooldownSec((prev) => (prev > 1 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownSec]);
 
   // Stable refs for volatile inputs
   const onHelpedRef = useRef(onHelped);
@@ -126,6 +161,13 @@ export default function AIMascotWidget({
   trackEventRef.current = trackEvent;
 
   const lastHandledMistakeCountRef = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   // Manual fallback helper
   const getRandomMessage = useCallback((pool: string[]) => {
@@ -136,7 +178,9 @@ export default function AIMascotWidget({
   // Strict Viewport Clamped Position Calculator for the Mascot Avatar
   const calculateAnchorPosition = useCallback((anchorId: string) => {
     if (typeof document === 'undefined') return null;
-    const targetEl = document.querySelector(`[data-mascot-anchor="${anchorId}"]`);
+    const targetEl = document.querySelector(
+      `[data-mascot-anchor="${escapeAttrSelector(anchorId)}"]`,
+    );
     if (!targetEl) return null;
 
     const rect = targetEl.getBoundingClientRect();
@@ -241,7 +285,20 @@ export default function AIMascotWidget({
         setIsMinimized(false);
       }
 
-      if (mode === 'manual-only') {
+      // Token-saving optimization: use pre-authored static welcome/idle copy when available (0 LLM tokens!)
+      const hasStaticWelcome =
+        trigger === 'welcome' &&
+        !queryText &&
+        Boolean(
+          currentPhase.mascotLine ||
+          (currentConfig.welcomeMessages && currentConfig.welcomeMessages.length > 0),
+        );
+      const hasStaticIdle =
+        trigger === 'idle' &&
+        !queryText &&
+        Boolean(currentPhase.idleHelp || currentConfig.idlePrompt);
+
+      if (mode === 'manual-only' || hasStaticWelcome || hasStaticIdle) {
         // Pure manual fallback
         let fallbackMsg = '';
         if (trigger === 'mistake') {
@@ -288,12 +345,17 @@ export default function AIMascotWidget({
       }
 
       // AI-Only or AI-Fallback mode
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       setIsAiLoading(true);
       try {
         const availableAnchors = getAvailableAnchors();
         const res = await fetch('/api/ai/mascot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             courseSlug: course.slug,
             phaseId: currentPhase.phaseId,
@@ -310,16 +372,65 @@ export default function AIMascotWidget({
           }),
         });
 
-        if (!res.ok) {
-          throw new Error(`AI Mascot API error: ${res.status}`);
+        if (controller.signal.aborted) return;
+
+        const data = await res.json().catch(() => ({}));
+        if (controller.signal.aborted) return;
+
+        if (data?.globallyDisabled) {
+          setIsGloballyDisabled(true);
+          throw new Error('MASCOT_FALLBACK');
         }
 
-        const data = await res.json();
+        if (data?.limits) {
+          if (
+            typeof data.limits.usedMessagesInPhase === 'number' &&
+            typeof data.limits.maxMessagesPerPhase === 'number'
+          ) {
+            setPhaseLimitsInfo({
+              used: data.limits.usedMessagesInPhase,
+              max: data.limits.maxMessagesPerPhase,
+            });
+          }
+          if (queryText && typeof data.limits.cooldownSeconds === 'number') {
+            setCooldownSec(data.limits.cooldownSeconds);
+          }
+        }
+
+        if (data?.rateLimited && data?.limitMessage) {
+          if (typeof data.cooldownRemainingSec === 'number') {
+            setCooldownSec(data.cooldownRemainingSec);
+          }
+          if (queryText) {
+            setChatHistory((prev) => [...prev, { role: 'assistant', content: data.limitMessage }]);
+          } else {
+            setMascotMessage(data.limitMessage);
+          }
+          setMascotVisible(true);
+          setIsMinimized(false);
+          return;
+        }
+
+        if (data?.limitReached && data?.limitMessage) {
+          const localHint = currentPhase.hintCopy
+            ? `\n\n💡 **Tipp:** ${currentPhase.hintCopy}`
+            : '';
+          const combinedMsg = `${data.limitMessage}${localHint}`;
+          if (queryText) {
+            setChatHistory((prev) => [...prev, { role: 'assistant', content: combinedMsg }]);
+          } else {
+            setMascotMessage(combinedMsg);
+          }
+          setMascotVisible(true);
+          setIsMinimized(false);
+          return;
+        }
+
+        if (!res.ok || data?.fallback || !data?.mascot?.message) {
+          throw new Error('MASCOT_FALLBACK');
+        }
+
         const mascotRes = data.mascot;
-
-        if (!mascotRes || !mascotRes.message) {
-          throw new Error('Empty AI mascot response');
-        }
 
         if (queryText) {
           // Add AI assistant answer to chat history
@@ -359,7 +470,15 @@ export default function AIMascotWidget({
         });
         onHelpedRef.current?.();
       } catch (err) {
-        console.warn('[AIMascotWidget] AI call failed. Fallback triggered:', err);
+        if (
+          (err instanceof DOMException && err.name === 'AbortError') ||
+          controller.signal.aborted
+        ) {
+          return;
+        }
+        if (!(err instanceof Error && err.message === 'MASCOT_FALLBACK')) {
+          console.warn('[AIMascotWidget] AI call failed. Fallback triggered:', err);
+        }
         if (mode === 'ai-fallback') {
           // Graceful fallback to manual messages
           let fallbackMsg = '';
@@ -400,7 +519,10 @@ export default function AIMascotWidget({
           onHelpedRef.current?.();
         }
       } finally {
-        setIsAiLoading(false);
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+          setIsAiLoading(false);
+        }
       }
     },
     [
@@ -419,9 +541,11 @@ export default function AIMascotWidget({
   // Trigger: On Phase Enter (Welcome Advice)
   useEffect(() => {
     if (!isEnabled) return;
+    abortControllerRef.current?.abort();
     returnToDock();
     clearAnnotations();
     setChatHistory([]);
+    setPhaseLimitsInfo(null);
     lastHandledMistakeCountRef.current = 0;
 
     // Initial greeting if phase has explicit line or on first phase
@@ -429,7 +553,10 @@ export default function AIMascotWidget({
       fetchAiMascotAdvice('welcome');
     }, 400);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      abortControllerRef.current?.abort();
+    };
   }, [activePhase.phaseId, isEnabled, returnToDock, clearAnnotations, fetchAiMascotAdvice]);
 
   // Trigger: Consecutive Mistakes Threshold
@@ -441,17 +568,9 @@ export default function AIMascotWidget({
       phaseMistakesCount > lastHandledMistakeCountRef.current
     ) {
       lastHandledMistakeCountRef.current = phaseMistakesCount;
-      incrementCourseMistakes(course.slug);
       fetchAiMascotAdvice('mistake');
     }
-  }, [
-    phaseMistakesCount,
-    mistakeTriggerThresh,
-    isEnabled,
-    incrementCourseMistakes,
-    course.slug,
-    fetchAiMascotAdvice,
-  ]);
+  }, [phaseMistakesCount, mistakeTriggerThresh, isEnabled, fetchAiMascotAdvice]);
 
   // Trigger: Inactivity (Idle Timer) - Only when mascot is NOT visible and chat is not active!
   useEffect(() => {
@@ -490,15 +609,15 @@ export default function AIMascotWidget({
   // Handle Question Submit
   const handleSendQuestion = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const query = userQueryInput.trim();
-    if (!query || isAiLoading) return;
+    const query = userQueryInput.trim().slice(0, 200);
+    if (!query || isAiLoading || cooldownSec > 0) return;
     setUserQueryInput('');
     fetchAiMascotAdvice('question', query);
   };
 
   const handleQuickReply = (text: string) => {
-    if (isAiLoading) return;
-    fetchAiMascotAdvice('question', text);
+    if (isAiLoading || cooldownSec > 0 || mode === 'manual-only') return;
+    fetchAiMascotAdvice('question', text.slice(0, 200));
   };
 
   if (!isEnabled) return null;
@@ -607,7 +726,11 @@ export default function AIMascotWidget({
                     {isAiLoading && (
                       <span className="flex items-center gap-1 text-[9px] text-teal-600 font-bold">
                         <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                        gondolkodik...
+                        {locale === 'en'
+                          ? 'thinking...'
+                          : locale === 'ro'
+                            ? 'se gândește...'
+                            : 'gondolkodik...'}
                       </span>
                     )}
                   </div>
@@ -668,11 +791,23 @@ export default function AIMascotWidget({
                       <button
                         type="button"
                         onClick={returnToDock}
-                        title="Visszahívás a sarokba"
+                        title={
+                          locale === 'en'
+                            ? 'Return to corner'
+                            : locale === 'ro'
+                              ? 'Cheamă înapoi în colț'
+                              : 'Visszahívás a sarokba'
+                        }
                         className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-[10px] font-bold text-teal-700 dark:text-teal-300 hover:brightness-110 transition-colors"
                       >
                         <Anchor className="w-3 h-3" />
-                        <span>Visszahívás</span>
+                        <span>
+                          {locale === 'en'
+                            ? 'Recall'
+                            : locale === 'ro'
+                              ? 'Reapelare'
+                              : 'Visszahívás'}
+                        </span>
                       </button>
                     )}
                     <button
@@ -688,7 +823,13 @@ export default function AIMascotWidget({
                     <button
                       type="button"
                       onClick={() => setIsMinimized(true)}
-                      title="Minimalizálás"
+                      title={
+                        locale === 'en'
+                          ? 'Minimize'
+                          : locale === 'ro'
+                            ? 'Minimizare'
+                            : 'Minimalizálás'
+                      }
                       className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
@@ -699,7 +840,7 @@ export default function AIMascotWidget({
                         setMascotVisible(false);
                         returnToDock();
                       }}
-                      title="Bezárás"
+                      title={locale === 'en' ? 'Close' : locale === 'ro' ? 'Închide' : 'Bezárás'}
                       className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -745,11 +886,21 @@ export default function AIMascotWidget({
                           <Loader2 className="w-4 h-4 animate-spin text-[#269984] shrink-0" />
                           <div className="flex flex-col">
                             <span className="font-bold flex items-center gap-1">
-                              <span>{mascotConfig.name} épp gondolkodik</span>
+                              <span>
+                                {locale === 'en'
+                                  ? `${mascotConfig.name} is thinking`
+                                  : locale === 'ro'
+                                    ? `${mascotConfig.name} se gândește`
+                                    : `${mascotConfig.name} épp gondolkodik`}
+                              </span>
                               <span className="animate-pulse">•••</span>
                             </span>
                             <span className="text-[10px] text-gray-500 dark:text-gray-400 font-normal">
-                              Hamarosan kész a válasz
+                              {locale === 'en'
+                                ? 'Answer will be ready shortly'
+                                : locale === 'ro'
+                                  ? 'Răspunsul va fi gata în curând'
+                                  : 'Hamarosan kész a válasz'}
                             </span>
                           </div>
                         </motion.div>
@@ -761,10 +912,18 @@ export default function AIMascotWidget({
                       <Loader2 className="w-5 h-5 animate-spin text-[#269984] shrink-0" />
                       <div className="flex flex-col">
                         <span className="font-bold">
-                          {mascotConfig.name} gondolkodik a lépésen...
+                          {locale === 'en'
+                            ? `${mascotConfig.name} is analyzing this step...`
+                            : locale === 'ro'
+                              ? `${mascotConfig.name} analizează acest pas...`
+                              : `${mascotConfig.name} gondolkodik a lépésen...`}
                         </span>
                         <span className="text-[10px] text-gray-500 dark:text-gray-400 font-normal">
-                          Hamarosan érkezik a segítség
+                          {locale === 'en'
+                            ? 'Help is on the way'
+                            : locale === 'ro'
+                              ? 'Ajutorul sosește imediat'
+                              : 'Hamarosan érkezik a segítség'}
                         </span>
                       </div>
                     </div>
@@ -793,36 +952,70 @@ export default function AIMascotWidget({
                   </div>
                 )}
 
-                {/* Footer Controls: ALWAYS-VISIBLE Chat Input */}
-                <div className="pt-2 border-t border-gray-100 dark:border-white/5">
-                  <form onSubmit={handleSendQuestion} className="flex items-center gap-1.5 w-full">
-                    <input
-                      type="text"
-                      value={userQueryInput}
-                      onChange={(e) => setUserQueryInput(e.target.value)}
-                      disabled={isAiLoading}
-                      placeholder={
-                        isAiLoading
-                          ? `${mascotConfig.name} gondolkodik...`
-                          : 'Kérdezz a kabalától...'
-                      }
-                      className="flex-1 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#269984] disabled:opacity-60 font-medium"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!userQueryInput.trim() || isAiLoading}
-                      className="h-7 w-7 rounded-xl flex items-center justify-center text-white shadow-md disabled:opacity-40 transition-transform active:scale-95 shrink-0"
-                      style={{ backgroundColor: mascotConfig.accentColor || '#269984' }}
-                      title="Küldés"
+                {/* Footer Controls: Chat Input (Only visible when AI mode is active, hidden in manual-only mode) */}
+                {mode !== 'manual-only' && (
+                  <div className="pt-2 border-t border-gray-100 dark:border-white/5 space-y-1.5">
+                    {phaseLimitsInfo && (
+                      <div className="flex items-center justify-between text-[10px] text-gray-400 font-semibold px-1">
+                        <span>
+                          {locale === 'en'
+                            ? `Step questions: ${phaseLimitsInfo.used}/${phaseLimitsInfo.max}`
+                            : locale === 'ro'
+                              ? `Întrebări pe pas: ${phaseLimitsInfo.used}/${phaseLimitsInfo.max}`
+                              : `Kérdések ebben a lépésben: ${phaseLimitsInfo.used}/${phaseLimitsInfo.max}`}
+                        </span>
+                        {userQueryInput.length > 150 && <span>{userQueryInput.length}/200</span>}
+                      </div>
+                    )}
+                    <form
+                      onSubmit={handleSendQuestion}
+                      className="flex items-center gap-1.5 w-full"
                     >
-                      {isAiLoading ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Send className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  </form>
-                </div>
+                      <input
+                        type="text"
+                        maxLength={200}
+                        value={userQueryInput}
+                        onChange={(e) => setUserQueryInput(e.target.value)}
+                        disabled={isAiLoading || cooldownSec > 0}
+                        placeholder={
+                          isAiLoading
+                            ? locale === 'en'
+                              ? `${mascotConfig.name} is thinking...`
+                              : locale === 'ro'
+                                ? `${mascotConfig.name} se gândește...`
+                                : `${mascotConfig.name} gondolkodik...`
+                            : cooldownSec > 0
+                              ? locale === 'en'
+                                ? `Please wait ${cooldownSec}s...`
+                                : locale === 'ro'
+                                  ? `Așteaptă ${cooldownSec}s...`
+                                  : `Kérlek várj ${cooldownSec} mp-et...`
+                              : locale === 'en'
+                                ? 'Ask the mascot (max 200 chars)...'
+                                : locale === 'ro'
+                                  ? 'Întreabă mascota (max 200 car.)...'
+                                  : 'Kérdezz a kabalától (max 200 kar.)...'
+                        }
+                        className="flex-1 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#269984] disabled:opacity-60 font-medium"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!userQueryInput.trim() || isAiLoading || cooldownSec > 0}
+                        className="h-7 min-w-7 px-1.5 rounded-xl flex items-center justify-center text-white shadow-md disabled:opacity-40 transition-transform active:scale-95 shrink-0 text-[10px] font-black"
+                        style={{ backgroundColor: mascotConfig.accentColor || '#269984' }}
+                        title={locale === 'en' ? 'Send' : locale === 'ro' ? 'Trimite' : 'Küldés'}
+                      >
+                        {isAiLoading ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : cooldownSec > 0 ? (
+                          <span>{cooldownSec}s</span>
+                        ) : (
+                          <Send className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </form>
+                  </div>
+                )}
               </motion.div>
             )
           ) : (
@@ -852,8 +1045,17 @@ export default function AIMascotWidget({
               </div>
               <span className="text-xs font-black uppercase tracking-wider">
                 {isAiLoading
-                  ? `${mascotConfig.name} gondolkodik...`
-                  : mascotConfig.summonLabel || `${mascotConfig.name} segítő`}
+                  ? locale === 'en'
+                    ? `${mascotConfig.name} is thinking...`
+                    : locale === 'ro'
+                      ? `${mascotConfig.name} se gândește...`
+                      : `${mascotConfig.name} gondolkodik...`
+                  : mascotConfig.summonLabel ||
+                    (locale === 'en'
+                      ? `${mascotConfig.name} helper`
+                      : locale === 'ro'
+                        ? `Ajutor ${mascotConfig.name}`
+                        : `${mascotConfig.name} segítő`)}
               </span>
               {isAiLoading ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-[#269984]" />

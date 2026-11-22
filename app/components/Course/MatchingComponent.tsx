@@ -29,6 +29,15 @@ type MatchPair = {
   isCorrect?: boolean;
 };
 
+function shuffleArray<T>(items: T[]): T[] {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export default function MatchingComponent({ phase, courseId, onMistake }: MatchingComponentProps) {
   const { t } = useLocale();
   const { markCoursePhaseComplete, setCoursePhaseResult, setCoursePhasePoints, syncProgress } =
@@ -48,8 +57,15 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
     [phase.matching],
   );
 
-  // Shuffle right side for the challenge
-  const [shuffledRight] = useState(() => [...initialRight].sort(() => Math.random() - 0.5));
+  // Shuffle deterministically after mount to avoid SSR hydration mismatches and Fisher-Yates bias
+  const [shuffledRight, setShuffledRight] = useState(initialRight);
+  React.useEffect(() => {
+    setShuffledRight(initialRight.length > 1 ? shuffleArray(initialRight) : initialRight);
+    setMatches(initialLeft.map((l) => ({ leftId: l.id, rightId: null })));
+    setSelectedLeft(null);
+    setEvaluation(null);
+    setShowFeedback(false);
+  }, [phase.phaseId, initialLeft, initialRight]);
 
   const [matches, setMatches] = useState<MatchPair[]>(() =>
     initialLeft.map((l) => ({ leftId: l.id, rightId: null })),
@@ -110,10 +126,17 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
   };
 
   const checkMatches = () => {
+    if (matches.length === 0) return;
+
     const results = matches.map((m) => {
-      const leftIdx = parseInt(m.leftId.split('-')[1]);
-      const rightIdx = m.rightId ? parseInt(m.rightId.split('-')[1]) : -1;
-      return { ...m, isCorrect: leftIdx === rightIdx };
+      const leftIdx = parseInt(m.leftId.split('-')[1], 10);
+      const expectedRightText = initialRight[leftIdx]?.text?.trim();
+      const selectedRight = shuffledRight.find((r) => r.id === m.rightId);
+      const isCorrect =
+        selectedRight !== undefined &&
+        expectedRightText !== undefined &&
+        selectedRight.text.trim() === expectedRightText;
+      return { ...m, isCorrect };
     });
 
     setMatches(results);
@@ -121,7 +144,7 @@ export default function MatchingComponent({ phase, courseId, onMistake }: Matchi
 
     const correctCount = results.filter((r) => r.isCorrect).length;
     const totalCount = results.length;
-    const allCorrect = correctCount === totalCount;
+    const allCorrect = totalCount > 0 && correctCount === totalCount;
 
     const maxPoints = phase.maxPoints ?? 10;
     const evalResult = evaluateConfidence({

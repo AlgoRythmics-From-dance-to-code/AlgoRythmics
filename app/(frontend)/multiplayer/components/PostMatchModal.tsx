@@ -189,12 +189,14 @@ ${t('multiplayer.post_match.total_steps', { count: stats.actualSteps })} (${stat
                       {t('multiplayer.post_match.success_ratio') || 'Sikeres lépések aránya'}
                     </span>
                     <span className="font-bold text-slate-900 dark:text-white">
-                      {stats.actualSteps - stats.totalErrors} / {stats.actualSteps}
+                      {Math.max(0, stats.actualSteps - stats.totalErrors)} / {stats.actualSteps}
                     </span>
                   </div>
                   <div className="w-full h-2.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                     <div
-                      style={{ width: `${stats.accuracyPercentage}%` }}
+                      style={{
+                        width: `${Math.min(100, Math.max(0, stats.accuracyPercentage))}%`,
+                      }}
                       className="h-full bg-gradient-to-r from-[#269984] to-emerald-400 rounded-full transition-all duration-500"
                     />
                   </div>

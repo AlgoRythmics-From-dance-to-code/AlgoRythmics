@@ -12,33 +12,56 @@ interface VideoPlayerProps {
   title?: string;
 }
 
+function extractYouTubeId(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.startsWith('placeholder_')) return trimmed;
+  try {
+    if (trimmed.includes('://')) {
+      const url = new URL(trimmed);
+      if (url.hostname.includes('youtu.be')) {
+        return url.pathname.replace(/^\//, '').split('/')[0] || '';
+      }
+      const v = url.searchParams.get('v');
+      if (v) return v;
+      const parts = url.pathname.split('/').filter(Boolean);
+      const embedIdx = parts.indexOf('embed');
+      if (embedIdx !== -1 && parts[embedIdx + 1]) return parts[embedIdx + 1];
+    }
+  } catch {
+    // Fall back to raw value
+  }
+  return trimmed;
+}
+
 export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlayerProps) {
   const { t } = useLocale();
-  const [isLoading, setIsLoading] = useState(true);
+  const normalizedYoutubeId = extractYouTubeId(youtubeId);
+  const [loadedVideoId, setLoadedVideoId] = useState<string | null>(null);
+  const isLoading = loadedVideoId !== normalizedYoutubeId;
   const { updateProgress, trackEvent } = useAnalytics(algorithmId, 'video');
-  const { algorithmProgress } = useAlgorithmStore();
+  const algoProgress = useAlgorithmStore((s) => s.algorithmProgress[algorithmId]);
 
   const lastTickRef = useRef(Date.now());
-  const isWatched = algorithmProgress[algorithmId]?.videoWatched || false;
+  const isWatched = algoProgress?.videoWatched || false;
   const isWatchedRef = useRef(isWatched);
 
   useEffect(() => {
     isWatchedRef.current = isWatched;
   }, [isWatched]);
 
-  const progressRef = useRef(algorithmProgress[algorithmId]);
+  const progressRef = useRef(algoProgress);
   useEffect(() => {
-    progressRef.current = algorithmProgress[algorithmId];
-  }, [algorithmProgress, algorithmId]);
+    progressRef.current = algoProgress;
+  }, [algoProgress]);
 
   // Mark as watched 10 seconds after opening the video or when already watched in store
   useEffect(() => {
     // Reset the last tick at the start of the effect
     lastTickRef.current = Date.now();
-    trackEvent('video_enter', { youtubeId, isWatched: isWatchedRef.current });
+    trackEvent('video_enter', { youtubeId: normalizedYoutubeId, isWatched: isWatchedRef.current });
 
     const timer = setTimeout(() => {
-      trackEvent('video_watched_10s', { youtubeId });
+      trackEvent('video_watched_10s', { youtubeId: normalizedYoutubeId });
       updateProgress({
         videoWatched: true,
         videoCompletedAt: new Date().toISOString(),
@@ -48,27 +71,27 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
     return () => {
       clearTimeout(timer);
       const delta = Date.now() - lastTickRef.current;
-      trackEvent('video_exit', { youtubeId, durationWatched: delta });
+      trackEvent('video_exit', { youtubeId: normalizedYoutubeId, durationWatched: delta });
       const currentTotal = progressRef.current?.videoWatchTimeMs || 0;
       updateProgress({
         videoWatchTimeMs: currentTotal + delta,
       });
     };
-  }, [algorithmId, updateProgress, trackEvent, youtubeId]);
+  }, [algorithmId, updateProgress, trackEvent, normalizedYoutubeId]);
 
-  // If youtubeId is a placeholder, show a message instead of a broken iframe
-  const isPlaceholder = youtubeId.startsWith('placeholder_');
+  // If youtubeId is missing or a placeholder, show a message instead of a broken iframe
+  const isPlaceholder = !normalizedYoutubeId || normalizedYoutubeId.startsWith('placeholder_');
 
   useReportMascotScreen(
     'video',
     React.useMemo(
       () => ({
         algorithmId,
-        youtubeId,
+        youtubeId: normalizedYoutubeId,
         title,
         isWatched,
       }),
-      [algorithmId, youtubeId, title, isWatched],
+      [algorithmId, normalizedYoutubeId, title, isWatched],
     ),
   );
 
@@ -91,7 +114,7 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
             {t('videos.placeholder_desc').replace('{title}', title || t('common.algorithm'))}
           </p>
           <div className="mt-4 text-xs text-[#269984] font-mono p-2 bg-black/30 rounded">
-            ID: {youtubeId}
+            ID: {normalizedYoutubeId || 'none'}
           </div>
         </div>
       ) : (
@@ -102,12 +125,13 @@ export default function VideoPlayer({ youtubeId, algorithmId, title }: VideoPlay
             </div>
           )}
           <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&rel=0&modestbranding=1`}
+            key={normalizedYoutubeId}
+            src={`https://www.youtube.com/embed/${encodeURIComponent(normalizedYoutubeId)}?autoplay=0&rel=0&modestbranding=1`}
             title={title || 'Algorithm Video'}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             className="absolute inset-0 w-full h-full border-0"
-            onLoad={() => setIsLoading(false)}
+            onLoad={() => setLoadedVideoId(normalizedYoutubeId)}
           ></iframe>
         </>
       )}

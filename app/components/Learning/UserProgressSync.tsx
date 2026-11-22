@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import { useShallow } from 'zustand/react/shallow';
 import { useAlgorithmStore } from '../../store/useAlgorithmStore';
 import { APP_CONFIG } from '../../../lib/constants';
 
@@ -15,7 +16,7 @@ const clearAuthCookies = () => {
   for (let i = 0; i < cookies.length; i++) {
     const cookie = cookies[i];
     const eqPos = cookie.indexOf('=');
-    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+    const name = eqPos > -1 ? cookie.slice(0, eqPos).trim() : cookie.trim();
     // Clear next-auth, payload and any other auth related cookies
     if (name.includes('auth') || name.includes('token') || name.includes('session')) {
       document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
@@ -39,10 +40,20 @@ export default function UserProgressSync() {
     courseProgress,
     hydrate,
     clearStore,
-  } = useAlgorithmStore();
+  } = useAlgorithmStore(
+    useShallow((s) => ({
+      completedIds: s.completedIds,
+      visualizerProgress: s.visualizerProgress,
+      algorithmProgress: s.algorithmProgress,
+      courseProgress: s.courseProgress,
+      hydrate: s.hydrate,
+      clearStore: s.clearStore,
+    })),
+  );
 
   const isInitialMount = useRef(true);
   const isHydrating = useRef(false);
+  const hydratedUserIdRef = useRef<string | null>(null);
   const lastSynced = useRef({ ids: '', progress: '', algorithm: '', course: '' });
 
   // Do not sync on auth pages or while loading
@@ -58,12 +69,22 @@ export default function UserProgressSync() {
       clearStore();
       lastSynced.current = { ids: '', progress: '', algorithm: '', course: '' };
       isInitialMount.current = true;
+      hydratedUserIdRef.current = null;
     }
   }, [status, clearStore]);
 
-  // 1. Initial Hydration: Fill the store with server data on login
+  // 1. Initial Hydration: Fill the store with server data once per user login
+  const sessionUserId = session?.user?.id ? String(session.user.id) : null;
   useEffect(() => {
-    if (status !== 'authenticated' || !session?.user || isHydrating.current || isAuthPage) return;
+    if (
+      status !== 'authenticated' ||
+      !sessionUserId ||
+      isHydrating.current ||
+      hydratedUserIdRef.current === sessionUserId ||
+      isAuthPage
+    ) {
+      return;
+    }
 
     const fetchFullProgress = async () => {
       isHydrating.current = true;
@@ -81,6 +102,7 @@ export default function UserProgressSync() {
 
         if (response.ok) {
           const data = await response.json();
+          hydratedUserIdRef.current = sessionUserId;
           hydrate({
             completedIds: data.completedIds || [],
             visualizerProgress: data.visualizerProgress || {},
@@ -102,7 +124,7 @@ export default function UserProgressSync() {
     };
 
     fetchFullProgress();
-  }, [status, session, isAuthPage, clearStore, hydrate]);
+  }, [status, sessionUserId, isAuthPage, clearStore, hydrate]);
 
   // 2. Persistent Sync Logic
   const syncProgress = useCallback(async () => {
@@ -167,8 +189,6 @@ export default function UserProgressSync() {
   useEffect(() => {
     if (status !== 'authenticated' || isHydrating.current || isAuthPage) return;
 
-    if (isInitialMount.current && completedIds.length === 0) return;
-
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
@@ -223,6 +243,13 @@ export default function UserProgressSync() {
             keepalive: true,
           }).catch(() => {});
         }
+
+        lastSynced.current = {
+          ids: currentIds,
+          progress: currentProgress,
+          algorithm: currentAlgorithmProgress,
+          course: currentCourseProgress,
+        };
       }
     };
 

@@ -2,22 +2,6 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-.dark {
-  --background: #0a0a0a;
-  --foreground: #ffffff;
-
-  --brand-dark: #ffffff; /* Invert brand dark for dark mode text if used */
-
-  --card-bg: #1a1a1a;
-  --card-border: #333333;
-  --text-secondary: #a1a1aa;
-
-  /* Course Colors Dark Mode Overrides */
-  --color-course-create: #4ade80; /* Green shade replacing red in dark mode */
-
-  --muted: rgba(255, 255, 255, 0.6);
-  --border: rgba(255, 255, 255, 0.06);
-}
 :root {
   --background: #ffffff;
   --foreground: #000000;
@@ -42,6 +26,23 @@
   --color-course-create: #f15a24;
   --color-course-alive: #6c63ff;
 }
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+
+  --brand-dark: #ffffff; /* Invert brand dark for dark mode text if used */
+
+  --card-bg: #1a1a1a;
+  --card-border: #333333;
+  --text-secondary: #a1a1aa;
+
+  /* Course Colors Dark Mode Overrides */
+  --color-course-create: #4ade80; /* Green shade replacing red in dark mode */
+
+  --muted: rgba(255, 255, 255, 0.6);
+  --border: rgba(255, 255, 255, 0.06);
+}
 body {
   font-family: var(--font-montserrat);
   background-color: var(--background);
@@ -49,6 +50,12 @@ body {
   transition:
     background 180ms ease,
     color 180ms ease;
+}
+
+.dark body,
+html.dark body {
+  background-color: #0a0a0a;
+  color: #ffffff;
 }
 
 /* Premium Markdown Content Styles */

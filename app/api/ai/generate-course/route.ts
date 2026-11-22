@@ -4,6 +4,7 @@ import { headers as getHeaders } from 'next/headers';
 import { auth } from '../../../../auth';
 import { markdownToLexical } from '@/lib/courses/lexicalConverter';
 import { getOpenRouterConfig } from '@/lib/ai/aiSettingsHelper';
+import { ROLES } from '../../../../lib/constants';
 import type { Course } from '../../../../payload-types';
 
 export const maxDuration = 60;
@@ -103,7 +104,7 @@ interface AICourseData {
 // Simple in-memory rate limiter: track last request timestamp per user email
 const lastRequestMap = new Map<string, number>();
 const RATE_LIMIT_MS = 30_000; // 30 seconds between requests
-const OPENROUTER_TIMEOUT_MS = 120_000; // 2 minute timeout for OpenRouter API calls
+const OPENROUTER_TIMEOUT_MS = 50_000; // Must stay below Vercel/Next maxDuration (60s)
 
 const localizedStringSchema = {
   type: 'object',
@@ -552,8 +553,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Fetch OpenRouter configuration from Payload CMS (ai-settings global)
+    // Only administrators may override the configured OpenRouter model per request
     const aiConfig = await getOpenRouterConfig();
-    let activeModel = model?.trim() ? model.trim() : aiConfig.model;
+    const canOverrideModel = authorizedUser.role === ROLES.ADMIN;
+    let activeModel =
+      canOverrideModel && typeof model === 'string' && model.trim() ? model.trim() : aiConfig.model;
     const apiKey = aiConfig.apiKey;
 
     console.log(`[AI Course Generation] Target OpenRouter model: ${activeModel}`);
@@ -828,8 +832,10 @@ CRITICAL REQUIREMENTS:
 
       // Mascot group — non-localized fields plus localized sub-fields
       if (data.mascot) {
+        const mascotEnabled = data.mascot.enabled ?? true;
         result.mascot = {
-          enabled: data.mascot.enabled ?? true,
+          enabled: mascotEnabled,
+          mode: mascotEnabled ? 'ai-fallback' : 'disabled',
           name: data.mascot.name, // {hu, en, ro}
           asset: data.mascot.asset,
           accentColor: data.mascot.accentColor,

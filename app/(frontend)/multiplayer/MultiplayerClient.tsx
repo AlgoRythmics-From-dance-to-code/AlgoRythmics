@@ -256,6 +256,7 @@ export default function MultiplayerClient() {
               status: 'lobby',
               array: [],
               activeIndices: [0, 1],
+              stats: undefined,
               lastActionMessage: 'Új táncverseny indítása...',
               version: (room.version || 1) + 1,
             };
@@ -268,6 +269,7 @@ export default function MultiplayerClient() {
               status: 'lobby',
               array: [],
               activeIndices: [0, 1],
+              stats: undefined,
               lastActionMessage: 'Visszatérés a lobbyba.',
               version: (room.version || 1) + 1,
             };
